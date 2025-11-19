@@ -11,6 +11,7 @@
     <img src="https://img.shields.io/docker/pulls/plutonhq/pluton" />
   </a>
   <br />
+  <br />
   <figure>
     <img src="https://usepluton.com/_astro/pluton-screenshot.CPFk1SrO.png" alt="Pluton Screenshot" />
   </figure>
