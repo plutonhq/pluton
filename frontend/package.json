@@ -3,6 +3,7 @@
    "description": "Pluton Core Frontend Library",
    "version": "0.0.1",
    "author": "Plutonhq",
+   "license": "Apache-2.0",
    "publishConfig": {
       "access": "public"
    },

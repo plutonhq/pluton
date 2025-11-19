@@ -2,6 +2,7 @@
    "name": "pluton",
    "version": "0.0.1",
    "description": "Pluton - Open Source Backup Software",
+   "license": "Apache-2.0",
    "scripts": {
       "build": "turbo run build",
       "dev:backend": "pnpm --filter @plutonhq/core-backend dev",
