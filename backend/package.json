@@ -3,7 +3,7 @@
 	"description": "Pluton Core Backend Library",
 	"version": "0.0.1",
 	"author": "plutonhq",
-   "license": "Apache-2.0",
+	"license": "Apache-2.0",
 	"publishConfig": {
 		"access": "public"
 	},
@@ -11,7 +11,7 @@
 		"dist",
 		"README.md",
 		"CHANGELOG.md",
-      "LICENSE"
+		"LICENSE"
 	],
 	"dependencies": {
 		"aedes": "^0.51.3",
@@ -97,7 +97,7 @@
 		"start": "node dist/index.js",
 		"test": "jest --config jest.config.ts",
 		"build:pkg": "node ./scripts/build.js",
-		"clean": "rm -rf dist public",
+		"clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true});require('fs').rmSync('public',{recursive:true,force:true})\"",
 		"build": "pnpm run clean && node ./scripts/build.js && pnpm run copy:frontend",
 		"package": "node ./scripts/build.js",
 		"prepublishOnly": "pnpm run clean && node ./scripts/build.js"
