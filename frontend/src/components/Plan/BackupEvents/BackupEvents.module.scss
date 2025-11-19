@@ -1,0 +1,189 @@
+.backupEventsContainer {
+   margin-top: -20px;
+}
+
+.header {
+   display: flex;
+   flex-direction: row;
+   justify-content: space-between;
+   margin-bottom: 15px;
+   position: sticky;
+   top: -30px;
+   background: var(--content-background-color);
+   width: 100%;
+   box-sizing: border-box;
+   padding: 10px 0;
+   z-index: 2;
+   border-bottom: 1px solid var(--line-color);
+
+   .duration {
+      color: var(--content-text-color-light);
+   }
+
+   .status {
+      padding: 2px 12px;
+      font-size: 0.9em;
+      font-weight: 600;
+      border-radius: 15px;
+      text-transform: capitalize;
+      &.inProgress {
+         background-color: var(--primary-color-lighter);
+         color: var(--primary-color);
+      }
+      &.hasCompleted {
+         background-color: var(--success-bg-color);
+         color: var(--success-text-color);
+      }
+      &.hasFailed {
+         background-color: var(--error-bg-color);
+         color: var(--error-button-color);
+      }
+   }
+}
+
+.eventList {
+   list-style-type: none;
+   margin: 0;
+   padding: 0;
+   max-width: 100%;
+   display: flex;
+   flex-direction: column;
+   border-radius: 6px;
+   border: 1px solid var(--line-color);
+   .eventItem {
+      padding: 8px 12px;
+      word-break: break-word;
+      display: flex;
+      gap: 10px;
+      .time {
+         color: var(--content-text-color-light);
+      }
+      .phase {
+         padding: 2px 8px;
+         font-size: 0.9em;
+         border-radius: 12px;
+         background-color: var(--primary-color-light);
+         margin: 0 4px;
+         text-transform: capitalize;
+      }
+      .action {
+         color: var(--content-text-color);
+         .viewError {
+            text-decoration: underline;
+            text-decoration-style: dashed;
+            margin-left: 10px;
+            text-decoration-color: var(--line-active-color);
+            font-weight: 600;
+            color: var(--content-text-color);
+            cursor: pointer;
+            &:hover {
+               color: var(--primary-color);
+            }
+         }
+      }
+      .icon {
+         color: var(--primary-color);
+      }
+      &.error {
+         .icon {
+            color: var(--error-button-color);
+         }
+      }
+      &:nth-child(odd) {
+         background-color: var(--primary-color-lighter);
+      }
+      &.completed {
+         background-color: var(--success-bg-color);
+         border: 2px solid var(--success-bg-color-active);
+         border-radius: 6px;
+         .icon {
+            color: var(--success-text-color);
+         }
+         .action {
+            color: var(--success-text-color);
+            font-weight: 600;
+         }
+         .phase {
+            background-color: var(--success-bg-color-active);
+            color: var(--success-text-color);
+         }
+      }
+      &.failed {
+         background-color: var(--error-bg-color);
+         border: 2px solid var(--error-bg-color-active);
+         border-radius: 6px;
+         .action {
+            color: var(--error-button-color);
+            font-weight: 600;
+         }
+         .phase {
+            background-color: var(--error-bg-color-active);
+            color: var(--error-button-color);
+         }
+         .icon {
+            color: var(--error-button-color);
+         }
+      }
+      &.retrying {
+         border-top: 2px solid var(--primary-color-mid);
+         .action {
+            color: var(--primary-color);
+            font-weight: 600;
+         }
+      }
+      &.isError {
+         .action {
+            color: var(--error-button-color);
+            font-weight: 600;
+         }
+      }
+      &.isWarning {
+         .phase {
+            background-color: var(--warning-bg-color);
+            color: var(--warning-text-color);
+         }
+         .icon {
+            color: var(--warning-button-color);
+         }
+      }
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .eventList {
+      .eventItem {
+         display: grid;
+         grid-template-columns: 20px 80px auto auto;
+         grid-template-rows: auto auto;
+         border-bottom: 1px solid var(--line-color);
+         gap: 5px;
+         .icon {
+            grid-column: 1;
+            grid-row: 1;
+         }
+         .time {
+            grid-column: 2;
+            grid-row: 1;
+         }
+         .phase {
+            grid-column: 3;
+            grid-row: 1;
+            background: transparent;
+            color: var(--content-text-color-light);
+            &::before {
+               content: 'Phase: ';
+            }
+         }
+         .action {
+            grid-column: 1 / span 3;
+            grid-row: 2;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 6px;
+         }
+         &.eventItem:nth-child(odd) {
+            background: transparent;
+         }
+      }
+   }
+}

@@ -1,0 +1,24 @@
+{
+   "name": "pluton",
+   "version": "0.0.1",
+   "description": "Pluton - Open Source Backup Software",
+   "scripts": {
+      "build": "turbo run build",
+      "dev:backend": "pnpm --filter @plutonhq/core-backend dev",
+      "dev:frontend": "pnpm --filter @plutonhq/core-frontend dev",
+      "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\" "
+   },
+   "devDependencies": {
+      "concurrently": "^9.1.2",
+      "prettier": "^3.0.0",
+      "release-please": "^17.1.3",
+      "syncpack": "^13.0.4",
+      "turbo": "^2.6.0",
+      "typescript": "^5.0.0"
+   },
+   "packageManager": "pnpm@10.20.0",
+   "workspaces": [
+      "backend",
+      "frontend"
+   ]
+}

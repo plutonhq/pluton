@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+
+# Development data
+data/
+**/data/
+
+# Test files
+coverage/
+**/__tests__/
+**/*.test.ts
+**/*.test.js
+**/*.test.tsx
+**/*.test.jsx
+**/*.spec.ts
+**/*.spec.js
+
+# Git
+.git/
+.github/
+.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.template
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+**/logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (keep only essentials)
+llm/
+**/llm/
+repomix-output.xml
+**/repomix-output.xml
+
+# Misc
+*.md
+!README.md
+!License.md
+.turbo/

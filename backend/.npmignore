@@ -1,0 +1,66 @@
+# Source files (only ship compiled dist/)
+src/
+__tests__/
+*.test.ts
+*.spec.ts
+
+# Config files
+tsconfig.json
+tsconfig.*.json
+jest.config.ts
+drizzle.config.ts
+loader.mjs
+
+# Development data
+/email-previews
+/data
+/binaries
+/coverage
+/docs
+/.turbo
+
+# Build artifacts not needed in package
+/scripts
+/public
+
+# Documentation and planning
+repomix-output.xml
+llm/
+TODO
+*.TODO
+
+# Database
+/drizzle
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment files
+.env
+*.env
+/.env
+
+# Editor directories and files
+.vscode/
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.code-workspace
+
+# Dependencies
+node_modules/
+
+# Misc
+.gitignore
+.npmignore

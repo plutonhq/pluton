@@ -1,0 +1,36 @@
+.notFound {
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
+   padding: 6rem 1rem;
+   text-align: center;
+   box-sizing: border-box;
+   font-weight: bold;
+   color: var(--content-text-color-light);
+   background-color: var(--content-background-color);
+   border-radius: 6px;
+   margin-top: 100px;
+   box-shadow: 0 0 15px var(--content-shadow-color);
+
+   h1 {
+      font-size: 6rem;
+      margin: 1rem 0;
+      margin-bottom: 0;
+      color: var(--primary-color-light);
+   }
+   h3 {
+      text-transform: capitalize;
+      margin: 0;
+      margin-top: -0.2rem;
+      color: var(--primary-color);
+      font-size: 1.2rem;
+      background: var(--primary-color-lighter);
+      padding: 0 20px;
+      font-weight: 600;
+   }
+
+   p {
+      font-weight: normal;
+   }
+}

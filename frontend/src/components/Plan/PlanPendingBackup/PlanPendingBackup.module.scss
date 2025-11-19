@@ -1,0 +1,42 @@
+.backup {
+   width: 100%;
+   padding: 10px 15px;
+   display: flex;
+   justify-content: left;
+   align-items: center;
+   box-sizing: border-box;
+   border-radius: 6px;
+   border: 1px solid var(--line-color);
+   margin-bottom: 15px;
+   .backupIcon {
+      margin-right: 15px;
+   }
+
+   .progressSkeleton {
+      display: block;
+      width: 100%;
+      height: 20px;
+      margin-bottom: 10px;
+   }
+   .backupLeft {
+      width: calc(55% - 20px);
+      .backupId {
+         font-weight: 600;
+         margin-bottom: 5px;
+         color: var(--content-text-color);
+      }
+      .backupStart {
+         color: var(--content-text-color-light);
+         font-size: 0.75rem;
+         display: flex;
+         gap: 10px;
+      }
+   }
+   .backupRight {
+      width: calc(45% - 20px);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding-top: 10px;
+   }
+}

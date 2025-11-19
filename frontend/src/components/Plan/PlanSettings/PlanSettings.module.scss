@@ -1,0 +1,464 @@
+//Fields
+
+.field {
+   margin-bottom: 20px;
+   width: 100%;
+   position: relative;
+   .fieldErrorLabel {
+      position: absolute;
+      right: 10px;
+      top: 15px;
+      background-color: var(--error-bg-active);
+      color: var(--error-active-text);
+      padding: 1px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 0.2px;
+      z-index: 2;
+   }
+   .fieldNotice {
+      margin-top: 10px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 10px;
+      background: var(--primary-color-lighter);
+      border-radius: 6px;
+   }
+}
+
+.label {
+   font-weight: 600;
+   display: block;
+   margin-bottom: 8px;
+   font-size: 0.75rem;
+}
+
+.strategyFieldOptions {
+   display: flex;
+   gap: 12px;
+}
+
+.strategyFieldOptionsDisabled {
+   .strategyFieldOption {
+      opacity: 0.7;
+      cursor: not-allowed;
+      user-select: none;
+   }
+}
+
+.strategyFieldOption {
+   display: flex;
+   flex: 1 1 0px;
+   align-items: center;
+   border: 1px solid var(--line-color);
+   padding: 15px;
+   padding-right: 25px;
+   border-radius: 6px;
+   cursor: pointer;
+   font-size: 0.75rem;
+   position: relative;
+
+   :global(.checkMark) {
+      color: var(--primary-color);
+      position: absolute;
+      top: 5px;
+      right: 5px;
+   }
+}
+
+.typeFieldOptions {
+   display: flex;
+   gap: 12px;
+}
+
+.typeFieldOptionsDisabled {
+   .typeFieldOption {
+      opacity: 0.7;
+      cursor: not-allowed;
+      user-select: none;
+   }
+}
+
+.typeFieldOption {
+   display: flex;
+   flex-direction: column;
+   flex: 1 1 0px;
+   align-items: center;
+   text-align: center;
+   border: 1px solid var(--line-color);
+   padding: 15px;
+   padding-right: 25px;
+   border-radius: 6px;
+   cursor: pointer;
+   font-size: 0.75rem;
+   position: relative;
+
+   :global(.checkMark) {
+      color: var(--primary-color);
+      position: absolute;
+      top: 5px;
+      right: 5px;
+   }
+}
+
+.forgetByAgeField {
+   display: flex;
+   flex-direction: row;
+   gap: 10px;
+   width: 50%;
+}
+
+.customPolicyOption {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   margin-bottom: 10px;
+   & > div {
+      width: 100px;
+      margin: 0 10px;
+   }
+}
+
+.typeFieldActive {
+   background-color: var(--background-color);
+   border-color: var(--primary-color);
+}
+
+.typeFieldIcon {
+   margin-right: 10px;
+   opacity: 0.4;
+}
+
+.typeFieldContent {
+   h4 {
+      margin: 0;
+      margin-bottom: 5px;
+   }
+   p {
+      margin: 0;
+   }
+}
+
+.intervalField {
+   display: flex;
+   gap: 10px;
+   align-items: center;
+}
+
+.pathPickerField {
+   display: flex;
+   div[class*='_paths_'] {
+      border-radius: 0 4px 4px 4px;
+   }
+}
+
+.pathPickerFieldTabs {
+   display: flex;
+   margin: 0;
+   padding: 0;
+   li {
+      list-style-type: none;
+      cursor: pointer;
+      padding: 4px 12px;
+      border: 1px solid var(--content-background-color);
+      border-bottom-color: transparent;
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      bottom: -1px;
+      &.pathPickerFieldActive {
+         border-color: var(--line-color);
+         border-bottom-color: var(--content-background-color);
+      }
+   }
+}
+
+.weekDays {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+
+   button {
+      padding: 6px 8px;
+      color: var(--content-text-color);
+      text-transform: capitalize;
+      font-size: 0.75rem;
+      span {
+         color: var(--icon-color);
+      }
+      &.weekDayActive {
+         background-color: var(--primary-color-light);
+         color: var(--primary-color);
+         span {
+            color: var(--primary-color);
+         }
+      }
+   }
+}
+
+.advancedTabContent {
+   padding-left: 15px;
+   min-height: 500px;
+}
+.advancedTabs {
+   margin: 0;
+   padding: 0;
+   display: flex;
+   flex-direction: row;
+   gap: 6px;
+   margin-bottom: 30px;
+   border-bottom: 1px solid var(--line-color);
+
+   li {
+      list-style-type: none;
+      font-size: 0.75rem;
+      padding: 5px 15px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      color: var(--content-text-color);
+      &.advancedTabActive {
+         color: var(--primary-color);
+         border: 1px solid var(--line-color);
+         border-radius: 4px 4px 0 0;
+         border-bottom: 1px solid var(--content-background-color);
+         position: relative;
+         top: 1px;
+      }
+   }
+}
+.advancedButton {
+   display: flex;
+   width: 100%;
+   cursor: pointer;
+   justify-content: space-between;
+   font-weight: 500;
+   position: relative;
+   padding: 10px;
+   border: 1px solid var(--line-color);
+   border-radius: 6px 6px;
+   box-sizing: border-box;
+
+   &:hover {
+      color: var(--primary-color);
+   }
+   &.advancedButtonActive {
+      border-radius: 6px 6px 0 0;
+   }
+}
+
+// Footer
+.footer {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding: 15px;
+   padding-left: 30px;
+   border-top: 1px solid var(--content-shadow-color);
+}
+
+.summary {
+   font-size: 0.75rem;
+}
+
+.createButton {
+   border-radius: 6px;
+   font-size: 0.75rem;
+   padding: 12px 20px;
+   color: var(--primary-text-color);
+   background-color: var(--primary-color);
+   cursor: pointer;
+}
+
+.loader {
+   position: absolute;
+   z-index: 9;
+   width: 100%;
+   height: 100%;
+   left: 0;
+   top: 0;
+   background-color: var(--content-background-color);
+   opacity: 0.7;
+   cursor: default;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+}
+
+.advancedSettingsSelect {
+   margin-bottom: 20px;
+}
+
+// Scripts Field
+
+.eventTabs {
+   display: flex;
+   flex-direction: column;
+   gap: 20px;
+}
+.eventTab {
+   display: flex;
+   flex-direction: column;
+
+   .eventTabHead {
+      border: 1px solid var(--line-color);
+      padding: 12px;
+      border-radius: 6px 6px 0 0;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+      .eventTabHeadTitle {
+         cursor: pointer;
+      }
+      i {
+         display: inline-block;
+         padding: 1px 8px;
+         background-color: var(--primary-color-light);
+         color: var(--content-text-color-light);
+         margin-left: 5px;
+         border-radius: 20px;
+         font-size: 0.8em;
+         line-height: 1.2em;
+         font-style: normal;
+      }
+      :global(.icon) {
+         color: var(--icon-color);
+      }
+   }
+   .eventTabContent {
+      border: 1px solid var(--line-color);
+      padding: 15px;
+      border-radius: 0 0 6px 6px;
+      border-top: 0;
+      position: relative;
+   }
+   .addScriptButton {
+      background-color: var(--primary-color-light);
+      color: var(--primary-color);
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      width: 20px;
+      height: 20px;
+      line-height: 0.3em;
+      border-radius: 50%;
+      transition: all 0.12s linear;
+      padding: 0;
+      margin-left: 10px;
+      &:hover {
+         color: var(--primary-color-light);
+         background-color: var(--primary-color);
+      }
+   }
+   .scriptItem {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--line-color);
+      padding: 0 12px;
+      box-sizing: border-box;
+      border-radius: 6px;
+      margin-bottom: 20px;
+
+      .scriptHeader {
+         padding: 10px 0;
+         display: flex;
+         justify-content: space-between;
+         .scriptTitle {
+            font-weight: 600;
+            margin-bottom: 4px;
+            :global(.icon) {
+               color: var(--icon-color);
+            }
+         }
+         .scriptPositionControls {
+            button {
+               color: var(--icon-color);
+               &:hover {
+                  color: var(--primary-color);
+               }
+               &:disabled {
+                  opacity: 0.4;
+                  color: var(--icon-color);
+                  cursor: not-allowed;
+               }
+            }
+         }
+      }
+
+      textarea {
+         border: 1px solid var(--line-color);
+         padding: 15px;
+         border-radius: 6px;
+         color: var(--content-text-color);
+         background-color: var(--content-background-color);
+         &:focus {
+            outline: none;
+            border: 1px solid var(--line-active-color);
+         }
+      }
+      .scriptFooter {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         .scriptOptions {
+            display: flex;
+            flex-direction: row;
+            gap: 0;
+            padding: 6px;
+            gap: 15px;
+            align-items: center;
+            .scriptOptionCheckbox {
+               display: flex;
+               align-items: center;
+               font-size: 0.86em;
+               font-weight: 500;
+               gap: 6px;
+               color: var(--content-text-color-light);
+               & > div {
+                  width: auto;
+                  max-width: 150px;
+               }
+
+               div[class^='_selected_'] {
+                  padding: 4px 6px;
+                  & > span {
+                     white-space: nowrap;
+                     overflow: hidden;
+                     text-overflow: ellipsis;
+                  }
+               }
+            }
+         }
+         .removeScriptButton {
+            cursor: pointer;
+            padding: 10px;
+            color: var(--icon-color);
+         }
+         .scriptOptionTimeout {
+            position: relative;
+            button {
+               color: var(--icon-color);
+            }
+            &.hasTimeOutSettings {
+               & > button {
+                  color: var(--primary-color);
+               }
+            }
+         }
+         .timeoutSettings {
+            position: absolute;
+            width: max-content;
+            border-radius: 4px;
+            border: 1px solid var(--line-color);
+            padding: 6px 8px;
+            top: -55px;
+            background: var(--content-background-color);
+            z-index: 99;
+            right: -80px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.07);
+         }
+      }
+   }
+}

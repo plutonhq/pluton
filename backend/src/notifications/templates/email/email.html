@@ -1,0 +1,801 @@
+<!doctype html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>Pluton Notification Email</title>
+		<style>
+			/* -------------------------------------
+          GLOBAL RESETS
+      ------------------------------------- */
+
+			/*All the styling goes here*/
+
+			img {
+				border: none;
+				-ms-interpolation-mode: bicubic;
+				max-width: 100%;
+			}
+
+			body {
+				background-color: #edeffb;
+				font-family: sans-serif;
+				-webkit-font-smoothing: antialiased;
+				font-size: 13px;
+				line-height: 1.4;
+				margin: 0;
+				padding: 0;
+				-ms-text-size-adjust: 100%;
+				-webkit-text-size-adjust: 100%;
+			}
+
+			table {
+				border-collapse: separate;
+				width: 100%;
+			}
+			table td {
+				font-family: sans-serif;
+				font-size: 12px;
+				vertical-align: top;
+			}
+
+			/* -------------------------------------
+          BODY & CONTAINER
+      ------------------------------------- */
+
+			.body {
+				background-color: #edeffb;
+				width: 100%;
+			}
+
+			/* Set a max-width, and make it display as block so it will automatically stretch to that width, but will also shrink down on a phone or something */
+			.container {
+				display: block;
+				margin: 0 auto !important;
+				max-width: 580px;
+				width: 580px;
+				border-radius: 8px;
+				padding-top: 20px;
+				padding-bottom: 20px;
+			}
+
+			/* This should also be a block element, so that it will fill 100% of the .container */
+			.content {
+				box-sizing: border-box;
+				display: block;
+				margin: 0 auto;
+				margin-top: 30px;
+				max-width: 580px;
+				padding-bottom: 30px;
+				background: #fff;
+				border-radius: 8px;
+				position: relative;
+			}
+
+			/* -------------------------------------
+          HEADER, FOOTER, MAIN
+      ------------------------------------- */
+			.topbar {
+				padding: 15px 20px;
+				border-bottom: 1px solid #eee;
+			}
+			.topbar table td {
+				font-size: 12px;
+				color: #777777;
+			}
+			.topbar img {
+				width: 20px;
+				height: 20px;
+				vertical-align: bottom;
+				border-radius: 50%;
+			}
+
+			.main {
+				background: #ffffff;
+				border-radius: 3px;
+				width: 100%;
+				border: 1px solid #e7e9f5;
+			}
+
+			.wrapper {
+				box-sizing: border-box;
+				padding: 20px;
+			}
+
+			.content-block {
+				padding-bottom: 10px;
+				padding-top: 10px;
+			}
+			.emailBody {
+				color: #6e6f92;
+				font-size: 13px;
+				margin-top: 40px;
+			}
+			.notificationMsg {
+				text-align: center;
+				padding: 20px;
+				padding-bottom: 0;
+				border-top: 1px solid #eee;
+				margin-top: 40px;
+			}
+			.notificationMsg p {
+				margin-bottom: 0;
+				font-size: 11px;
+			}
+			.notificationMsg a {
+				color: inherit;
+				text-decoration: underline;
+			}
+			.footer {
+				clear: both;
+				margin-top: 10px;
+				text-align: center;
+				width: 100%;
+			}
+			.footer td,
+			.footer p,
+			.footer span,
+			.footer a {
+				color: #999999;
+				font-size: 12px;
+				text-align: center;
+			}
+			.footer i {
+				margin: 0 8px;
+			}
+			/* -------------------------------------
+          TYPOGRAPHY
+      ------------------------------------- */
+			h1,
+			h2,
+			h3,
+			h4 {
+				color: #414158;
+				font-family: sans-serif;
+				line-height: 1.4;
+				margin: 0;
+				margin-bottom: 15px;
+				font-weight: 600;
+			}
+
+			h1 {
+				font-size: 35px;
+				font-weight: 300;
+				text-align: center;
+				text-transform: capitalize;
+			}
+			h2 {
+				font-size: 18px;
+			}
+			h3 {
+				font-size: 16px;
+			}
+			h1 i,
+			h2 i,
+			h3 i,
+			h4 i {
+				color: #575aff;
+				font-style: normal;
+			}
+			p,
+			ul,
+			ol {
+				font-family: sans-serif;
+				font-size: 13px;
+				font-weight: normal;
+				margin: 0;
+				margin-bottom: 15px;
+			}
+			p li,
+			ul li,
+			ol li {
+				list-style-position: inside;
+				margin-left: 5px;
+			}
+
+			a {
+				color: #575aff;
+				text-decoration: none;
+			}
+			.highlight {
+				background-color: #eff4ff;
+				color: #6e6f92;
+				padding: 2px 6px;
+				border-radius: 4px;
+				font-style: normal;
+				font-weight: 600;
+				font-size: 12px;
+			}
+			.label {
+				font-size: 12px;
+				color: #575aff;
+				background-color: #e4ecff;
+				padding: 3px 10px;
+				border-radius: 4px;
+				font-weight: 600;
+				display: inline-block;
+			}
+			.label-success {
+				color: #06ba9f;
+				background-color: #dcfffa;
+			}
+			.label-error {
+				color: #8d2f2f;
+				background-color: #ffecec;
+			}
+			.errorMsg {
+				color: #f12b2b;
+				background: #ffeeee;
+				font-weight: 600;
+				margin: 30px;
+				border-radius: 6px;
+				text-align: left;
+				padding: 16px;
+				margin-bottom: 24px;
+			}
+			.errorMsg p {
+				margin-top: 8px;
+				margin-bottom: 0;
+			}
+			.title {
+				margin-bottom: 40px;
+			}
+			.title-error,
+			.title-error a {
+				color: #f12b2b;
+			}
+			.title .icon--check {
+				vertical-align: middle;
+				width: 18px;
+				height: 18px;
+				line-height: 18px;
+			}
+			.icon {
+				font-weight: bold;
+				font-style: normal;
+				opacity: 0.6;
+				text-transform: none;
+			}
+			.icon--check {
+				width: 15px;
+				height: 15px;
+				display: inline-block;
+				background: #18cd94;
+				color: #fff;
+				text-align: center;
+				border-radius: 50%;
+				font-size: 9px;
+				line-height: 16px;
+			}
+			.img-icon img {
+				vertical-align: sub;
+			}
+
+			/* -------------------------------------
+          BUTTONS
+      ------------------------------------- */
+			.btn {
+				box-sizing: border-box;
+				width: 100%;
+			}
+			.btn > tbody > tr > td {
+				padding-bottom: 15px;
+			}
+			.btn table {
+				width: auto;
+			}
+			.btn table td {
+				background-color: #ffffff;
+				border-radius: 5px;
+				text-align: center;
+			}
+			.btn a {
+				background-color: #ffffff;
+				border: solid 1px #3498db;
+				border-radius: 5px;
+				box-sizing: border-box;
+				color: #3498db;
+				cursor: pointer;
+				display: inline-block;
+				font-size: 14px;
+				font-weight: bold;
+				margin: 0;
+				padding: 12px 25px;
+				text-decoration: none;
+				text-transform: capitalize;
+			}
+
+			.btn-primary table td {
+				background-color: #3498db;
+			}
+
+			.btn-primary a {
+				background-color: #3498db;
+				border-color: #3498db;
+				color: #ffffff;
+			}
+
+			/* -------------------------------------
+         Backups 
+         ------------------------------------- */
+
+			.backupSummary,
+			.backupDateTime {
+				background-color: #f8faff;
+				margin: 20px 30px;
+				border-radius: 6px;
+			}
+
+			.backupDateTime {
+				padding: 8px 0;
+			}
+
+			tr.backupSummary_title td {
+				padding: 10px 15px;
+				border-bottom: 3px solid #fff;
+			}
+
+			tr.backupSummary_details td {
+				padding: 15px;
+				width: 48%;
+			}
+
+			tr.backupSummary_details td span {
+				display: block;
+				margin-bottom: 5px;
+			}
+
+			tr.backupSummary_date td {
+				padding: 10px 15px;
+			}
+
+			.backupSummary_arrow {
+				font-size: 20px;
+				opacity: 0.6;
+			}
+
+			.backupDetails {
+				margin: 20px 30px;
+			}
+
+			.backupDetailsCard {
+				background-color: #f8faff;
+				border-radius: 8px;
+			}
+
+			.backupDetailsTitle {
+				font-size: 12px;
+				font-weight: bold;
+				color: #9dadd0;
+				margin-bottom: 15px;
+				text-transform: uppercase;
+			}
+
+			.backupDetailsValue {
+				font-size: 16px;
+				font-weight: bold;
+				line-height: 1.2;
+				margin-bottom: 5px;
+			}
+
+			.backupDetailsLabel {
+				font-size: 11px;
+				margin-bottom: 0;
+			}
+
+			.backupError {
+				margin: 30px;
+				background: #fff2f2;
+				padding: 15px;
+				border-radius: 6px;
+				padding-bottom: 8px;
+			}
+
+			.backupErrorTitle {
+				display: block;
+				margin-bottom: 12px;
+				color: #f12b2b;
+			}
+
+			/* Weekly Backup Report Specific Styles */
+			.planReportDayStatus {
+				display: inline-block;
+				margin-left: 10px;
+			}
+
+			.planReportDayStatus span {
+				display: block;
+			}
+
+			span.planReportDayStatusCount {
+				width: 24px;
+				height: 24px;
+				border-radius: 50%;
+				background: #e4eaf7;
+				text-align: center;
+				line-height: 24px;
+				font-size: 10px;
+				margin-top: 5px;
+			}
+
+			span.planReportDayStatusLabel {
+				text-transform: uppercase;
+				font-size: 10px;
+			}
+
+			.planReportDayStatus--Completed .planReportDayStatusCount {
+				background: #59d0b5;
+				color: #fff;
+			}
+
+			.planReportDayStatus--Failed .planReportDayStatusCount {
+				background: #f99292;
+				color: #fff;
+			}
+
+			.planReportDayStatus--monthly {
+				margin-left: 5px;
+			}
+			.planReportDayStatus--monthly .planReportDayStatusCount {
+				width: 15px;
+				height: 15px;
+				line-height: 15px;
+			}
+
+			@media screen and (max-width: 600px) {
+				tr.backupSummary_date td {
+					display: block;
+					text-align: left !important;
+				}
+				.backupDetailsColumnsWrapper,
+				.backupDetailsColumnsWrapper tbody,
+				.backupDetailsColumnsWrapper tr {
+					width: 100% !important;
+					display: block !important;
+				}
+				.backupDetailsColumn {
+					width: 100% !important;
+					display: block !important;
+					padding-right: 0 !important;
+					padding-left: 0 !important;
+					margin-bottom: 20px; /* Add vertical spacing when stacked */
+				}
+				.backupDetailsCardContent {
+					display: block;
+				}
+				.backupDetailsStat {
+					display: inline-block;
+					width: 48%;
+				}
+				.backupDetailsChange {
+					display: inline-block;
+					width: 32.3%;
+				}
+			}
+
+			/* -------------------------------------
+         Backup Integrity Section 
+         ------------------------------------- */
+			.integrityCheck .errorMsg {
+				font-size: 13px;
+				text-align: center;
+			}
+			.integrityLogs {
+				border-radius: 6px;
+				border: 1px solid #eee;
+				box-sizing: border-box;
+				margin: 30px;
+			}
+			.integrityLogsHeader {
+				font-weight: 600;
+				padding: 12px;
+				border-bottom: 1px solid #eee;
+			}
+			.integrityLogMessages {
+				font-family: monospace;
+				background-color: #f9f2f2;
+				line-height: 1.3rem;
+				max-height: 300px;
+				overflow: auto;
+			}
+			.integrityLogMessages span {
+				display: block;
+				padding: 4px 12px;
+				line-break: anywhere;
+			}
+			.integrityLogMessages span:nth-child(even) {
+				background: rgba(0, 0, 0, 0.03);
+			}
+
+			/* -------------------------------------
+          OTHER STYLES THAT MIGHT BE USEFUL
+      ------------------------------------- */
+			.center {
+				text-align: center;
+			}
+			.last {
+				margin-bottom: 0;
+			}
+
+			.first {
+				margin-top: 0;
+			}
+
+			.align-center {
+				text-align: center;
+			}
+
+			.align-right {
+				text-align: right;
+			}
+
+			.align-left {
+				text-align: left;
+			}
+
+			.clear {
+				clear: both;
+			}
+
+			.mt0 {
+				margin-top: 0;
+			}
+
+			.mb0 {
+				margin-bottom: 0;
+			}
+
+			.preheader {
+				color: transparent;
+				display: none;
+				height: 0;
+				max-height: 0;
+				max-width: 0;
+				opacity: 0;
+				overflow: hidden;
+				visibility: hidden;
+				width: 0;
+			}
+
+			.powered-by a {
+				text-decoration: none;
+			}
+
+			/* -------------------------------------
+    Daily Report Styles
+------------------------------------- */
+			/* Container & Layout */
+			.planReportContainer {
+				max-width: 600px;
+				width: 100%;
+				border-collapse: collapse;
+				table-layout: fixed;
+				margin: 0 auto;
+			}
+
+			.planReportInfoTable {
+				padding: 10px;
+			}
+
+			.planReportLabelText {
+				font-size: 12px;
+				color: #9393c3;
+			}
+			.planReportBodyText {
+				font-size: 12px;
+				color: #9dadd0;
+			}
+			.planReportBodyTextBold {
+				font-weight: bold;
+				color: #6e6f92;
+			}
+			.planReportBodyTextBold a {
+				color: #6e6f92;
+			}
+
+			.planReportStatsTable {
+				padding: 6px 10px;
+				padding-bottom: 3px;
+				border-radius: 4px;
+				background: #eff4ff;
+			}
+
+			/* Status & Colors */
+			.planReportStatusSuccess {
+				font-size: 12px;
+			}
+			.planReportSuccessIcon {
+				font-size: 16px;
+				line-height: 1;
+				color: #00b894;
+			}
+			.planReportIconHolder {
+				width: 24px;
+				text-align: center;
+				vertical-align: middle;
+				padding-right: 10px;
+			}
+			.planReportIcon {
+				font-size: 28px;
+				line-height: 1;
+				color: #c6d5f3;
+			}
+			.planReportIcon .icon-cloudArrow {
+				font-size: 18px;
+				margin-top: -20px;
+				display: block;
+				opacity: 1;
+				color: #afbcd5;
+				z-index: 2;
+				position: relative;
+			}
+			.planReportArrowIcon {
+				font-size: 16px;
+				line-height: 1;
+				color: #9dadd0;
+			}
+
+			/* Card Backgrounds */
+			.planReportMainCardBg {
+				background-color: #f8faff;
+				border-radius: 6px;
+			}
+
+			/* Responsive Columns (for modern clients) */
+			@media screen and (max-width: 600px) {
+				.planReportContainer {
+					width: 100% !important;
+				}
+				.planReportColumnWrap {
+					width: 100% !important;
+					display: block !important;
+					padding-right: 0 !important;
+					padding-left: 0 !important;
+					margin-bottom: 20px;
+				}
+				.planReportStackPaddingBottom {
+					padding-bottom: 20px !important;
+				}
+				.planReportInfoTable .planReportCardCell {
+					display: block;
+					width: 100% !important;
+					text-align: left !important;
+				}
+				.planReportInfoTable .planReportCardCell--right {
+					margin-top: 15px;
+					border-top: 1px solid #e5e8ef;
+					padding-top: 10px;
+					text-align: center !important;
+				}
+			}
+			/* -------------------------------------
+          RESPONSIVE AND MOBILE FRIENDLY STYLES
+      ------------------------------------- */
+			@media only screen and (max-width: 620px) {
+				table.body h1 {
+					font-size: 28px !important;
+					margin-bottom: 10px !important;
+				}
+				table.body .wrapper,
+				table.body .article {
+					padding: 10px !important;
+				}
+
+				table.body .container {
+					padding: 0 !important;
+					width: 90% !important;
+				}
+				table.body .main {
+					border-left-width: 0 !important;
+					border-radius: 0 !important;
+					border-right-width: 0 !important;
+				}
+				table.body .btn table {
+					width: 100% !important;
+				}
+				table.body .btn a {
+					width: 100% !important;
+				}
+				table.body .img-responsive {
+					height: auto !important;
+					max-width: 100% !important;
+					width: auto !important;
+				}
+				.stat {
+					display: none;
+				}
+				.backupBlockItem {
+					width: 65%;
+					margin-bottom: 15px;
+					padding: 20px;
+				}
+			}
+
+			/* -------------------------------------
+          PRESERVE THESE STYLES IN THE HEAD
+      ------------------------------------- */
+			@media all {
+				.ExternalClass {
+					width: 100%;
+				}
+				.ExternalClass,
+				.ExternalClass p,
+				.ExternalClass span,
+				.ExternalClass font,
+				.ExternalClass td,
+				.ExternalClass div {
+					line-height: 100%;
+				}
+				.apple-link a {
+					color: inherit !important;
+					font-family: inherit !important;
+					font-size: inherit !important;
+					font-weight: inherit !important;
+					line-height: inherit !important;
+					text-decoration: none !important;
+				}
+				#MessageViewBody a {
+					color: inherit;
+					text-decoration: none;
+					font-size: inherit;
+					font-family: inherit;
+					font-weight: inherit;
+					line-height: inherit;
+				}
+				.btn-primary table td:hover {
+					background-color: #34495e !important;
+				}
+				.btn-primary a:hover {
+					background-color: #34495e !important;
+					border-color: #34495e !important;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<span class="preheader">{{PRE_HEADER}}</span>
+		<table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
+			<tr>
+				<td>&nbsp;</td>
+				<td class="container">
+					<div class="content {{CLASSNAME}}">
+						<div class="topbar">
+							<table role="presentation" border="0" cellpadding="0" cellspacing="0">
+								<tr>
+									<td align="right" style="vertical-align: bottom; text-align: left">
+										<img
+											class="logo_img"
+											src="https://pluton.b-cdn.net/logo.png"
+											alt="Pluton Logo"
+											width="70"
+											height="70"
+										/>
+										{{APP_TITLE}}
+									</td>
+									<td align="right" style="vertical-align: bottom">{{CURRENT_DATE}}</td>
+								</tr>
+							</table>
+						</div>
+						<!-- START EMAIL BODY -->
+						<div class="emailBody">{{EMAIL_BODY_CONTENT}}</div>
+						<!-- END EMAIL BODY -->
+					</div>
+					<!-- START FOOTER -->
+					<div class="footer">
+						<table role="presentation" border="0" cellpadding="0" cellspacing="0">
+							<tr>
+								<td class="content-block powered-by">
+									<a href="https://plutonbackup.com">Pluton</a> <i>|</i>
+									<a href="{{APP_URL}}">Visit Dashboard</a> <i>|</i>
+									<a href="{{DOCS_URL}}">Help</a>
+								</td>
+							</tr>
+						</table>
+					</div>
+					<!-- END FOOTER -->
+				</td>
+				<td>&nbsp;</td>
+			</tr>
+		</table>
+	</body>
+</html>

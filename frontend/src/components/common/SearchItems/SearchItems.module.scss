@@ -1,0 +1,48 @@
+.searchItems {
+   display: flex;
+   position: relative;
+   button {
+      padding: 10px 12px;
+      border-radius: 50%;
+      span {
+         opacity: 1;
+      }
+   }
+}
+
+.searchBox {
+   width: 0;
+   visibility: hidden;
+   opacity: 0;
+   transition: all 0.12s linear;
+   border-radius: 20px;
+   display: flex;
+   gap: 5px;
+   position: absolute;
+   right: 45px;
+   padding: 5px;
+   overflow: hidden;
+   input {
+      border: 1px solid var(--line-color);
+      background-color: var(--content-background-color);
+      padding: 8px 12px;
+      border-radius: 20px;
+      box-sizing: border-box;
+      width: 100%;
+      outline: none;
+      &:focus {
+         border-color: var(--line-active-color);
+      }
+   }
+   &.searchBoxShow {
+      width: 200px;
+      visibility: visible;
+      opacity: 1;
+   }
+}
+
+.buttonActive {
+   background-color: var(--content-background-color);
+   position: relative;
+   z-index: 22;
+}

@@ -1,0 +1,109 @@
+<div>
+	<div class="center">
+		<h2 class="title title-error">
+			<img
+				width="16"
+				height="16"
+				src="https://pluton.b-cdn.net/email/cross-red.png"
+				style="vertical-align: middle"
+			/>
+			<a href="<%= appUrl %>/plan/<%= plan.id %>"><%= plan.title %></a> Failed!
+		</h2>
+	</div>
+	<!-- Basic ERROR Info -->
+	<div class="backupError">
+		<span class="backupErrorTitle"
+			><i class="img-icon">
+				<img
+					width="14"
+					height="14"
+					src="https://pluton.b-cdn.net/email/warning-red.png"
+					style="vertical-align: middle"
+				/>
+			</i>
+			<strong>Backup Failed</strong></span
+		>
+		<p>Error: <%= error %></p>
+	</div>
+
+	<!-- Basic Summary Info -->
+	<div class="backupSummary">
+		<div class="backupSummary_basic">
+			<table role="presentation" cellpadding="0" cellspacing="0">
+				<tr class="backupSummary_title">
+					<td style="text-align: left">
+						<i class="img-icon">
+							<img
+								width="14"
+								height="14"
+								src="https://pluton.b-cdn.net/email/uploading.png"
+								style="vertical-align: middle"
+							/>
+						</i>
+						<strong>Failed to Backup <%= plan.sourceConfig.includes.length || 0 %> sources</strong>
+					</td>
+					<td style="text-align: left"></td>
+					<td style="text-align: right">
+						<i class="img-icon"
+							><img
+								width="12"
+								height="12"
+								src="https://pluton.b-cdn.net/email/hourglass.png"
+								style="vertical-align: middle"
+						/></i>
+						Duration:
+						<strong><%= formatDuration(stats?.total_duration || 0) %></strong>
+					</td>
+				</tr>
+				<tr class="backupSummary_details">
+					<td style="text-align: left">
+						<span><strong><%= deviceName %></strong></span>
+						<span>Device</span>
+					</td>
+					<td style="text-align: center; width: 4%">
+						<span class="backupSummary_arrow">➝</span>
+					</td>
+					<td style="text-align: right">
+						<span><strong><%= storageName %></strong></span>
+						<span><%= storageTypeName %></span>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<!-- Basic Date and Time -->
+	<div class="backupDateTime">
+		<table role="presentation" cellpadding="0" cellspacing="0">
+			<tr class="backupSummary_date">
+				<td style="text-align: left">
+					<i class="img-icon"
+						><img width="14" height="14" src="https://pluton.b-cdn.net/email/clock.png"
+					/></i>
+					Started At:
+				</td>
+				<td style="text-align: right"><%= startDate %></td>
+			</tr>
+			<tr class="backupSummary_date">
+				<td style="text-align: left">
+					<img
+						width="11"
+						height="11"
+						src="https://pluton.b-cdn.net/email/cross.png"
+						style="vertical-align: middle"
+					/>
+					Failed At:
+				</td>
+				<td style="text-align: right"><%= endDate %></td>
+			</tr>
+		</table>
+	</div>
+
+	<!-- Notification Settings Info -->
+	<div class="center notificationMsg">
+		<p>
+			You are receiving this email because you've enabled Email Notification for this backup Plan.
+			You can customize the Notification Settings
+			<a href="<%= appUrl %>/plan/<%= plan.id %>/?settings">here</a>.
+		</p>
+	</div>
+</div>

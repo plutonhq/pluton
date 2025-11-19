@@ -1,0 +1,191 @@
+//Fields
+
+.field {
+   margin-bottom: 20px;
+   width: 100%;
+   position: relative;
+   .fieldErrorLabel {
+      position: absolute;
+      right: 10px;
+      top: 15px;
+      background-color: var(--error-bg-active);
+      color: var(--error-active-text);
+      padding: 1px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 0.2px;
+      z-index: 2;
+   }
+}
+
+.label {
+   font-weight: 600;
+   display: block;
+   margin-bottom: 8px;
+   font-size: 0.75rem;
+}
+
+.titleInput {
+   width: 100%;
+   border: 1px solid var(--field-line-color);
+   background-color: var(--content-background-color);
+   color: var(--content-text-color);
+   padding: 15px;
+   font-size: 0.75rem;
+   border-radius: 6px;
+   box-sizing: border-box;
+   transition: all 0.12s linear;
+   &:focus {
+      outline: none;
+      border-color: var(--line-active-color);
+   }
+}
+
+.typeFieldOptions {
+   display: flex;
+   gap: 12px;
+}
+
+.typeFieldOption {
+   display: flex;
+   flex: 1 1 0px;
+   align-items: center;
+   border: 1px solid var(--line-color);
+   padding: 15px;
+   padding-right: 25px;
+   border-radius: 6px;
+   cursor: pointer;
+   font-size: 0.75rem;
+   position: relative;
+
+   :global(.checkMark) {
+      color: var(--primary-color);
+      position: absolute;
+      top: 5px;
+      right: 5px;
+   }
+}
+
+.forgetByAgeField {
+   display: flex;
+   flex-direction: row;
+   gap: 10px;
+   width: 50%;
+}
+
+.customPolicyOption {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   margin-bottom: 10px;
+   & > div {
+      width: 100px;
+      margin: 0 10px;
+   }
+}
+
+.typeFieldActive {
+   background-color: var(--background-color);
+   border-color: var(--primary-color);
+}
+
+.typeFieldIcon {
+   margin-right: 10px;
+   opacity: 0.4;
+}
+
+.typeFieldContent {
+   h4 {
+      margin: 0;
+      margin-bottom: 5px;
+   }
+   p {
+      margin: 0;
+   }
+}
+
+.intervalField {
+   display: flex;
+   gap: 10px;
+   align-items: center;
+}
+
+.pathPickerField {
+   display: flex;
+   div[class*='_paths_'] {
+      border-radius: 0 4px 4px 4px;
+   }
+}
+
+.pathPickerFieldTabs {
+   display: flex;
+   margin: 0;
+   padding: 0;
+   li {
+      list-style-type: none;
+      cursor: pointer;
+      padding: 4px 12px;
+      border: 1px solid var(--content-background-color);
+      border-bottom-color: transparent;
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      bottom: -1px;
+      &.pathPickerFieldActive {
+         border-color: var(--line-color);
+         border-bottom-color: var(--content-background-color);
+      }
+   }
+}
+
+.weekDays {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+
+   button {
+      padding: 6px 8px;
+      color: var(--content-text-color);
+      text-transform: capitalize;
+      font-size: 0.75rem;
+      span {
+         color: var(--icon-color);
+      }
+      &.weekDayActive {
+         background-color: var(--primary-color-light);
+         color: var(--primary-color);
+         span {
+            color: var(--primary-color);
+         }
+      }
+   }
+}
+
+.summary {
+   font-size: 0.75rem;
+}
+
+.createButton {
+   border-radius: 6px;
+   font-size: 0.75rem;
+   padding: 12px 20px;
+   color: var(--primary-text-color);
+   background-color: var(--primary-color);
+   cursor: pointer;
+}
+
+.loader {
+   position: absolute;
+   z-index: 9;
+   width: 100%;
+   height: 100%;
+   left: 0;
+   top: 0;
+   background-color: var(--content-background-color);
+   opacity: 0.7;
+   cursor: default;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+}

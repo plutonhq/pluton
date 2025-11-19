@@ -1,0 +1,47 @@
+.intervalField {
+   .fieldInner {
+      flex-direction: column;
+      align-items: baseline;
+      gap: 8px;
+   }
+
+   &.fieldHasError {
+      input {
+         border-color: var(--error-bg-color-active);
+      }
+   }
+
+   .intervalSelect {
+      max-width: 150px;
+   }
+
+   .intervalFieldOptions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      .weekDays {
+         display: flex;
+         flex-direction: row;
+         align-items: center;
+         border: 1px solid var(--field-line-color);
+         border-radius: 6px;
+
+         button {
+            padding: 10px;
+            color: var(--content-text-color);
+            text-transform: capitalize;
+            font-size: 0.75rem;
+            span {
+               color: var(--icon-color);
+            }
+            &.weekDayActive {
+               background-color: var(--primary-color-light);
+               color: var(--primary-color);
+               span {
+                  color: var(--primary-color);
+               }
+            }
+         }
+      }
+   }
+}

@@ -1,0 +1,113 @@
+const qingstorSettings = [
+	{
+		label: 'Access Key ID',
+		value: 'access_key_id',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: false,
+		default: '',
+		description: 'QingStor Access Key ID. Leave blank for anonymous access or runtime credentials.',
+		command: '--qingstor-access-key-id',
+	},
+	{
+		label: 'Secret Access Key',
+		value: 'secret_access_key',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: false,
+		default: '',
+		description:
+			'QingStor Secret Access Key (password). Leave blank for anonymous access or runtime credentials.',
+		command: '--qingstor-secret-access-key',
+	},
+	{
+		label: 'Endpoint URL',
+		value: 'endpoint',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: false,
+		default: '',
+		description:
+			'Enter an endpoint URL to connection QingStor API. Leave blank will use the default value "https://qingstor.com:443".',
+		command: '--qingstor-endpoint',
+	},
+	{
+		label: 'Zone',
+		value: 'zone',
+		fieldType: 'string',
+		required: false,
+		default: '',
+		description: 'Zone to connect to. Default is "pek3a".',
+		command: '--qingstor-zone',
+	},
+	{
+		label: 'Environment Auth',
+		value: 'env_auth',
+		fieldType: 'bool',
+		required: false,
+		default: false,
+		description:
+			'Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.',
+		command: '--qingstor-env-auth',
+	},
+	{
+		label: 'Connection Retries',
+		value: 'connection_retries',
+		fieldType: 'int',
+		required: false,
+		default: '3',
+		description: 'Number of connection retries.',
+		command: '--qingstor-connection-retries',
+	},
+	{
+		label: 'Upload Cutoff',
+		value: 'upload_cutoff',
+		fieldType: 'sizesuffix',
+		required: false,
+		default: '200mi',
+		description:
+			'Cutoff for switching to chunked upload. Any files larger than this will be uploaded in chunks of chunk_size. The minimum is 0 and the maximum is 5 GiB.',
+		command: '--qingstor-upload-cutoff',
+	},
+	{
+		label: 'Chunk Size',
+		value: 'chunk_size',
+		fieldType: 'sizesuffix',
+		required: false,
+		default: '4mi',
+		description:
+			'Chunk size to use for uploading. When uploading files larger than upload_cutoff they will be uploaded as multipart uploads using this chunk size.',
+		command: '--qingstor-chunk-size',
+	},
+	{
+		label: 'Upload Concurrency',
+		value: 'upload_concurrency',
+		fieldType: 'int',
+		required: false,
+		default: '1',
+		description:
+			'Concurrency for multipart uploads. This is the number of chunks of the same file that are uploaded concurrently.',
+		command: '--qingstor-upload-concurrency',
+	},
+	{
+		label: 'Encoding',
+		value: 'encoding',
+		fieldType: 'encoding',
+		required: false,
+		default: 'slash,ctl,invalidutf8',
+		description:
+			'The encoding for the backend. See the encoding section in the overview for more info.',
+		command: '--qingstor-encoding',
+	},
+	{
+		label: 'Description',
+		value: 'description',
+		fieldType: 'string',
+		required: false,
+		default: '',
+		description: 'Description of the Storage.',
+		command: '--qingstor-description',
+	},
+];
+
+export default qingstorSettings;

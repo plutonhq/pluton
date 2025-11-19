@@ -1,0 +1,120 @@
+.activeBackups {
+   width: 100%;
+   margin: 30px 0;
+}
+
+.activeBackupsTable {
+   width: 100%;
+}
+
+.backup {
+   width: 100%;
+   padding: 10px 15px;
+   display: flex;
+   justify-content: left;
+   align-items: center;
+   box-sizing: border-box;
+   border-radius: 6px;
+   border: 1px solid var(--line-color);
+   margin-bottom: 15px;
+   .backupIcon {
+      margin-right: 15px;
+   }
+   .backupLeft {
+      width: calc(55% - 20px);
+      .backupId {
+         font-weight: 600;
+         margin-bottom: 5px;
+         color: var(--content-text-color);
+      }
+      .backupTime {
+         font-size: 0.9em;
+         color: var(--content-text-color-light);
+         margin-left: 10px;
+         font-weight: normal;
+      }
+
+      .backupError {
+         color: var(--error-button-color);
+         margin-left: 0.5rem;
+         font-size: 0.9em;
+         i {
+            font-style: normal;
+         }
+      }
+
+      .backupStart {
+         color: var(--content-text-color-light);
+         font-size: 0.75rem;
+         display: flex;
+         gap: 10px;
+
+         .progressMessage {
+            cursor: pointer;
+            text-transform: capitalize;
+            &:hover {
+               color: var(--content-text-color);
+            }
+         }
+
+         button {
+            color: inherit;
+            font-family: inherit;
+            background: var(--line-color);
+            padding-right: 12px;
+            border-radius: 12px;
+            transition: all 0.12s linear;
+            &:hover {
+               color: var(--error-button-color);
+               background-color: var(--error-bg-color);
+            }
+         }
+      }
+   }
+   .backupRight {
+      width: calc(45% - 20px);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      .ProgressStats {
+         display: flex;
+         justify-content: space-between;
+         .ProgressStatsLeft {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            i {
+               display: block;
+               width: 1px;
+               height: 11px;
+               background-color: var(--line-color);
+            }
+         }
+      }
+      .progressBar {
+         width: 100%;
+         height: 12px;
+         border-radius: 4px;
+         background-color: var(--line-color);
+         .progressBarFill {
+            height: 100%;
+            border-radius: 4px;
+            background-color: turquoise;
+            position: relative;
+            transition: all 0.2s linear;
+            span {
+               font-weight: 600;
+               font-size: 0.625rem;
+               line-height: 1.2em;
+               position: absolute;
+            }
+            &.progressBarFilled {
+               span {
+                  right: 5px;
+                  color: #fff;
+               }
+            }
+         }
+      }
+   }
+}

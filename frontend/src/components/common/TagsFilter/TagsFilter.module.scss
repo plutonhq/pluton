@@ -1,0 +1,59 @@
+.tagFilter {
+   display: flex;
+   position: relative;
+   button {
+      padding: 8px 10px;
+      border-radius: 50%;
+      span {
+         opacity: 1;
+      }
+   }
+}
+
+.tagsList {
+   width: 0;
+   visibility: hidden;
+   opacity: 0;
+   transition: all 0.12s linear;
+   background-color: var(--content-background-color);
+   border-radius: 20px;
+   display: flex;
+   gap: 5px;
+   position: absolute;
+   right: 45px;
+   padding: 8px;
+   overflow: hidden;
+   &.tagsListShow {
+      width: 400px;
+      visibility: visible;
+      opacity: 1;
+   }
+}
+
+.buttonActive {
+   background-color: var(--content-background-color);
+   position: relative;
+   z-index: 22;
+}
+
+.tag {
+   padding: 3px 10px;
+   border-radius: 20px;
+   background: var(--line-color);
+   font-size: 0.9em;
+   cursor: pointer;
+
+   &.tagActive {
+      background-color: var(--background-color);
+      color: var(--primary-color);
+      font-weight: 600;
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .tagsList {
+      &.tagsListShow {
+         width: 200px;
+      }
+   }
+}

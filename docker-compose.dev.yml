@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  pluton:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-builder  # Stop at builder stage for development
+    
+    volumes:
+      # Mount source code for hot reload
+      - ./backend/src:/app/src:ro
+      - ./frontend/src:/frontend/src:ro
+      - ./backend/dist:/app/dist
+      - ./frontend/dist:/app/public
+      
+      # Persistent data
+      - pluton-dev-data:/data
+    
+    environment:
+      NODE_ENV: development
+      IS_DOCKER: "true"
+    
+    command: ["npm", "run", "dev"]
+    
+    # Expose additional ports for debugging
+    ports:
+      - "5173:5173"
+      - "9229:9229"  # Node.js debug port
+
+volumes:
+  pluton-dev-data:
+    driver: local

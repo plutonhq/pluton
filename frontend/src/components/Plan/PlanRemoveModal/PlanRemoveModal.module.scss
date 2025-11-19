@@ -1,0 +1,9 @@
+.removeRemoteToggle {
+   margin-top: 15px;
+   :global([class*='_toggleCheckbox']) {
+      opacity: 1;
+      span {
+         width: 100%;
+      }
+   }
+}

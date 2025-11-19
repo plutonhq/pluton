@@ -1,0 +1,76 @@
+.planActions {
+   position: relative;
+   .moreOptions {
+      position: absolute;
+      width: max-content;
+      top: 35px;
+      right: 10px;
+      margin: 0;
+      padding: 0;
+      z-index: 9;
+      background-color: var(--content-background-color);
+      border: 1px solid var(--line-color);
+      border-radius: 6px;
+      list-style-type: none;
+      li {
+         cursor: pointer;
+         padding: 5px 15px;
+         font-size: 0.9em;
+         color: var(--content-text-color-light);
+
+         &:hover {
+            background-color: var(--primary-color-light);
+            color: var(--primary-color);
+         }
+      }
+   }
+}
+
+.planContent {
+   width: 100%;
+   position: relative;
+   padding: 30px;
+   border-radius: 7px;
+   box-sizing: border-box;
+   background-color: var(--content-background-color);
+   color: var(--content-text-color-light);
+   box-shadow: 0 0 15px var(--content-shadow-color);
+   min-height: 200px;
+   margin-top: 20px;
+}
+
+.actionBtn {
+   &:hover {
+      color: var(--primary-color);
+   }
+   &.actionBtnHighlight {
+      font-weight: 600;
+      color: var(--content-text-color-light);
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .plans {
+      :global([class*='_header_']) {
+         flex-direction: column;
+         align-items: flex-start;
+      }
+      :global([class*='_header_']) {
+         :global([class*='_rightSection_']) {
+            width: 100%;
+         }
+         .planActions {
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+            .actionMoreBtn {
+               margin-left: auto;
+            }
+         }
+      }
+      .planContent {
+         padding: 15px;
+         padding-top: 20px;
+      }
+   }
+}

@@ -1,0 +1,86 @@
+import s3Options from './_s3Options';
+
+const qiniuSettings = [
+	{
+		label: 'Access Key ID',
+		value: 'access_key_id',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Access Key ID.',
+		command: '--s3-access-key-id',
+	},
+	{
+		label: 'Secret Access Key',
+		value: 'secret_access_key',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Secret Access Key (password).',
+		command: '--s3-secret-access-key',
+	},
+	{
+		label: 'Region',
+		value: 'region',
+		fieldType: 'select',
+		authFieldType: 'client',
+		allowCustom: true,
+		options: [
+			{ label: 'Select Region', value: '' },
+			{ label: 'East China-Zhejiang', value: 'cn-east-1' },
+			{ label: 'East China-Zhejiang 2', value: 'cn-east-2' },
+			{ label: 'North China-Hebei', value: 'cn-north-1' },
+			{ label: 'South China - Guangdong', value: 'cn-south-1' },
+			{ label: 'Northwest-Shaanxi 1', value: 'cn-northwest-1' },
+			{ label: 'North America - Los Angeles', value: 'us-north-1' },
+			{ label: 'Asia Pacific-Singapore (formerly Southeast Asia)', value: 'ap-southeast-1' },
+			{ label: 'Asia Pacific-Hanoi', value: 'ap-southeast-2' },
+			{ label: 'Asia Pacific-Ho Chi Minh', value: 'ap-southeast-3' },
+			{ label: 'Insert Custon Region', value: 'custom' },
+		],
+		required: true,
+		default: '',
+		description: "Select a Region to connect to that region's API Ednpoint.",
+		command: '--s3-region',
+	},
+	{
+		label: 'Storage Type/Class',
+		value: 'storage_class',
+		fieldType: 'select',
+		authFieldType: 'client',
+		options: [
+			{ label: 'Select Storage Class', value: '' },
+			{ label: 'Standard storage class', value: 'STANDARD' },
+			{ label: 'Infrequent access storage mode', value: 'LINE' },
+			{ label: 'Archive storage mode', value: 'GLACIER' },
+			{ label: 'Archive storage mode (Direct Read)', value: 'GLACIER_IR' },
+			{ label: 'Deep archive storage mode', value: 'DEEP_ARCHIVE' },
+			{ label: 'Intelligent Tiering', value: 'INTELLIGENT_TIERING' },
+		],
+		required: true,
+		default: '',
+		description: 'The storage class to use when storing new objects in Tencent COS',
+		command: '--s3-storage_class',
+	},
+	{
+		label: 'ACL',
+		value: 'acl',
+		fieldType: 'select',
+		authFieldType: 'client',
+		options: [
+			{ label: 'Private', value: 'private' },
+			{ label: 'Public Read', value: 'public-read' },
+		],
+		required: false,
+		default: '',
+		description:
+			"Canned ACL used when creating buckets and storing or copying objects. This ACL is used for creating objects and if bucket_acl isn't set, for creating buckets too.",
+		command: '--s3-acl',
+	},
+
+	...s3Options,
+];
+
+export default qiniuSettings;

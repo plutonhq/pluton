@@ -1,0 +1,38 @@
+.integrations {
+   width: 100%;
+   .tabs {
+      display: flex;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      gap: 10px;
+      margin-bottom: 20px;
+      li {
+         padding: 5px 15px;
+         border-radius: 6px;
+         font-size: 0.75rem;
+         font-weight: 500;
+         cursor: pointer;
+         &.tabActive {
+            color: var(--primary-color);
+            background: var(--background-color);
+         }
+      }
+   }
+   .field {
+      width: 420px;
+      margin-bottom: 20px;
+      position: relative;
+   }
+   .validateBtn {
+      color: var(--primary-color);
+      background: var(--background-color);
+      padding: 10px;
+      border-radius: 6px;
+      width: 100%;
+      transition: all 0.12s linear;
+      &:hover {
+         filter: contrast(0.95);
+      }
+   }
+}

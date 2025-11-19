@@ -1,0 +1,13 @@
+packages:
+  - 'backend'
+  - 'frontend'
+  - '../pluton/backend'
+  - '../pluton/frontend'
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - better-sqlite3
+  - cpu-features
+  - esbuild
+  - ssh2
+  - unrs-resolver

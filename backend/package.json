@@ -1,0 +1,105 @@
+{
+	"name": "@plutonhq/core-backend",
+	"description": "Pluton Core Backend Library",
+	"version": "0.0.1",
+	"author": "plutonhq",
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"CHANGELOG.md"
+	],
+	"dependencies": {
+		"aedes": "^0.51.3",
+		"better-sqlite3": "12.2.0",
+		"cookies": "^0.9.1",
+		"cors": "^2.8.5",
+		"croner": "^9.0.0",
+		"cryptr": "^6.3.0",
+		"drizzle-orm": "^0.44.7",
+		"drizzle-zod": "^0.8.3",
+		"ejs": "^3.1.10",
+		"express": "^4.21.2",
+		"express-rate-limit": "^7.5.1",
+		"jsonwebtoken": "^9.0.2",
+		"mqtt": "^5.10.3",
+		"nanoid": "^5.0.9",
+		"node-ssh": "^13.2.0",
+		"nodemailer": "7.0.5",
+		"pino": "^9.6.0",
+		"systeminformation": "^5.25.11",
+		"tsx": "^4.19.2",
+		"zod": "^4.1.12"
+	},
+	"devDependencies": {
+		"@types/better-sqlite3": "^7.6.12",
+		"@types/cookies": "^0.9.0",
+		"@types/cors": "^2.8.17",
+		"@types/ejs": "^3.1.5",
+		"@types/express": "^5.0.0",
+		"@types/jest": "^30.0.0",
+		"@types/jsonwebtoken": "^9.0.8",
+		"@types/node": "^22.10.10",
+		"@types/nodemailer": "^6.4.17",
+		"@types/pg": "^8.11.11",
+		"@types/supertest": "^6.0.3",
+		"concurrently": "^9.1.2",
+		"cross-env": "^10.0.0",
+		"dotenv": "17.2.0",
+		"drizzle-kit": "^0.31.7",
+		"jest": "^30.2.0",
+		"pino-pretty": "^13.0.0",
+		"prettier": "^3.4.2",
+		"supertest": "^7.1.4",
+		"terser": "^5.44.1",
+		"ts-jest": "^29.4.5",
+		"typescript": "^5.7.3"
+	},
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"import": "./src/index.ts",
+			"default": "./dist/index.js"
+		},
+		"./*": {
+			"types": "./src/*.ts",
+			"import": "./src/*.ts",
+			"default": "./dist/*.js"
+		}
+	},
+	"imports": {
+		"#core-backend/*": {
+			"types": "./src/*.ts",
+			"default": "./src/*.ts"
+		}
+	},
+	"license": "ISC",
+	"main": "./src/index.ts",
+	"module": "./src/index.ts",
+	"types": "./src/index.ts",
+	"typesVersions": {
+		"*": {
+			"*": [
+				"./src/*"
+			]
+		}
+	},
+	"scripts": {
+		"checkUpdates": "npx npm-check -u",
+		"db:studio": "npx drizzle-kit studio --port 4983",
+		"dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
+		"generate-migration": "drizzle-kit generate:sqlite",
+		"lint": "eslint src/**/*.ts",
+		"migrate-db": "tsx src/db/migrate.ts",
+		"start": "node dist/index.js",
+		"test": "jest --config jest.config.ts",
+		"build:pkg": "node ./scripts/build.js",
+		"clean": "rm -rf dist public",
+		"build": "pnpm run clean && node ./scripts/build.js && pnpm run copy:frontend",
+		"package": "node ./scripts/build.js",
+		"prepublishOnly": "pnpm run clean && node ./scripts/build.js"
+	},
+	"type": "module"
+}

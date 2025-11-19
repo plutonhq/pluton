@@ -1,0 +1,168 @@
+.addStorage {
+   position: relative;
+
+   & > div {
+      top: 10%;
+   }
+}
+
+.loader {
+   position: absolute;
+   z-index: 9;
+   width: 100%;
+   height: 100%;
+   left: 0;
+   top: 0;
+   background-color: var(--content-background-color);
+   opacity: 0.7;
+   cursor: default;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+}
+
+.field {
+   margin-bottom: 20px;
+   width: 100%;
+   position: relative;
+   .fieldErrorLabel {
+      position: absolute;
+      right: 10px;
+      top: 15px;
+      background-color: var(--error-bg-active);
+      color: var(--error-active-text);
+      padding: 1px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 0.2px;
+      z-index: 2;
+   }
+}
+
+.label {
+   font-weight: 600;
+   display: block;
+   margin-bottom: 8px;
+   font-size: 0.75rem;
+}
+
+.input {
+   width: 100%;
+   border: 1px solid var(--field-line-color);
+   background-color: var(--content-background-color);
+   padding: 12px;
+   font-size: 0.75rem;
+   border-radius: 6px;
+   box-sizing: border-box;
+   &:focus {
+      outline: none;
+      border: 1px solid var(--line-active-color);
+   }
+   &.inputHasError {
+      border-color: var(--error-bg-color-active);
+   }
+   &:disabled {
+      background-color: var(--light-grey);
+      cursor: not-allowed;
+   }
+}
+
+.storageType {
+   width: 100%;
+   background-color: var(--light-grey);
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   padding: 8px 12px;
+   cursor: not-allowed;
+   color: var(--content-text-color);
+   box-sizing: border-box;
+   img {
+      max-height: 18px;
+      width: auto;
+      margin-right: 5px;
+      vertical-align: middle;
+   }
+}
+
+.createButton {
+   width: 100%;
+   background: var(--primary-color);
+   padding: 12px;
+   font-size: 0.75rem;
+   border-radius: 6px;
+   color: var(--primary-text-color);
+}
+
+.advancedOptions {
+   padding: 20px;
+   border: 1px solid var(--line-color);
+   border-top: 0;
+   border-radius: 0 0 6px 6px;
+   input[class^='_input'] {
+      width: 100%;
+   }
+}
+.advancedButton {
+   display: flex;
+   width: 100%;
+   cursor: pointer;
+   justify-content: space-between;
+   font-weight: 500;
+   position: relative;
+   padding: 10px;
+   border: 1px solid var(--line-color);
+   border-radius: 6px 6px;
+   box-sizing: border-box;
+   user-select: none;
+
+   &:hover {
+      color: var(--primary-color);
+   }
+   &.advancedButtonActive {
+      border-radius: 6px 6px 0 0;
+   }
+}
+
+.authSettings {
+   margin-bottom: 20px;
+}
+
+.oauthDoc {
+   background-color: var(--background-color);
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   box-sizing: border-box;
+   padding: 12px;
+   word-break: break-all;
+   h4 {
+      font-weight: 600;
+      margin: 0;
+      position: relative;
+      user-select: none;
+      cursor: pointer;
+      button {
+         position: absolute;
+         right: 0px;
+         color: var(--icon-color);
+      }
+   }
+   code {
+      background-color: rgba(0, 0, 0, 0.1);
+      color: var(--content-text-color);
+      padding: 2px 6px;
+      border-radius: 6px;
+   }
+   .codeBlock {
+      background-color: #333;
+      color: #ccc;
+      padding: 10px;
+      width: 100%;
+      display: block;
+      border-radius: 6px;
+      box-sizing: border-box;
+      margin: 10px 0;
+      strong {
+         color: var(--rt-color-success);
+      }
+   }
+}

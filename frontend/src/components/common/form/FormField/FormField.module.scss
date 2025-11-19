@@ -1,0 +1,32 @@
+@use '../../../../styles/fields.scss';
+
+.formField {
+   @extend %fieldBase;
+
+   .fieldInner {
+      @extend %fieldInner;
+   }
+
+   .fieldLabel {
+      @extend %fieldLabel;
+   }
+
+   .description {
+      @extend %fieldDescription;
+   }
+   &.notLine {
+      .fieldInner {
+         flex-direction: column;
+         align-items: flex-start;
+         gap: 6px;
+      }
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .formField .fieldInner {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+   }
+}

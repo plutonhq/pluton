@@ -1,0 +1,72 @@
+@use '../../../styles/steps.scss';
+
+.steps {
+   @extend %modalSteps;
+
+   &.stepsEdit {
+      & > ul {
+         position: relative;
+         top: 6px;
+         justify-content: flex-start;
+         gap: 12px;
+         &::before {
+            display: none;
+         }
+         li {
+            border-radius: 6px 6px 0 0;
+            border: 1px solid transparent;
+            border-bottom: none;
+            cursor: pointer;
+            i {
+               padding: 4px 18px;
+               position: relative;
+               top: -3px;
+            }
+            &.stepCurrent {
+               background-color: var(--content-background-color);
+               border: 1px solid var(--content-shadow-color);
+               border-bottom: none;
+            }
+            & > span {
+               display: none;
+            }
+         }
+      }
+   }
+}
+
+.formContent {
+   padding: 30px;
+   display: flex;
+   flex-direction: column;
+   padding: 30px;
+   height: calc(100vh - 265px);
+   overflow: auto;
+
+   hr {
+      margin: 30px 0;
+      border: 0;
+      border-top: 1px solid var(--line-color);
+   }
+}
+
+.backButton {
+   color: var(--icon-color);
+   &:hover {
+      color: var(--content-text-color-light);
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .steps.stepsEdit {
+      > ul {
+         gap: 0;
+         li i {
+            padding: 4px 10px;
+            span {
+               display: none;
+            }
+         }
+      }
+   }
+}

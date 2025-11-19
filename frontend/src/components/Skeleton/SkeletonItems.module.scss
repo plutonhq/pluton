@@ -1,0 +1,162 @@
+.skeletonItems {
+   display: flex;
+   flex-direction: column;
+
+   .skeletonItem {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 20px;
+      min-height: 41px;
+      gap: 10px;
+      border-radius: 7px;
+      overflow: hidden;
+      background-color: var(--content-background-color);
+      color: var(--content-text-color-light);
+      box-shadow: 0 0 15px var(--content-shadow-color);
+      // transition: all 0.2s linear;
+      .leftContent {
+         flex-basis: 60%;
+         display: flex;
+         flex-direction: row;
+         align-items: center;
+         .status {
+            width: 28px;
+            height: 28px;
+            margin-right: 10px;
+            margin-left: 5px;
+            border-radius: 6px;
+            border-radius: 50%;
+            background-color: var(--background-color);
+         }
+         .content {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            .title {
+               width: 150px;
+               height: 13px;
+               background-color: var(--content-shadow-color);
+               margin-bottom: 8px;
+               border-radius: 6px;
+            }
+            .sources {
+               width: 110px;
+               height: 11px;
+               background-color: var(--background-color);
+               border-radius: 6px;
+            }
+         }
+      }
+      .rightContent {
+         display: flex;
+         flex-direction: row;
+         align-items: center;
+         flex-basis: 40%;
+         justify-content: right;
+         gap: 20px;
+         padding-right: 30px;
+         & > div {
+            width: 110px;
+            height: 14px;
+            border-radius: 6px;
+            background-color: var(--background-color);
+         }
+      }
+
+      &::before {
+         content: '';
+         position: absolute;
+         top: 0;
+         left: -100%; /* Start off-screen to the left */
+         width: 100%; /* Adjust width for desired shine length */
+         height: 100%;
+         background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+         animation: shimmer 1.5s infinite linear; /* Apply the animation */
+      }
+   }
+   &.grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      .skeletonItem {
+         width: 100%;
+         flex-direction: column;
+         margin: 0;
+         align-items: flex-start;
+         box-sizing: border-box;
+         padding: 0;
+         gap: 0;
+         .leftContent {
+            width: 100%;
+            padding: 22px 15px;
+            box-sizing: border-box;
+            .status {
+               position: absolute;
+               right: 0;
+               margin-top: -15px;
+               transform: scale(0.8);
+            }
+            .content {
+               .sources {
+                  width: 190px;
+                  margin-top: 5px;
+               }
+            }
+         }
+         .rightContent {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            row-gap: 0;
+            column-gap: 12px;
+            padding-top: 12px;
+            margin-top: 5px;
+            font-size: 0.9em;
+            width: 100%;
+            box-sizing: border-box;
+            border-top: 1px solid var(--line-color);
+            background-color: var(--primary-color-lighter);
+            padding-right: 0;
+            & > div {
+               width: 60px;
+            }
+            .history {
+               width: 100%;
+               margin-top: 10px;
+               border-top: 1px solid var(--line-color);
+               background-color: var(--content-background-color);
+               padding: 12px;
+               border-radius: 0 0 6px 6px;
+            }
+         }
+      }
+   }
+}
+
+@keyframes shimmer {
+   0% {
+      left: -100%; /* Start position */
+   }
+   100% {
+      left: 100%; /* End position, moving across the container */
+   }
+}
+
+@media only screen and (max-width: 1024px) {
+   .skeletonItems.grid {
+      grid-template-columns: repeat(2, 1fr);
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .skeletonItems.grid {
+      grid-template-columns: repeat(1, 1fr);
+   }
+   .skeletonItem {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+   }
+}

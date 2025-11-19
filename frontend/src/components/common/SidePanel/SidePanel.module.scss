@@ -1,0 +1,217 @@
+.sidePanel {
+   width: 100%;
+   height: 100vh;
+   background-color: var(--modal-bg);
+   position: fixed;
+   left: 0;
+   top: 0;
+   z-index: 999;
+   display: flex;
+   align-items: flex-start;
+   justify-content: center;
+   transition: all 0.12s linear;
+}
+
+.wrapper {
+   width: 50rem;
+   height: 100vh;
+   position: fixed;
+   background: var(--content-background-color);
+   color: var(--content-text-color);
+   border: 1px solid var(--content-shadow-color);
+   right: 0;
+   top: 0;
+   box-sizing: border-box;
+   box-shadow: 0 0 20px var(--modal-shadow-color);
+   transform: translateX(100%);
+   transition: transform 0.2s ease-out;
+
+   &.active {
+      transform: translateX(0);
+   }
+   &.noPadding .content {
+      padding: 0;
+   }
+}
+
+.header {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding: 20px;
+   border-bottom: 1px solid var(--content-shadow-color);
+   h3 {
+      font-size: 1rem;
+      margin: 0;
+   }
+   img {
+      max-height: 18px;
+      vertical-align: text-top;
+      margin-right: 4px;
+   }
+}
+
+.content {
+   display: flex;
+   flex-direction: column;
+   padding: 30px;
+   overflow: auto;
+   height: calc(100vh - 130px);
+
+   &.hasFooter {
+      height: calc(100vh - 205px);
+   }
+}
+
+.close {
+   background: transparent;
+   opacity: 0.5;
+   color: var(--content-text-color);
+   transition: all 0.2s linear;
+   &:hover {
+      opacity: 1;
+      transform: rotate(90deg);
+   }
+}
+
+//Fields
+
+.field {
+   margin-bottom: 20px;
+   width: 100%;
+}
+
+.label {
+   font-weight: 600;
+   display: block;
+   margin-bottom: 8px;
+   font-size: 0.75rem;
+}
+
+.titleInput {
+   width: 100%;
+   border: 1px solid var(--line-color);
+   background-color: var(--content-background-color);
+   color: var(--content-text-color);
+   padding: 15px;
+   font-size: 0.75rem;
+   border-radius: 6px;
+   box-sizing: border-box;
+   &:focus {
+      outline: none;
+      border-color: var(--line-active-color);
+   }
+}
+
+.typeFieldOptions {
+   display: flex;
+   gap: 12px;
+}
+
+.typeFieldOption {
+   display: flex;
+   align-items: center;
+   border: 1px solid var(--line-color);
+   padding: 15px;
+   padding-right: 25px;
+   border-radius: 6px;
+   cursor: pointer;
+   font-size: 0.75rem;
+   position: relative;
+
+   :global(.checkMark) {
+      color: var(--primary-color);
+      position: absolute;
+      top: 5px;
+      right: 5px;
+   }
+}
+
+.typeFieldActive {
+   background-color: var(--background-color);
+   border-color: var(--primary-color);
+}
+
+.typeFieldIcon {
+   margin-right: 10px;
+   opacity: 0.4;
+}
+
+.typeFieldContent {
+   h4 {
+      margin: 0;
+      margin-bottom: 5px;
+   }
+   p {
+      margin: 0;
+   }
+}
+
+.intervalField {
+   display: flex;
+   gap: 15px;
+}
+
+.pathPickerField {
+   display: flex;
+   div[class*='_paths_'] {
+      border-radius: 0 4px 4px 4px;
+   }
+}
+
+.pathPickerFieldTabs {
+   display: flex;
+   margin: 0;
+   padding: 0;
+   li {
+      list-style-type: none;
+      cursor: pointer;
+      padding: 4px 12px;
+      border: 1px solid var(--content-background-color);
+      border-bottom-color: transparent;
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      bottom: -1px;
+      &.pathPickerFieldActive {
+         border-color: var(--line-color);
+         border-bottom-color: var(--content-background-color);
+      }
+   }
+}
+
+// Footer
+.footer {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding: 15px;
+   padding-left: 30px;
+   border-top: 1px solid var(--content-shadow-color);
+   min-height: 40px;
+}
+
+.summary {
+   font-size: 0.75rem;
+}
+
+.createButton {
+   border-radius: 6px;
+   font-size: 0.75rem;
+   padding: 12px 20px;
+   color: var(--primary-text-color);
+   background-color: var(--primary-color);
+   cursor: pointer;
+}
+
+@media only screen and (max-width: 768px) {
+   .wrapper {
+      width: 100% !important;
+      .content {
+         padding: 20px;
+         height: calc(100vh - 110px);
+         &.noFooter {
+            height: calc(100vh - 90px);
+         }
+      }
+   }
+}

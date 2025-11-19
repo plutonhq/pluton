@@ -1,0 +1,231 @@
+.storage {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   padding: 10px;
+   margin-bottom: 20px;
+   gap: 10px;
+   border-radius: 7px;
+   background-color: var(--content-background-color);
+   color: var(--content-text-color-light);
+   box-shadow: 0 0 15px var(--content-shadow-color);
+   position: relative;
+   transition: all 0.2s linear;
+   &:hover {
+      box-shadow: 0 0 20px var(--content-shadow-color);
+   }
+   &.storageEditing {
+      box-shadow: 0 0 2px var(--primary-color);
+   }
+}
+
+.leftContent {
+   flex-basis: 40%;
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+}
+.rightContent {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   flex-basis: 60%;
+   justify-content: right;
+   gap: 10px;
+}
+
+.storageType {
+   display: flex;
+   align-items: center;
+   margin-right: 10px;
+   margin-left: 5px;
+   width: 28px;
+   height: 28px;
+   background: var(--light-grey);
+   padding: 5px;
+   border-radius: 5px;
+   justify-content: center;
+   img {
+      max-width: 24px;
+   }
+}
+
+.content {
+   display: flex;
+   flex-direction: column;
+   cursor: pointer;
+   color: var(--content-text-color-light);
+   &:hover {
+      color: inherit;
+      h4 {
+         color: var(--primary-color);
+      }
+   }
+}
+
+.title {
+   display: flex;
+   flex-direction: row;
+   h4 {
+      margin: 0;
+      margin-bottom: 2px;
+      color: var(--content-text-color);
+      display: flex;
+      align-items: center;
+   }
+   :global(.icon) {
+      position: relative;
+      top: 2px;
+      margin-left: 5px;
+      opacity: 0.5;
+   }
+}
+
+.info {
+   margin-right: 30px;
+   display: flex;
+   align-items: center;
+   :global(.icon) {
+      position: relative;
+      top: 2px;
+      margin-right: 5px;
+      opacity: 0.5;
+   }
+   i {
+      font-style: normal;
+   }
+}
+
+.moreBtn {
+   color: var(--content-text-color-light);
+   padding: 3px 6px;
+   border-radius: 4px;
+   &.moreBtnActive {
+      background-color: var(--primary-color-light);
+      color: var(--primary-color);
+   }
+}
+
+.settings {
+   position: absolute;
+   z-index: 99;
+   top: 45px;
+   right: 15px;
+   display: flex;
+   flex-direction: column;
+   justify-content: left;
+   width: 120px;
+   text-align: left;
+   align-items: center;
+   background: var(--content-background-color);
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   button {
+      padding: 6px 10px;
+      width: 100%;
+      text-align: left;
+      color: var(--content-text-color-light);
+      &:hover {
+         background-color: var(--primary-color-light);
+         color: var(--primary-color);
+      }
+   }
+}
+
+.verifyModalContent {
+   position: relative;
+   padding-bottom: 20px;
+}
+
+.removeModalContent {
+   position: relative;
+   .deleteLoader {
+      position: absolute;
+      z-index: 9;
+      width: 100%;
+      height: 100%;
+      left: 0;
+      top: 0;
+      background-color: var(--content-background-color);
+      opacity: 0.7;
+      cursor: default;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+   }
+   .removeModalActions {
+      margin-top: 20px;
+      justify-content: right;
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      button {
+         background-color: var(--line-color);
+         color: var(--content-text-color);
+         padding: 6px 12px;
+         border-radius: 4px;
+         transition: all 0.12s linear;
+         &:nth-child(2) {
+            background-color: var(--error-button-color);
+            color: var(--error-active-text);
+         }
+         &:hover {
+            filter: brightness(105%);
+         }
+      }
+   }
+}
+
+.storageGrid {
+   width: 100%;
+   margin: 0;
+   flex-direction: column;
+   align-items: baseline;
+   padding: 0;
+   padding-bottom: 12px;
+   .leftContent {
+      padding: 12px;
+      width: 100%;
+      box-sizing: border-box;
+   }
+   .rightContent {
+      width: 100%;
+      flex-basis: unset;
+      justify-content: flex-start;
+      padding: 6px 10px;
+      box-sizing: border-box;
+      background: var(--primary-color-lighter);
+      .moreBtn {
+         margin-left: auto;
+      }
+   }
+   .settings {
+      bottom: 10px;
+      top: auto;
+      right: 40px;
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .storage {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+   }
+
+   .rightContent {
+      width: 100%;
+      justify-content: flex-start;
+      border-top: 1px solid var(--line-color);
+      padding-top: 10px;
+      margin-top: 10px;
+      gap: 0;
+      button.moreBtn {
+         margin-left: auto;
+      }
+   }
+
+   .settings {
+      right: 35px;
+   }
+}

@@ -1,0 +1,125 @@
+.planStats {
+   display: flex;
+   gap: 20px;
+   .widgetTitle {
+      padding: 2px 6px;
+      background-color: var(--content-background-color);
+      border: 1px solid var(--line-color);
+      color: var(--content-title-color);
+      border-radius: 4px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      width: max-content;
+      position: relative;
+      margin-top: -30px;
+      span {
+         color: var(--icon-color);
+      }
+   }
+
+   .sources,
+   .snapshots,
+   .health {
+      border: 1px solid var(--line-color);
+      padding: 20px;
+      border-radius: 6px;
+      box-sizing: border-box;
+   }
+
+   .sources {
+      width: 38%;
+      .sourceContent {
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         padding: 12px;
+         gap: 20%;
+         & > div {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            img {
+               width: auto;
+               max-height: 18px;
+               display: block;
+            }
+            span {
+               display: block;
+               line-height: initial;
+            }
+            &:nth-child(2) {
+               border: 1px solid var(--line-color);
+               border-radius: 50%;
+               width: 30px;
+               height: 30px;
+               box-sizing: border-box;
+               padding-top: 4px;
+               position: relative;
+            }
+            .sourceArrow {
+               position: absolute;
+               left: 35px;
+               opacity: 0.6;
+               &::before {
+                  content: '';
+                  width: 10px;
+                  height: 2px;
+                  background: var(--content-text-color-light);
+                  position: absolute;
+                  left: -52px;
+                  top: 8px;
+                  opacity: 0.7;
+               }
+            }
+         }
+      }
+   }
+   .snapshots {
+      width: 24%;
+      .snapshotsContent {
+         display: flex;
+         justify-content: space-around;
+         align-items: center;
+         height: 100%;
+         margin-top: 8px;
+
+         & > div {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+
+            & > span:nth-child(1) {
+               font-size: 1rem;
+               font-weight: 600;
+               color: var(--content-subtitle-color);
+            }
+            &:nth-child(2) {
+               width: 1px;
+               height: 30px;
+               background-color: var(--line-color);
+            }
+         }
+      }
+   }
+   .health {
+      width: 38%;
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .planStats {
+      flex-direction: column;
+      .sources,
+      .snapshots,
+      .health {
+         width: 100%;
+      }
+   }
+}

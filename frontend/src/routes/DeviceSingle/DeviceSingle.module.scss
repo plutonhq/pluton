@@ -1,0 +1,105 @@
+.deviceContent {
+   width: 100%;
+   position: relative;
+   padding: 30px;
+   border-radius: 7px;
+   box-sizing: border-box;
+   background-color: var(--content-background-color);
+   color: var(--content-text-color-light);
+   box-shadow: 0 0 15px var(--content-shadow-color);
+   min-height: 200px;
+   margin-top: 20px;
+   display: flex;
+   flex-direction: column;
+}
+
+.noMetrics {
+   text-align: center;
+   align-items: center;
+   align-self: center;
+   width: 100%;
+}
+
+.titleSkeleton {
+   width: 200px;
+   height: 30px;
+   // background-color: var(--line-color);
+}
+
+.version {
+   display: flex;
+   align-items: center;
+   :global(.icon) {
+      position: relative;
+      top: 2px;
+      margin-right: 5px;
+      opacity: 0.5;
+   }
+   i {
+      font-style: normal;
+   }
+   b {
+      margin-left: 3px;
+      color: #06ba9f;
+   }
+   &.versionUpdate {
+      cursor: pointer;
+      &:hover {
+         color: var(--primary-color);
+      }
+   }
+
+   &.agentUpdateBtn {
+      svg {
+         margin-right: 4px;
+         color: var(--icon-color);
+      }
+   }
+}
+
+.moreOptions {
+   position: absolute;
+   width: max-content;
+   top: 35px;
+   right: 10px;
+   margin: 0;
+   padding: 0;
+   z-index: 9;
+   background-color: var(--content-background-color);
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   list-style-type: none;
+   li {
+      cursor: pointer;
+      padding: 5px 15px;
+      font-size: 0.9em;
+      color: var(--content-text-color-light);
+
+      &:hover {
+         background-color: var(--primary-color-light);
+         color: var(--primary-color);
+      }
+   }
+}
+
+.connectionStatus {
+   width: 12px;
+   height: 12px;
+   border-radius: 50%;
+   background-color: var(--line-active-color);
+   margin-left: 4px;
+   &.connected {
+      background-color: turquoise;
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .device {
+      :global([class*='_header_']) {
+         flex-direction: column;
+      }
+      .deviceContent {
+         padding: 20px;
+      }
+   }
+}

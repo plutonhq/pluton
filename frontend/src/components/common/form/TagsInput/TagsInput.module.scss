@@ -1,0 +1,54 @@
+.tagField {
+   width: 100%;
+
+   .tagBox {
+      width: 100%;
+      border: 1px solid var(--field-line-color);
+      border-radius: 6px;
+      padding: 7px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-sizing: border-box;
+   }
+
+   .tag {
+      background: var(--background-color);
+      border: 1px solid var(--line-color);
+      font-size: 0.75rem;
+      padding: 0px 10px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+
+      span {
+         position: relative;
+         top: 2px;
+         opacity: 0.5;
+      }
+      i {
+         font-style: normal;
+         padding: 2px;
+         cursor: pointer;
+         opacity: 0.5;
+         &:hover {
+            opacity: 0.8;
+         }
+      }
+   }
+
+   .textInput {
+      input {
+         border: none;
+         font-size: 0.75rem;
+         font-family: inherit;
+         padding: 5px;
+         background-color: var(--content-background-color);
+         &:focus {
+            outline: none;
+            border: none;
+         }
+      }
+   }
+}

@@ -1,0 +1,75 @@
+import s3Options from './_s3Options';
+
+const rackcorpSettings = [
+	{
+		label: 'Access Key ID',
+		value: 'access_key_id',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Access Key ID.',
+		command: '--s3-access-key-id',
+	},
+	{
+		label: 'Secret Access Key',
+		value: 'secret_access_key',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Secret Access Key (password).',
+		command: '--s3-secret-access-key',
+	},
+	{
+		label: 'Region',
+		value: 'region',
+		fieldType: 'select',
+		authFieldType: 'client',
+		allowCustom: true,
+		options: [
+			{ label: 'Select Region', value: '' },
+			{ label: 'Australia GlobalSwitch DC1', value: 'au-nsw-gbl1' },
+			{ label: 'Australia Equinix SYD4', value: 'au-nsw-eqx4' },
+			{ label: 'Australia Sydney', value: 'au-nsw' },
+			{ label: 'Thailand Bangkok NTT DC1', value: 'th-bkk' },
+			{ label: 'Mongolia Ulaanbaatar', value: 'mn' },
+			{ label: 'Mongolia Ulaanbaatar GEMNET DC1', value: 'mn-gem1' },
+			{ label: 'Hong Kong', value: 'hk' },
+			{ label: 'Hong Kong Equinix HK2', value: 'hk-eqx2' },
+			{ label: 'Philippines', value: 'ph' },
+			{ label: 'Philippines Carmona DC1', value: 'ph-crm1' },
+			{ label: 'Kyrgyzstan', value: 'kg' },
+			{ label: 'Kyrgyzstan - NSP DC1', value: 'kg-nsp1' },
+			{ label: 'Indonesia', value: 'id' },
+			{ label: 'Indonesia - Area31 DC1', value: 'id-area31' },
+			{ label: 'Australia LEDC NSW Datacenters', value: 'au-nsw-ledc' },
+			{ label: 'Australia NSW Newcastle', value: 'au-nsw-ledc-ncle1' },
+			{ label: 'Australia NSW Dubbo', value: 'au-nsw-ledc-dbo1' },
+			{ label: 'Insert Custon Region', value: 'custom' },
+		],
+		required: true,
+		default: '',
+		description: "Select a Region to connect to that region's API Ednpoint.",
+		command: '--s3-region',
+	},
+	{
+		label: 'ACL',
+		value: 'acl',
+		fieldType: 'select',
+		authFieldType: 'client',
+		options: [
+			{ label: 'Private', value: 'private' },
+			{ label: 'Public Read', value: 'public-read' },
+		],
+		required: false,
+		default: '',
+		description:
+			"Canned ACL used when creating buckets and storing or copying objects. This ACL is used for creating objects and if bucket_acl isn't set, for creating buckets too.",
+		command: '--s3-acl',
+	},
+
+	...s3Options,
+];
+
+export default rackcorpSettings;

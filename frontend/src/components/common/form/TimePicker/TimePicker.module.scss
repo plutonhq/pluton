@@ -1,0 +1,73 @@
+@use '../../../../styles/fields.scss';
+
+.timePickerField {
+   width: 130px;
+}
+
+.fieldInner {
+   width: auto;
+   position: relative;
+}
+
+.fieldLabel {
+   @extend %fieldLabel;
+}
+
+.currentTime {
+   border: 1px solid var(--field-line-color);
+   padding: 8px 10px;
+   border-radius: 6px;
+   display: flex;
+   justify-content: space-between;
+   cursor: pointer;
+   .dropBtn {
+      background: transparent;
+      color: var(--icon-color);
+   }
+}
+
+.timeSelect {
+   position: absolute;
+   background-color: var(--field-bg);
+   border: 1px solid var(--field-line-color);
+   padding: 10px;
+   border-radius: 0 0 6px 6px;
+   margin-top: -3px;
+}
+
+.times {
+   display: flex;
+
+   & > span {
+      padding: 5px;
+   }
+}
+
+.timeInput {
+   border: 1px solid var(--field-line-color);
+   padding: 5px;
+   border-radius: 6px;
+   width: 35px;
+   text-align: left;
+   color: inherit;
+}
+
+.ampm {
+   background-color: transparent;
+   border: none;
+   margin-top: 8px;
+   text-align: center;
+   button {
+      padding: 8px 15px;
+   }
+}
+
+.ampmActive {
+   background-color: var(--primary-color);
+   color: var(--primary-text-color);
+   border-radius: 4px;
+}
+
+.description {
+   @extend %fieldDescription;
+}

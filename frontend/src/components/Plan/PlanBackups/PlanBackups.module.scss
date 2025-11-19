@@ -1,0 +1,58 @@
+.backups {
+   margin-top: 20px;
+}
+
+.backupsHeader {
+   width: 100%;
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   padding-top: 10px;
+   h3 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--content-title-color);
+      span {
+         background-color: var(--line-color);
+         color: var(--content-text-color-light);
+         font-size: 0.7rem;
+         padding: 1px 8px;
+         border-radius: 20px;
+      }
+   }
+
+   .historyTabs {
+      display: flex;
+      gap: 10px;
+      button {
+         padding: 12px 18px;
+         border-radius: 6px 6px 0 0;
+         color: var(--content-text-color-light);
+         border: 1px solid transparent;
+         position: relative;
+         top: 1px;
+         i {
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-size: 0.625rem;
+            line-height: 0.625rem;
+            font-style: normal;
+            background-color: var(--light-grey);
+         }
+         &.historyTabActive {
+            color: var(--content-text-color);
+            border-color: var(--line-color);
+            border-bottom-color: var(--content-background-color);
+         }
+      }
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .backups {
+      overflow-x: auto;
+   }
+   .backupsInfo {
+      display: none;
+   }
+}

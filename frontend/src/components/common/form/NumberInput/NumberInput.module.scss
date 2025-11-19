@@ -1,0 +1,102 @@
+.numberInputField {
+   .numberInputWrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 1;
+      max-width: 150px;
+
+      .input {
+         padding: 8px 12px;
+         padding-left: 40px;
+         padding-right: 40px;
+         text-align: center;
+         border: 1px solid var(--field-line-color);
+         border-radius: 6px;
+         background: transparent;
+         color: var(--content-text-color);
+         font-size: 0.75rem;
+         width: 100%;
+         box-sizing: border-box;
+         transition: all 0.2s ease;
+
+         &:focus {
+            outline: none;
+            border-color: var(--line-active-color);
+         }
+
+         &::placeholder {
+            color: var(--content-text-color-light);
+         }
+
+         &::-webkit-inner-spin-button,
+         &::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+         }
+      }
+
+      .numberControl {
+         position: absolute;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         width: 24px;
+         height: 24px;
+         background: transparent;
+         border-radius: 4px;
+         cursor: pointer;
+         color: var(--content-text-color-light);
+         font-size: 1.125rem;
+         font-weight: 600;
+         transition: all 0.2s ease;
+
+         &:hover {
+            color: var(--primary-color);
+         }
+
+         &:first-of-type {
+            left: 7px;
+            font-size: 0.625rem;
+         }
+
+         &:last-of-type {
+            right: 7px;
+         }
+      }
+   }
+
+   &.numberFieldLarge {
+      .input {
+         height: 42px;
+         font-size: 1rem;
+      }
+   }
+
+   &.numberFieldInline {
+      .fieldInner {
+         display: flex;
+         flex-direction: row;
+         justify-content: space-between;
+         gap: 8px;
+         .fieldLabel {
+            min-width: unset;
+         }
+         .numberInputWrapper {
+            max-width: 50%;
+         }
+      }
+   }
+
+   &.numberFieldFull {
+      width: 100%;
+      .input {
+         width: 100%;
+      }
+   }
+   &.fieldHasError {
+      input {
+         border-color: var(--error-bg-color-active);
+      }
+   }
+}

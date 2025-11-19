@@ -1,0 +1,110 @@
+//Fields
+
+.field {
+   margin-bottom: 20px;
+   width: 100%;
+   position: relative;
+   .fieldErrorLabel {
+      position: absolute;
+      right: 10px;
+      top: 15px;
+      background-color: var(--error-bg-active);
+      color: var(--error-active-text);
+      padding: 1px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 0.2px;
+      z-index: 2;
+   }
+   .fileManagerBtn {
+      position: absolute;
+      right: 0;
+      top: 22px;
+      padding: 10px;
+      cursor: pointer;
+      color: var(--icon-color);
+      &:hover {
+         color: var(--primary-color);
+      }
+   }
+}
+
+.label {
+   font-weight: 600;
+   display: block;
+   margin-bottom: 8px;
+   font-size: 0.75rem;
+}
+
+.titleInput {
+   width: 100%;
+   border: 1px solid var(--line-color);
+   background-color: var(--content-background-color);
+   color: var(--content-text-color);
+   padding: 15px;
+   font-size: 0.75rem;
+   border-radius: 6px;
+   box-sizing: border-box;
+   &:focus {
+      outline: none;
+      border-color: var(--line-active-color);
+   }
+}
+
+.createButton {
+   border-radius: 6px;
+   font-size: 0.75rem;
+   padding: 12px 20px;
+   color: var(--primary-text-color);
+   background-color: var(--primary-color);
+   cursor: pointer;
+}
+
+.loader {
+   position: absolute;
+   z-index: 9;
+   width: 100%;
+   height: 100%;
+   left: 0;
+   top: 0;
+   background-color: var(--content-background-color);
+   opacity: 0.7;
+   cursor: default;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+}
+
+.tabs {
+   padding: 10px;
+   border: 1px solid var(--line-color);
+   border-radius: 6px 6px 0 0;
+   ul {
+      margin: 0;
+      padding: 0;
+      list-style-type: none;
+      display: flex;
+      gap: 10px;
+      li {
+         padding: 3px 12px;
+         border-radius: 20px;
+         cursor: pointer;
+         span {
+            color: var(--icon-color);
+         }
+         &.tabActive {
+            color: var(--primary-color);
+            background-color: var(--primary-color-light);
+            span {
+               color: var(--primary-color);
+            }
+         }
+      }
+   }
+}
+.tabContent {
+   padding: 20px;
+   border: 1px solid var(--line-color);
+   border-top: 0;
+   border-radius: 0 0 6px 6px;
+}

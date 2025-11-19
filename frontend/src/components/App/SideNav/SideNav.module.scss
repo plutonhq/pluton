@@ -1,0 +1,58 @@
+.sideNav {
+   position: absolute;
+}
+
+.logo {
+   position: relative;
+   background-color: var(--primary-color);
+   padding: 10px;
+   border-radius: 50%;
+   box-sizing: border-box;
+   display: flex;
+}
+
+.navMenu {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   align-items: center;
+   margin-top: 10px;
+   & > a {
+      width: 50px;
+      height: 50px;
+      background: transparent;
+      border-radius: 50%;
+      color: var(--nav-color);
+      cursor: pointer;
+
+      &:global(.active) {
+         background-color: var(--content-background-color);
+         color: var(--primary-color);
+      }
+   }
+}
+
+.navMenuLabel {
+   padding: 10px;
+   display: block;
+   text-align: center;
+}
+
+@media only screen and (max-width: 768px) {
+   .logo {
+      display: none;
+   }
+   .navMenu {
+      position: fixed;
+      width: 100%;
+      left: 0;
+      bottom: 0;
+      z-index: 999;
+      flex-direction: row-reverse;
+      background: var(--content-background-color);
+      box-shadow: 0 0 15px var(--content-shadow-color);
+      margin-top: 0;
+      gap: 0;
+      justify-content: space-around;
+   }
+}

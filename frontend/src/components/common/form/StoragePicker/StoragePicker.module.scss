@@ -1,0 +1,114 @@
+.storagePicker {
+   width: 100%;
+
+   .storagePickerInput {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--field-line-color);
+      border-radius: 6px;
+      box-sizing: border-box;
+      .storage {
+         width: 35%;
+         cursor: pointer;
+         img {
+            height: 18px;
+            width: auto;
+            margin-right: 5px;
+            vertical-align: top;
+         }
+         :global([class*='_dropdown_']) {
+            width: 100%;
+         }
+      }
+      .path {
+         width: calc(65% - 10px);
+         margin-left: 10px;
+         position: relative;
+         .fileManagerBtn {
+            position: absolute;
+            right: 1px;
+            top: 1px;
+            padding: 8px;
+            cursor: pointer;
+            color: var(--icon-color);
+            &:hover {
+               color: var(--primary-color);
+            }
+         }
+         div[class*='_inputField_'] input {
+            padding: 10px 12px;
+         }
+      }
+      & > div {
+         border-radius: 4px;
+         box-sizing: border-box;
+         font-size: 0.75rem;
+         display: flex;
+
+         button {
+            padding: 3px 8px;
+            background-color: var(--background-color);
+            color: var(--content-text-color);
+            font-size: 0.75rem;
+            border-radius: 4px;
+            margin-left: 5px;
+         }
+      }
+   }
+}
+
+.pickerContent {
+   .field {
+      margin-bottom: 20px;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+   }
+
+   label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 0.75rem;
+      width: 55%;
+   }
+   .pickerFooter {
+      margin-top: 20px;
+      justify-content: right;
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      button {
+         background-color: var(--line-color);
+         color: var(--content-text-color);
+         padding: 8px 16px;
+         border-radius: 4px;
+         font-size: 0.75rem;
+         transition: all 0.12s linear;
+         &:nth-child(2) {
+            background-color: var(--primary-color);
+            color: var(--primary-text-color);
+            &:hover {
+               background-color: var(--primary-hover-color);
+            }
+         }
+      }
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .storagePicker {
+      .storagePickerInput > div {
+         display: flex;
+         flex-direction: column;
+         .storage {
+            width: 100%;
+            margin-bottom: 10px;
+         }
+         .path {
+            width: 100%;
+            margin-left: 0px;
+         }
+      }
+   }
+}

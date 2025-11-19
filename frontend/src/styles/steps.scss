@@ -1,0 +1,67 @@
+%modalSteps {
+   width: 100%;
+   padding: 10px 15px;
+   padding-bottom: 5px;
+   box-sizing: border-box;
+   border-bottom: 1px solid var(--content-shadow-color);
+   background: var(--background-color);
+   ul {
+      margin: 0;
+      padding: 0;
+      list-style-type: none;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      &:before {
+         content: '';
+         position: absolute;
+         width: calc(100% - 60px);
+         height: 2px;
+         background-color: var(--content-shadow-color);
+         z-index: 0;
+         top: 12px;
+         left: 25px;
+      }
+      li {
+         padding: 3px;
+         display: flex;
+         flex-direction: column;
+         justify-content: center;
+         align-items: center;
+         position: relative;
+         i {
+            font-style: normal;
+            font-size: 0.75rem;
+            margin-top: 5px;
+            color: var(--content-text-color-light);
+         }
+         & > span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            border-radius: 50%;
+            background-color: var(--content-shadow-color);
+            text-align: center;
+            box-sizing: border-box;
+         }
+         &.stepCurrent {
+            & > span {
+               background-color: var(--primary-color);
+               color: var(--primary-text-color);
+            }
+            i {
+               color: var(--primary-color);
+               font-weight: 600;
+            }
+         }
+         &.stepPassed {
+            & > span {
+               background-color: var(--primary-color);
+            }
+         }
+      }
+   }
+}

@@ -1,0 +1,112 @@
+.settings {
+   .settingsContent {
+      width: 100%;
+      position: relative;
+      border-radius: 7px;
+      box-sizing: border-box;
+      background-color: var(--content-background-color);
+      color: var(--content-text-color-light);
+      box-shadow: 0 0 15px var(--content-shadow-color);
+      min-height: 400px;
+      margin-top: 20px;
+
+      .sidebar {
+         width: 180px;
+         height: 100%;
+         position: absolute;
+         border-radius: 6px 0 0 6px;
+         padding: 20px;
+         box-sizing: border-box;
+         padding-left: 20px;
+         border-right: 1px solid var(--line-color);
+         display: flex;
+         flex-direction: column;
+         justify-content: space-between;
+      }
+
+      .updateBtn {
+         width: 100%;
+         padding: 12px;
+         background-color: var(--primary-color);
+         color: var(--primary-text-color);
+         border-radius: 6px;
+         font-weight: 600;
+      }
+
+      .tabs {
+         margin: 0;
+         list-style-type: none;
+         display: flex;
+         flex-direction: column;
+         padding: 0;
+         gap: 0.5rem;
+         li {
+            cursor: pointer;
+            padding: 10px 16px;
+            padding-left: 20px;
+            position: relative;
+            font-weight: 500;
+
+            &.tabActive {
+               border-right: 0;
+               border-radius: 6px;
+               color: var(--primary-color);
+               background: var(--background-color);
+            }
+         }
+      }
+
+      .content {
+         padding: 30px;
+         width: calc(100% - 180px);
+         min-height: 500px;
+         position: relative;
+         left: 180px;
+         box-sizing: border-box;
+         display: flex;
+         justify-content: flex-start;
+         overflow: hidden;
+         h4 {
+            color: var(--content-title-color);
+            margin-top: 0;
+         }
+         .field {
+            margin-bottom: 1rem;
+         }
+      }
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .settings {
+      .settingsContent {
+         .content {
+            left: 0;
+            width: 100%;
+            min-height: 600px;
+         }
+         .tabs {
+            flex-direction: row;
+            gap: 0;
+            li {
+               font-size: 0;
+            }
+         }
+         .sidebar {
+            position: relative;
+            width: 100%;
+            height: auto;
+            justify-content: space-between;
+            flex-direction: row;
+            border-bottom: 1px solid var(--line-color);
+            padding: 12px;
+            .updateBtn {
+               width: 90px;
+            }
+         }
+         // .integrationTab {
+         //     display: flex;
+         // }
+      }
+   }
+}

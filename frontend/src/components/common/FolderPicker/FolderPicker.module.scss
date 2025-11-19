@@ -1,0 +1,77 @@
+.folderPickerModal {
+   position: fixed;
+   width: 100%;
+   height: 100vh;
+   top: 0;
+   left: 0;
+   z-index: 99999999;
+   background: var(--modal-shadow-color-light);
+   .folderPickerModalInner {
+      position: absolute;
+      width: 70%;
+      max-width: 1000px;
+      background: var(--content-background-color);
+      color: var(--content-text-color);
+      border-radius: 8px;
+      border: 1px solid var(--content-shadow-color);
+      margin: 0 auto;
+      left: 0;
+      right: 0;
+      top: 10%;
+      box-sizing: border-box;
+      box-shadow: 0 0 20px var(--modal-shadow-color);
+      .folderPickerHeader {
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         padding: 10px 15px;
+         border-bottom: 1px solid var(--line-color);
+         h4 {
+            margin: 0;
+         }
+         button {
+            padding: 10px;
+            cursor: pointer;
+            background: transparent;
+            opacity: 0.5;
+            color: var(--content-text-color);
+            transition: all 0.2s linear;
+            &:hover {
+               opacity: 1;
+               transform: rotate(90deg);
+            }
+         }
+      }
+      .folderPickerFooter {
+         display: flex;
+         align-items: center;
+         justify-content: flex-end;
+         padding: 10px 15px;
+         border-top: 1px solid var(--line-color);
+         button {
+            background-color: var(--primary-color);
+            color: var(--primary-text-color);
+            padding: 10px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+         }
+         &.folderPickerFooterWithText {
+            justify-content: space-between;
+         }
+      }
+      .folderPickerContent {
+         padding: 20px;
+         max-height: 500px;
+         overflow: auto;
+      }
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .folderPickerModal {
+      .folderPickerModalInner {
+         width: 100%;
+         top: 0;
+      }
+   }
+}

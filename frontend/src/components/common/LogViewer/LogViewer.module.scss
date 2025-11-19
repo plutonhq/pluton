@@ -1,0 +1,188 @@
+.logViewer {
+   display: flex;
+   flex-direction: column;
+   height: 100%;
+   border: 1px solid var(--line-color);
+   border-radius: 8px;
+   overflow: hidden;
+   .toolbar {
+      display: flex;
+      padding: 12px;
+      border-bottom: 1px solid var(--line-color);
+      gap: 15px;
+      align-items: center;
+      justify-content: space-between;
+      .toolbarRight {
+         display: flex;
+         flex-direction: row;
+         gap: 15px;
+         justify-content: space-between;
+
+         button {
+            color: var(--icon-color);
+            &:hover {
+               color: var(--primary-color);
+            }
+         }
+         .filters {
+            display: flex;
+            gap: 12px;
+            input {
+               accent-color: var(--primary-color);
+            }
+            label {
+               display: flex;
+               align-items: center;
+               gap: 4px;
+               text-transform: capitalize;
+            }
+         }
+
+         .search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            border: 1px solid var(--line-color);
+            border-radius: 6px;
+            margin-left: auto;
+
+            input {
+               border: none;
+               outline: none;
+               font-size: 0.75rem;
+               background-color: var(--content-background-color);
+            }
+         }
+      }
+   }
+   .logsTable {
+      .logsHeader {
+         display: grid;
+         grid-template-columns: repeat(4, 1fr) 55%;
+         padding: 12px;
+         background: var(--background-color);
+         font-weight: 600;
+         .logsHeaderItemTime {
+            width: 170px;
+         }
+      }
+      .logs {
+         height: calc(100vh - 290px);
+         overflow: auto;
+
+         .log {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr) 55%;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--line-color);
+            position: relative;
+            .logTime {
+               width: 170px;
+            }
+            .logType {
+               padding: 2px 12px;
+               font-size: 0.7rem;
+               background-color: var(--background-color);
+               border-radius: 20px;
+               text-transform: capitalize;
+               display: inline-block;
+               width: max-content;
+               height: max-content;
+               &.logType--error {
+                  background-color: #ffdada;
+                  color: #c43e3e;
+               }
+               &.logType--warn {
+                  background-color: #fff2d9;
+                  color: #d19628;
+               }
+               &.logType--info {
+                  background-color: #e7edff;
+                  color: #6182e4;
+               }
+            }
+            .logMessage {
+               overflow: auto;
+            }
+            &.log--backupStart {
+               border-top: 1px solid #e4e6ff;
+               margin-top: 30px;
+               padding-top: 20px;
+            }
+         }
+         .backupStartLabel {
+            position: absolute;
+            background: var(--primary-color-light);
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 0.7rem;
+            padding: 2px 12px;
+            border-radius: 30px;
+            left: 0;
+            right: 0;
+            top: -12px;
+            margin: 0 auto;
+            width: max-content;
+         }
+      }
+   }
+   .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid var(--line-color);
+
+      .paginationButton {
+         padding: 6px 12px;
+         border: 1px solid var(--line-color);
+         border-radius: 6px;
+         background: transparent;
+         cursor: pointer;
+         font-size: 0.875rem;
+         transition: all 0.2s;
+         color: var(--content-text-color-light);
+
+         &:hover:not(:disabled) {
+            background: var(--primary-color-light);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+         }
+
+         &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+         }
+
+         &.paginationButtonActive {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+         }
+      }
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .logViewer {
+      .toolbar {
+         flex-direction: column;
+         align-items: baseline;
+         .toolbarRight {
+            justify-content: space-between;
+            flex-wrap: wrap;
+         }
+      }
+      .logsTable {
+         overflow-x: auto;
+         overflow-y: hidden;
+         width: 100%;
+         .logs,
+         .logsHeader {
+            width: 1100px;
+         }
+      }
+   }
+}

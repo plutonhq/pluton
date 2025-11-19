@@ -1,0 +1,88 @@
+.animatedWrapper {
+   transition: all var(--animation-duration, 300ms) ease-in-out;
+   will-change: opacity, transform;
+}
+
+.absolute {
+   position: absolute;
+   top: 0;
+   left: 0;
+   width: 100%;
+   padding: inherit;
+   box-sizing: border-box;
+}
+
+// Fade animation
+.fade {
+   opacity: 0;
+
+   &.active {
+      opacity: 1;
+   }
+}
+
+// Slide up animation
+.slide-up {
+   opacity: 0;
+   transform: translateY(20px);
+
+   &.active {
+      opacity: 1;
+      transform: translateY(0);
+   }
+}
+
+// Slide down animation
+.slide-down {
+   opacity: 0;
+   transform: translateY(-20px);
+
+   &.active {
+      opacity: 1;
+      transform: translateY(0);
+   }
+}
+
+// Slide left animation
+.slide-left {
+   opacity: 0;
+   transform: translateX(20px);
+
+   &.active {
+      opacity: 1;
+      transform: translateX(0);
+   }
+}
+
+// Slide right animation
+.slide-right {
+   opacity: 0;
+   transform: translateX(-20px);
+
+   &.active {
+      opacity: 1;
+      transform: translateX(0);
+   }
+}
+
+// Scale animation
+.scale {
+   opacity: 0;
+   transform: scale(0.9);
+
+   &.active {
+      opacity: 1;
+      transform: scale(1);
+   }
+}
+
+// Rotate animation
+.rotate {
+   opacity: 0;
+   transform: rotate(-10deg) scale(0.95);
+
+   &.active {
+      opacity: 1;
+      transform: rotate(0) scale(1);
+   }
+}

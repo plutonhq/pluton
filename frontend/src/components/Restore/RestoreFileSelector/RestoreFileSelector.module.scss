@@ -1,0 +1,326 @@
+.restoreFileSelector {
+   height: 100%;
+}
+
+.restoredFileBrowser {
+   display: flex;
+   flex-direction: column;
+   height: 100%;
+   border: 1px solid var(--line-color);
+   border-radius: 8px;
+   overflow: hidden;
+}
+
+.loader {
+   position: absolute;
+   z-index: 9;
+   width: 100%;
+   height: 100%;
+   left: 0;
+   top: 0;
+   background-color: var(--content-background-color);
+   opacity: 0.7;
+   cursor: default;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+}
+
+.toolbar {
+   display: flex;
+   padding: 10px;
+   border-bottom: 1px solid var(--line-color);
+   gap: 15px;
+   align-items: center;
+   justify-content: space-between;
+   .toolbarRight {
+      display: flex;
+      flex-direction: row;
+      gap: 15px;
+      justify-content: space-between;
+      .filters {
+         display: flex;
+         gap: 12px;
+         input {
+            accent-color: var(--primary-color);
+         }
+         label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            text-transform: capitalize;
+         }
+      }
+
+      .search {
+         display: flex;
+         align-items: center;
+         gap: 8px;
+         padding: 6px 12px;
+         border: 1px solid var(--line-color);
+         border-radius: 4px;
+         margin-left: auto;
+
+         input {
+            border: none;
+            outline: none;
+            font-size: 0.75rem;
+            min-width: 200px;
+            background-color: var(--content-background-color);
+         }
+      }
+   }
+
+   .toolbarLeft {
+      .stats {
+         display: flex;
+         flex-direction: row;
+         gap: 8px;
+         .excludedStat {
+            i {
+               font-style: normal;
+               padding-bottom: 0px;
+               display: inline-block;
+               border-bottom: 1px solid var(--content-text-color-light);
+               border-bottom-style: dashed;
+            }
+         }
+      }
+   }
+}
+
+.browserContent {
+   display: flex;
+   flex: 1;
+   overflow: hidden;
+}
+
+.sidebar {
+   width: 300px;
+   border-right: 1px solid var(--line-color);
+   overflow-y: auto;
+
+   .sidebarHeader {
+      padding: 12px;
+      background: var(--background-color);
+      font-weight: 600;
+      position: sticky;
+      z-index: 2;
+      top: 0;
+   }
+}
+
+.directory {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 8px 16px;
+   cursor: pointer;
+   position: relative;
+   button {
+      width: 20px;
+   }
+   .toggleButton {
+      border: 1px solid var(--line-color);
+      width: auto;
+      padding: 0px 4px;
+      border-radius: 3px;
+   }
+   .togglePlaceholder {
+      width: 10px;
+      height: 10px;
+   }
+   .dirName {
+      position: relative;
+      display: inline-block;
+      .notification {
+         width: 7px;
+         height: 7px;
+         background: var(--primary-color);
+         border-radius: 50%;
+         margin-left: auto;
+         position: absolute;
+         left: -2px;
+         top: 8px;
+      }
+   }
+   &.directoryEmpty {
+      .dirName {
+         padding-left: 10px;
+         .notification {
+            left: 8px;
+         }
+      }
+   }
+
+   &:hover {
+      background: var(--background-color);
+   }
+}
+
+.selected {
+   background: var(--primary-color-light);
+}
+.notSelectable {
+   cursor: default;
+   user-select: none;
+   opacity: 0.6;
+}
+
+.content {
+   flex: 1;
+   overflow-y: auto;
+}
+
+.fileList {
+   .header {
+      display: grid;
+      grid-template-columns: 1fr 180px minmax(80px, auto);
+      padding: 12px;
+      background: var(--background-color);
+      font-weight: 600;
+      position: sticky;
+      z-index: 2;
+      top: 0;
+      div {
+         display: flex;
+         width: 100%;
+         justify-content: center;
+         cursor: pointer;
+         user-select: none;
+         &:nth-child(1) {
+            justify-content: left;
+         }
+         &.activeSort {
+            font-weight: bold;
+            cursor: pointer;
+         }
+      }
+   }
+}
+.fileListEmpty {
+   height: calc(100vh - 400px);
+   width: 100%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}
+
+.file {
+   display: grid;
+   grid-template-columns: 1fr 180px minmax(80px, auto);
+   padding: 12px;
+   border-bottom: 1px solid var(--line-color);
+
+   &.fileIsDir {
+      .fileName {
+         cursor: pointer;
+         i {
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            margin-left: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+         }
+         &:hover {
+            color: var(--primary-color);
+         }
+      }
+   }
+   &:last-child {
+      border-bottom: none;
+   }
+   &.fileModified {
+      background-color: var(--primary-color-lighter);
+   }
+   &.fileRemoved {
+      background-color: var(--error-bg-color);
+   }
+}
+
+.selectButton {
+   color: var(--icon-color);
+   margin-right: 7px;
+   &.selected {
+      color: var(--primary-color);
+      background-color: transparent;
+   }
+}
+
+.goUpButton {
+   font-style: italic;
+   opacity: 0.8;
+   padding: 0px 12px;
+
+   &:hover {
+      background-color: var(--primary-color-light);
+   }
+
+   .fileName {
+      font-weight: normal;
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .toolbar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      .toolbarLeft .stats strong {
+         display: none;
+      }
+      .toolbarRight {
+         width: 100%;
+         .search {
+            width: 100%;
+         }
+      }
+   }
+   .sidebar {
+      width: 100px;
+      display: none;
+   }
+   .fileList {
+      .header {
+         display: none;
+      }
+      .file {
+         display: block;
+         box-sizing: border-box;
+         .fileName {
+            width: 100%;
+            margin-bottom: 0px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--content-text-color);
+         }
+         .fileModified {
+            padding-left: 32px;
+         }
+         .status {
+            display: none;
+         }
+         .fileSize {
+            margin-left: 12px;
+         }
+         & > div {
+            display: inline-block;
+            width: auto;
+            font-size: 0.9em;
+            color: var(--content-text-color-light);
+         }
+         &.goUpButton {
+            display: flex;
+            align-items: center;
+            .fileName::after {
+               content: ' Go Up ↑';
+               font-size: 12px;
+               font-style: normal;
+               font-weight: 500;
+            }
+         }
+      }
+   }
+}

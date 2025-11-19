@@ -1,0 +1,278 @@
+.pathPicker {
+   width: 100%;
+}
+.paths {
+   width: 100%;
+   border: 1px solid var(--field-line-color);
+   border-radius: 6px;
+   padding: 10px;
+   display: flex;
+   flex-wrap: wrap;
+   gap: 10px;
+   box-sizing: border-box;
+   .path {
+      background: var(--background-color);
+      border: 1px solid var(--line-color);
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.12s linear;
+
+      :global(.icon) {
+         position: relative;
+         top: 2px;
+         opacity: 0.5;
+      }
+
+      i {
+         font-style: normal;
+         padding: 2px;
+         cursor: pointer;
+         opacity: 0.5;
+         &:hover {
+            opacity: 0.8;
+         }
+      }
+      .excludeCount {
+         font-size: 0.75rem;
+         opacity: 1;
+         background: #0000000f;
+         padding: 1px 6px;
+         border-radius: 4px;
+      }
+      &:hover {
+         border-color: var(--line-active-color);
+      }
+   }
+}
+.pathAdd {
+   font-size: 1.125rem;
+   font-weight: 600;
+   padding: 0px 10px;
+   color: var(--content-text-color-light);
+   user-select: none;
+   cursor: pointer;
+   position: relative;
+   span {
+      font-size: 0.75rem;
+   }
+   &:hover {
+      color: var(--primary-color);
+   }
+}
+
+.addDropDown {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   width: max-content;
+   background-color: var(--content-background-color);
+   border: 1px solid var(--line-color);
+   position: absolute;
+   z-index: 2;
+   border-radius: 4px;
+   right: -45px;
+   top: -65px;
+   box-shadow: 0 0 15px var(--modal-shadow-color);
+
+   button {
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      width: 100%;
+      color: var(--content-text-color);
+      text-align: right;
+      &:hover {
+         background-color: var(--primary-color);
+         color: var(--primary-text-color);
+      }
+   }
+}
+
+.patternPickerContent {
+   display: flex;
+   flex-direction: row;
+   gap: 10px;
+   div[class*='_selectField_'] {
+      max-width: 100px;
+   }
+   div[class*='_dropdown_'] {
+      min-width: unset;
+   }
+}
+
+.patternPickerHint {
+   margin: 20px 0;
+
+   table {
+      border: 1px solid var(--primary-color-light);
+      border-radius: 8px;
+      border-spacing: 0;
+      width: 100%;
+      font-size: 0.75rem;
+
+      th {
+         background: var(--primary-color-light);
+         padding: 6px;
+         text-align: left;
+      }
+
+      td {
+         padding: 6px;
+         border-bottom: 1px solid var(--primary-color-light);
+      }
+
+      tr:last-child td {
+         border-bottom: none;
+      }
+   }
+}
+
+.patternModalFooter {
+   display: flex;
+   justify-content: space-between;
+   button {
+      color: var(--content-text-color-light);
+      &.hintBtnActive {
+         color: var(--primary-color);
+      }
+   }
+}
+
+.pathPickerModal {
+   position: fixed;
+   width: 100%;
+   height: 100vh;
+   top: 0;
+   left: 0;
+   z-index: 99999999;
+   background: var(--modal-shadow-color-light);
+   .pathPickerModalInner {
+      position: absolute;
+      width: 70%;
+      max-width: 1000px;
+      background: var(--content-background-color);
+      color: var(--content-text-color);
+      border-radius: 8px;
+      border: 1px solid var(--content-shadow-color);
+      margin: 0 auto;
+      left: 0;
+      right: 0;
+      top: 10%;
+      box-sizing: border-box;
+      box-shadow: 0 0 20px var(--modal-shadow-color);
+      .pathPickerHeader {
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         padding: 10px 15px;
+         border-bottom: 1px solid var(--line-color);
+         h4 {
+            margin: 0;
+         }
+         button {
+            padding: 10px;
+            cursor: pointer;
+            background: transparent;
+            opacity: 0.5;
+            color: var(--content-text-color);
+            transition: all 0.2s linear;
+            &:hover {
+               opacity: 1;
+               transform: rotate(90deg);
+            }
+         }
+      }
+      .pathPickerFooter {
+         display: flex;
+         align-items: center;
+         justify-content: flex-end;
+         padding: 10px 15px;
+         border-top: 1px solid var(--line-color);
+         button {
+            background-color: var(--primary-color);
+            color: var(--primary-text-color);
+            padding: 10px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+         }
+      }
+      .pathPickerContent {
+         padding: 20px;
+         max-height: 500px;
+         overflow: auto;
+      }
+   }
+}
+
+.dirItem {
+   cursor: pointer;
+   margin: 3px 0;
+}
+.selectedDirItem {
+   background-color: var(--primary-color);
+   color: var(--primary-text-color);
+   border-radius: 3px;
+   :global(.icon) {
+      color: var(--primary-text-color);
+   }
+}
+
+.file {
+   padding-left: 7px;
+}
+
+.isSingle {
+   .paths {
+      .path {
+         width: 100%;
+         padding: 6px 10px;
+      }
+   }
+}
+.disabled {
+   .paths {
+      .path {
+         background-color: var(--line-color);
+         cursor: default;
+         &:hover {
+            border-color: var(--line-color);
+         }
+      }
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .pathPickerModal .pathPickerModalInner {
+      width: 100%;
+      height: 100%;
+      top: 0;
+   }
+   .patternPickerContent {
+      flex-direction: column;
+      :global([class*='_input_']) {
+         width: 100%;
+      }
+   }
+
+   .patternModalFooter {
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+      & > button {
+         margin-bottom: 15px;
+         text-align: left;
+      }
+      & > div {
+         width: 100%;
+         display: flex;
+         button {
+            width: 100%;
+         }
+      }
+   }
+}

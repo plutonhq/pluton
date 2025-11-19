@@ -1,0 +1,53 @@
+.sortItems {
+   position: relative;
+}
+
+.sortActive {
+   color: var(--primary-color) !important;
+   span {
+      opacity: 1;
+      color: inherit;
+   }
+}
+
+.lists {
+   border: 1px solid var(--line-color);
+   margin-top: -1px;
+   position: absolute;
+   z-index: 9999;
+   background: var(--field-bg);
+   width: calc(100% - 2px);
+   border-radius: 0 0 4px 4px;
+   max-height: 200px;
+   overflow: auto;
+   font-size: 0.75rem;
+   right: 0;
+   width: 200px;
+   border-radius: 6px;
+   ul {
+      margin: 0;
+      padding: 0;
+      list-style-type: none;
+
+      li {
+         padding: 8px 10px;
+         cursor: pointer;
+
+         &.selectedItem {
+            color: var(--field-bg);
+            background: var(--primary-color);
+         }
+
+         &:hover {
+            background: var(--background-color);
+            color: inherit;
+         }
+      }
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .sortItemLabel {
+      display: none;
+   }
+}

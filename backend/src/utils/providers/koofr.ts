@@ -1,0 +1,87 @@
+const koofrSettings = [
+	{
+		label: 'Storage Provider',
+		value: 'provider',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: 'https://app.koofr.net/',
+		options: [
+			{ label: 'Koofr', value: 'https://app.koofr.net/' },
+			{ label: 'Digi Storage', value: 'https://storage.rcs-rds.ro/' },
+			{ label: 'Custom', value: 'custom' },
+		],
+		description: 'Choose your storage provider.',
+		command: '--koofr-provider',
+	},
+	{
+		label: 'API Endpoint',
+		value: 'endpoint',
+		fieldType: 'string',
+		required: false,
+		default: '',
+		description: 'The Koofr API endpoint to use.',
+		command: '--koofr-endpoint',
+	},
+	{
+		label: 'Username',
+		value: 'user',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your user name.',
+		command: '--koofr-user',
+	},
+	{
+		label: 'App Password',
+		value: 'password',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description:
+			'Your password for rclone generate one at https://app.koofr.net/app/admin/preferences/password. NB Input to this must be obscured - see rclone obscure.',
+		command: '--koofr-password',
+	},
+	{
+		label: 'Mount ID',
+		value: 'mountid',
+		fieldType: 'string',
+		required: false,
+		default: '',
+		description: 'Mount ID of the mount to use. If omitted, the primary mount is used.',
+		command: '--koofr-mountid',
+	},
+	{
+		label: 'Set Modification Time',
+		value: 'setmtime',
+		fieldType: 'bool',
+		required: false,
+		default: true,
+		description:
+			'Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend.',
+		command: '--koofr-setmtime',
+	},
+	{
+		label: 'Encoding',
+		value: 'encoding',
+		fieldType: 'encoding',
+		required: false,
+		default: 'slash,backslash,del,ctl,invalidutf8,dot',
+		description:
+			'The encoding for the backend. See the encoding section in the overview for more info.',
+		command: '--koofr-encoding',
+	},
+	{
+		label: 'Description',
+		value: 'description',
+		fieldType: 'string',
+		required: false,
+		default: '',
+		description: 'Description of the Storage.',
+		command: '--koofr-description',
+	},
+];
+
+export default koofrSettings;

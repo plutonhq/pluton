@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8" />
+      <link rel="icon" type="image/svg+xml" href="/favicon.png" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+      <!-- PWA Meta Tags -->
+      <meta name="theme-color" content="#575aff" />
+      <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+      <meta name="apple-mobile-web-app-title" content="Pluton" />
+
+      <script>
+         (function () {
+            function getInitialTheme() {
+               // 1. Check for a user's explicit choice in localStorage
+               const storedTheme = window.localStorage.getItem('theme');
+               if (storedTheme) {
+                  return storedTheme;
+               }
+               // 2. Check for their OS preference
+               const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+               if (prefersDark.matches) {
+                  return 'dark';
+               }
+               // 3. Default to light
+               return 'light';
+            }
+
+            var theme = getInitialTheme();
+            document.documentElement.setAttribute('data-theme', theme);
+         })();
+      </script>
+
+      <title>Pluton</title>
+   </head>
+   <body>
+      <div id="root"></div>
+      <script type="module" src="/src/main.tsx"></script>
+   </body>
+</html>

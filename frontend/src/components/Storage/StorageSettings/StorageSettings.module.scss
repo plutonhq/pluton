@@ -1,0 +1,29 @@
+.field {
+   margin-bottom: 20px;
+   width: 100%;
+   position: relative;
+   .fieldErrorLabel {
+      position: absolute;
+      right: 10px;
+      top: 15px;
+      background-color: var(--error-bg-active);
+      color: var(--error-active-text);
+      padding: 1px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 0.2px;
+      z-index: 2;
+   }
+
+   .fileManagerBtn {
+      position: absolute;
+      right: 0;
+      top: -3px;
+      padding: 10px;
+      cursor: pointer;
+      color: var(--icon-color);
+      &:hover {
+         color: var(--primary-color);
+      }
+   }
+}

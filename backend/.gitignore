@@ -1,0 +1,12 @@
+# dev data folders
+/email-previews
+/data
+/public
+
+# Misc
+/binaries
+/coverage
+/docs
+/.turbo
+repomix-output.xml
+llm

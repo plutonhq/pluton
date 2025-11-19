@@ -1,0 +1,49 @@
+%fieldBase {
+   width: 100%;
+   display: flex;
+   flex-direction: column;
+   gap: 0.25rem;
+}
+
+%fieldInner {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   gap: 1.25rem;
+   min-height: 30px;
+}
+
+%fieldLabel {
+   font-size: 0.75rem;
+   font-weight: 500;
+   color: var(--content-text-color);
+   min-width: 12.5rem;
+
+   i {
+      opacity: 0.5;
+      margin-left: 0.313rem;
+   }
+
+   .required {
+      color: var(--error);
+      margin-left: 0.125rem;
+   }
+
+   .fieldLabelError {
+      position: absolute;
+      right: 0.625rem;
+      top: -0.738rem;
+      background-color: var(--error-bg-active);
+      color: var(--error-active-text);
+      padding: 0.063rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.9em;
+      letter-spacing: 0.013rem;
+      z-index: 2;
+   }
+}
+
+%fieldDescription {
+   font-size: 0.75rem;
+   color: var(--content-text-color-light);
+}

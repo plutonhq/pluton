@@ -1,0 +1,19 @@
+.backupsHeader {
+   width: 100%;
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   padding-top: 10px;
+   h3 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--content-title-color);
+      span {
+         background-color: var(--line-color);
+         color: var(--content-text-color-light);
+         font-size: 0.7rem;
+         padding: 1px 8px;
+         border-radius: 20px;
+      }
+   }
+}

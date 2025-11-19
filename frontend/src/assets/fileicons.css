@@ -1,0 +1,6205 @@
+.pfi-icon {
+   display: inline-block;
+   overflow: hidden; /* Important to hide the rest of the sprite */
+   background-image: url('../assets/fileicons.png'); /* Relative path from CSS */
+   background-repeat: no-repeat;
+   vertical-align: middle; /* Adjust as needed */
+   image-rendering: pixelated; /* Optional: for crisp pixels if upscaling */
+   image-rendering: crisp-edges; /* Optional: for crisp pixels */
+}
+
+.pfi-sm {
+   transform: scale(0.9);
+}
+
+.pfi-access {
+   width: 20px;
+   height: 20px;
+   background-position: -1px 0px;
+}
+
+.pfi-access2 {
+   width: 20px;
+   height: 20px;
+   background-position: -24px 0px;
+}
+
+.pfi-actionscript {
+   width: 20px;
+   height: 20px;
+   background-position: -47px 0px;
+}
+
+.pfi-actionscript2 {
+   width: 20px;
+   height: 20px;
+   background-position: -70px 0px;
+}
+
+.pfi-ada {
+   width: 20px;
+   height: 20px;
+   background-position: -93px 0px;
+}
+
+.pfi-advpl {
+   width: 20px;
+   height: 20px;
+   background-position: -116px 0px;
+}
+
+.pfi-affinitydesigner {
+   width: 20px;
+   height: 20px;
+   background-position: -139px 0px;
+}
+
+.pfi-affinityphoto {
+   width: 20px;
+   height: 20px;
+   background-position: -162px 0px;
+}
+
+.pfi-affinitypublisher {
+   width: 20px;
+   height: 20px;
+   background-position: -185px 0px;
+}
+
+.pfi-agda {
+   width: 20px;
+   height: 20px;
+   background-position: -208px 0px;
+}
+
+.pfi-ai {
+   width: 20px;
+   height: 20px;
+   background-position: -231px 0px;
+}
+
+.pfi-ai2 {
+   width: 20px;
+   height: 20px;
+   background-position: -254px 0px;
+}
+
+.pfi-al {
+   width: 20px;
+   height: 20px;
+   background-position: -277px 0px;
+}
+
+.pfi-al_dal {
+   width: 20px;
+   height: 20px;
+   background-position: -300px 0px;
+}
+
+.pfi-allcontributors {
+   width: 20px;
+   height: 20px;
+   background-position: -323px 0px;
+}
+
+.pfi-angular {
+   width: 20px;
+   height: 20px;
+   background-position: -346px 0px;
+}
+
+.pfi-ansible {
+   width: 20px;
+   height: 20px;
+   background-position: -369px 0px;
+}
+
+.pfi-antlers_html {
+   width: 20px;
+   height: 20px;
+   background-position: -392px 0px;
+}
+
+.pfi-antlr {
+   width: 20px;
+   height: 20px;
+   background-position: -415px 0px;
+}
+
+.pfi-anyscript {
+   width: 20px;
+   height: 20px;
+   background-position: -438px 0px;
+}
+
+.pfi-apache {
+   width: 20px;
+   height: 20px;
+   background-position: -461px 0px;
+}
+
+.pfi-apex {
+   width: 20px;
+   height: 20px;
+   background-position: -484px 0px;
+}
+
+.pfi-api_extractor {
+   width: 20px;
+   height: 20px;
+   background-position: -507px 0px;
+}
+
+.pfi-apib {
+   width: 20px;
+   height: 20px;
+   background-position: -530px 0px;
+}
+
+.pfi-apib2 {
+   width: 20px;
+   height: 20px;
+   background-position: -553px 0px;
+}
+
+.pfi-apl {
+   width: 20px;
+   height: 20px;
+   background-position: -576px 0px;
+}
+
+.pfi-applescript {
+   width: 20px;
+   height: 20px;
+   background-position: -599px 0px;
+}
+
+.pfi-appscript {
+   width: 20px;
+   height: 20px;
+   background-position: -622px 0px;
+}
+
+.pfi-appsemble {
+   width: 20px;
+   height: 20px;
+   background-position: -645px 0px;
+}
+
+.pfi-appveyor {
+   width: 20px;
+   height: 20px;
+   background-position: -668px 0px;
+}
+
+.pfi-arduino {
+   width: 20px;
+   height: 20px;
+   background-position: -691px 0px;
+}
+
+.pfi-asciidoc {
+   width: 20px;
+   height: 20px;
+   background-position: -714px 0px;
+}
+
+.pfi-asp {
+   width: 20px;
+   height: 20px;
+   background-position: -737px 0px;
+}
+
+.pfi-aspx {
+   width: 20px;
+   height: 20px;
+   background-position: -760px 0px;
+}
+
+.pfi-assembly {
+   width: 20px;
+   height: 20px;
+   background-position: -783px 0px;
+}
+
+.pfi-astro {
+   width: 20px;
+   height: 20px;
+   background-position: -806px 0px;
+}
+
+.pfi-astroconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -829px 0px;
+}
+
+.pfi-atom {
+   width: 20px;
+   height: 20px;
+   background-position: -852px 0px;
+}
+
+.pfi-ats {
+   width: 20px;
+   height: 20px;
+   background-position: -875px 0px;
+}
+
+.pfi-attw {
+   width: 20px;
+   height: 20px;
+   background-position: -898px 0px;
+}
+
+.pfi-audio {
+   width: 20px;
+   height: 20px;
+   background-position: -921px 0px;
+}
+
+.pfi-aurelia {
+   width: 20px;
+   height: 20px;
+   background-position: -944px 0px;
+}
+
+.pfi-autohotkey {
+   width: 20px;
+   height: 20px;
+   background-position: -967px 0px;
+}
+
+.pfi-autoit {
+   width: 20px;
+   height: 20px;
+   background-position: -990px 0px;
+}
+
+.pfi-avif {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px 0px;
+}
+
+.pfi-avro {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px 0px;
+}
+
+.pfi-awk {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px 0px;
+}
+
+.pfi-aws {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px 0px;
+}
+
+.pfi-azure {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px 0px;
+}
+
+.pfi-azurepipelines {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px 0px;
+}
+
+.pfi-babel {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px 0px;
+}
+
+.pfi-babel2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px 0px;
+}
+
+.pfi-bak {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px 0px;
+}
+
+.pfi-ballerina {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px 0px;
+}
+
+.pfi-bat {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px 0px;
+}
+
+.pfi-bats {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px 0px;
+}
+
+.pfi-bazaar {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px 0px;
+}
+
+.pfi-bazel {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px 0px;
+}
+
+.pfi-bazel_ignore {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px 0px;
+}
+
+.pfi-bazel_version {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px 0px;
+}
+
+.pfi-befunge {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -20px;
+}
+
+.pfi-bicep {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -20px;
+}
+
+.pfi-biml {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -20px;
+}
+
+.pfi-binary {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -20px;
+}
+
+.pfi-biome {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -20px;
+}
+
+.pfi-bitbucketpipeline {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -20px;
+}
+
+.pfi-bithound {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -20px;
+}
+
+.pfi-blade {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -20px;
+}
+
+.pfi-blender {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -20px;
+}
+
+.pfi-blitzbasic {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -20px;
+}
+
+.pfi-bolt {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -20px;
+}
+
+.pfi-bosque {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -20px;
+}
+
+.pfi-bower {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -20px;
+}
+
+.pfi-bower2 {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -20px;
+}
+
+.pfi-browserslist {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -20px;
+}
+
+.pfi-bruno {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -20px;
+}
+
+.pfi-buckbuild {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -20px;
+}
+
+.pfi-buf {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -20px;
+}
+
+.pfi-bun {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -20px;
+}
+
+.pfi-bundlemon {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -20px;
+}
+
+.pfi-bunfig {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -20px;
+}
+
+.pfi-c {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -20px;
+}
+
+.pfi-c2 {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -20px;
+}
+
+.pfi-c3 {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -20px;
+}
+
+.pfi-c_al {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -20px;
+}
+
+.pfi-cabal {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -20px;
+}
+
+.pfi-caddy {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -20px;
+}
+
+.pfi-cake {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -20px;
+}
+
+.pfi-cakephp {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -20px;
+}
+
+.pfi-capacitor {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -20px;
+}
+
+.pfi-capnp {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -20px;
+}
+
+.pfi-cargo {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -20px;
+}
+
+.pfi-casc {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -20px;
+}
+
+.pfi-cddl {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -20px;
+}
+
+.pfi-cert {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -20px;
+}
+
+.pfi-ceylon {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -20px;
+}
+
+.pfi-cf {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -20px;
+}
+
+.pfi-cf2 {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -20px;
+}
+
+.pfi-cfc {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -20px;
+}
+
+.pfi-cfc2 {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -20px;
+}
+
+.pfi-cfm {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -20px;
+}
+
+.pfi-cfm2 {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -20px;
+}
+
+.pfi-changie {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -20px;
+}
+
+.pfi-cheader {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -20px;
+}
+
+.pfi-chef {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -20px;
+}
+
+.pfi-chef_cookbook {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -20px;
+}
+
+.pfi-circleci {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -20px;
+}
+
+.pfi-class {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -20px;
+}
+
+.pfi-claude {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -20px;
+}
+
+.pfi-clojure {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -20px;
+}
+
+.pfi-clojurescript {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -20px;
+}
+
+.pfi-cloudfoundry {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -20px;
+}
+
+.pfi-cmake {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -20px;
+}
+
+.pfi-cobol {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -20px;
+}
+
+.pfi-codacy {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -20px;
+}
+
+.pfi-codeclimate {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -20px;
+}
+
+.pfi-codecov {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -20px;
+}
+
+.pfi-codekit {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -20px;
+}
+
+.pfi-codemagic {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -20px;
+}
+
+.pfi-codeowners {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -20px;
+}
+
+.pfi-codeql {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -40px;
+}
+
+.pfi-coderabbit {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -40px;
+}
+
+.pfi-coffeelint {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -40px;
+}
+
+.pfi-coffeescript {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -40px;
+}
+
+.pfi-commitizen {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -40px;
+}
+
+.pfi-commitlint {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -40px;
+}
+
+.pfi-compass {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -40px;
+}
+
+.pfi-composer {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -40px;
+}
+
+.pfi-conan {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -40px;
+}
+
+.pfi-conda {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -40px;
+}
+
+.pfi-config {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -40px;
+}
+
+.pfi-confluence {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -40px;
+}
+
+.pfi-copilot {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -40px;
+}
+
+.pfi-coverage {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -40px;
+}
+
+.pfi-coveralls {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -40px;
+}
+
+.pfi-cpp {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -40px;
+}
+
+.pfi-cpp2 {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -40px;
+}
+
+.pfi-cpp3 {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -40px;
+}
+
+.pfi-cppheader {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -40px;
+}
+
+.pfi-craco {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -40px;
+}
+
+.pfi-crowdin {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -40px;
+}
+
+.pfi-crystal {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -40px;
+}
+
+.pfi-csharp {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -40px;
+}
+
+.pfi-csharp2 {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -40px;
+}
+
+.pfi-cspell {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -40px;
+}
+
+.pfi-csproj {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -40px;
+}
+
+.pfi-css {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -40px;
+}
+
+.pfi-css2 {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -40px;
+}
+
+.pfi-css2map {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -40px;
+}
+
+.pfi-csscomb {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -40px;
+}
+
+.pfi-csslint {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -40px;
+}
+
+.pfi-cssmap {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -40px;
+}
+
+.pfi-cucumber {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -40px;
+}
+
+.pfi-cuda {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -40px;
+}
+
+.pfi-cursorrules {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -40px;
+}
+
+.pfi-cvs {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -40px;
+}
+
+.pfi-cypress {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -40px;
+}
+
+.pfi-cypress_spec {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -40px;
+}
+
+.pfi-cython {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -40px;
+}
+
+.pfi-dal {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -40px;
+}
+
+.pfi-darcs {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -40px;
+}
+
+.pfi-dartlang {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -40px;
+}
+
+.pfi-dartlang_generated {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -40px;
+}
+
+.pfi-dartlang_ignore {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -40px;
+}
+
+.pfi-datadog {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -40px;
+}
+
+.pfi-db {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -40px;
+}
+
+.pfi-debian {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -40px;
+}
+
+.pfi-file {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -40px;
+}
+
+.pfi-default_folder {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -40px;
+}
+
+.pfi-default_folder_opened {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -40px;
+}
+
+.pfi-default_root_folder {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -40px;
+}
+
+.pfi-default_root_folder_opened {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -40px;
+}
+
+.pfi-delphi {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -40px;
+}
+
+.pfi-deno {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -40px;
+}
+
+.pfi-denoify {
+   width: 18px;
+   height: 20px;
+   background-position: -1244px -40px;
+}
+
+.pfi-dependabot {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -40px;
+}
+
+.pfi-dependencies {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -40px;
+}
+
+.pfi-devcontainer {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -40px;
+}
+
+.pfi-dhall {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -40px;
+}
+
+.pfi-diff {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -40px;
+}
+
+.pfi-django {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -60px;
+}
+
+.pfi-dlang {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -60px;
+}
+
+.pfi-docker {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -60px;
+}
+
+.pfi-docker2 {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -60px;
+}
+
+.pfi-dockertest {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -60px;
+}
+
+.pfi-dockertest2 {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -60px;
+}
+
+.pfi-docpad {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -60px;
+}
+
+.pfi-docusaurus {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -60px;
+}
+
+.pfi-docz {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -60px;
+}
+
+.pfi-dojo {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -60px;
+}
+
+.pfi-doppler {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -60px;
+}
+
+.pfi-dotenv {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -60px;
+}
+
+.pfi-dotjs {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -60px;
+}
+
+.pfi-doxygen {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -60px;
+}
+
+.pfi-drawio {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -60px;
+}
+
+.pfi-drone {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -60px;
+}
+
+.pfi-drools {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -60px;
+}
+
+.pfi-dtd {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -60px;
+}
+
+.pfi-dune {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -60px;
+}
+
+.pfi-dustjs {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -60px;
+}
+
+.pfi-dvc {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -60px;
+}
+
+.pfi-dylan {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -60px;
+}
+
+.pfi-earthly {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -60px;
+}
+
+.pfi-eas-metadata {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -60px;
+}
+
+.pfi-edge {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -60px;
+}
+
+.pfi-edge2 {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -60px;
+}
+
+.pfi-editorconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -60px;
+}
+
+.pfi-eex {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -60px;
+}
+
+.pfi-ejs {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -60px;
+}
+
+.pfi-elastic {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -60px;
+}
+
+.pfi-elasticbeanstalk {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -60px;
+}
+
+.pfi-eleventy {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -60px;
+}
+
+.pfi-eleventy2 {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -60px;
+}
+
+.pfi-elixir {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -60px;
+}
+
+.pfi-elm {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -60px;
+}
+
+.pfi-elm2 {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -60px;
+}
+
+.pfi-emacs {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -60px;
+}
+
+.pfi-ember {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -60px;
+}
+
+.pfi-ensime {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -60px;
+}
+
+.pfi-eps {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -60px;
+}
+
+.pfi-epub {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -60px;
+}
+
+.pfi-erb {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -60px;
+}
+
+.pfi-erlang {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -60px;
+}
+
+.pfi-erlang2 {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -60px;
+}
+
+.pfi-esbuild {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -60px;
+}
+
+.pfi-eslint {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -60px;
+}
+
+.pfi-eslint2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -60px;
+}
+
+.pfi-esphome {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -60px;
+}
+
+.pfi-excalidraw {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -60px;
+}
+
+.pfi-excel {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -60px;
+}
+
+.pfi-excel2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -60px;
+}
+
+.pfi-expo {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -60px;
+}
+
+.pfi-falcon {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -60px;
+}
+
+.pfi-fantasticon {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -60px;
+}
+
+.pfi-fastly {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -60px;
+}
+
+.pfi-fauna {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -60px;
+}
+
+.pfi-favicon {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -60px;
+}
+
+.pfi-fbx {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -60px;
+}
+
+.pfi-firebase {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -60px;
+}
+
+.pfi-firebasehosting {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -60px;
+}
+
+.pfi-firestore {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -80px;
+}
+
+.pfi-fitbit {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -80px;
+}
+
+.pfi-fla {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -80px;
+}
+
+.pfi-flareact {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -80px;
+}
+
+.pfi-flash {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -80px;
+}
+
+.pfi-floobits {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -80px;
+}
+
+.pfi-flow {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -80px;
+}
+
+.pfi-flutter {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -80px;
+}
+
+.pfi-flutter_package {
+   width: 23px;
+   height: 20px;
+   background-position: -184px -80px;
+}
+
+.pfi-flyio {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -80px;
+}
+
+.pfi-font {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -80px;
+}
+
+.pfi-formkit {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -80px;
+}
+
+.pfi-fortran {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -80px;
+}
+
+.pfi-fossa {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -80px;
+}
+
+.pfi-fossil {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -80px;
+}
+
+.pfi-freemarker {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -80px;
+}
+
+.pfi-frontcommerce {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -80px;
+}
+
+.pfi-fsharp {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -80px;
+}
+
+.pfi-fsharp2 {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -80px;
+}
+
+.pfi-fsproj {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -80px;
+}
+
+.pfi-fthtml {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -80px;
+}
+
+.pfi-funding {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -80px;
+}
+
+.pfi-fusebox {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -80px;
+}
+
+.pfi-galen {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -80px;
+}
+
+.pfi-galen2 {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -80px;
+}
+
+.pfi-gamemaker {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -80px;
+}
+
+.pfi-gamemaker2 {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -80px;
+}
+
+.pfi-gamemaker81 {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -80px;
+}
+
+.pfi-gatsby {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -80px;
+}
+
+.pfi-gcloud {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -80px;
+}
+
+.pfi-gcode {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -80px;
+}
+
+.pfi-gdscript {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -80px;
+}
+
+.pfi-genstat {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -80px;
+}
+
+.pfi-git {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -80px;
+}
+
+.pfi-git2 {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -80px;
+}
+
+.pfi-gitlab {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -80px;
+}
+
+.pfi-gitpod {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -80px;
+}
+
+.pfi-gleam {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -80px;
+}
+
+.pfi-gleamconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -80px;
+}
+
+.pfi-glitter {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -80px;
+}
+
+.pfi-glsl {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -80px;
+}
+
+.pfi-gltf {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -80px;
+}
+
+.pfi-glyphs {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -80px;
+}
+
+.pfi-gnu {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -80px;
+}
+
+.pfi-gnuplot {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -80px;
+}
+
+.pfi-go {
+   width: 23px;
+   height: 20px;
+   background-position: -1035px -80px;
+}
+
+.pfi-go_aqua {
+   width: 23px;
+   height: 20px;
+   background-position: -1058px -80px;
+}
+
+.pfi-go_black {
+   width: 23px;
+   height: 20px;
+   background-position: -1081px -80px;
+}
+
+.pfi-go_fuchsia {
+   width: 23px;
+   height: 20px;
+   background-position: -1104px -80px;
+}
+
+.pfi-go_gopher {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -80px;
+}
+
+.pfi-go_lightblue {
+   width: 23px;
+   height: 20px;
+   background-position: -1150px -80px;
+}
+
+.pfi-go_package {
+   width: 23px;
+   height: 20px;
+   background-position: -1173px -80px;
+}
+
+.pfi-go_white {
+   width: 23px;
+   height: 20px;
+   background-position: -1196px -80px;
+}
+
+.pfi-go_work {
+   width: 23px;
+   height: 20px;
+   background-position: -1219px -80px;
+}
+
+.pfi-go_yellow {
+   width: 23px;
+   height: 20px;
+   background-position: -1242px -80px;
+}
+
+.pfi-goctl {
+   width: 23px;
+   height: 20px;
+   background-position: -1265px -80px;
+}
+
+.pfi-godot {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -80px;
+}
+
+.pfi-gpg {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -80px;
+}
+
+.pfi-gradle {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -80px;
+}
+
+.pfi-gradle2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -80px;
+}
+
+.pfi-grain {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -100px;
+}
+
+.pfi-graphql {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -100px;
+}
+
+.pfi-graphql_config {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -100px;
+}
+
+.pfi-graphviz {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -100px;
+}
+
+.pfi-greenkeeper {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -100px;
+}
+
+.pfi-gridsome {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -100px;
+}
+
+.pfi-groovy {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -100px;
+}
+
+.pfi-groovy2 {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -100px;
+}
+
+.pfi-grunt {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -100px;
+}
+
+.pfi-gulp {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -100px;
+}
+
+.pfi-haml {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -100px;
+}
+
+.pfi-handlebars {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -100px;
+}
+
+.pfi-handlebars2 {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -100px;
+}
+
+.pfi-harbour {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -100px;
+}
+
+.pfi-hardhat {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -100px;
+}
+
+.pfi-hashicorp {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -100px;
+}
+
+.pfi-haskell {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -100px;
+}
+
+.pfi-haskell2 {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -100px;
+}
+
+.pfi-haxe {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -100px;
+}
+
+.pfi-haxecheckstyle {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -100px;
+}
+
+.pfi-helix {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -100px;
+}
+
+.pfi-helm {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -100px;
+}
+
+.pfi-histoire {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -100px;
+}
+
+.pfi-hjson {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -100px;
+}
+
+.pfi-hlsl {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -100px;
+}
+
+.pfi-homeassistant {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -100px;
+}
+
+.pfi-horusec {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -100px;
+}
+
+.pfi-host {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -100px;
+}
+
+.pfi-html {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -100px;
+}
+
+.pfi-htmlhint {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -100px;
+}
+
+.pfi-htmlvalidate {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -100px;
+}
+
+.pfi-http {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -100px;
+}
+
+.pfi-hugo {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -100px;
+}
+
+.pfi-humanstxt {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -100px;
+}
+
+.pfi-hunspell {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -100px;
+}
+
+.pfi-husky {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -100px;
+}
+
+.pfi-hy {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -100px;
+}
+
+.pfi-hygen {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -100px;
+}
+
+.pfi-hypr {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -100px;
+}
+
+.pfi-icl {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -100px;
+}
+
+.pfi-idris {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -100px;
+}
+
+.pfi-idrisbin {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -100px;
+}
+
+.pfi-idrispkg {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -100px;
+}
+
+.pfi-image {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -100px;
+}
+
+.pfi-imba {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -100px;
+}
+
+.pfi-inc {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -100px;
+}
+
+.pfi-infopath {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -100px;
+}
+
+.pfi-informix {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -100px;
+}
+
+.pfi-ini {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -100px;
+}
+
+.pfi-ink {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -100px;
+}
+
+.pfi-innosetup {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -100px;
+}
+
+.pfi-io {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -100px;
+}
+
+.pfi-iodine {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -100px;
+}
+
+.pfi-ionic {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -100px;
+}
+
+.pfi-jake {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -100px;
+}
+
+.pfi-janet {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -100px;
+}
+
+.pfi-jar {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -100px;
+}
+
+.pfi-jasmine {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -100px;
+}
+
+.pfi-java {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -100px;
+}
+
+.pfi-jbuilder {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -100px;
+}
+
+.pfi-jekyll {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -120px;
+}
+
+.pfi-jenkins {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -120px;
+}
+
+.pfi-jest {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -120px;
+}
+
+.pfi-jest_snapshot {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -120px;
+}
+
+.pfi-jinja {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -120px;
+}
+
+.pfi-jpm {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -120px;
+}
+
+.pfi-js {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -120px;
+}
+
+.pfi-js_official {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -120px;
+}
+
+.pfi-jsbeautify {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -120px;
+}
+
+.pfi-jsconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -120px;
+}
+
+.pfi-jscpd {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -120px;
+}
+
+.pfi-jshint {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -120px;
+}
+
+.pfi-jsmap {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -120px;
+}
+
+.pfi-json {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -120px;
+}
+
+.pfi-json2 {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -120px;
+}
+
+.pfi-json5 {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -120px;
+}
+
+.pfi-json_official {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -120px;
+}
+
+.pfi-json_schema {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -120px;
+}
+
+.pfi-jsonld {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -120px;
+}
+
+.pfi-jsonnet {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -120px;
+}
+
+.pfi-jsp {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -120px;
+}
+
+.pfi-jsr {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -120px;
+}
+
+.pfi-jss {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -120px;
+}
+
+.pfi-juice {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -120px;
+}
+
+.pfi-julia {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -120px;
+}
+
+.pfi-julia2 {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -120px;
+}
+
+.pfi-jupyter {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -120px;
+}
+
+.pfi-just {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -120px;
+}
+
+.pfi-k {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -120px;
+}
+
+.pfi-karma {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -120px;
+}
+
+.pfi-key {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -120px;
+}
+
+.pfi-kitchenci {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -120px;
+}
+
+.pfi-kite {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -120px;
+}
+
+.pfi-kivy {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -120px;
+}
+
+.pfi-knip {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -120px;
+}
+
+.pfi-kos {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -120px;
+}
+
+.pfi-kotlin {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -120px;
+}
+
+.pfi-kusto {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -120px;
+}
+
+.pfi-language_configuration {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -120px;
+}
+
+.pfi-lark {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -120px;
+}
+
+.pfi-latino {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -120px;
+}
+
+.pfi-layout {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -120px;
+}
+
+.pfi-lefthook {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -120px;
+}
+
+.pfi-less {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -120px;
+}
+
+.pfi-lex {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -120px;
+}
+
+.pfi-liara {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -120px;
+}
+
+.pfi-libreoffice_base {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -120px;
+}
+
+.pfi-libreoffice_calc {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -120px;
+}
+
+.pfi-libreoffice_draw {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -120px;
+}
+
+.pfi-libreoffice_impress {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -120px;
+}
+
+.pfi-libreoffice_math {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -120px;
+}
+
+.pfi-libreoffice_writer {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -120px;
+}
+
+.pfi-license {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -120px;
+}
+
+.pfi-licensebat {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -120px;
+}
+
+.pfi-light_actionscript2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -120px;
+}
+
+.pfi-light_ada {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -120px;
+}
+
+.pfi-light_agda {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -120px;
+}
+
+.pfi-light_apl {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -120px;
+}
+
+.pfi-light_astro {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -120px;
+}
+
+.pfi-light_astroconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -120px;
+}
+
+.pfi-light_babel {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -140px;
+}
+
+.pfi-light_babel2 {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -140px;
+}
+
+.pfi-light_cabal {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -140px;
+}
+
+.pfi-light_circleci {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -140px;
+}
+
+.pfi-light_cloudfoundry {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -140px;
+}
+
+.pfi-light_codacy {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -140px;
+}
+
+.pfi-light_codeclimate {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -140px;
+}
+
+.pfi-light_codeowners {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -140px;
+}
+
+.pfi-light_config {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -140px;
+}
+
+.pfi-light_copilot {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -140px;
+}
+
+.pfi-light_crystal {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -140px;
+}
+
+.pfi-light_cypress {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -140px;
+}
+
+.pfi-light_cypress_spec {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -140px;
+}
+
+.pfi-light_db {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -140px;
+}
+
+.pfi-light_dhall {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -140px;
+}
+
+.pfi-light_docpad {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -140px;
+}
+
+.pfi-light_drone {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -140px;
+}
+
+.pfi-light_eas-metadata {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -140px;
+}
+
+.pfi-light_eleventy {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -140px;
+}
+
+.pfi-light_eleventy2 {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -140px;
+}
+
+.pfi-light_esphome {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -140px;
+}
+
+.pfi-light_expo {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -140px;
+}
+
+.pfi-light_firebasehosting {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -140px;
+}
+
+.pfi-light_fla {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -140px;
+}
+
+.pfi-light_font {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -140px;
+}
+
+.pfi-light_gamemaker2 {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -140px;
+}
+
+.pfi-light_gradle {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -140px;
+}
+
+.pfi-light_hashicorp {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -140px;
+}
+
+.pfi-light_hjson {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -140px;
+}
+
+.pfi-light_ini {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -140px;
+}
+
+.pfi-light_io {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -140px;
+}
+
+.pfi-light_js {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -140px;
+}
+
+.pfi-light_jsconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -140px;
+}
+
+.pfi-light_jsmap {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -140px;
+}
+
+.pfi-light_json {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -140px;
+}
+
+.pfi-light_json5 {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -140px;
+}
+
+.pfi-light_json_schema {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -140px;
+}
+
+.pfi-light_jsonld {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -140px;
+}
+
+.pfi-light_kite {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -140px;
+}
+
+.pfi-light_lark {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -140px;
+}
+
+.pfi-light_mailing {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -140px;
+}
+
+.pfi-light_markuplint {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -140px;
+}
+
+.pfi-light_mdx-components {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -140px;
+}
+
+.pfi-light_mdx {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -140px;
+}
+
+.pfi-light_mlang {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -140px;
+}
+
+.pfi-light_mustache {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -140px;
+}
+
+.pfi-light_mypy {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -140px;
+}
+
+.pfi-light_neo4j {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -140px;
+}
+
+.pfi-light_netlify {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -140px;
+}
+
+.pfi-light_next {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -140px;
+}
+
+.pfi-light_nim {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -140px;
+}
+
+.pfi-light_nx {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -140px;
+}
+
+.pfi-light_objidconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -140px;
+}
+
+.pfi-light_openHAB {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -140px;
+}
+
+.pfi-light_packship {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -140px;
+}
+
+.pfi-light_pcl {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -140px;
+}
+
+.pfi-light_pnpm {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -140px;
+}
+
+.pfi-light_prettier {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -140px;
+}
+
+.pfi-light_prisma {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -140px;
+}
+
+.pfi-light_purescript {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -140px;
+}
+
+.pfi-light_quasar {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -160px;
+}
+
+.pfi-light_raku {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -160px;
+}
+
+.pfi-light_razzle {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -160px;
+}
+
+.pfi-light_reactrouter {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -160px;
+}
+
+.pfi-light_rehype {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -160px;
+}
+
+.pfi-light_remark {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -160px;
+}
+
+.pfi-light_replit {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -160px;
+}
+
+.pfi-light_retext {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -160px;
+}
+
+.pfi-light_rome {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -160px;
+}
+
+.pfi-light_rubocop {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -160px;
+}
+
+.pfi-light_rust {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -160px;
+}
+
+.pfi-light_rust_toolchain {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -160px;
+}
+
+.pfi-light_safetensors {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -160px;
+}
+
+.pfi-light_shaderlab {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -160px;
+}
+
+.pfi-light_solidity {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -160px;
+}
+
+.pfi-light_spin {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -160px;
+}
+
+.pfi-light_stylelint {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -160px;
+}
+
+.pfi-light_stylus {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -160px;
+}
+
+.pfi-light_symfony {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -160px;
+}
+
+.pfi-light_systemd {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -160px;
+}
+
+.pfi-light_systemverilog {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -160px;
+}
+
+.pfi-light_testcafe {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -160px;
+}
+
+.pfi-light_testjs {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -160px;
+}
+
+.pfi-light_tex {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -160px;
+}
+
+.pfi-light_tm {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -160px;
+}
+
+.pfi-light_tmux {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -160px;
+}
+
+.pfi-light_todo {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -160px;
+}
+
+.pfi-light_toit {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -160px;
+}
+
+.pfi-light_toml {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -160px;
+}
+
+.pfi-light_tree {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -160px;
+}
+
+.pfi-light_turbo {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -160px;
+}
+
+.pfi-light_unibeautify {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -160px;
+}
+
+.pfi-light_vash {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -160px;
+}
+
+.pfi-light_vercel {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -160px;
+}
+
+.pfi-light_vsix {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -160px;
+}
+
+.pfi-light_vsixmanifest {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -160px;
+}
+
+.pfi-light_xfl {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -160px;
+}
+
+.pfi-light_xorg {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -160px;
+}
+
+.pfi-light_yaml {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -160px;
+}
+
+.pfi-light_yaml_official {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -160px;
+}
+
+.pfi-lighthouse {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -160px;
+}
+
+.pfi-lilypond {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -160px;
+}
+
+.pfi-lime {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -160px;
+}
+
+.pfi-lintstagedrc {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -160px;
+}
+
+.pfi-liquid {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -160px;
+}
+
+.pfi-lisp {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -160px;
+}
+
+.pfi-livescript {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -160px;
+}
+
+.pfi-lnk {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -160px;
+}
+
+.pfi-locale {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -160px;
+}
+
+.pfi-log {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -160px;
+}
+
+.pfi-lolcode {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -160px;
+}
+
+.pfi-lsl {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -160px;
+}
+
+.pfi-lua {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -160px;
+}
+
+.pfi-luau {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -160px;
+}
+
+.pfi-lync {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -160px;
+}
+
+.pfi-mailing {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -160px;
+}
+
+.pfi-manifest {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -160px;
+}
+
+.pfi-manifest_bak {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -160px;
+}
+
+.pfi-manifest_skip {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -160px;
+}
+
+.pfi-map {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -160px;
+}
+
+.pfi-mariadb {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -180px;
+}
+
+.pfi-markdown {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -180px;
+}
+
+.pfi-markdownlint {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -180px;
+}
+
+.pfi-markdownlint_ignore {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -180px;
+}
+
+.pfi-marko {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -180px;
+}
+
+.pfi-markojs {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -180px;
+}
+
+.pfi-markuplint {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -180px;
+}
+
+.pfi-master-co {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -180px;
+}
+
+.pfi-matlab {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -180px;
+}
+
+.pfi-maven {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -180px;
+}
+
+.pfi-maxscript {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -180px;
+}
+
+.pfi-maya {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -180px;
+}
+
+.pfi-mdx-components {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -180px;
+}
+
+.pfi-mdx {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -180px;
+}
+
+.pfi-mediawiki {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -180px;
+}
+
+.pfi-mercurial {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -180px;
+}
+
+.pfi-mermaid {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -180px;
+}
+
+.pfi-meson {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -180px;
+}
+
+.pfi-metal {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -180px;
+}
+
+.pfi-meteor {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -180px;
+}
+
+.pfi-minecraft {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -180px;
+}
+
+.pfi-mivascript {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -180px;
+}
+
+.pfi-mjml {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -180px;
+}
+
+.pfi-mlang {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -180px;
+}
+
+.pfi-mocha {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -180px;
+}
+
+.pfi-modernizr {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -180px;
+}
+
+.pfi-mojo {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -180px;
+}
+
+.pfi-mojolicious {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -180px;
+}
+
+.pfi-moleculer {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -180px;
+}
+
+.pfi-mondoo {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -180px;
+}
+
+.pfi-mongo {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -180px;
+}
+
+.pfi-monotone {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -180px;
+}
+
+.pfi-motif {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -180px;
+}
+
+.pfi-mson {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -180px;
+}
+
+.pfi-mustache {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -180px;
+}
+
+.pfi-mvt {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -180px;
+}
+
+.pfi-mvtcss {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -180px;
+}
+
+.pfi-mvtjs {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -180px;
+}
+
+.pfi-mypy {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -180px;
+}
+
+.pfi-mysql {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -180px;
+}
+
+.pfi-ndst {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -180px;
+}
+
+.pfi-nearly {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -180px;
+}
+
+.pfi-neo4j {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -180px;
+}
+
+.pfi-nest_adapter_js {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -180px;
+}
+
+.pfi-nest_adapter_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -180px;
+}
+
+.pfi-nest_controller_js {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -180px;
+}
+
+.pfi-nest_controller_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -180px;
+}
+
+.pfi-nest_decorator_js {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -180px;
+}
+
+.pfi-nest_decorator_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -180px;
+}
+
+.pfi-nest_filter_js {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -180px;
+}
+
+.pfi-nest_filter_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -180px;
+}
+
+.pfi-nest_gateway_js {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -180px;
+}
+
+.pfi-nest_gateway_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -180px;
+}
+
+.pfi-nest_guard_js {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -180px;
+}
+
+.pfi-nest_guard_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -180px;
+}
+
+.pfi-nest_interceptor_js {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -180px;
+}
+
+.pfi-nest_interceptor_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -180px;
+}
+
+.pfi-nest_middleware_js {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -180px;
+}
+
+.pfi-nest_middleware_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -180px;
+}
+
+.pfi-nest_module_js {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -180px;
+}
+
+.pfi-nest_module_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -200px;
+}
+
+.pfi-nest_pipe_js {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -200px;
+}
+
+.pfi-nest_pipe_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -200px;
+}
+
+.pfi-nest_service_js {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -200px;
+}
+
+.pfi-nest_service_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -200px;
+}
+
+.pfi-nestjs {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -200px;
+}
+
+.pfi-netlify {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -200px;
+}
+
+.pfi-next {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -200px;
+}
+
+.pfi-nextflow {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -200px;
+}
+
+.pfi-ng_component_css {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -200px;
+}
+
+.pfi-ng_component_dart {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -200px;
+}
+
+.pfi-ng_component_html {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -200px;
+}
+
+.pfi-ng_component_js {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -200px;
+}
+
+.pfi-ng_component_js2 {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -200px;
+}
+
+.pfi-ng_component_less {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -200px;
+}
+
+.pfi-ng_component_sass {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -200px;
+}
+
+.pfi-ng_component_scss {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -200px;
+}
+
+.pfi-ng_component_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -200px;
+}
+
+.pfi-ng_component_ts2 {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -200px;
+}
+
+.pfi-ng_controller_js {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -200px;
+}
+
+.pfi-ng_controller_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -200px;
+}
+
+.pfi-ng_directive_dart {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -200px;
+}
+
+.pfi-ng_directive_js {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -200px;
+}
+
+.pfi-ng_directive_js2 {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -200px;
+}
+
+.pfi-ng_directive_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -200px;
+}
+
+.pfi-ng_directive_ts2 {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -200px;
+}
+
+.pfi-ng_guard_dart {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -200px;
+}
+
+.pfi-ng_guard_js {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -200px;
+}
+
+.pfi-ng_guard_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -200px;
+}
+
+.pfi-ng_interceptor_dart {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -200px;
+}
+
+.pfi-ng_interceptor_js {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -200px;
+}
+
+.pfi-ng_interceptor_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -200px;
+}
+
+.pfi-ng_module_dart {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -200px;
+}
+
+.pfi-ng_module_js {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -200px;
+}
+
+.pfi-ng_module_js2 {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -200px;
+}
+
+.pfi-ng_module_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -200px;
+}
+
+.pfi-ng_module_ts2 {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -200px;
+}
+
+.pfi-ng_pipe_dart {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -200px;
+}
+
+.pfi-ng_pipe_js {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -200px;
+}
+
+.pfi-ng_pipe_js2 {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -200px;
+}
+
+.pfi-ng_pipe_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -200px;
+}
+
+.pfi-ng_pipe_ts2 {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -200px;
+}
+
+.pfi-ng_routing_dart {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -200px;
+}
+
+.pfi-ng_routing_js {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -200px;
+}
+
+.pfi-ng_routing_js2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -200px;
+}
+
+.pfi-ng_routing_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -200px;
+}
+
+.pfi-ng_routing_ts2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -200px;
+}
+
+.pfi-ng_service_dart {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -200px;
+}
+
+.pfi-ng_service_js {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -200px;
+}
+
+.pfi-ng_service_js2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -200px;
+}
+
+.pfi-ng_service_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -200px;
+}
+
+.pfi-ng_service_ts2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -200px;
+}
+
+.pfi-ng_smart_component_dart {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -200px;
+}
+
+.pfi-ng_smart_component_js {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -200px;
+}
+
+.pfi-ng_smart_component_js2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -200px;
+}
+
+.pfi-ng_smart_component_ts {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -200px;
+}
+
+.pfi-ng_smart_component_ts2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -200px;
+}
+
+.pfi-ng_tailwind {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -200px;
+}
+
+.pfi-nginx {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -200px;
+}
+
+.pfi-nim {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -200px;
+}
+
+.pfi-nimble {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -220px;
+}
+
+.pfi-ninja {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -220px;
+}
+
+.pfi-nix {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -220px;
+}
+
+.pfi-njsproj {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -220px;
+}
+
+.pfi-noc {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -220px;
+}
+
+.pfi-node {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -220px;
+}
+
+.pfi-node2 {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -220px;
+}
+
+.pfi-nodemon {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -220px;
+}
+
+.pfi-npm {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -220px;
+}
+
+.pfi-npmpackagejsonlint {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -220px;
+}
+
+.pfi-nsi {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -220px;
+}
+
+.pfi-nsri-integrity {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -220px;
+}
+
+.pfi-nsri {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -220px;
+}
+
+.pfi-nuget {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -220px;
+}
+
+.pfi-numpy {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -220px;
+}
+
+.pfi-nunjucks {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -220px;
+}
+
+.pfi-nuxt {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -220px;
+}
+
+.pfi-nx {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -220px;
+}
+
+.pfi-nyc {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -220px;
+}
+
+.pfi-objectivec {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -220px;
+}
+
+.pfi-objectivecpp {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -220px;
+}
+
+.pfi-objidconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -220px;
+}
+
+.pfi-ocaml {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -220px;
+}
+
+.pfi-ocaml_intf {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -220px;
+}
+
+.pfi-ogone {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -220px;
+}
+
+.pfi-onenote {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -220px;
+}
+
+.pfi-opam {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -220px;
+}
+
+.pfi-openHAB {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -220px;
+}
+
+.pfi-opencl {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -220px;
+}
+
+.pfi-openscad {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -220px;
+}
+
+.pfi-opentofu {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -220px;
+}
+
+.pfi-org {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -220px;
+}
+
+.pfi-outlook {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -220px;
+}
+
+.pfi-ovpn {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -220px;
+}
+
+.pfi-oxlint {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -220px;
+}
+
+.pfi-package {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -220px;
+}
+
+.pfi-packship {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -220px;
+}
+
+.pfi-paket {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -220px;
+}
+
+.pfi-pandacss {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -220px;
+}
+
+.pfi-patch {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -220px;
+}
+
+.pfi-pcl {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -220px;
+}
+
+.pfi-pddl {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -220px;
+}
+
+.pfi-pddl_happenings {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -220px;
+}
+
+.pfi-pddl_plan {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -220px;
+}
+
+.pfi-pdf {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -220px;
+}
+
+.pfi-pdf2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -220px;
+}
+
+.pfi-pdm {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -220px;
+}
+
+.pfi-peeky {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -220px;
+}
+
+.pfi-perl {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -220px;
+}
+
+.pfi-perl2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -220px;
+}
+
+.pfi-perl6 {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -220px;
+}
+
+.pfi-pgsql {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -220px;
+}
+
+.pfi-photoshop {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -220px;
+}
+
+.pfi-photoshop2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -220px;
+}
+
+.pfi-php {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -220px;
+}
+
+.pfi-php2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -220px;
+}
+
+.pfi-php3 {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -220px;
+}
+
+.pfi-phpcsfixer {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -220px;
+}
+
+.pfi-phpstan {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -220px;
+}
+
+.pfi-phpunit {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -220px;
+}
+
+.pfi-phraseapp {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -240px;
+}
+
+.pfi-pine {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -240px;
+}
+
+.pfi-pip {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -240px;
+}
+
+.pfi-pipeline {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -240px;
+}
+
+.pfi-plantuml {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -240px;
+}
+
+.pfi-platformio {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -240px;
+}
+
+.pfi-playwright {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -240px;
+}
+
+.pfi-plsql {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -240px;
+}
+
+.pfi-plsql_package {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -240px;
+}
+
+.pfi-plsql_package_body {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -240px;
+}
+
+.pfi-plsql_package_header {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -240px;
+}
+
+.pfi-plsql_package_spec {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -240px;
+}
+
+.pfi-pm2 {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -240px;
+}
+
+.pfi-pnpm {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -240px;
+}
+
+.pfi-poedit {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -240px;
+}
+
+.pfi-poetry {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -240px;
+}
+
+.pfi-polymer {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -240px;
+}
+
+.pfi-pony {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -240px;
+}
+
+.pfi-postcss {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -240px;
+}
+
+.pfi-postcssconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -240px;
+}
+
+.pfi-postman {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -240px;
+}
+
+.pfi-powerpoint {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -240px;
+}
+
+.pfi-powerpoint2 {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -240px;
+}
+
+.pfi-powershell {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -240px;
+}
+
+.pfi-powershell2 {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -240px;
+}
+
+.pfi-powershell_format {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -240px;
+}
+
+.pfi-powershell_psd {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -240px;
+}
+
+.pfi-powershell_psd2 {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -240px;
+}
+
+.pfi-powershell_psm {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -240px;
+}
+
+.pfi-powershell_psm2 {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -240px;
+}
+
+.pfi-powershell_types {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -240px;
+}
+
+.pfi-preact {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -240px;
+}
+
+.pfi-precommit {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -240px;
+}
+
+.pfi-prettier {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -240px;
+}
+
+.pfi-prisma {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -240px;
+}
+
+.pfi-processinglang {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -240px;
+}
+
+.pfi-procfile {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -240px;
+}
+
+.pfi-progress {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -240px;
+}
+
+.pfi-prolog {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -240px;
+}
+
+.pfi-prometheus {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -240px;
+}
+
+.pfi-protobuf {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -240px;
+}
+
+.pfi-protractor {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -240px;
+}
+
+.pfi-publiccode {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -240px;
+}
+
+.pfi-publisher {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -240px;
+}
+
+.pfi-pug {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -240px;
+}
+
+.pfi-pulumi {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -240px;
+}
+
+.pfi-puppet {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -240px;
+}
+
+.pfi-purescript {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -240px;
+}
+
+.pfi-purgecss {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -240px;
+}
+
+.pfi-pyenv {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -240px;
+}
+
+.pfi-pyret {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -240px;
+}
+
+.pfi-pyscript {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -240px;
+}
+
+.pfi-pytest {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -240px;
+}
+
+.pfi-python {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -240px;
+}
+
+.pfi-pythowo {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -240px;
+}
+
+.pfi-pytyped {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -240px;
+}
+
+.pfi-pyup {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -240px;
+}
+
+.pfi-q {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -240px;
+}
+
+.pfi-qbs {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -240px;
+}
+
+.pfi-qlikview {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -240px;
+}
+
+.pfi-qml {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -260px;
+}
+
+.pfi-qmldir {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -260px;
+}
+
+.pfi-qsharp {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -260px;
+}
+
+.pfi-quasar {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -260px;
+}
+
+.pfi-r {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -260px;
+}
+
+.pfi-ra_syntax_tree {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -260px;
+}
+
+.pfi-racket {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -260px;
+}
+
+.pfi-rails {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -260px;
+}
+
+.pfi-rake {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -260px;
+}
+
+.pfi-raku {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -260px;
+}
+
+.pfi-raml {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -260px;
+}
+
+.pfi-razor {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -260px;
+}
+
+.pfi-razzle {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -260px;
+}
+
+.pfi-reactjs {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -260px;
+}
+
+.pfi-reactrouter {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -260px;
+}
+
+.pfi-reacttemplate {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -260px;
+}
+
+.pfi-reactts {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -260px;
+}
+
+.pfi-reason {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -260px;
+}
+
+.pfi-red {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -260px;
+}
+
+.pfi-registry {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -260px;
+}
+
+.pfi-rego {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -260px;
+}
+
+.pfi-rehype {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -260px;
+}
+
+.pfi-remark {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -260px;
+}
+
+.pfi-renovate {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -260px;
+}
+
+.pfi-replit {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -260px;
+}
+
+.pfi-rescript {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -260px;
+}
+
+.pfi-rest {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -260px;
+}
+
+.pfi-retext {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -260px;
+}
+
+.pfi-rexx {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -260px;
+}
+
+.pfi-riot {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -260px;
+}
+
+.pfi-rmd {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -260px;
+}
+
+.pfi-rnc {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -260px;
+}
+
+.pfi-robotframework {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -260px;
+}
+
+.pfi-robots {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -260px;
+}
+
+.pfi-rolldown {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -260px;
+}
+
+.pfi-rollup {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -260px;
+}
+
+.pfi-rome {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -260px;
+}
+
+.pfi-ron {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -260px;
+}
+
+.pfi-rproj {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -260px;
+}
+
+.pfi-rspec {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -260px;
+}
+
+.pfi-rss {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -260px;
+}
+
+.pfi-rubocop {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -260px;
+}
+
+.pfi-ruby {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -260px;
+}
+
+.pfi-rust {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -260px;
+}
+
+.pfi-rust_toolchain {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -260px;
+}
+
+.pfi-s-lang {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -260px;
+}
+
+.pfi-safetensors {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -260px;
+}
+
+.pfi-sails {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -260px;
+}
+
+.pfi-saltstack {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -260px;
+}
+
+.pfi-san {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -260px;
+}
+
+.pfi-sapphire_framework_cli {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -260px;
+}
+
+.pfi-sas {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -260px;
+}
+
+.pfi-sass {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -260px;
+}
+
+.pfi-sbt {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -260px;
+}
+
+.pfi-scala {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -260px;
+}
+
+.pfi-scilab {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -260px;
+}
+
+.pfi-script {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -260px;
+}
+
+.pfi-scss {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -260px;
+}
+
+.pfi-scss2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -260px;
+}
+
+.pfi-sdlang {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -260px;
+}
+
+.pfi-search_result {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -280px;
+}
+
+.pfi-seedkit {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -280px;
+}
+
+.pfi-sentry {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -280px;
+}
+
+.pfi-sequelize {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -280px;
+}
+
+.pfi-serverless {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -280px;
+}
+
+.pfi-shaderlab {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -280px;
+}
+
+.pfi-shell {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -280px;
+}
+
+.pfi-shuttle {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -280px;
+}
+
+.pfi-silverstripe {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -280px;
+}
+
+.pfi-sino {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -280px;
+}
+
+.pfi-siyuan {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -280px;
+}
+
+.pfi-sketch {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -280px;
+}
+
+.pfi-skipper {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -280px;
+}
+
+.pfi-slang {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -280px;
+}
+
+.pfi-slashup {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -280px;
+}
+
+.pfi-slice {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -280px;
+}
+
+.pfi-slint {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -280px;
+}
+
+.pfi-sln {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -280px;
+}
+
+.pfi-sln2 {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -280px;
+}
+
+.pfi-smarty {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -280px;
+}
+
+.pfi-snakemake {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -280px;
+}
+
+.pfi-snapcraft {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -280px;
+}
+
+.pfi-snaplet {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -280px;
+}
+
+.pfi-snort {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -280px;
+}
+
+.pfi-snyk {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -280px;
+}
+
+.pfi-solidarity {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -280px;
+}
+
+.pfi-solidity {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -280px;
+}
+
+.pfi-source {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -280px;
+}
+
+.pfi-spacengine {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -280px;
+}
+
+.pfi-sparql {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -280px;
+}
+
+.pfi-spin {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -280px;
+}
+
+.pfi-sqf {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -280px;
+}
+
+.pfi-sql {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -280px;
+}
+
+.pfi-sqlite {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -280px;
+}
+
+.pfi-squirrel {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -280px;
+}
+
+.pfi-sst {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -280px;
+}
+
+.pfi-stackblitz {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -280px;
+}
+
+.pfi-stan {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -280px;
+}
+
+.pfi-stata {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -280px;
+}
+
+.pfi-stencil {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -280px;
+}
+
+.pfi-storyboard {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -280px;
+}
+
+.pfi-storybook {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -280px;
+}
+
+.pfi-stryker {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -280px;
+}
+
+.pfi-stylable {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -280px;
+}
+
+.pfi-style {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -280px;
+}
+
+.pfi-styled {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -280px;
+}
+
+.pfi-stylelint {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -280px;
+}
+
+.pfi-stylish_haskell {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -280px;
+}
+
+.pfi-stylus {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -280px;
+}
+
+.pfi-sublime {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -280px;
+}
+
+.pfi-subversion {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -280px;
+}
+
+.pfi-svelte {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -280px;
+}
+
+.pfi-svelteconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -280px;
+}
+
+.pfi-svg {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -280px;
+}
+
+.pfi-svgo {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -280px;
+}
+
+.pfi-swagger {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -280px;
+}
+
+.pfi-swc {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -280px;
+}
+
+.pfi-swift {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -280px;
+}
+
+.pfi-swig {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -280px;
+}
+
+.pfi-symfony {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -280px;
+}
+
+.pfi-syncpack {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -300px;
+}
+
+.pfi-systemd {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -300px;
+}
+
+.pfi-systemverilog {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -300px;
+}
+
+.pfi-t4tt {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -300px;
+}
+
+.pfi-tailwind {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -300px;
+}
+
+.pfi-tamagui {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -300px;
+}
+
+.pfi-taplo {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -300px;
+}
+
+.pfi-taskfile {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -300px;
+}
+
+.pfi-tauri {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -300px;
+}
+
+.pfi-tcl {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -300px;
+}
+
+.pfi-teal {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -300px;
+}
+
+.pfi-templ {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -300px;
+}
+
+.pfi-tera {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -300px;
+}
+
+.pfi-terraform {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -300px;
+}
+
+.pfi-test {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -300px;
+}
+
+.pfi-testcafe {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -300px;
+}
+
+.pfi-testjs {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -300px;
+}
+
+.pfi-testplane {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -300px;
+}
+
+.pfi-testts {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -300px;
+}
+
+.pfi-tex {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -300px;
+}
+
+.pfi-text {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -300px;
+}
+
+.pfi-textile {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -300px;
+}
+
+.pfi-tfs {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -300px;
+}
+
+.pfi-tiltfile {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -300px;
+}
+
+.pfi-tm {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -300px;
+}
+
+.pfi-tmux {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -300px;
+}
+
+.pfi-todo {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -300px;
+}
+
+.pfi-toit {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -300px;
+}
+
+.pfi-toml {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -300px;
+}
+
+.pfi-tox {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -300px;
+}
+
+.pfi-travis {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -300px;
+}
+
+.pfi-tree {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -300px;
+}
+
+.pfi-tres {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -300px;
+}
+
+.pfi-truffle {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -300px;
+}
+
+.pfi-trunk {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -300px;
+}
+
+.pfi-tsbuildinfo {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -300px;
+}
+
+.pfi-tscn {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -300px;
+}
+
+.pfi-tsconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -300px;
+}
+
+.pfi-tsconfig_official {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -300px;
+}
+
+.pfi-tsdoc {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -300px;
+}
+
+.pfi-tslint {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -300px;
+}
+
+.pfi-tt {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -300px;
+}
+
+.pfi-ttcn {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -300px;
+}
+
+.pfi-tuc {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -300px;
+}
+
+.pfi-turbo {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -300px;
+}
+
+.pfi-twig {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -300px;
+}
+
+.pfi-typedoc {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -300px;
+}
+
+.pfi-typescript {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -300px;
+}
+
+.pfi-typescript_official {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -300px;
+}
+
+.pfi-typescriptdef {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -300px;
+}
+
+.pfi-typescriptdef_official {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -300px;
+}
+
+.pfi-typo3 {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -300px;
+}
+
+.pfi-uiua {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -300px;
+}
+
+.pfi-unibeautify {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -300px;
+}
+
+.pfi-unison {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -300px;
+}
+
+.pfi-unlicense {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -300px;
+}
+
+.pfi-unocss {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -300px;
+}
+
+.pfi-vagrant {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -300px;
+}
+
+.pfi-vala {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -300px;
+}
+
+.pfi-vanilla_extract {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -300px;
+}
+
+.pfi-vapi {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -320px;
+}
+
+.pfi-vapor {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -320px;
+}
+
+.pfi-vash {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -320px;
+}
+
+.pfi-vb {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -320px;
+}
+
+.pfi-vba {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -320px;
+}
+
+.pfi-vbhtml {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -320px;
+}
+
+.pfi-vbproj {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -320px;
+}
+
+.pfi-vcxproj {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -320px;
+}
+
+.pfi-velocity {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -320px;
+}
+
+.pfi-vento {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -320px;
+}
+
+.pfi-vercel {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -320px;
+}
+
+.pfi-verilog {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -320px;
+}
+
+.pfi-vhdl {
+   width: 20px;
+   height: 20px;
+   background-position: -277px -320px;
+}
+
+.pfi-video {
+   width: 20px;
+   height: 20px;
+   background-position: -300px -320px;
+}
+
+.pfi-view {
+   width: 20px;
+   height: 20px;
+   background-position: -323px -320px;
+}
+
+.pfi-vim {
+   width: 20px;
+   height: 20px;
+   background-position: -346px -320px;
+}
+
+.pfi-vite {
+   width: 20px;
+   height: 20px;
+   background-position: -369px -320px;
+}
+
+.pfi-vitest {
+   width: 20px;
+   height: 20px;
+   background-position: -392px -320px;
+}
+
+.pfi-vlang {
+   width: 20px;
+   height: 20px;
+   background-position: -415px -320px;
+}
+
+.pfi-volt {
+   width: 20px;
+   height: 20px;
+   background-position: -438px -320px;
+}
+
+.pfi-vscode-insiders {
+   width: 20px;
+   height: 20px;
+   background-position: -461px -320px;
+}
+
+.pfi-vscode {
+   width: 20px;
+   height: 20px;
+   background-position: -484px -320px;
+}
+
+.pfi-vscode2 {
+   width: 20px;
+   height: 20px;
+   background-position: -507px -320px;
+}
+
+.pfi-vscode3 {
+   width: 20px;
+   height: 20px;
+   background-position: -530px -320px;
+}
+
+.pfi-vscode_test {
+   width: 20px;
+   height: 20px;
+   background-position: -553px -320px;
+}
+
+.pfi-vsix {
+   width: 20px;
+   height: 20px;
+   background-position: -576px -320px;
+}
+
+.pfi-vsixmanifest {
+   width: 20px;
+   height: 20px;
+   background-position: -599px -320px;
+}
+
+.pfi-vue {
+   width: 20px;
+   height: 20px;
+   background-position: -622px -320px;
+}
+
+.pfi-vueconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -645px -320px;
+}
+
+.pfi-vyper {
+   width: 20px;
+   height: 20px;
+   background-position: -668px -320px;
+}
+
+.pfi-wallaby {
+   width: 20px;
+   height: 20px;
+   background-position: -691px -320px;
+}
+
+.pfi-wally {
+   width: 20px;
+   height: 20px;
+   background-position: -714px -320px;
+}
+
+.pfi-wasm {
+   width: 20px;
+   height: 20px;
+   background-position: -737px -320px;
+}
+
+.pfi-watchmanconfig {
+   width: 20px;
+   height: 20px;
+   background-position: -760px -320px;
+}
+
+.pfi-wdio {
+   width: 20px;
+   height: 20px;
+   background-position: -783px -320px;
+}
+
+.pfi-weblate {
+   width: 20px;
+   height: 20px;
+   background-position: -806px -320px;
+}
+
+.pfi-webpack {
+   width: 20px;
+   height: 20px;
+   background-position: -829px -320px;
+}
+
+.pfi-wenyan {
+   width: 20px;
+   height: 20px;
+   background-position: -852px -320px;
+}
+
+.pfi-wercker {
+   width: 20px;
+   height: 20px;
+   background-position: -875px -320px;
+}
+
+.pfi-wgsl {
+   width: 20px;
+   height: 20px;
+   background-position: -898px -320px;
+}
+
+.pfi-wikitext {
+   width: 20px;
+   height: 20px;
+   background-position: -921px -320px;
+}
+
+.pfi-windi {
+   width: 20px;
+   height: 20px;
+   background-position: -944px -320px;
+}
+
+.pfi-wit {
+   width: 20px;
+   height: 20px;
+   background-position: -967px -320px;
+}
+
+.pfi-wolfram {
+   width: 20px;
+   height: 20px;
+   background-position: -990px -320px;
+}
+
+.pfi-word {
+   width: 20px;
+   height: 20px;
+   background-position: -1013px -320px;
+}
+
+.pfi-word2 {
+   width: 20px;
+   height: 20px;
+   background-position: -1036px -320px;
+}
+
+.pfi-wpml {
+   width: 20px;
+   height: 20px;
+   background-position: -1059px -320px;
+}
+
+.pfi-wurst {
+   width: 20px;
+   height: 20px;
+   background-position: -1082px -320px;
+}
+
+.pfi-wxml {
+   width: 20px;
+   height: 20px;
+   background-position: -1105px -320px;
+}
+
+.pfi-wxss {
+   width: 20px;
+   height: 20px;
+   background-position: -1128px -320px;
+}
+
+.pfi-wxt {
+   width: 20px;
+   height: 20px;
+   background-position: -1151px -320px;
+}
+
+.pfi-xcode {
+   width: 20px;
+   height: 20px;
+   background-position: -1174px -320px;
+}
+
+.pfi-xfl {
+   width: 20px;
+   height: 20px;
+   background-position: -1197px -320px;
+}
+
+.pfi-xib {
+   width: 20px;
+   height: 20px;
+   background-position: -1220px -320px;
+}
+
+.pfi-xliff {
+   width: 20px;
+   height: 20px;
+   background-position: -1243px -320px;
+}
+
+.pfi-xmake {
+   width: 20px;
+   height: 20px;
+   background-position: -1266px -320px;
+}
+
+.pfi-xml {
+   width: 20px;
+   height: 20px;
+   background-position: -1289px -320px;
+}
+
+.pfi-xo {
+   width: 20px;
+   height: 20px;
+   background-position: -1312px -320px;
+}
+
+.pfi-xorg {
+   width: 20px;
+   height: 20px;
+   background-position: -1335px -320px;
+}
+
+.pfi-xquery {
+   width: 20px;
+   height: 20px;
+   background-position: -1358px -320px;
+}
+
+.pfi-xsl {
+   width: 20px;
+   height: 20px;
+   background-position: -1px -340px;
+}
+
+.pfi-yacc {
+   width: 20px;
+   height: 20px;
+   background-position: -24px -340px;
+}
+
+.pfi-yaml {
+   width: 20px;
+   height: 20px;
+   background-position: -47px -340px;
+}
+
+.pfi-yaml_official {
+   width: 20px;
+   height: 20px;
+   background-position: -70px -340px;
+}
+
+.pfi-yamllint {
+   width: 20px;
+   height: 20px;
+   background-position: -93px -340px;
+}
+
+.pfi-yandex {
+   width: 20px;
+   height: 20px;
+   background-position: -116px -340px;
+}
+
+.pfi-yang {
+   width: 20px;
+   height: 20px;
+   background-position: -139px -340px;
+}
+
+.pfi-yarn {
+   width: 20px;
+   height: 20px;
+   background-position: -162px -340px;
+}
+
+.pfi-yeoman {
+   width: 20px;
+   height: 20px;
+   background-position: -185px -340px;
+}
+
+.pfi-zig {
+   width: 20px;
+   height: 20px;
+   background-position: -208px -340px;
+}
+
+.pfi-zip {
+   width: 20px;
+   height: 20px;
+   background-position: -231px -340px;
+}
+
+.pfi-zip2 {
+   width: 20px;
+   height: 20px;
+   background-position: -254px -340px;
+}

@@ -1,0 +1,30 @@
+.storages {
+   width: 100%;
+}
+
+.storageItems {
+   margin-top: 20px;
+}
+
+.storagesGrid {
+   width: 100%;
+   display: grid;
+   grid-template-columns: repeat(3, 1fr);
+   gap: 15px;
+}
+
+@media only screen and (max-width: 1024px) {
+   .storageItems {
+      &.storagesGrid {
+         grid-template-columns: repeat(2, 1fr);
+      }
+   }
+}
+
+@media only screen and (max-width: 768px) {
+   .storageItems {
+      &.storagesGrid {
+         grid-template-columns: repeat(1, 1fr);
+      }
+   }
+}

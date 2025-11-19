@@ -1,0 +1,41 @@
+//Fields
+
+.field {
+   margin-bottom: 20px;
+   width: 100%;
+   position: relative;
+   .fieldErrorLabel {
+      position: absolute;
+      right: 10px;
+      top: 15px;
+      background-color: var(--error-bg-active);
+      color: var(--error-active-text);
+      padding: 1px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 0.2px;
+      z-index: 2;
+   }
+}
+
+.label {
+   font-weight: 600;
+   display: block;
+   margin-bottom: 8px;
+   font-size: 0.75rem;
+}
+
+.titleInput {
+   width: 100%;
+   border: 1px solid var(--line-color);
+   background-color: var(--content-background-color);
+   color: var(--content-text-color);
+   padding: 15px;
+   font-size: 0.75rem;
+   border-radius: 6px;
+   box-sizing: border-box;
+   &:focus {
+      outline: none;
+      border-color: var(line-active-color);
+   }
+}
