@@ -20,6 +20,9 @@
 
 Pluton is a self-hosted backup management platform that simplifies automated, incremental backups across your storage destinations. Pluton leverages powerful open-source tools - Restic for secure incremental backups and Rclone for versatile cloud storage connectivity - wrapped in an intuitive web interface designed for both beginners and advanced users.
 
+[Website](https://usepluton.com/) &nbsp; |  &nbsp; [Documentation](https:/docs.usepluton.com/)
+
+
 ### Features
 
 - &nbsp; **Automated backups** with encryption, compression and retention policies powered by Restic
