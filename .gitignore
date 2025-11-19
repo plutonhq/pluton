@@ -28,6 +28,8 @@ dist-ssr
 *.vscode
 /*.vscode
 repomix-output.xml
+/.repomix
+.repomix
 
 #env
 /*.env
