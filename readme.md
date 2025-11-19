@@ -2,7 +2,7 @@
   <h1><img width="28" height="28" src="https://pluton.b-cdn.net/logo.png" /> Pluton</h1>
   <h3>Open-Source, Self-Hosted Backup Solution That Puts You in Control</h3>
   <a href="https://github.com/plutonhq/pluton/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/plutonhq/pluton" />
+    <img src="https://img.shields.io/github/license/plutonhq/pluton" />
   </a>
   <a href="https://github/license/plutonhq/pluton/releases">
     <img src="https://img.shields.io/github/package-json/v/plutonhq/pluton" />
