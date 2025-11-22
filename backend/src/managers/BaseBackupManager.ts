@@ -8,7 +8,7 @@ import { BackupHandler } from './handlers/BackupHandler';
 import { PruneHandler } from './handlers/PruneHandler';
 import { jobQueue } from '../jobs/JobQueue';
 import { generateUID } from '../utils/helpers';
-import { configService } from 'src/services/ConfigService';
+import { configService } from '../services/ConfigService';
 
 type ScheduleOptions = (BackupPlanArgs | PlanPrune) & {
 	isActive: boolean;

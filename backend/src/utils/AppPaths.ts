@@ -48,7 +48,7 @@ class AppPaths {
 	 */
 	private getTheBaseDir(): string {
 		// if dev use /data
-		if (process.env.NODE_ENV !== 'production') {
+		if (!(process as any).pkg && process.env.NODE_ENV !== 'production') {
 			return path.join(process.cwd(), 'data');
 		}
 
@@ -72,6 +72,29 @@ class AppPaths {
 			default:
 				return path.join('/var/lib', appName.toLowerCase());
 		}
+	}
+
+	/**
+	 * Gets the directory where the executable is located.
+	 * For pkg-packaged apps, this returns the directory containing the executable.
+	 */
+	public getExecutableDir(): string {
+		return path.dirname(process.execPath);
+	}
+
+	/**
+	 * Gets the binaries directory path.
+	 * For pkg-packaged apps, binaries are located relative to the executable.
+	 */
+	public getBinariesDir(): string {
+		if ((process as any).pkg) {
+			// In packaged mode, binaries are in {executableDir}/binaries/{platform}-{arch}/
+			const platformId = `${os.platform()}-${os.arch()}`;
+			return path.join(this.getExecutableDir(), 'binaries', platformId);
+		}
+		// In development, use the binaries folder in the project
+		const platformId = `${os.platform()}-${os.arch()}`;
+		return path.join(process.cwd(), 'binaries', platformId);
 	}
 
 	/**

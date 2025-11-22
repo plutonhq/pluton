@@ -39,6 +39,7 @@ async function removeConsoleLogs(dir) {
 			} else if (entry.isFile() && extname(entry.name) === '.js') {
 				const code = await readFile(fullPath, 'utf-8');
 				const result = await minify(code, {
+					module: true, // Enable ES module support
 					compress: {
 						drop_console: true, // Remove console.* statements
 						pure_funcs: ['console.log', 'console.debug', 'console.warn'],

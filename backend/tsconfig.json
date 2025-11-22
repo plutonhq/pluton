@@ -14,7 +14,8 @@
 		"rootDir": "./src",
 		"declaration": true,
 		"declarationMap": true,
-		"sourceMap": true
+		"sourceMap": true,
+		"typeRoots": ["./node_modules/@types", "./src/types"]
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist", "__tests__", "**/*.test.ts"]

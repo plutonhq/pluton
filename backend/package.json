@@ -51,6 +51,7 @@
 		"cross-env": "^10.0.0",
 		"dotenv": "17.2.0",
 		"drizzle-kit": "^0.31.7",
+		"esbuild": "^0.27.0",
 		"jest": "^30.2.0",
 		"pino-pretty": "^13.0.0",
 		"prettier": "^3.4.2",
@@ -78,6 +79,7 @@
 		}
 	},
 	"main": "./src/index.ts",
+	"bin": "./dist/pkg-index.cjs",
 	"module": "./src/index.ts",
 	"types": "./src/index.ts",
 	"typesVersions": {
@@ -87,17 +89,29 @@
 			]
 		}
 	},
+	"pkg": {
+		"scripts": [
+			"dist/pkg-index.cjs"
+		],
+		"assets": [
+			"public/**/*",
+			"node_modules/**/*",
+			"!node_modules/better-sqlite3/**/*",
+			"drizzle/**/*"
+		]
+	},
 	"scripts": {
 		"checkUpdates": "npx npm-check -u",
 		"db:studio": "npx drizzle-kit studio --port 4983",
-		"dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
+		"dev": "cross-env NODE_ENV=development tsx watch -r dotenv/config src/index.ts",
 		"generate-migration": "drizzle-kit generate:sqlite",
 		"lint": "eslint src/**/*.ts",
-		"migrate-db": "tsx src/db/migrate.ts",
+		"migrate-db": "tsx -r dotenv/config src/db/migrate.ts",
 		"start": "node dist/index.js",
 		"test": "jest --config jest.config.ts",
-		"build:pkg": "node ./scripts/build.js",
+		"build:pkg": "node ./scripts/build-pkg.js",
 		"clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true});require('fs').rmSync('public',{recursive:true,force:true})\"",
+		"copy:frontend": "node -e \"const fs=require('fs');const path=require('path');function copyDir(s,d){fs.mkdirSync(d,{recursive:true});fs.readdirSync(s,{withFileTypes:true}).forEach(e=>{const sp=path.join(s,e.name),dp=path.join(d,e.name);e.isDirectory()?copyDir(sp,dp):fs.copyFileSync(sp,dp)})};copyDir('../frontend/dist','public')\"",
 		"build": "pnpm run clean && node ./scripts/build.js && pnpm run copy:frontend",
 		"package": "node ./scripts/build.js",
 		"prepublishOnly": "pnpm run clean && node ./scripts/build.js"

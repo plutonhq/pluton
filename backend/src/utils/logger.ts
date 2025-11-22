@@ -40,31 +40,45 @@ export function initializeLogger(): void {
 
 	// 1. Create and assign the main logger instance.
 	const isProduction = process.env.NODE_ENV === 'production';
+	const isPkg = (process as any).pkg;
 
-	const targets: any[] = [
-		{
-			target: 'pino/file',
-			options: { destination: `${logPath}/app.log` },
-			level: 'info',
-		},
-	];
+	let mainLogger: pino.Logger;
 
-	// Only use pino-pretty in development (not available in production)
-	if (!isProduction) {
-		targets.unshift({
-			target: 'pino-pretty',
-			options: {
-				colorize: true,
-				translateTime: 'SYS:standard',
-				ignore: 'pid,hostname',
-			},
-			level: 'info',
+	if (isPkg) {
+		// In pkg environment, use pino.destination (main thread) to avoid worker thread issues
+		const stream = pino.destination({ 
+			dest: `${logPath}/app.log`, 
+			sync: false, // Asynchronous logging
+			mkdir: true 
+		});
+		mainLogger = pino(stream);
+	} else {
+		// In development or standard node production, use transports
+		const targets: any[] = [
+			{
+				target: 'pino/file',
+				options: { destination: `${logPath}/app.log`, mkdir: true },
+				level: 'info',
+			}
+		];
+
+		// Add pino-pretty only in development
+		if (!isProduction) {
+			targets.push({
+				target: 'pino-pretty',
+				options: {
+					colorize: true,
+					translateTime: 'SYS:standard',
+					ignore: 'pid,hostname',
+				},
+				level: 'info',
+			});
+		}
+
+		mainLogger = pino({
+			transport: { targets },
 		});
 	}
-
-	const mainLogger = pino({
-		transport: { targets },
-	});
 
 	logger = mainLogger;
 
@@ -103,17 +117,30 @@ export const planLogger = (task: string, planId?: string, backupId?: string) => 
 
 	if (planId) {
 		if (!planLoggers[planId]) {
-			planLoggers[planId] = pino({
-				transport: {
-					targets: [
-						{
-							target: 'pino/file',
-							options: { destination: `${appPaths.getLogsDir()}/plan-${planId}.log` },
-							level: 'info',
-						},
-					],
-				},
-			});
+			const isPkg = (process as any).pkg;
+			
+			if (isPkg) {
+				// Use pino.destination for plan loggers in pkg to avoid worker threads
+				const stream = pino.destination({
+					dest: `${appPaths.getLogsDir()}/plan-${planId}.log`,
+					sync: false,
+					mkdir: true
+				});
+				planLoggers[planId] = pino(stream);
+			} else {
+				// Use standard transport for non-pkg environments
+				planLoggers[planId] = pino({
+					transport: {
+						targets: [
+							{
+								target: 'pino/file',
+								options: { destination: `${appPaths.getLogsDir()}/plan-${planId}.log`, mkdir: true },
+								level: 'info',
+							},
+						],
+					},
+				});
+			}
 		}
 		return planLoggers[planId].child(metadata);
 	}

@@ -2,6 +2,7 @@
 // import Database from 'better-sqlite3';
 // import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { initializeLogger } from '../src/utils/logger';
+import 'dotenv/config';
 
 beforeAll(() => {
 	console.log('--- JEST SETUP FILE IS RUNNING ---');
