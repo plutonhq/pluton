@@ -1,7 +1,7 @@
 import Cryptr from 'cryptr';
 import { spawn, ChildProcess } from 'child_process';
 import os from 'os';
-import { PlanScript } from 'src/types/plans';
+import { PlanScript } from '../types/plans';
 
 /**
  * Executes a user-defined script in a specified shell, capturing its output
