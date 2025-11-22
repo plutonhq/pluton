@@ -237,7 +237,7 @@ export class BackupHandler {
 		// Update progress: Backup operation start
 		await this.updateProgress(planId, backupId, 'backup', 'BACKUP_OPERATION_START', false);
 
-		const repoPassword = options.settings.encryption ? (process.env.ENCRYPTION_KEY as string) : '';
+		const repoPassword = options.settings.encryption ? configService.config.ENCRYPTION_KEY : '';
 		const handlers = this.createHandlers(planId, backupId);
 		const { resticArgs, resticEnv } = resticArgsAndEnv;
 		const resticArgsWithBackupTag: string[] = [...resticArgs, '--tag', `backup-${backupId}`];
@@ -416,9 +416,7 @@ export class BackupHandler {
 			console.log(`[BackupHandler]: Unlocking stale locks for plan: ${planId}`);
 			try {
 				const repoPath = generateResticRepoPath(options.storage.name, options.storagePath || '');
-				const repoPassword = options.settings.encryption
-					? (process.env.ENCRYPTION_KEY as string)
-					: '';
+				const repoPassword = options.settings.encryption ? configService.config.ENCRYPTION_KEY : '';
 
 				await runResticCommand(['unlock', '-r', repoPath], {
 					...resticArgsAndEnv.resticEnv,
@@ -449,7 +447,7 @@ export class BackupHandler {
 		}
 
 		// Check if encryption key is available when encryption is enabled
-		if (options.settings.encryption && !process.env.ENCRYPTION_KEY) {
+		if (options.settings.encryption && !configService.config.ENCRYPTION_KEY) {
 			throw new Error(`Encryption enabled but ENCRYPTION_KEY not found.`);
 		}
 
@@ -571,7 +569,7 @@ export class BackupHandler {
 		const dryRunArgs = [...resticArgs, '--dry-run'];
 		const dryRunEnv = {
 			...resticEnv,
-			RESTIC_PASSWORD: options.settings.encryption ? (process.env.ENCRYPTION_KEY as string) : '',
+			RESTIC_PASSWORD: options.settings.encryption ? configService.config.ENCRYPTION_KEY : '',
 		};
 		if (options.method === 'rescue') {
 			dryRunArgs.push('--one-file-system');

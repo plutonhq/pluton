@@ -84,7 +84,7 @@ export class BaseSnapshotManager extends EventEmitter {
 	}> {
 		try {
 			const { storageName, storagePath, encryption, planId } = options;
-			const repoPassword = encryption ? (process.env.ENCRYPTION_KEY as string) : '';
+			const repoPassword = encryption ? configService.config.ENCRYPTION_KEY : '';
 			const repoPath = generateResticRepoPath(storageName, storagePath || '');
 			let snapshotId = '';
 			const { success, result } = await getSnapshotByTag('backup-' + backupId, options);
@@ -125,7 +125,7 @@ export class BaseSnapshotManager extends EventEmitter {
 				return { success: false, result: 'Snapshot not found' };
 			}
 			const { storageName, storagePath, encryption } = options;
-			const repoPassword = encryption ? (configService.config.ENCRYPTION_KEY as string) : '';
+			const repoPassword = encryption ? configService.config.ENCRYPTION_KEY : '';
 			const repoPath = generateResticRepoPath(storageName, storagePath || '');
 			const output = await runResticCommand(
 				['ls', '-r', repoPath, snapshotId, '--json', '--long'],

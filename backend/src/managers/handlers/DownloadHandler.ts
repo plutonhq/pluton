@@ -8,6 +8,7 @@ import { generateResticRepoPath } from '../../utils/restic/helpers';
 import { processManager } from '../ProcessManager';
 import { runCommand } from '../../utils/runCommand';
 import { appPaths } from '../../utils/AppPaths';
+import { configService } from '../../services/ConfigService';
 
 export class DownloadHandler {
 	constructor(private emitter: EventEmitter) {}
@@ -36,7 +37,7 @@ export class DownloadHandler {
 		return new Promise((resolve, reject) => {
 			const handlers = this.createHandlers(planId, backupId);
 			const { storageName, storagePath, encryption } = options;
-			const repoPassword = encryption ? (process.env.ENCRYPTION_KEY as string) : '';
+			const repoPassword = encryption ? configService.config.ENCRYPTION_KEY : '';
 			const repoPath = generateResticRepoPath(storageName, storagePath || '');
 
 			runResticCommand(

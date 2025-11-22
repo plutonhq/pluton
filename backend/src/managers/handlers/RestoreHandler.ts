@@ -12,6 +12,7 @@ import { ProgressManager } from '../ProgressManager';
 import { appPaths } from '../../utils/AppPaths';
 import { RestoreOptions } from '../../types/restores';
 import { RestoreStatsManager } from '../RestoreStatsManager';
+import { configService } from '../../services/ConfigService';
 
 export class RestoreHandler {
 	private runningRestores = new Set<string>();
@@ -430,7 +431,7 @@ export class RestoreHandler {
 		}
 
 		// Check if encryption key is available when encryption is enabled
-		if (options.encryption && !process.env.ENCRYPTION_KEY) {
+		if (options.encryption && !configService.config.ENCRYPTION_KEY) {
 			throw new Error(`Snapshot encrypted but ENCRYPTION_KEY not found.`);
 		}
 
@@ -470,7 +471,7 @@ export class RestoreHandler {
 			excludes,
 			performanceSettings: performance,
 		} = options;
-		const repoPassword = encryption ? (process.env.ENCRYPTION_KEY as string) : '';
+		const repoPassword = encryption ? configService.config.ENCRYPTION_KEY : '';
 		const repoPath = generateResticRepoPath(storageName, storagePath || '');
 		const overWriteCommand = overwrite == 'always' ? [] : ['--overwrite', overwrite];
 		// Set the target path for the restore operation
@@ -627,7 +628,7 @@ export class RestoreHandler {
 			console.log(`[RestoreHandler]: Unlocking stale locks for plan: ${planId}`);
 			try {
 				const repoPath = generateResticRepoPath(options.storageName, options.storagePath || '');
-				const repoPassword = options.encryption ? (process.env.ENCRYPTION_KEY as string) : '';
+				const repoPassword = options.encryption ? configService.config.ENCRYPTION_KEY : '';
 
 				await runResticCommand(['unlock', '-r', repoPath], {
 					RESTIC_PASSWORD: repoPassword,

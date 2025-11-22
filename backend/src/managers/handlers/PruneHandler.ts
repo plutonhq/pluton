@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { getBackupPlanStats, runResticCommand } from '../../utils/restic/restic';
 import { generateResticRepoPath } from '../../utils/restic/helpers';
+import { configService } from '../../services/ConfigService';
 
 export class PruneHandler {
 	constructor(private emitter: EventEmitter) {}
@@ -65,7 +66,7 @@ export class PruneHandler {
 		const { prune, encryption = true } = settings;
 		const resticArgs = ['forget', '--prune', '--tag', `plan-${planId}`];
 		const policyArgs: string[] = [];
-		const resticEnv = { RESTIC_PASSWORD: encryption ? (process.env.ENCRYPTION_KEY as string) : '' };
+		const resticEnv = { RESTIC_PASSWORD: encryption ? configService.config.ENCRYPTION_KEY : '' };
 
 		if (storage.name) {
 			const repoPath = generateResticRepoPath(storage.name, storagePath || '');

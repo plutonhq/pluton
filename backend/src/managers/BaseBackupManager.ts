@@ -8,6 +8,7 @@ import { BackupHandler } from './handlers/BackupHandler';
 import { PruneHandler } from './handlers/PruneHandler';
 import { jobQueue } from '../jobs/JobQueue';
 import { generateUID } from '../utils/helpers';
+import { configService } from 'src/services/ConfigService';
 
 type ScheduleOptions = (BackupPlanArgs | PlanPrune) & {
 	isActive: boolean;
@@ -59,9 +60,15 @@ export class BaseBackupManager extends EventEmitter {
 	): Promise<{ success: boolean; result: string }> {
 		const { storagePath, storage } = options;
 		const { encryption } = options.settings;
-
+		const encKey = configService.config.ENCRYPTION_KEY;
+		if (encryption && (!encKey || encKey.trim() === '')) {
+			return {
+				success: false,
+				result: 'Encryption is enabled but ENCRYPTION_KEY is not set in environment variables.',
+			};
+		}
 		// Then Create a restic repo based on the provided rclone storage and the backup path
-		const repoPassword = encryption ? (process.env.ENCRYPTION_KEY as string) : '';
+		const repoPassword = encryption ? encKey : '';
 		try {
 			const repoPath = generateResticRepoPath(storage.name, storagePath || '');
 			const repoCommand = ['-r', repoPath, 'init', '--verbose'];
@@ -243,6 +250,7 @@ export class BaseBackupManager extends EventEmitter {
 	async unlockRepo(planId: string): Promise<{ success: boolean; result: string }> {
 		const schedules = await this.cronManager.getSchedule(planId);
 		const backupSchedule = schedules?.find(s => s.type === 'backup');
+		const encKey = configService.config.ENCRYPTION_KEY;
 
 		if (!backupSchedule || !backupSchedule.options) {
 			return {
@@ -261,9 +269,7 @@ export class BaseBackupManager extends EventEmitter {
 			console.log(`[BaseBackupManager]: Force-unlocking repository for plan: ${planId}`);
 
 			const repoPath = generateResticRepoPath(options.storage.name, options.storagePath || '');
-			const repoPassword = options.settings.encryption
-				? (process.env.ENCRYPTION_KEY as string)
-				: '';
+			const repoPassword = options.settings.encryption ? encKey : '';
 			// Run the restic unlock command
 			const resticArgs = ['unlock', '-r', repoPath, '--json'];
 			const output = await runResticCommand(resticArgs, { RESTIC_PASSWORD: repoPassword });

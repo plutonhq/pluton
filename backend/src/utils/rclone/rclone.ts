@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import os from 'os';
 import { getBinaryPath } from '../binaryPathResolver';
 import { getRcloneConfigPath } from './helpers';
+import { configService } from '../../services/ConfigService';
 
 export function runRcloneCommand(args: string[], env?: Record<string, string>): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -12,7 +13,7 @@ export function runRcloneCommand(args: string[], env?: Record<string, string>): 
 			// ...process.env,
 			RCLONE_CONFIG: rcloneConfigPath,
 			LOCALAPPDATA: localAppData,
-			RCLONE_CONFIG_PASS: process.env.ENCRYPTION_KEY,
+			RCLONE_CONFIG_PASS: configService.config.ENCRYPTION_KEY,
 			...env,
 		};
 		console.log('rcloneBinary :', rcloneBinary);
