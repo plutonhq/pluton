@@ -7,9 +7,13 @@
   <a href="https://github/license/plutonhq/pluton/releases">
     <img src="https://img.shields.io/github/package-json/v/plutonhq/pluton" />
   </a>
-  <a href="https://github/license/plutonhq/pluton/releases">
+  <a href="https://hub.docker.com/r/plutonhq/pluton">
     <img src="https://img.shields.io/docker/pulls/plutonhq/pluton" />
   </a>
+  <a href="https://github/license/plutonhq/pluton/releases">
+    <img src="https://img.shields.io/github/downloads/plutonhq/pluton/total" />
+  </a>
+
   <br />
   <br />
   <figure>
