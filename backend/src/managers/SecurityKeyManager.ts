@@ -27,6 +27,20 @@ class SecurityKeyManager {
 	}
 
 	public async setupInitialKeys(): Promise<void> {
+		const keysPath = path.join(appPaths.getDataDir(), 'keys.json');
+		
+		// 1. Check if keys already exist (Optimization)
+		try {
+			const existingContent = JSON.parse(await fs.readFile(keysPath, 'utf-8'));
+			if (existingContent.publicKey && existingContent.encryptedPrivateKey) {
+				console.log('[SecurityKeyManager] Keys already exist. Skipping generation.');
+				this.keyData = existingContent;
+				return;
+			}
+		} catch (e) {
+			// File might not exist or be corrupt, proceed to generate
+		}
+
 		console.log('[SecurityKeyManager] Generating new Ed25519 key pair...');
 		const keyPair = crypto.generateKeyPairSync('ed25519', {
 			privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
@@ -36,22 +50,35 @@ class SecurityKeyManager {
 		const cryptr = new Cryptr(configService.config.SECRET);
 		const encryptedPrivateKey = cryptr.encrypt(keyPair.privateKey);
 
-		const newKeyData: KeyData = {
+		const newKeyData = {
 			publicKey: keyPair.publicKey,
 			encryptedPrivateKey: encryptedPrivateKey,
 		};
 
-		// Create the key files
-		const keysPath = path.join(appPaths.getDataDir(), 'keys.json');
+		// 2. MERGE with existing data (Crucial to preserve SECRET/APIKEY)
 		try {
-			await fs.access(keysPath);
-		} catch (error) {
-			await fs.writeFile(keysPath, JSON.stringify(newKeyData, null, 2), { mode: 0o600 });
-			console.log(`[SecurityKeyManager] Cryptographic keys securely stored at ${keysPath}`);
-		}
+			let currentFileContent = {};
+			try {
+				const fileStr = await fs.readFile(keysPath, 'utf-8');
+				currentFileContent = JSON.parse(fileStr);
+			} catch (e) {
+				// File doesn't exist yet, that's fine
+			}
 
-		// Immediately load the newly created keys into the instance
-		this.keyData = newKeyData;
+			const finalContent = {
+				...currentFileContent,
+				...newKeyData
+			};
+
+			await fs.writeFile(keysPath, JSON.stringify(finalContent, null, 2), { mode: 0o600 });
+			console.log(`[SecurityKeyManager] Cryptographic keys securely stored at ${keysPath}`);
+			
+			// Update local state
+			this.keyData = finalContent as KeyData; // Cast or update interface
+		} catch (error) {
+			console.error('[SecurityKeyManager] Error saving keys:', error);
+			throw error;
+		}
 	}
 
 	private async loadKeys(): Promise<void> {
