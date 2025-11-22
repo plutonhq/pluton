@@ -6,6 +6,7 @@ import { ResticRawStats, ResticSnapshot } from '../../types/restic';
 import { getBinaryPath } from '../binaryPathResolver';
 import { appPaths } from '../AppPaths';
 import { generateResticRepoPath } from './helpers';
+import { configService } from '../../services/ConfigService';
 
 export function runResticCommand(
 	args: string[],
@@ -20,26 +21,31 @@ export function runResticCommand(
 	const localAppData = process.env.LOCALAPPDATA || os.homedir();
 	return new Promise((resolve, reject) => {
 		const resticBinary = getBinaryPath('restic');
-		let rcloneBinary = getBinaryPath('rclone');
+		const rcloneBinaryPath = getBinaryPath('rclone');
+		const rcloneDir = path.dirname(rcloneBinaryPath);
+		const rcloneExecutable = path.basename(rcloneBinaryPath);
+
 		const rcloneConfigPath = getRcloneConfigPath();
+
+		// Construct new PATH ensuring rclone directory is included
+		// We check for both PATH and Path to be safe on Windows, though Node.js usually handles this.
+		const currentPath = env?.PATH || process.env.PATH || process.env.Path || '';
+		const newPath = `${rcloneDir}${path.delimiter}${currentPath}`;
+
 		const envVars = {
 			// ...process.env,
 			...env,
+			PATH: newPath,
 			RCLONE_CONFIG: rcloneConfigPath,
 			// RCLONE_PROGRESS: 'true',
 			LOCALAPPDATA: localAppData,
-			RCLONE_CONFIG_PASS: process.env.ENCRYPTION_KEY as string,
+			RCLONE_CONFIG_PASS: configService.config.ENCRYPTION_KEY,
 		};
-
-		if (os.platform() === 'win32') {
-			// Replace all backslashes with forward slashes for compatibility.
-			rcloneBinary = rcloneBinary.replace(/\\/g, '/');
-		}
 
 		const finalArgs = [
 			...args,
 			'-o',
-			`rclone.program=${rcloneBinary}`,
+			`rclone.program=${rcloneExecutable}`,
 			'--cache-dir',
 			path.join(appPaths.getTempDir(), 'restic-cache'),
 		];
@@ -145,7 +151,7 @@ export async function getBackupPlanStats(
 	// TODO: Run restic snapshot list command targeting the tag `plan-${planId}` with getSnapshotByTag
 	// run both the stats and the snapshot command simultaneously and return the result to the caller.
 	const repoPath = generateResticRepoPath(storageName, storagePath);
-	const repoPass = encryption ? (process.env.ENCRYPTION_KEY as string) : '';
+	const repoPass = encryption ? configService.config.ENCRYPTION_KEY : '';
 	const resticEnv = { RESTIC_PASSWORD: repoPass };
 	const statsArgs = [
 		'stats',
@@ -191,7 +197,7 @@ export async function getSnapshotByTag(
 	options: { storagePath: string; storageName: string; encryption: boolean }
 ): Promise<{ success: boolean; result: ResticSnapshot | string }> {
 	const { storageName, storagePath, encryption } = options;
-	const repoPassword = encryption ? (process.env.ENCRYPTION_KEY as string) : '';
+	const repoPassword = encryption ? configService.config.ENCRYPTION_KEY : '';
 	const repoPath = generateResticRepoPath(storageName, storagePath);
 	const failedObj = { success: false, result: 'Snapshot Not Found' };
 	try {
