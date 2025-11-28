@@ -1,7 +1,6 @@
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
-import { appPaths } from './AppPaths';
 
 /**
  * Resolves the path to a bundled binary ('restic', 'rclone' or 'rear').
@@ -20,11 +19,11 @@ export function getBinaryPath(binaryName: 'restic' | 'rclone' | 'rear'): string 
 		const platformId = `${os.platform()}-${os.arch()}`;
 		const execDir = path.dirname(process.execPath);
 		const pkgBinaryPath = path.join(execDir, 'binaries', platformId, fileName);
-		
+
 		if (fs.existsSync(pkgBinaryPath)) {
 			return pkgBinaryPath;
 		}
-		
+
 		console.warn(
 			`[binaryPathResolver] Expected binary at '${pkgBinaryPath}' but not found. Trying fallbacks...`
 		);
