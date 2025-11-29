@@ -1,22 +1,14 @@
 import { execSync } from "child_process";
-import {
-  readdir,
-  readFile,
-  writeFile,
-  mkdir,
-  copyFile,
-  rm,
-  access,
-  chmod,
-} from "fs/promises";
-import { join, dirname, extname, resolve } from "path";
+import { readdir, mkdir, copyFile, rm, access, chmod } from "fs/promises";
+import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { constants } from "fs";
 import https from "https";
 import fs from "fs";
 import { createWriteStream } from "fs";
 import os from "os";
-import AdmZip from "adm-zip";
+import compressing from "compressing";
+import unbzip2Stream from "unbzip2-stream";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -380,39 +372,46 @@ async function downloadBinaries() {
 
         // Extract based on file type
         if (config.resticUrl.endsWith(".bz2")) {
-          // Decompress bz2 (Unix)
-          execSync(`bunzip2 -c "${resticTemp}" > "${resticPath}"`, {
-            stdio: "pipe",
+          // Decompress bz2 using unbzip2-stream (cross-platform, pure JS)
+          await new Promise((resolve, reject) => {
+            const input = fs.createReadStream(resticTemp);
+            const output = fs.createWriteStream(resticPath);
+            input.pipe(unbzip2Stream()).pipe(output);
+            output.on("finish", resolve);
+            output.on("error", reject);
+            input.on("error", reject);
           });
           await rm(resticTemp, { force: true });
         } else if (config.resticUrl.endsWith(".zip")) {
-          // Extract zip (Windows) using adm-zip for cross-platform support
-          const zip = new AdmZip(resticTemp);
-          const zipEntries = zip.getEntries();
+          // Extract zip to temp directory, then find and move the executable
+          const extractDir = join(binariesDir, `restic-${platform}-extract`);
+          await compressing.zip.uncompress(resticTemp, extractDir);
 
-          // Find the restic executable
-          // Restic windows zip usually contains a versioned exe like restic_0.16.0_windows_amd64.exe
+          // Find the restic executable in the extracted files
+          const files = await readdir(extractDir, { recursive: true });
           let found = false;
-          for (const entry of zipEntries) {
-            if (
-              entry.entryName.endsWith(".exe") &&
-              entry.name.includes("restic")
-            ) {
-              zip.extractEntryTo(
-                entry,
-                dirname(resticPath),
-                false,
-                true,
-                false,
-                resticName
-              );
-              found = true;
-              break;
+          for (const file of files) {
+            const fileName = typeof file === "string" ? file : file.name;
+            // Normalize path separators and get base name
+            const normalizedPath = fileName.replace(/\\/g, "/");
+            const baseName = normalizedPath.split("/").pop();
+
+            if (baseName === "restic" || baseName === "restic.exe") {
+              const srcFile = join(extractDir, fileName);
+              const stat = await fs.promises.stat(srcFile);
+              if (stat.isFile()) {
+                await copyFile(srcFile, resticPath);
+                found = true;
+                break;
+              }
             }
           }
+
           if (!found) {
             throw new Error("restic executable not found in zip archive");
           }
+
+          await rm(extractDir, { recursive: true, force: true });
           await rm(resticTemp, { force: true });
         }
 
@@ -445,32 +444,35 @@ async function downloadBinaries() {
         const rcloneTemp = join(binariesDir, `rclone-${platform}.zip`);
         await downloadFile(config.rcloneUrl, rcloneTemp);
 
-        // Extract zip using adm-zip for cross-platform support
-        const zip = new AdmZip(rcloneTemp);
-        const zipEntries = zip.getEntries();
+        // Extract zip using compressing package (cross-platform)
+        const extractDir = join(binariesDir, `rclone-${platform}-extract`);
+        await compressing.zip.uncompress(rcloneTemp, extractDir);
 
-        // Find the rclone executable (usually in a versioned folder)
+        // Find the rclone executable (usually in a versioned folder like rclone-v1.71.2-linux-amd64/)
+        const files = await readdir(extractDir, { recursive: true });
         let found = false;
-        for (const entry of zipEntries) {
-          if (
-            !entry.isDirectory &&
-            (entry.name === "rclone.exe" || entry.name === "rclone")
-          ) {
-            zip.extractEntryTo(
-              entry,
-              dirname(rclonePath),
-              false,
-              true,
-              false,
-              rcloneName
-            );
-            found = true;
-            break;
+        for (const file of files) {
+          const fileName = typeof file === "string" ? file : file.name;
+          // Normalize path separators and get base name
+          const normalizedPath = fileName.replace(/\\/g, "/");
+          const baseName = normalizedPath.split("/").pop();
+
+          if (baseName === "rclone" || baseName === "rclone.exe") {
+            const srcFile = join(extractDir, fileName);
+            const stat = await fs.promises.stat(srcFile);
+            if (stat.isFile()) {
+              await copyFile(srcFile, rclonePath);
+              found = true;
+              break;
+            }
           }
         }
+
         if (!found) {
           throw new Error("rclone executable not found in zip archive");
         }
+
+        await rm(extractDir, { recursive: true, force: true });
         await rm(rcloneTemp, { force: true });
 
         // Set executable permissions on Unix
