@@ -1,4 +1,3 @@
-
 services:
   pluton:
     image: plutonhq/pluton:latest
@@ -8,16 +7,16 @@ services:
     #   dockerfile: Dockerfile
     container_name: pluton-backup
     restart: unless-stopped
-    
+
     ports:
       - "${SERVER_PORT:-5173}:${SERVER_PORT:-5173}"
-    
+
     volumes:
       # Main data volume - contains database, config, logs
       - pluton-data:/data
-      
+
       # Optional: Mount host directories to backup
-  
+
       # Example: Make user's documents folders Accessible to Pluton
       # - /home/user/documents:/mnt/documents:ro  #linux
       # - /home/user/photos:/mnt/photos:ro  #linux
@@ -31,35 +30,39 @@ services:
     environment:
       # ===== REQUIRED: Security & Authentication =====
       # Generate secure random strings (min 12 characters for the first three)
-      SECRET: ${SECRET}                           # Master encryption key for securing sensitive data
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}           # Encryption key for restic/rclone Snapshot encryption
-      APIKEY: ${APIKEY}                           # API authentication key
-      USER_NAME: ${USER_NAME}                     # Admin username for login
-      USER_PASSWORD: ${USER_PASSWORD}             # Admin password for login
-      
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY} # Encryption key for restic/rclone Snapshot encryption
+      USER_NAME: ${USER_NAME} # Admin username for login
+      USER_PASSWORD: ${USER_PASSWORD} # Admin password for login
+
       # ===== Application Settings =====
       APP_TITLE: ${APP_TITLE:-Pluton}
       APP_URL: ${APP_URL:-http://localhost:5173}
       SERVER_PORT: ${SERVER_PORT:-5173}
       MAX_CONCURRENT_BACKUPS: ${MAX_CONCURRENT_BACKUPS:-2}
-      SESSION_DURATION: ${SESSION_DURATION:-7}    # How long frontend login Session lasts in Days
-      
+      SESSION_DURATION: ${SESSION_DURATION:-7} # How long frontend login Session lasts in Days
+
       # ===== User Interface Security Settings =====
       ALLOW_CUSTOM_RESTORE_PATH: ${ALLOW_CUSTOM_RESTORE_PATH:-true}
       ALLOW_FILE_BROWSER: ${ALLOW_FILE_BROWSER:-true}
       DISABLE_EVENT_SCRIPTS: ${DISABLE_EVENT_SCRIPTS:-false}
-      
+
       # ===== Docker-specific (do not change) =====
       NODE_ENV: production
       IS_DOCKER: "true"
-    
+
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget --no-verbose --tries=1 --spider http://localhost:${SERVER_PORT:-5173}/api/health"]
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          "wget --no-verbose --tries=1 --spider http://localhost:${SERVER_PORT:-5173}/api/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    
+
 volumes:
   pluton-data:
     driver: local
