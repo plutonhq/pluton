@@ -101,6 +101,7 @@ try {
 		define: {
 			'import.meta.url': '__import_meta_url',
 			'process.env.NODE_ENV': '"production"',
+			'process.env.APP_VERSION': JSON.stringify(packageJson.version),
 		},
 		inject: [join(process.cwd(), 'scripts/esbuild-import-meta-url-shim.js')],
 	});
