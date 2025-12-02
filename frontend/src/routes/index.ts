@@ -5,5 +5,6 @@ export { default as NotFoundRoute } from './NotFoundRoute/NotFoundRoute';
 export { default as Plans } from './Plans/Plans';
 export { default as PlanSingle } from './PlanSingle/PlanSingle';
 export { default as Settings } from './Settings/Settings';
+export { default as Setup } from './Setup/Setup';
 export { default as Sources } from './Sources/Sources';
 export { default as Storages } from './Storages/Storages';

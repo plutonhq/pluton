@@ -24,6 +24,7 @@ console.log("╚═════════════════════�
 const BETTER_SQLITE3_VERSION = "12.4.4"; // Latest: Check https://github.com/WiseLibs/better-sqlite3/releases
 const RESTIC_VERSION = "0.18.1"; // Latest: Check https://github.com/restic/restic/releases
 const RCLONE_VERSION = "1.71.2"; // Latest: Check https://rclone.org/downloads/
+const KEYRING_VERSION = "1.2.0"; // Latest: Check https://www.npmjs.com/package/@napi-rs/keyring
 
 // Target configurations
 const targets = {
@@ -35,6 +36,8 @@ const targets = {
     betterSqlite3Url: `https://github.com/WiseLibs/better-sqlite3/releases/download/v${BETTER_SQLITE3_VERSION}/better-sqlite3-v${BETTER_SQLITE3_VERSION}-node-v137-win32-x64.tar.gz`,
     resticUrl: `https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_windows_amd64.zip`,
     rcloneUrl: `https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-windows-amd64.zip`,
+    keyringPackage: `@napi-rs/keyring-win32-x64-msvc`,
+    keyringNodeFile: `keyring.win32-x64-msvc.node`,
   },
   "linux-x64": {
     pkgTarget: "node24-linux-x64",
@@ -44,6 +47,8 @@ const targets = {
     betterSqlite3Url: `https://github.com/WiseLibs/better-sqlite3/releases/download/v${BETTER_SQLITE3_VERSION}/better-sqlite3-v${BETTER_SQLITE3_VERSION}-node-v137-linux-x64.tar.gz`,
     resticUrl: `https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_amd64.bz2`,
     rcloneUrl: `https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-amd64.zip`,
+    keyringPackage: `@napi-rs/keyring-linux-x64-gnu`,
+    keyringNodeFile: `keyring.linux-x64-gnu.node`,
   },
   "linux-arm64": {
     pkgTarget: "node24-linux-arm64",
@@ -53,6 +58,8 @@ const targets = {
     betterSqlite3Url: `https://github.com/WiseLibs/better-sqlite3/releases/download/v${BETTER_SQLITE3_VERSION}/better-sqlite3-v${BETTER_SQLITE3_VERSION}-node-v137-linux-arm64.tar.gz`,
     resticUrl: `https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_arm64.bz2`,
     rcloneUrl: `https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-arm64.zip`,
+    keyringPackage: `@napi-rs/keyring-linux-arm64-gnu`,
+    keyringNodeFile: `keyring.linux-arm64-gnu.node`,
   },
   "macos-x64": {
     pkgTarget: "node24-macos-x64",
@@ -62,6 +69,8 @@ const targets = {
     betterSqlite3Url: `https://github.com/WiseLibs/better-sqlite3/releases/download/v${BETTER_SQLITE3_VERSION}/better-sqlite3-v${BETTER_SQLITE3_VERSION}-node-v137-darwin-x64.tar.gz`,
     resticUrl: `https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_darwin_amd64.bz2`,
     rcloneUrl: `https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-osx-amd64.zip`,
+    keyringPackage: `@napi-rs/keyring-darwin-x64`,
+    keyringNodeFile: `keyring.darwin-x64.node`,
   },
   "macos-arm64": {
     pkgTarget: "node24-macos-arm64",
@@ -71,6 +80,8 @@ const targets = {
     betterSqlite3Url: `https://github.com/WiseLibs/better-sqlite3/releases/download/v${BETTER_SQLITE3_VERSION}/better-sqlite3-v${BETTER_SQLITE3_VERSION}-node-v137-darwin-arm64.tar.gz`,
     resticUrl: `https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_darwin_arm64.bz2`,
     rcloneUrl: `https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-osx-arm64.zip`,
+    keyringPackage: `@napi-rs/keyring-darwin-arm64`,
+    keyringNodeFile: `keyring.darwin-arm64.node`,
   },
 };
 
@@ -215,7 +226,10 @@ async function compileBackend() {
   console.log("📦 Step 4: Compiling TypeScript Backend");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
-  exec("pnpm run build:pkg", { cwd: backendDir });
+  exec("pnpm run build:pkg", {
+    cwd: backendDir,
+    env: { USE_LOCAL_CORE: process.env.USE_LOCAL_CORE }, // USE_LOCAL_CORE for build:pkg script (for PRO local development)
+  });
 
   console.log("✅ Backend compiled successfully");
 }
@@ -315,6 +329,111 @@ async function setupBetterSqlite3() {
   }
 
   console.log("\n✅ better-sqlite3 binaries setup completed");
+}
+
+/**
+ * Step 5b: Download and Setup @napi-rs/keyring Native Binaries
+ */
+async function setupKeyring() {
+  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📦 Step 5b: Setting up @napi-rs/keyring Native Binaries");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+  const pkgAssetsDir = join(rootDir, "dist", "pkg-assets");
+  await mkdir(pkgAssetsDir, { recursive: true });
+
+  // Check if all keyring binaries already exist (caching)
+  let allKeyringBinariesExist = true;
+  for (const [platform, config] of Object.entries(targets)) {
+    const keyringNodePath = join(
+      pkgAssetsDir,
+      platform,
+      "keyring",
+      config.keyringNodeFile
+    );
+    if (!(await fileExists(keyringNodePath))) {
+      allKeyringBinariesExist = false;
+      break;
+    }
+  }
+
+  if (allKeyringBinariesExist) {
+    console.log("✅ All keyring binaries already exist, skipping download\n");
+    console.log(
+      "💡 To force re-download, delete the dist/pkg-assets/*/keyring folders"
+    );
+    return;
+  }
+
+  for (const [platform, config] of Object.entries(targets)) {
+    console.log(`\n🔧 Setting up @napi-rs/keyring for ${platform}...`);
+
+    const keyringDir = join(pkgAssetsDir, platform, "keyring");
+    const keyringNodePath = join(keyringDir, config.keyringNodeFile);
+
+    // Skip if already exists (individual platform caching)
+    if (await fileExists(keyringNodePath)) {
+      console.log(
+        `  ✓ keyring already exists for ${platform}, skipping download`
+      );
+      continue;
+    }
+
+    await mkdir(keyringDir, { recursive: true });
+
+    try {
+      // Use npm pack to download the platform-specific package
+      const tempDir = join(pkgAssetsDir, `keyring-temp-${platform}`);
+      await mkdir(tempDir, { recursive: true });
+
+      // Download and extract the npm package
+      console.log(
+        `  ⬇️  Downloading ${config.keyringPackage}@${KEYRING_VERSION}...`
+      );
+      execSync(`npm pack ${config.keyringPackage}@${KEYRING_VERSION}`, {
+        cwd: tempDir,
+        stdio: "pipe",
+      });
+
+      // Find the downloaded tarball
+      const files = await readdir(tempDir);
+      const tarball = files.find((f) => f.endsWith(".tgz"));
+
+      if (!tarball) {
+        throw new Error("Could not find downloaded tarball");
+      }
+
+      // Extract the tarball
+      const tarballPath = join(tempDir, tarball);
+      const isWindows = os.platform() === "win32";
+      const tarCommand = isWindows
+        ? `tar -xzf "${tarballPath}" -C "${tempDir}"`
+        : `tar -xzf ${tarballPath} -C ${tempDir}`;
+
+      execSync(tarCommand, { stdio: "pipe" });
+
+      // Find and copy the .node file
+      const packageDir = join(tempDir, "package");
+      const nodeFile = join(packageDir, config.keyringNodeFile);
+
+      if (await fileExists(nodeFile)) {
+        await copyFile(nodeFile, keyringNodePath);
+        console.log(`  ✅ keyring binary ready for ${platform}`);
+      } else {
+        throw new Error(`Could not find ${config.keyringNodeFile} in package`);
+      }
+
+      // Clean up temp directory
+      await rm(tempDir, { recursive: true, force: true });
+    } catch (error) {
+      console.warn(
+        `  ⚠️  Failed to download keyring for ${platform}: ${error.message}`
+      );
+      console.warn(`  Keyring functionality may not work on this platform`);
+    }
+  }
+
+  console.log("\n✅ @napi-rs/keyring binaries setup completed");
 }
 
 /**
@@ -649,6 +768,28 @@ async function createDistributionPackages() {
       console.log(`  ✓ Copied better-sqlite3 native module`);
     }
 
+    // Copy @napi-rs/keyring native module
+    const keyringAssetsDir = join(pkgAssetsDir, platform, "keyring");
+    const keyringSourceFile = join(keyringAssetsDir, config.keyringNodeFile);
+    if (await fileExists(keyringSourceFile)) {
+      // The path structure @napi-rs/keyring expects is:
+      // node_modules/@napi-rs/keyring-<platform>/keyring.<platform>.node
+      const keyringDestDir = join(
+        packageDir,
+        "node_modules",
+        "@napi-rs",
+        config.keyringPackage.replace("@napi-rs/", "")
+      );
+      await mkdir(keyringDestDir, { recursive: true });
+
+      const keyringDestFile = join(keyringDestDir, config.keyringNodeFile);
+      await copyFile(keyringSourceFile, keyringDestFile);
+
+      console.log(`  ✓ Copied @napi-rs/keyring native module`);
+    } else {
+      console.warn(`  ⚠️  keyring native module not found for ${platform}`);
+    }
+
     // Copy binaries if they exist
     const sourceBinariesDir = join(binariesDir, config.binaryPlatform);
     if (await fileExists(sourceBinariesDir)) {
@@ -715,6 +856,7 @@ async function main() {
     await installBackendDeps();
     await compileBackend();
     await setupBetterSqlite3();
+    await setupKeyring();
     await downloadBinaries();
     await generateExecutables();
     await createDistributionPackages();

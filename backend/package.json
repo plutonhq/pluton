@@ -14,6 +14,7 @@
 		"LICENSE"
 	],
 	"dependencies": {
+		"@napi-rs/keyring": "^1.2.0",
 		"aedes": "^0.51.3",
 		"better-sqlite3": "12.2.0",
 		"cookies": "^0.9.1",

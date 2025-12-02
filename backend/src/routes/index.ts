@@ -6,3 +6,4 @@ export { createUserRouter } from './users';
 export { createBackupRouter } from './backups';
 export { createSettingsRouter } from './settings';
 export { createHealthRouter } from './health';
+export { createSetupRouter } from './setup';

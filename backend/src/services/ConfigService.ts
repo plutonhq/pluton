@@ -3,9 +3,10 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { appPaths } from '../utils/AppPaths';
 import path from 'path';
+import { requiresKeyringSetup } from '../utils/installHelpers';
 
-// Schema for the .env config file
-const configSchema = z.object({
+// Schema for the .env config file (with optional sensitive fields for setup mode)
+const baseConfigSchema = z.object({
 	// General
 	NODE_ENV: z.enum(['development', 'production', 'test']).default('production'),
 	SERVER_PORT: z.coerce.number().int().positive().default(5173),
@@ -19,20 +20,35 @@ const configSchema = z.object({
 	ALLOW_CUSTOM_RESTORE_PATH: z.coerce.boolean().default(true).optional(),
 	ALLOW_FILE_BROWSER: z.coerce.boolean().default(true).optional(),
 
-	// Security
-	ENCRYPTION_KEY: z.string().min(12, { message: 'ENCRYPTION_KEY is required for rclone/restic.' }),
+	// Security (optional in setup mode)
+	ENCRYPTION_KEY: z
+		.string()
+		.min(12, { message: 'ENCRYPTION_KEY is required for rclone/restic.' })
+		.optional(),
 	SECRET: z.string().min(12).optional(),
 	APIKEY: z.string().min(12).optional(),
 	DISABLE_EVENT_SCRIPTS: z.coerce.boolean().default(false).optional(),
 
-	// User Authentication
-	USER_NAME: z.string().min(1).default('admin'),
-	USER_PASSWORD: z.string().min(1),
+	// User Authentication (optional in setup mode)
+	USER_NAME: z.string().min(1).optional(),
+	USER_PASSWORD: z.string().min(1).optional(),
 	SESSION_DURATION: z.coerce.number().int().positive().default(7), // in days
+
+	// INTERNAL
+	IS_DOCKER: z.coerce.boolean().default(false).optional(),
+	IS_BINARY: z.coerce.boolean().default(false).optional(),
+	SETUP_PENDING: z.coerce.boolean().default(false).optional(),
+});
+
+// Full config schema (requires all sensitive fields)
+const configSchema = baseConfigSchema.extend({
+	ENCRYPTION_KEY: z.string().min(12, { message: 'ENCRYPTION_KEY is required for rclone/restic.' }),
+	USER_NAME: z.string().min(1, { message: 'USER_NAME is required.' }),
+	USER_PASSWORD: z.string().min(1, { message: 'USER_PASSWORD is required.' }),
 });
 
 // A schema for the user-editable config.json file
-const userConfigSchema = configSchema
+const userConfigSchema = baseConfigSchema
 	.pick({
 		APP_TITLE: true,
 		APP_URL: true,
@@ -46,17 +62,45 @@ const userConfigSchema = configSchema
 	})
 	.partial();
 
+// Final config schema for normal operation (requires all sensitive fields)
 const finalConfigSchema = configSchema.extend({
 	SECRET: z.string().min(12),
 	APIKEY: z.string().min(12),
 });
 
+// Setup mode config schema (doesn't require sensitive fields)
+const setupModeConfigSchema = baseConfigSchema.extend({
+	SECRET: z.string().min(12),
+	APIKEY: z.string().min(12),
+	SETUP_PENDING: z.literal(true),
+});
+
 export type AppConfig = z.infer<typeof finalConfigSchema>;
+export type SetupModeConfig = z.infer<typeof setupModeConfigSchema>;
 
 class ConfigService {
 	private static instance: ConfigService;
-	public readonly config: AppConfig;
-	private keysPath: string;
+	private _config!: AppConfig | SetupModeConfig;
+	private keysPath: string = '';
+	private _isSetupPending: boolean = false;
+
+	/**
+	 * Returns the config. In setup mode, some fields may be undefined.
+	 */
+	public get config(): AppConfig {
+		if (this._isSetupPending) {
+			// Return a partial config that works for setup mode
+			return this._config as AppConfig;
+		}
+		return this._config as AppConfig;
+	}
+
+	/**
+	 * Check if the app is in setup pending mode (waiting for credentials)
+	 */
+	public isSetupPending(): boolean {
+		return this._isSetupPending;
+	}
 
 	private constructor() {
 		// Note: dotenv is loaded in index.ts before this service is initialized
@@ -80,7 +124,7 @@ class ConfigService {
 		// Initialize or load SECRET and APIKEY
 
 		// 2. Layer user's config.json file
-		let fileConfig = {};
+		let fileConfig: Record<string, any> = {};
 		const configPath = path.join(appPaths.getConfigDir(), 'config.json');
 		try {
 			if (fs.existsSync(configPath)) {
@@ -105,6 +149,8 @@ class ConfigService {
 
 				fileConfig = userConfigSchema.parse(parsedJson); // Validate the user's config (will exclude sensitive fields)
 				console.log(`[ConfigService] Loaded user configuration from ${configPath}`);
+			} else {
+				console.log(`[ConfigService] No config.json found at ${configPath}`);
 			}
 		} catch (error) {
 			console.log(
@@ -122,13 +168,36 @@ class ConfigService {
 			...fileConfig,
 			SECRET: secrets.SECRET, // System secrets fill in the gaps
 			APIKEY: secrets.APIKEY,
+			IS_DOCKER: rawEnv.IS_DOCKER === 'true' || rawEnv.IS_DOCKER === '1',
+			IS_BINARY: (process as any).pkg ? true : false,
 		};
 
 		// 5. Validate final configuration
 		const parsedConfig = finalConfigSchema.safeParse(mergedConfig);
 
 		if (!parsedConfig.success) {
-			// If validation fails, log the errors and exit immediately.
+			// Check if we're in binary mode on a keyring-supported platform
+			// In this case, we can start in "setup pending" mode
+			if (requiresKeyringSetup()) {
+				console.log('⏳ [ConfigService] Binary mode detected without credentials.');
+				console.log('⏳ [ConfigService] Starting in setup pending mode...');
+				console.log('⏳ [ConfigService] Please complete the initial setup via the web interface.');
+
+				// Create a setup-mode config with placeholder values
+				this._isSetupPending = true;
+				this._config = {
+					...mergedConfig,
+					ENCRYPTION_KEY: '', // Will be set during setup
+					USER_NAME: 'admin', // Default value
+					USER_PASSWORD: '', // Will be set during setup
+					SETUP_PENDING: true,
+				} as SetupModeConfig;
+
+				console.log('⏳ Environment configuration loaded in SETUP PENDING mode.');
+				return;
+			}
+
+			// If validation fails and not in keyring mode, log the errors and exit immediately.
 			// This is "fail-fast" and prevents the app from running in a broken state.
 			console.error('❌ Invalid environment configuration:');
 			parsedConfig.error.issues.forEach(err => {
@@ -142,7 +211,7 @@ class ConfigService {
 			process.exit(1);
 		}
 
-		this.config = parsedConfig.data;
+		this._config = parsedConfig.data;
 		console.log('✅ Environment configuration loaded and validated successfully.');
 	}
 
@@ -204,7 +273,63 @@ class ConfigService {
 	public isDevelopment(): boolean {
 		return this.config.NODE_ENV === 'development';
 	}
+
+	/**
+	 * Complete the initial setup by updating config with credentials.
+	 * This is called after credentials are stored in the keyring.
+	 */
+	public completeSetup(credentials: {
+		ENCRYPTION_KEY: string;
+		USER_NAME: string;
+		USER_PASSWORD: string;
+	}): void {
+		if (!this._isSetupPending) {
+			throw new Error('Setup is not pending. Cannot complete setup.');
+		}
+
+		// Update the config with the new credentials
+		this._config = {
+			...this._config,
+			...credentials,
+			SETUP_PENDING: false,
+		} as AppConfig;
+
+		this._isSetupPending = false;
+		console.log('✅ [ConfigService] Setup completed. Credentials loaded from keyring.');
+	}
+
+	/**
+	 * Reinitialize ConfigService with credentials from keyring.
+	 * Used after initial setup to reload config with actual credentials.
+	 */
+	public static async reinitializeWithKeyringCredentials(): Promise<boolean> {
+		if (!ConfigService.instance || !ConfigService.instance._isSetupPending) {
+			return false;
+		}
+
+		try {
+			// Dynamically import keyring service to avoid circular dependencies
+			const { keyringService } = await import('./KeyringService');
+			const credentials = await keyringService.getAllCredentials();
+
+			if (credentials.ENCRYPTION_KEY && credentials.USER_NAME && credentials.USER_PASSWORD) {
+				ConfigService.instance.completeSetup({
+					ENCRYPTION_KEY: credentials.ENCRYPTION_KEY,
+					USER_NAME: credentials.USER_NAME,
+					USER_PASSWORD: credentials.USER_PASSWORD,
+				});
+				return true;
+			}
+		} catch (error) {
+			console.error('[ConfigService] Failed to reinitialize with keyring credentials:', error);
+		}
+
+		return false;
+	}
 }
 
 // Export a single, ready-to-use instance (the singleton)
 export const configService = ConfigService.getInstance();
+
+// Also export the class for static methods
+export { ConfigService };

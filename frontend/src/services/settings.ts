@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_URL } from '../utils/constants';
 
+// ============== Settings API ==============
+
 // Get Settings
 export async function getSettings() {
    const url = new URL(`${API_URL}/settings`);
@@ -159,5 +161,53 @@ export function useValidateIntegration() {
          // TODO: Should Display a Notification Bubble.
          console.log('# Settings Updated! :', res);
       },
+   });
+}
+
+// ============== Setup API ==============
+
+export interface SetupStatus {
+   setupPending: boolean;
+   isBinary: boolean;
+   requiresKeyringSetup: boolean;
+   platform: string;
+}
+
+export interface SetupCredentials {
+   encryptionKey: string;
+   userName: string;
+   userPassword: string;
+}
+
+// Fetch setup status
+export async function getSetupStatus(): Promise<{ success: boolean; data: SetupStatus }> {
+   const res = await fetch(`${API_URL}/setup/status`, { method: 'GET' });
+   if (!res.ok) {
+      throw new Error('Failed to get setup status');
+   }
+   return res.json();
+}
+
+export function useSetupStatus() {
+   return useQuery({
+      queryKey: ['setupStatus'],
+      queryFn: getSetupStatus,
+      retry: false,
+   });
+}
+
+// Complete setup
+export async function completeSetup(credentials: SetupCredentials): Promise<{ success: boolean; message?: string; error?: string }> {
+   const res = await fetch(`${API_URL}/setup/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+   });
+   return res.json();
+}
+
+export function useCompleteSetup() {
+   return useMutation({
+      mutationFn: completeSetup,
    });
 }

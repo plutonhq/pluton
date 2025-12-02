@@ -7,6 +7,8 @@ interface LoginCredentials {
    password: string;
 }
 
+export type InstallType = 'docker' | 'binary' | 'dev';
+
 //VALIDATE USER
 export async function validateAuth() {
    const res = await fetch(`${API_URL}/user/validate`, { method: 'GET', credentials: 'include' });
@@ -15,14 +17,17 @@ export async function validateAuth() {
    }
    const appVersion = res.headers.get('x-app-version');
    const serverOS = res.headers.get('x-server-os');
+   const installType = (res.headers.get('x-install-type') || 'dev') as InstallType;
 
    (window as any).plutonVersion = appVersion || 'unknown';
    (window as any).plutonServerOS = serverOS || 'unknown';
+   (window as any).plutonInstallType = installType;
 
    const data = await res.json();
    return {
       ...data,
       appVersion,
+      installType,
    };
 }
 

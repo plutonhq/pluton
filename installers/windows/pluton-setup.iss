@@ -70,13 +70,11 @@ Source: "..\..\dist\executables\pluton-win-x64\drizzle\*"; DestDir: "{app}\drizz
 Source: "tools\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
-; Set system-wide environment variables for sensitive data
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "PLUTON_ENCRYPTION_KEY"; ValueData: "{code:GetEncryptionKey}"; Flags: uninsdeletevalue
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "PLUTON_USER_NAME"; ValueData: "{code:GetUserName}"; Flags: uninsdeletevalue
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "PLUTON_USER_PASSWORD"; ValueData: "{code:GetUserPassword}"; Flags: uninsdeletevalue
-
-; Also set the data directory explicitly if needed, though AppPaths defaults to ProgramData
+; Set the data directory environment variable
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "PLUTON_DATA_DIR"; ValueData: "{commonappdata}\{#MyAppName}"; Flags: uninsdeletevalue
+
+; NOTE: PLUTON_ENCRYPTION_KEY, PLUTON_USER_NAME, PLUTON_USER_PASSWORD are no longer set here.
+; They will be configured via the web interface and stored securely in Windows Credential Manager.
 
 [Run]
 ; Install the service using NSSM
@@ -87,8 +85,10 @@ Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} Description ""P
 Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} Start SERVICE_AUTO_START"; Flags: runhidden
 ; Set service AppDirectory
 Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} AppDirectory ""{app}"""; Flags: runhidden
-; Set environment variables directly on the service (Avoids reboot requirement)
-Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} AppEnvironmentExtra PLUTON_ENCRYPTION_KEY=""{code:GetEncryptionKey}"" PLUTON_USER_NAME=""{code:GetUserName}"" PLUTON_USER_PASSWORD=""{code:GetUserPassword}"" PLUTON_DATA_DIR=""{commonappdata}\{#MyAppName}"""; Flags: runhidden
+; Set environment variables for data directory on the service
+Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} AppEnvironmentExtra PLUTON_DATA_DIR=""{commonappdata}\{#MyAppName}"""; Flags: runhidden
+; NOTE: Credentials (ENCRYPTION_KEY, USER_NAME, USER_PASSWORD) are now stored in Windows Credential Manager
+; and will be configured via the web interface on first launch.
 ; Set stdout and stderr logging
 Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} AppStdout ""{commonappdata}\{#MyAppName}\logs\service-out.log"""; Flags: runhidden
 Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} AppStderr ""{commonappdata}\{#MyAppName}\logs\service-err.log"""; Flags: runhidden
@@ -103,22 +103,9 @@ Filename: "{app}\nssm.exe"; Parameters: "remove {#MyAppServiceName} confirm"; Fl
 
 [Code]
 var
-  SensitivePage: TWizardPage;
   SettingsPage: TInputQueryWizardPage;
   
-  // Custom Controls for Sensitive Page
-  lblEncryptionKey: TLabel;
-  txtEncryptionKey: TPasswordEdit;
-  lblEncryptionKeyInfo: TLabel;
-  
-  lblUserName: TLabel;
-  txtUserName: TNewEdit;
-  
-  lblUserPassword: TLabel;
-  txtUserPassword: TPasswordEdit;
-  
   // Variables to store inputs
-  EncryptionKey, UserName, UserPassword: string;
   ServerPort, MaxConcurrentBackups: string;
 
 procedure InitializeWizard;
@@ -126,67 +113,13 @@ begin
   // Customize Wizard Colors
   WizardForm.MainPanel.Color := $fff5f5;
   
-  // --- 1. Sensitive Configuration Page (Custom) ---
-  SensitivePage := CreateCustomPage(wpLicense,
-    'Security Configuration', 'Please enter the required security credentials.');
-    
-  // Encryption Key Label
-  lblEncryptionKey := TLabel.Create(WizardForm);
-  lblEncryptionKey.Parent := SensitivePage.Surface;
-  lblEncryptionKey.Caption := 'Encryption Key (min 12 chars):';
-  lblEncryptionKey.Left := 0;
-  lblEncryptionKey.Top := 0;
-  
-  // Encryption Key Input
-  txtEncryptionKey := TPasswordEdit.Create(WizardForm);
-  txtEncryptionKey.Parent := SensitivePage.Surface;
-  txtEncryptionKey.Left := 0;
-  txtEncryptionKey.Top := lblEncryptionKey.Top + lblEncryptionKey.Height + 6;
-  txtEncryptionKey.Width := SensitivePage.SurfaceWidth;
-  
-  // Encryption Key Info (Caption)
-  lblEncryptionKeyInfo := TLabel.Create(WizardForm);
-  lblEncryptionKeyInfo.Parent := SensitivePage.Surface;
-  lblEncryptionKeyInfo.Caption := 'Used to encrypt all your backups. Do not lose this!';
-  lblEncryptionKeyInfo.Font.Color := clGray;
-  lblEncryptionKeyInfo.Left := 0;
-  lblEncryptionKeyInfo.Top := txtEncryptionKey.Top + txtEncryptionKey.Height + 6;
-  lblEncryptionKeyInfo.Width := SensitivePage.SurfaceWidth;
-  lblEncryptionKeyInfo.WordWrap := True;
-
-  // Admin Username Label
-  lblUserName := TLabel.Create(WizardForm);
-  lblUserName.Parent := SensitivePage.Surface;
-  lblUserName.Caption := 'Admin Username:';
-  lblUserName.Left := 0;
-  lblUserName.Top := lblEncryptionKeyInfo.Top + lblEncryptionKeyInfo.Height + 16;
-  
-  // Admin Username Input
-  txtUserName := TNewEdit.Create(WizardForm);
-  txtUserName.Parent := SensitivePage.Surface;
-  txtUserName.Left := 0;
-  txtUserName.Top := lblUserName.Top + lblUserName.Height + 6;
-  txtUserName.Width := SensitivePage.SurfaceWidth;
-  txtUserName.Text := 'admin'; // Default value
-
-  // Admin Password Label
-  lblUserPassword := TLabel.Create(WizardForm);
-  lblUserPassword.Parent := SensitivePage.Surface;
-  lblUserPassword.Caption := 'Admin Password:';
-  lblUserPassword.Left := 0;
-  lblUserPassword.Top := txtUserName.Top + txtUserName.Height + 16;
-
-  // Admin Password Input
-  txtUserPassword := TPasswordEdit.Create(WizardForm);
-  txtUserPassword.Parent := SensitivePage.Surface;
-  txtUserPassword.Left := 0;
-  txtUserPassword.Top := lblUserPassword.Top + lblUserPassword.Height + 6;
-  txtUserPassword.Width := SensitivePage.SurfaceWidth;
-
-  // --- 2. General Settings Page ---
-  SettingsPage := CreateInputQueryPage(SensitivePage.ID,
+  // --- General Settings Page ---
+  // NOTE: Security credentials (Encryption Key, Username, Password) are now configured
+  // via the web interface after installation and stored in Windows Credential Manager.
+  SettingsPage := CreateInputQueryPage(wpLicense,
     'General Settings', 'Configure the application defaults.',
-    'You can change these settings later in the config file.');
+    'You can change these settings later in the config file.' + #13#10 + #13#10 +
+    'NOTE: Security credentials will be configured via the web interface after installation.');
 
   SettingsPage.Add('Server Port:', False);
   SettingsPage.Add('Max Concurrent Backups:', False);
@@ -203,43 +136,8 @@ begin
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
-var
-  I: Integer;
 begin
   Result := True;
-
-  // Validate Sensitive Page
-  if CurPageID = SensitivePage.ID then
-  begin
-    // Check ENCRYPTION_KEY length
-    if Length(txtEncryptionKey.Text) < 12 then
-    begin
-      MsgBox('Encryption Key must be at least 12 characters long.', mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
-
-    // Check User Name
-    if Length(txtUserName.Text) = 0 then
-    begin
-      MsgBox('Admin Username cannot be empty.', mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
-
-    // Check User Password
-    if Length(txtUserPassword.Text) = 0 then
-    begin
-      MsgBox('Admin Password cannot be empty.', mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
-
-    // Store values
-    EncryptionKey := txtEncryptionKey.Text;
-    UserName := txtUserName.Text;
-    UserPassword := txtUserPassword.Text;
-  end;
 
   // Validate Settings Page
   if CurPageID = SettingsPage.ID then
@@ -248,22 +146,6 @@ begin
     ServerPort := SettingsPage.Values[0];
     MaxConcurrentBackups := SettingsPage.Values[1];
   end;
-end;
-
-// Getter functions for Registry section
-function GetEncryptionKey(Param: String): String;
-begin
-  Result := EncryptionKey;
-end;
-
-function GetUserName(Param: String): String;
-begin
-  Result := UserName;
-end;
-
-function GetUserPassword(Param: String): String;
-begin
-  Result := UserPassword;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -296,7 +178,9 @@ begin
   begin
     WizardForm.FinishedLabel.Caption := 'Setup has finished installing Pluton on your computer.' + #13#10 + #13#10 +
       'The service has been started successfully.' + #13#10 + #13#10 +
-      'You can access the application at: http://localhost:' + ServerPort + #13#10 + #13#10 +
+      'IMPORTANT: Complete the initial setup by visiting:' + #13#10 +
+      'http://localhost:' + ServerPort + #13#10 + #13#10 +
+      'You will need to configure your encryption key and admin credentials.' + #13#10 + #13#10 +
       'Please click Finish to exit Setup.';
       
     // Optional: Open browser

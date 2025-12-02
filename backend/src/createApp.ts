@@ -11,12 +11,14 @@ import { createRestoreRouter } from './routes/restores';
 import { createUserRouter } from './routes/users';
 import { createSettingsRouter } from './routes/settings';
 import { createHealthRouter } from './routes/health';
+import { createSetupRouter } from './routes/setup';
 import { PlanController } from './controllers/PlanController';
 import { DeviceController } from './controllers/DeviceController';
 import { StorageController } from './controllers/StorageController';
 import { RestoreController } from './controllers/RestoreController';
 import { UserController } from './controllers/UserController';
 import { SettingsController } from './controllers/SettingsController';
+import { SetupController } from './controllers/SetupController';
 import { createBackupRouter } from './routes/backups';
 import { BackupController } from './controllers/BackupController';
 
@@ -120,6 +122,7 @@ export async function createApp(): Promise<{ app: Express }> {
 	const storageController = new StorageController(storageService);
 	const settingsController = new SettingsController(settingsService);
 	const userController = new UserController();
+	const setupController = new SetupController();
 
 	console.log('process.env.APP_URL :', process.env.APP_URL);
 	console.log(' configService.config.APP_URL:', configService.config.APP_URL);
@@ -155,6 +158,7 @@ export async function createApp(): Promise<{ app: Express }> {
 	});
 
 	app.use('/api/', apiLimiter);
+	app.use('/api/setup', createSetupRouter(setupController)); // Setup route (no auth required)
 	app.use('/api/user', createUserRouter(userController));
 	app.use('/api/plans', createPlanRouter(planController));
 	app.use('/api/backups', createBackupRouter(backupController));
