@@ -69,6 +69,16 @@ Source: "..\..\dist\executables\pluton-win-x64\drizzle\*"; DestDir: "{app}\drizz
 ; NSSM for service management (Assumes you have downloaded nssm.exe to installers/windows/tools/)
 Source: "tools\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 
+; Application icon for shortcuts
+Source: "setup.ico"; DestDir: "{app}"; DestName: "pluton.ico"; Flags: ignoreversion
+
+[Icons]
+; Desktop shortcut to open Pluton in browser
+Name: "{commondesktop}\Pluton"; Filename: "{app}\pluton-open.url"; IconFilename: "{app}\pluton.ico"; Comment: "Open Pluton Backup Dashboard"
+; Start Menu shortcuts
+Name: "{group}\Pluton"; Filename: "{app}\pluton-open.url"; IconFilename: "{app}\pluton.ico"; Comment: "Open Pluton Backup Dashboard"
+Name: "{group}\Uninstall Pluton"; Filename: "{uninstallexe}"
+
 [Registry]
 ; Set the data directory environment variable
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "PLUTON_DATA_DIR"; ValueData: "{commonappdata}\{#MyAppName}"; Flags: uninsdeletevalue
@@ -152,9 +162,19 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   ConfigPath: String;
   ConfigContent: String;
+  UrlFilePath: String;
+  UrlFileContent: String;
 begin
   if CurStep = ssPostInstall then
   begin
+    // Create URL shortcut file with dynamic port
+    UrlFilePath := ExpandConstant('{app}\pluton-open.url');
+    UrlFileContent := '[InternetShortcut]' + #13#10 +
+      'URL=http://localhost:' + ServerPort + #13#10 +
+      'IconIndex=0' + #13#10 +
+      'IconFile=' + ExpandConstant('{app}\pluton.ico');
+    SaveStringToFile(UrlFilePath, UrlFileContent, False);
+
     // Write config.json
     ConfigPath := ExpandConstant('{commonappdata}\{#MyAppName}\config\config.json');
     
