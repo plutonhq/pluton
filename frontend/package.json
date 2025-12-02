@@ -8,7 +8,7 @@
       "access": "public"
    },
    "files": [
-      "dist",
+      "dist-lib",
       "src",
       "README.md",
       "LICENSE"
@@ -62,71 +62,71 @@
    },
    "exports": {
       ".": {
-         "types": "./dist/index.d.ts",
-         "import": "./dist/index.js",
-         "default": "./dist/index.js"
+         "types": "./dist-lib/index.d.ts",
+         "import": "./dist-lib/index.js",
+         "default": "./dist-lib/index.js"
       },
       "./components": {
-         "types": "./dist/components/index.d.ts",
-         "import": "./dist/components.js"
+         "types": "./dist-lib/components/index.d.ts",
+         "import": "./dist-lib/components.js"
       },
       "./components/*": {
-         "types": "./dist/components/*/index.d.ts",
-         "import": "./dist/components/*/index.js"
+         "types": "./dist-lib/components/*/index.d.ts",
+         "import": "./dist-lib/components/*/index.js"
       },
       "./routes": {
-         "types": "./dist/routes/index.d.ts",
-         "import": "./dist/routes.js"
+         "types": "./dist-lib/routes/index.d.ts",
+         "import": "./dist-lib/routes.js"
       },
       "./routes/*": {
-         "types": "./dist/routes/*/*.d.ts",
-         "import": "./dist/routes/*/*.js"
+         "types": "./dist-lib/routes/*/*.d.ts",
+         "import": "./dist-lib/routes/*/*.js"
       },
       "./routes/*/*": {
-         "import": "./dist/routes/*/*"
+         "import": "./dist-lib/routes/*/*"
       },
       "./components/*/*": {
-         "import": "./dist/components/*/*"
+         "import": "./dist-lib/components/*/*"
       },
       "./services": {
-         "types": "./dist/services/index.d.ts",
-         "import": "./dist/services.js"
+         "types": "./dist-lib/services/index.d.ts",
+         "import": "./dist-lib/services.js"
       },
       "./hooks": {
-         "types": "./dist/hooks/index.d.ts",
-         "import": "./dist/hooks.js"
+         "types": "./dist-lib/hooks/index.d.ts",
+         "import": "./dist-lib/hooks.js"
       },
       "./utils": {
-         "types": "./dist/utils/index.d.ts",
-         "import": "./dist/utils.js"
+         "types": "./dist-lib/utils/index.d.ts",
+         "import": "./dist-lib/utils.js"
       },
       "./context": {
-         "types": "./dist/context/index.d.ts",
-         "import": "./dist/context.js"
+         "types": "./dist-lib/context/index.d.ts",
+         "import": "./dist-lib/context.js"
       },
       "./types": {
-         "types": "./dist/@types/index.d.ts",
-         "import": "./dist/@types/index.js"
+         "types": "./dist-lib/@types/index.d.ts",
+         "import": "./dist-lib/@types/index.js"
       },
       "./@types/*": {
-         "types": "./dist/@types/*.d.ts"
+         "types": "./dist-lib/@types/*.d.ts"
       },
       "./config/*": {
-         "types": "./dist/config/*.d.ts",
-         "import": "./dist/config/*.js"
+         "types": "./dist-lib/config/*.d.ts",
+         "import": "./dist-lib/config/*.js"
       },
       "./styles/*": {
-         "import": "./dist/styles/*"
+         "import": "./dist-lib/styles/*"
       },
       "./router": {
-         "types": "./dist/router.d.ts",
-         "import": "./dist/router.js"
+         "types": "./dist-lib/router.d.ts",
+         "import": "./dist-lib/router.js"
       },
       "./package.json": "./package.json"
    },
-   "main": "./dist/index.js",
-   "module": "./dist/index.js",
-   "types": "./dist/index.d.ts",
+   "main": "./dist-lib/index.js",
+   "module": "./dist-lib/index.js",
+   "types": "./dist-lib/index.d.ts",
    "scripts": {
       "build": "tsc -b && vite build",
       "build:lib": "vite build --config vite.config.lib.ts && tsc -p tsconfig.lib.json",

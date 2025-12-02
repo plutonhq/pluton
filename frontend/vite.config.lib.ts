@@ -4,7 +4,7 @@ import { resolve } from 'path';
 import { copyFileSync, mkdirSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 
-// Plugin to copy SCSS files to dist
+// Plugin to copy SCSS files to dist-lib
 function copyScssPlugin() {
    return {
       name: 'copy-scss',
@@ -24,9 +24,9 @@ function copyScssPlugin() {
             });
          };
 
-         // Copy SCSS files from src to dist
-         copyScssFiles(resolve(__dirname, 'src'), resolve(__dirname, 'dist'));
-         console.log('✓ SCSS files copied to dist');
+         // Copy SCSS files from src to dist-lib
+         copyScssFiles(resolve(__dirname, 'src'), resolve(__dirname, 'dist-lib'));
+         console.log('✓ SCSS files copied to dist-lib');
       },
    };
 }
@@ -98,7 +98,7 @@ export default defineConfig(({ command, mode }) => ({
       sourcemap: true,
       // Generate CSS file
       cssCodeSplit: false,
-      outDir: 'dist',
+      outDir: 'dist-lib',
       emptyOutDir: command === 'build', // Only empty in build mode, not watch
       watch: command === 'serve' ? {} : null,
    },
