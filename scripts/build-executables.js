@@ -16,9 +16,18 @@ const rootDir = resolve(__dirname, "..");
 const backendDir = resolve(rootDir, "backend");
 const frontendDir = resolve(rootDir, "frontend");
 
+// Parse command line arguments for output name
+// Usage: node build-executables.js [--name <output-name>]
+// Example: node build-executables.js --name pluton-pro
+const args = process.argv.slice(2);
+const nameIndex = args.indexOf("--name");
+const OUTPUT_NAME =
+  nameIndex !== -1 && args[nameIndex + 1] ? args[nameIndex + 1] : "pluton";
+
 console.log("╔═══════════════════════════════════════════════════════════╗");
 console.log("║   🚀 Pluton Multi-Platform Executable Build Script       ║");
 console.log("╚═══════════════════════════════════════════════════════════╝\n");
+console.log(`📛 Output name: ${OUTPUT_NAME}\n`);
 
 // Version configuration - Update these to use latest versions
 const BETTER_SQLITE3_VERSION = "12.4.4"; // Latest: Check https://github.com/WiseLibs/better-sqlite3/releases
@@ -148,25 +157,42 @@ async function fileExists(path) {
 }
 
 /**
- * Step 1: Build Frontend
+ * Step 1: Install Dependencies
+ */
+async function installDependencies() {
+  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log(
+    "📦 Step 1: Install Dependencies",
+    process.env.USE_LOCAL_CORE ? "(Skipped)" : ""
+  );
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+  // FOR PRO: If USE_LOCAL_CORE is set, skip installing dependencies
+  // As it breaks the linking to local core packages
+  if (!process.env.USE_LOCAL_CORE) {
+    exec("pnpm install", { cwd: rootDir });
+    console.log("✅ Dependencies installed");
+  }
+}
+
+/**
+ * Step 2: Build Frontend
  */
 async function buildFrontend() {
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📦 Step 1: Building Frontend");
+  console.log("📦 Step 2: Building Frontend");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
-  exec("pnpm install", { cwd: frontendDir });
   exec("pnpm run build", { cwd: frontendDir });
 
   console.log("✅ Frontend build completed");
 }
 
 /**
- * Step 2: Copy Frontend Build to Backend
+ * Step 3: Copy Frontend Build to Backend
  */
 async function copyFrontendToBackend() {
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📦 Step 2: Copying Frontend Build to Backend");
+  console.log("📦 Step 3: Copying Frontend Build to Backend");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
   const frontendDistDir = join(frontendDir, "dist");
@@ -203,19 +229,6 @@ async function copyDirectory(src, dest) {
       await copyFile(srcPath, destPath);
     }
   }
-}
-
-/**
- * Step 3: Install Backend Dependencies
- */
-async function installBackendDeps() {
-  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📦 Step 3: Installing Backend Dependencies");
-  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-
-  exec("pnpm install", { cwd: backendDir });
-
-  console.log("✅ Backend dependencies installed");
 }
 
 /**
@@ -642,9 +655,10 @@ async function generateExecutables() {
 
   console.log(`\n🔨 Building executables for all platforms...`);
   console.log(`   Targets: ${pkgTargets}`);
+  console.log(`   Output name: ${OUTPUT_NAME}`);
 
   // Output to pkg-builds directory to avoid naming conflicts with distribution folders
-  const pkgCommand = `npx pkg ${entryPoint} --targets ${pkgTargets} --output ${join(pkgBuildsDir, "pluton")} --compress GZip --public --public-packages "*" --options expose-gc --no-bytecode`;
+  const pkgCommand = `npx pkg ${entryPoint} --targets ${pkgTargets} --output ${join(pkgBuildsDir, OUTPUT_NAME)} --compress GZip --public --public-packages "*" --options expose-gc --no-bytecode`;
 
   try {
     exec(pkgCommand, { cwd: rootDir });
@@ -671,7 +685,7 @@ async function createDistributionPackages() {
   for (const [platform, config] of Object.entries(targets)) {
     console.log(`\n📦 Creating distribution package for ${platform}...`);
 
-    const packageDir = join(executablesDir, `pluton-${platform}`);
+    const packageDir = join(executablesDir, `${OUTPUT_NAME}-${platform}`);
     const packageBinariesDir = join(
       packageDir,
       "binaries",
@@ -683,7 +697,10 @@ async function createDistributionPackages() {
 
     // Determine the source executable name generated by pkg
     // pkg might strip the node version from the filename or add .exe on Windows
-    let executableSource = join(pkgBuildsDir, `pluton-${config.pkgTarget}`);
+    let executableSource = join(
+      pkgBuildsDir,
+      `${OUTPUT_NAME}-${config.pkgTarget}`
+    );
 
     // Check for variations if the exact target name doesn't exist
     if (!(await fileExists(executableSource))) {
@@ -693,7 +710,7 @@ async function createDistributionPackages() {
       }
       // Try without the node version (e.g. pluton-linux-x64 instead of pluton-node24-linux-x64)
       else {
-        const simplifiedName = `pluton-${platform}`;
+        const simplifiedName = `${OUTPUT_NAME}-${platform}`;
         const simplifiedSource = join(pkgBuildsDir, simplifiedName);
 
         if (await fileExists(simplifiedSource)) {
@@ -837,7 +854,7 @@ async function createDistributionPackages() {
       console.warn(`  ⚠️  Drizzle migrations not found at ${drizzleSrc}`);
     }
 
-    console.log(`✅ Distribution package created: pluton-${platform}/`);
+    console.log(`✅ Distribution package created: ${OUTPUT_NAME}-${platform}/`);
   }
 
   console.log("\n✅ All distribution packages created successfully");
@@ -851,9 +868,9 @@ async function main() {
   try {
     const startTime = Date.now();
 
+    await installDependencies();
     await buildFrontend();
     await copyFrontendToBackend();
-    await installBackendDeps();
     await compileBackend();
     await setupBetterSqlite3();
     await setupKeyring();

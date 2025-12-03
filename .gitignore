@@ -18,6 +18,7 @@ dist-lib
 *.AppImage
 *.zsync
 .DirIcon
+*.generated.iss
 
 
 # Editor directories and files
