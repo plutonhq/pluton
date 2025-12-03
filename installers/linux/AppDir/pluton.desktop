@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Pluton
+Comment=Automated Backup Solution
+Exec=pluton
+Icon=pluton
+Type=Application
+Categories=Utility;
+Terminal=false
+StartupNotify=true
+X-AppImage-Version=0.0.1

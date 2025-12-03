@@ -37,10 +37,16 @@ export function getInstallType(): InstallType {
 
 /**
  * Checks if running on a Linux desktop environment (not headless/server)
- * by checking for common display environment variables
+ * by checking for common display environment variables or the PLUTON_LINUX_DESKTOP flag
+ * set by the AppImage installer for systemd service mode.
  */
 export function isLinuxDesktop(): boolean {
 	if (process.platform !== 'linux') return false;
+
+	// Check for explicit desktop flag (set by AppImage installer for systemd service)
+	if (process.env.PLUTON_LINUX_DESKTOP === 'true' || process.env.PLUTON_LINUX_DESKTOP === '1') {
+		return true;
+	}
 
 	// Check for display server (X11 or Wayland)
 	const hasDisplay = !!(process.env.DISPLAY || process.env.WAYLAND_DISPLAY);

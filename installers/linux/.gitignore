@@ -1,0 +1,17 @@
+# Downloaded tools
+appimagetool-*.AppImage
+
+# Build outputs
+*.zsync
+*.AppImage
+
+# Files copied during build (from dist/)
+AppDir/pluton.png
+AppDir/usr/bin/pluton
+AppDir/usr/bin/binaries/
+AppDir/usr/bin/node_modules/
+AppDir/usr/bin/drizzle/
+
+# Legacy locations (if any)
+AppDir/usr/lib/
+AppDir/usr/share/pluton/drizzle/

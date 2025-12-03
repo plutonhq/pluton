@@ -10,8 +10,14 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-lib
 *.local
 /.turbo
+
+# Installer build artifacts
+*.AppImage
+*.zsync
+.DirIcon
 
 
 # Editor directories and files

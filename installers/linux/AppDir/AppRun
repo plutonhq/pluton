@@ -1,0 +1,57 @@
+#!/bin/bash
+# AppRun - Entry point for Pluton AppImage
+# Supports: direct run, --install, --uninstall modes
+
+set -e
+
+# Get the directory where the AppImage is mounted
+APPDIR="$(dirname "$(readlink -f "$0")")"
+export APPDIR
+
+# Export AppImage-specific environment variables for binary resolution
+export APPIMAGE_MODE=1
+
+# Set library path for native modules
+export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${APPDIR}/usr/lib/node_modules:${LD_LIBRARY_PATH}"
+
+# Handle command line arguments
+case "$1" in
+    --install)
+        # Installation mode - requires root
+        if [ "$EUID" -ne 0 ]; then
+            echo "Installation requires root privileges. Please run with sudo:"
+            echo "  sudo $APPIMAGE --install"
+            exit 1
+        fi
+        exec "${APPDIR}/usr/share/pluton/install.sh" "$@"
+        ;;
+    --uninstall)
+        # Uninstallation mode - requires root
+        if [ "$EUID" -ne 0 ]; then
+            echo "Uninstallation requires root privileges. Please run with sudo:"
+            echo "  sudo $APPIMAGE --uninstall"
+            exit 1
+        fi
+        exec "${APPDIR}/usr/share/pluton/uninstall.sh" "$@"
+        ;;
+    --help|-h)
+        echo "Pluton - Automated Backup Solution"
+        echo ""
+        echo "Usage:"
+        echo "  ./Pluton.AppImage              Run Pluton directly"
+        echo "  sudo ./Pluton.AppImage --install    Install as system service"
+        echo "  sudo ./Pluton.AppImage --uninstall  Uninstall system service"
+        echo ""
+        echo "Options:"
+        echo "  --install     Install Pluton as a systemd service (requires root)"
+        echo "  --uninstall   Remove Pluton service and files (requires root)"
+        echo "  --help, -h    Show this help message"
+        echo ""
+        echo "After installation, access Pluton at: http://localhost:5173"
+        exit 0
+        ;;
+    *)
+        # Normal run mode - execute the pluton binary
+        exec "${APPDIR}/usr/bin/pluton" "$@"
+        ;;
+esac
