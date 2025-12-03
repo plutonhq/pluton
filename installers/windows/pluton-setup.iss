@@ -11,7 +11,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{A1B2C3D4-E5F6-7890-1234-567890ABCDEF}
+AppId={{F7A3B8C1-5D2E-4F6A-9B8C-1E2D3F4A5B6C}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -87,7 +87,7 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 ; They will be configured via the web interface and stored securely in Windows Credential Manager.
 
 [Run]
-; Install the service using NSSM
+; Install the service using NSSM (will fail silently if service already exists on upgrade - that's OK)
 Filename: "{app}\nssm.exe"; Parameters: "install {#MyAppServiceName} ""{app}\{#MyAppExeName}"""; Flags: runhidden; StatusMsg: "Installing service..."
 ; Set service description
 Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} Description ""Pluton Backup Service"""; Flags: runhidden
@@ -111,12 +111,125 @@ Filename: "{app}\nssm.exe"; Parameters: "stop {#MyAppServiceName}"; Flags: runhi
 ; Remove the service
 Filename: "{app}\nssm.exe"; Parameters: "remove {#MyAppServiceName} confirm"; Flags: runhidden; RunOnceId: "RemoveService"
 
+[UninstallDelete]
+; Remove dynamically created files
+Type: files; Name: "{app}\pluton-open.url"
+
 [Code]
 var
   SettingsPage: TInputQueryWizardPage;
+  IsUpgrade: Boolean;
   
   // Variables to store inputs
   ServerPort, MaxConcurrentBackups: string;
+
+// Check if service exists by querying its status
+function ServiceExists(ServiceName: String): Boolean;
+var
+  ResultCode: Integer;
+begin
+  // Use sc query - returns 0 if service exists, non-zero otherwise
+  Result := Exec('sc.exe', 'query "' + ServiceName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+end;
+
+// Check if config file exists (indicates existing installation)
+function ConfigExists(): Boolean;
+begin
+  Result := FileExists(ExpandConstant('{commonappdata}\{#MyAppName}\config\config.json'));
+end;
+
+// Read port from existing config file (simple parsing)
+function ReadPortFromConfig(): String;
+var
+  ConfigContent: AnsiString;
+  ConfigPath: String;
+  PortPos, PortEnd: Integer;
+  PortStr: String;
+begin
+  Result := '5173'; // Default
+  ConfigPath := ExpandConstant('{commonappdata}\{#MyAppName}\config\config.json');
+  
+  if LoadStringFromFile(ConfigPath, ConfigContent) then
+  begin
+    // Find "SERVER_PORT": and extract the number
+    PortPos := Pos('"SERVER_PORT":', String(ConfigContent));
+    if PortPos > 0 then
+    begin
+      PortStr := Copy(String(ConfigContent), PortPos + 14, 10); // Get chars after "SERVER_PORT":
+      // Trim whitespace and extract number
+      PortStr := Trim(PortStr);
+      PortEnd := 1;
+      while (PortEnd <= Length(PortStr)) and (PortStr[PortEnd] >= '0') and (PortStr[PortEnd] <= '9') do
+        PortEnd := PortEnd + 1;
+      if PortEnd > 1 then
+        Result := Copy(PortStr, 1, PortEnd - 1);
+    end;
+  end;
+end;
+
+// Stop the service if it's running
+function StopService(ServiceName: String): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := True;
+  // Use net stop since nssm.exe might not be installed yet
+  Exec('net', 'stop "' + ServiceName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  // Give the service time to stop
+  Sleep(2000);
+end;
+
+// Install service using NSSM
+function InstallService(): Boolean;
+var
+  ResultCode: Integer;
+  NssmPath, ExePath: String;
+begin
+  NssmPath := ExpandConstant('{app}\nssm.exe');
+  ExePath := ExpandConstant('{app}\{#MyAppExeName}');
+  Result := Exec(NssmPath, 'install "{#MyAppServiceName}" "' + ExePath + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+// Called at very start - detect upgrade early
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  // Detect upgrade by checking if service or config exists
+  IsUpgrade := ServiceExists('{#MyAppServiceName}') or ConfigExists();
+  
+  if IsUpgrade then
+  begin
+    // Read existing port for use throughout setup
+    ServerPort := ReadPortFromConfig();
+    MaxConcurrentBackups := '2'; // Default, not critical for upgrades
+  end
+  else
+  begin
+    // Set defaults for fresh install
+    ServerPort := '5173';
+    MaxConcurrentBackups := '2';
+  end;
+end;
+
+// Called before installation starts - stop existing service
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  Result := '';
+  
+  if IsUpgrade then
+  begin
+    Log('Upgrade detected - stopping existing service');
+    StopService('{#MyAppServiceName}');
+  end;
+end;
+
+// Skip settings page on upgrade
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+  if (PageID = SettingsPage.ID) and IsUpgrade then
+    Result := True;
+end;
 
 procedure InitializeWizard;
 begin
@@ -140,19 +253,19 @@ begin
   SettingsPage.Edits[1].Hint := 'Maximum number of backups to run simultaneously.';
   SettingsPage.Edits[1].ShowHint := True;
 
-  // Set defaults
-  SettingsPage.Values[0] := '5173';
-  SettingsPage.Values[1] := '2';
+  // Set defaults (will be overwritten by NextButtonClick if user changes them)
+  SettingsPage.Values[0] := ServerPort;
+  SettingsPage.Values[1] := MaxConcurrentBackups;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
 
-  // Validate Settings Page
+  // Validate Settings Page - only updates values if page was shown
   if CurPageID = SettingsPage.ID then
   begin
-    // Store values
+    // Store values from user input
     ServerPort := SettingsPage.Values[0];
     MaxConcurrentBackups := SettingsPage.Values[1];
   end;
@@ -175,32 +288,45 @@ begin
       'IconFile=' + ExpandConstant('{app}\pluton.ico');
     SaveStringToFile(UrlFilePath, UrlFileContent, False);
 
-    // Write config.json
+    // Only write config.json if it doesn't exist (preserve user settings on upgrade)
     ConfigPath := ExpandConstant('{commonappdata}\{#MyAppName}\config\config.json');
     
-    // Construct JSON content manually
-    ConfigContent := '{' + #13#10 +
-      '  "SERVER_PORT": ' + ServerPort + ',' + #13#10 +
-      '  "MAX_CONCURRENT_BACKUPS": ' + MaxConcurrentBackups + #13#10 +
-      '}';
-
-    if not SaveStringToFile(ConfigPath, ConfigContent, False) then
+    if not FileExists(ConfigPath) then
     begin
-      MsgBox('Failed to write configuration file.', mbError, MB_OK);
+      // Construct JSON content manually
+      ConfigContent := '{' + #13#10 +
+        '  "SERVER_PORT": ' + ServerPort + ',' + #13#10 +
+        '  "MAX_CONCURRENT_BACKUPS": ' + MaxConcurrentBackups + #13#10 +
+        '}';
+
+      if not SaveStringToFile(ConfigPath, ConfigContent, False) then
+      begin
+        MsgBox('Failed to write configuration file.', mbError, MB_OK);
+      end;
+    end
+    else
+    begin
+      Log('Config file already exists - preserving user settings');
     end;
   end;
 end;
 
 // Custom Completion Page
 procedure CurPageChanged(CurPageID: Integer);
+var
+  UpgradeNote: String;
 begin
   if CurPageID = wpFinished then
   begin
-    WizardForm.FinishedLabel.Caption := 'Setup has finished installing Pluton on your computer.' + #13#10 + #13#10 +
+    if IsUpgrade then
+      UpgradeNote := 'Pluton has been upgraded successfully.' + #13#10 + #13#10
+    else
+      UpgradeNote := 'Setup has finished installing Pluton on your computer.' + #13#10 + #13#10;
+      
+    WizardForm.FinishedLabel.Caption := UpgradeNote +
       'The service has been started successfully.' + #13#10 + #13#10 +
-      'IMPORTANT: Complete the initial setup by visiting:' + #13#10 +
+      'Access the dashboard at:' + #13#10 +
       'http://localhost:' + ServerPort + #13#10 + #13#10 +
-      'You will need to configure your encryption key and admin credentials.' + #13#10 + #13#10 +
       'Please click Finish to exit Setup.';
       
     // Optional: Open browser
