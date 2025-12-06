@@ -862,6 +862,68 @@ async function createDistributionPackages() {
 }
 
 /**
+ * Step 9: Create Linux Tarballs for Release
+ */
+async function createLinuxTarballs() {
+  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📦 Step 9: Creating Linux Tarballs for Release");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+  const executablesDir = join(rootDir, "dist", "executables");
+  const installersDir = join(rootDir, "dist", "installers");
+
+  // Ensure installers directory exists
+  await mkdir(installersDir, { recursive: true });
+
+  // Define Linux targets to compress
+  const linuxTargets = ["linux-x64", "linux-arm64"];
+
+  for (const platform of linuxTargets) {
+    const sourceDir = join(executablesDir, `${OUTPUT_NAME}-${platform}`);
+    const tarballName = `${OUTPUT_NAME}-${platform}.tar.gz`;
+    const tarballPath = join(installersDir, tarballName);
+
+    // Check if source directory exists
+    if (!(await fileExists(sourceDir))) {
+      console.warn(`  ⚠️  Source directory not found: ${sourceDir}`);
+      continue;
+    }
+
+    console.log(`\n🔧 Creating tarball for ${platform}...`);
+    console.log(`   Source: ${sourceDir}`);
+    console.log(`   Output: ${tarballPath}`);
+
+    try {
+      // Use tar command (available on Windows 10+ and all Unix systems)
+      // We need to cd to the executables dir so the tarball contains the folder name
+      const isWindows = os.platform() === "win32";
+      const folderName = `${OUTPUT_NAME}-${platform}`;
+
+      // Create tarball with the folder as root
+      const tarCommand = isWindows
+        ? `tar -czf "${tarballPath}" -C "${executablesDir}" "${folderName}"`
+        : `tar -czf "${tarballPath}" -C "${executablesDir}" "${folderName}"`;
+
+      execSync(tarCommand, { stdio: "pipe" });
+
+      // Get file size for display
+      const stats = await fs.promises.stat(tarballPath);
+      const sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
+
+      console.log(`  ✅ Created ${tarballName} (${sizeMB} MB)`);
+    } catch (error) {
+      console.error(
+        `  ❌ Failed to create tarball for ${platform}: ${error.message}`
+      );
+      throw error;
+    }
+  }
+
+  console.log("\n✅ Linux tarballs created successfully");
+  console.log(`📁 Tarballs location: ${installersDir}`);
+}
+
+/**
  * Main Build Process
  */
 async function main() {
@@ -877,6 +939,7 @@ async function main() {
     await downloadBinaries();
     await generateExecutables();
     await createDistributionPackages();
+    await createLinuxTarballs();
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 

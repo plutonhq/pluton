@@ -111,13 +111,6 @@ class KeyringService {
 		const isSupportedPlatform = isKeyringPlatform();
 
 		if (!isSupportedPlatform) {
-			if (platform === 'linux') {
-				console.log(
-					'[KeyringService] Linux detected but no desktop environment found (headless/server mode)'
-				);
-			} else {
-				console.log('[KeyringService] Keyring not supported on this platform:', platform);
-			}
 			this.isSupported = false;
 			return;
 		}

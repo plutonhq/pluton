@@ -1,0 +1,23 @@
+[Unit]
+Description=Pluton Backup Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/pluton/pluton
+WorkingDirectory=/var/lib/pluton
+User=root
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/var/lib/pluton/logs/stdout.log
+StandardError=append:/var/lib/pluton/logs/stderr.log
+
+# Load sensitive credentials from environment file
+EnvironmentFile=/etc/pluton/pluton.env
+
+# Non-sensitive environment variables
+Environment="PLUTON_DATA_DIR=/var/lib/pluton"
+Environment="NODE_ENV=production"
+
+[Install]
+WantedBy=multi-user.target
