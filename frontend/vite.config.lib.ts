@@ -17,7 +17,7 @@ function copyScssPlugin() {
 
                if (statSync(srcPath).isDirectory()) {
                   copyScssFiles(srcPath, distPath);
-               } else if (entry.endsWith('.scss')) {
+               } else if (entry.endsWith('.scss') || entry.endsWith('.css') || entry.endsWith('.png')) {
                   mkdirSync(dirname(distPath), { recursive: true });
                   copyFileSync(srcPath, distPath);
                }
@@ -26,7 +26,7 @@ function copyScssPlugin() {
 
          // Copy SCSS files from src to dist-lib
          copyScssFiles(resolve(__dirname, 'src'), resolve(__dirname, 'dist-lib'));
-         console.log('✓ SCSS files copied to dist-lib');
+         console.log('✓ SCSS/CSS/PNG files copied to dist-lib');
       },
    };
 }
