@@ -52,7 +52,7 @@ CLI_VERSION="latest"
 print_banner() {
     echo -e "${BLUE}"
     echo "╔═══════════════════════════════════════════════════════════╗"
-    echo "║       ${PRODUCT_NAME} Backup Service - Remote Installer            ║"
+    echo "║      ☄️ ${PRODUCT_NAME} Backup Service - Remote Installer ║"
     echo "╚═══════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 }

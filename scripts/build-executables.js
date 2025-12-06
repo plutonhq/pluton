@@ -241,7 +241,7 @@ async function compileBackend() {
 
   exec("pnpm run build:pkg", {
     cwd: backendDir,
-    env: { USE_LOCAL_CORE: process.env.USE_LOCAL_CORE }, // USE_LOCAL_CORE for build:pkg script (for PRO local development)
+    env: { ...process.env, USE_LOCAL_CORE: process.env.USE_LOCAL_CORE }, // USE_LOCAL_CORE for build:pkg script (for PRO local development)
   });
 
   console.log("✅ Backend compiled successfully");
@@ -528,7 +528,11 @@ async function downloadBinaries() {
             const normalizedPath = fileName.replace(/\\/g, "/");
             const baseName = normalizedPath.split("/").pop();
 
-            if (baseName === "restic" || baseName === "restic.exe") {
+            if (
+              baseName === "restic" ||
+              baseName === "restic.exe" ||
+              (baseName.startsWith("restic_") && baseName.endsWith(".exe"))
+            ) {
               const srcFile = join(extractDir, fileName);
               const stat = await fs.promises.stat(srcFile);
               if (stat.isFile()) {
