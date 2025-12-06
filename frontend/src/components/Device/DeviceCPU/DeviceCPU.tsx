@@ -11,6 +11,7 @@ const DeviceCPU = ({ cpu }: DeviceCPUProps) => {
    const processorIcon = getProcessorIcon(cpu.manufacturer);
 
    const cpuPercent = cpu.load?.currentLoad ? Math.round(cpu.load?.currentLoad) : 0;
+   const cpuName = cpu.manufacturer && cpu.brand ? `${cpu.manufacturer} ${cpu.brand}` : 'Unknown';
 
    return (
       <div className={`${classes.widget} ${classes.cpu}`}>
@@ -24,7 +25,7 @@ const DeviceCPU = ({ cpu }: DeviceCPUProps) => {
                </div>
                <div className={classes.infoBlockRight}>
                   <span>Processor</span>
-                  <span title={`${cpu.manufacturer} ${cpu.brand}`}>{`${cpu.manufacturer} ${cpu.brand}`}</span>
+                  <span title={cpuName}>{cpuName}</span>
                </div>
             </div>
             <div className={classes.infoBlock}>

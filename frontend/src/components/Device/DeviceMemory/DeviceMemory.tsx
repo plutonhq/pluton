@@ -24,7 +24,7 @@ const DeviceMemory = ({ memory }: DeviceMemoryProps) => {
       });
       const sortedGroups = Object.entries(memoryGroups).sort((a, b) => b[1] - a[1]);
       const primaryGroup = sortedGroups[0];
-      const mainText = `${primaryGroup[1]}x ${primaryGroup[0] || 'Unknown'}`;
+      const mainText = `${primaryGroup[1] || 1}x ${primaryGroup[0] || 'Unknown'}`;
       const remainingCount = sortedGroups.slice(1).reduce((sum, group) => sum + group[1], 0);
 
       if (remainingCount > 0) {

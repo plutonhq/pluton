@@ -210,13 +210,15 @@ const PlanForm = ({ title, planSettings, type, onPlanSettingsChange, onSubmit, i
             )}
             {step === 3 && (
                <div className={PFClasses.planStep}>
-                  <IntervalField
-                     label="Backup Interval*"
-                     fieldValue={planSettings.settings.interval}
-                     onUpdate={(intervalSettings) =>
-                        onPlanSettingsChange({ ...planSettings, settings: { ...planSettings.settings, interval: intervalSettings } })
-                     }
-                  />
+                  <div className={classes.field} style={{ width: '150px' }}>
+                     <IntervalField
+                        label="Backup Interval*"
+                        fieldValue={planSettings.settings.interval}
+                        onUpdate={(intervalSettings) =>
+                           onPlanSettingsChange({ ...planSettings, settings: { ...planSettings.settings, interval: intervalSettings } })
+                        }
+                     />
+                  </div>
 
                   <div className={classes.field} style={{ width: '150px' }}>
                      <NumberInput
