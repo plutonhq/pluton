@@ -82,12 +82,10 @@
          "types": "./dist-lib/routes/*/*.d.ts",
          "import": "./dist-lib/routes/*/*.js"
       },
-      "./routes/*/*": {
-         "import": "./dist-lib/routes/*/*"
-      },
-      "./components/*/*": {
-         "import": "./dist-lib/components/*/*"
-      },
+      "./routes/*/*.module.scss": "./dist-lib/routes/*/*.module.scss.js",
+      "./components/*/*.module.scss": "./dist-lib/components/*/*.module.scss.js",
+      "./routes/*/*": "./dist-lib/routes/*/*",
+      "./components/*/*": "./dist-lib/components/*/*",
       "./services": {
          "types": "./dist-lib/services/index.d.ts",
          "import": "./dist-lib/services.js"
@@ -115,13 +113,12 @@
          "types": "./dist-lib/config/*.d.ts",
          "import": "./dist-lib/config/*.js"
       },
-      "./styles/*": {
-         "import": "./dist-lib/styles/*"
-      },
+      "./styles/*": "./dist-lib/styles/*",
       "./router": {
          "types": "./dist-lib/router.d.ts",
          "import": "./dist-lib/router.js"
       },
+      "./*": "./dist-lib/*",
       "./package.json": "./package.json"
    },
    "main": "./dist-lib/index.js",
