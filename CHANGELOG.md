@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.3](https://github.com/plutonhq/pluton/compare/pluton-v0.0.2...pluton-v0.0.3) (2025-12-08)
+
+
+### Bug Fixes
+
+* incorrect AppImage version number. ([5508397](https://github.com/plutonhq/pluton/commit/5508397b1e279d354298f614e22b379e0c1e018b))
+
+
+### Build System
+
+* add support for platform specific builds for CI ([299a8e7](https://github.com/plutonhq/pluton/commit/299a8e759013a477a85e7b3420b899bb530f5d12))
+
 ## [0.0.2](https://github.com/plutonhq/pluton/compare/pluton-v0.0.1...pluton-v0.0.2) (2025-12-08)
 
 
