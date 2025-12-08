@@ -1,16 +1,17 @@
-# Dependencies
+# Dependencies (exclude all node_modules except in dist/executables)
 node_modules/
-**/node_modules/
+# Note: We can't use **/node_modules/ because it would exclude contents inside dist/executables
 
 # Build outputs
-dist/
-**/dist/
 build/
-**/build/
+backend/dist/
+frontend/dist/
+frontend/dist-lib/
+# Keep dist/executables for Dockerfile
 
 # Development data
 data/
-**/data/
+backend/data/
 
 # Test files
 coverage/

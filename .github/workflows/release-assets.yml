@@ -21,6 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - uses: pnpm/action-setup@v2
         with:
           version: 10.20.0
@@ -45,6 +48,13 @@ jobs:
         run: |
           chmod +x installers/linux/build-appimage.sh
           bash installers/linux/build-appimage.sh
+
+      - name: Upload Executables Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pluton-executables
+          path: dist/executables
+          retention-days: 1
 
       - name: Upload Linux Assets
         if: ${{ !env.ACT }}
@@ -95,9 +105,16 @@ jobs:
 
   docker:
     name: Build Docker Image
+    needs: build-linux
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download Executables Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pluton-executables
+          path: dist/executables
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -124,6 +141,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ !env.ACT }}
           tags: |

@@ -27,10 +27,6 @@ export function getBinaryPath(binaryName: 'restic' | 'rclone' | 'rear'): string 
 		if (fs.existsSync(appImageBinaryPath)) {
 			return appImageBinaryPath;
 		}
-
-		console.warn(
-			`[binaryPathResolver] Expected binary at '${appImageBinaryPath}' (AppImage) but not found. Trying fallbacks...`
-		);
 	}
 
 	// Priority 2: Check if running as a pkg-packaged executable
@@ -41,10 +37,6 @@ export function getBinaryPath(binaryName: 'restic' | 'rclone' | 'rear'): string 
 		if (fs.existsSync(pkgBinaryPath)) {
 			return pkgBinaryPath;
 		}
-
-		console.warn(
-			`[binaryPathResolver] Expected binary at '${pkgBinaryPath}' but not found. Trying fallbacks...`
-		);
 	}
 
 	// Priority 3: Production/installed binary next to executable
@@ -60,6 +52,15 @@ export function getBinaryPath(binaryName: 'restic' | 'rclone' | 'rear'): string 
 
 	if (fs.existsSync(devPath)) {
 		return devPath;
+	}
+
+	// Priority 5: Docker/Linux standard binary locations
+	const standardPaths = ['/usr/local/bin', '/usr/bin', '/bin'];
+	for (const standardPath of standardPaths) {
+		const standardBinaryPath = path.join(standardPath, fileName);
+		if (fs.existsSync(standardBinaryPath)) {
+			return standardBinaryPath;
+		}
 	}
 
 	// Final fallback to system PATH (shouldn't be needed in production)

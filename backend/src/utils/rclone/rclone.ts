@@ -10,13 +10,13 @@ export function runRcloneCommand(args: string[], env?: Record<string, string>): 
 		const rcloneConfigPath = getRcloneConfigPath();
 		const localAppData = process.env.LOCALAPPDATA || os.homedir();
 		const envVars = {
-			// ...process.env,
+			PATH: process.env.PATH, // Needed for docker instances
 			RCLONE_CONFIG: rcloneConfigPath,
 			LOCALAPPDATA: localAppData,
 			RCLONE_CONFIG_PASS: configService.config.ENCRYPTION_KEY,
 			...env,
 		};
-		console.log('rcloneBinary :', rcloneBinary);
+		// console.log('rcloneBinary :', rcloneBinary);
 		const rcProcess = spawn(rcloneBinary, args, { env: envVars });
 		let output = '';
 		let errorOutput = '';
