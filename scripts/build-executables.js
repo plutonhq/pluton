@@ -169,7 +169,7 @@ async function installDependencies() {
   // FOR PRO: If USE_LOCAL_CORE is set, skip installing dependencies
   // As it breaks the linking to local core packages
   if (!process.env.USE_LOCAL_CORE) {
-    exec("pnpm install", { cwd: rootDir });
+    exec("pnpm install --no-frozen-lockfile", { cwd: rootDir });
     console.log("✅ Dependencies installed");
   }
 }
@@ -182,7 +182,10 @@ async function buildFrontend() {
   console.log("📦 Step 2: Building Frontend");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
-  exec("pnpm run build", { cwd: frontendDir });
+  exec("pnpm run build", {
+    cwd: frontendDir,
+    env: { ...process.env, USE_PUBLISHED_CORE_FRONTEND: true },
+  });
 
   console.log("✅ Frontend build completed");
 }
