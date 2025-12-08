@@ -662,7 +662,7 @@ async function generateExecutables() {
   console.log(`   Output name: ${OUTPUT_NAME}`);
 
   // Output to pkg-builds directory to avoid naming conflicts with distribution folders
-  const pkgCommand = `npx pkg ${entryPoint} --targets ${pkgTargets} --output ${join(pkgBuildsDir, OUTPUT_NAME)} --compress GZip --public --public-packages "*" --options expose-gc --no-bytecode`;
+  const pkgCommand = `npx pkg ${entryPoint} --targets ${pkgTargets} --output ${join(pkgBuildsDir, OUTPUT_NAME)} --compress GZip --public --public-packages "*" --options expose-gc`;
 
   try {
     exec(pkgCommand, { cwd: rootDir });
@@ -721,6 +721,20 @@ async function createDistributionPackages() {
           executableSource = simplifiedSource;
         } else if (await fileExists(simplifiedSource + ".exe")) {
           executableSource = simplifiedSource + ".exe";
+        } else {
+          // Try even more simplified names (e.g. pluton-linux or pluton-win)
+          // Extract OS from platform (linux-x64 -> linux, win-x64 -> win)
+          const osName = platform.split("-")[0];
+          const osSimplifiedSource = join(
+            pkgBuildsDir,
+            `${OUTPUT_NAME}-${osName}`
+          );
+
+          if (await fileExists(osSimplifiedSource)) {
+            executableSource = osSimplifiedSource;
+          } else if (await fileExists(osSimplifiedSource + ".exe")) {
+            executableSource = osSimplifiedSource + ".exe";
+          }
         }
       }
     }
