@@ -36,7 +36,7 @@ const RCLONE_VERSION = "1.71.2"; // Latest: Check https://rclone.org/downloads/
 const KEYRING_VERSION = "1.2.0"; // Latest: Check https://www.npmjs.com/package/@napi-rs/keyring
 
 // Target configurations
-const targets = {
+const allTargets = {
   "win-x64": {
     pkgTarget: "node24-win-x64",
     executableName: "pluton.exe",
@@ -93,6 +93,34 @@ const targets = {
   //     keyringNodeFile: `keyring.darwin-arm64.node`,
   //   },
 };
+
+// Parse platform argument
+const platformIndex = args.indexOf("--platform");
+const requestedPlatforms =
+  platformIndex !== -1 && args[platformIndex + 1]
+    ? args[platformIndex + 1].split(",").map((p) => p.trim())
+    : null;
+
+let targets = allTargets;
+
+if (requestedPlatforms) {
+  targets = {};
+  for (const targetKey of Object.keys(allTargets)) {
+    const isMatch = requestedPlatforms.some((platform) => {
+      if (platform === "all") return true;
+      if (targetKey === platform) return true;
+      if (targetKey.startsWith(platform)) return true;
+      if (platform === "windows" && targetKey.startsWith("win")) return true;
+      return false;
+    });
+
+    if (isMatch) {
+      targets[targetKey] = allTargets[targetKey];
+    }
+  }
+}
+
+console.log(`🎯 Active targets: ${Object.keys(targets).join(", ")}\n`);
 
 /**
  * Execute a command and log the output
@@ -897,7 +925,9 @@ async function createLinuxTarballs() {
   await mkdir(installersDir, { recursive: true });
 
   // Define Linux targets to compress
-  const linuxTargets = ["linux-x64", "linux-arm64"];
+  const linuxTargets = Object.keys(targets).filter((t) =>
+    t.startsWith("linux")
+  );
 
   for (const platform of linuxTargets) {
     const sourceDir = join(executablesDir, `${OUTPUT_NAME}-${platform}`);
