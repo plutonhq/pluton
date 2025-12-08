@@ -1,10 +1,9 @@
 name: Release Please
 
 on:
-  # Temporarily disabled - uncomment to re-enable
-  #   push:
-  #     branches:
-  #       - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:

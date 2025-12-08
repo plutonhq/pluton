@@ -1,9 +1,8 @@
 name: Build Release Assets
 
 on:
-  # Temporarily disabled - uncomment to re-enable
-  #   release:
-  #     types: [published]
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -60,7 +59,7 @@ jobs:
         if: ${{ !env.ACT }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag }}
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: |
             dist/installers/*.tar.gz
             dist/installers/*.AppImage
@@ -97,7 +96,7 @@ jobs:
       - name: Upload Windows Assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag }}
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: |
             dist/installers/*.exe
         env:
