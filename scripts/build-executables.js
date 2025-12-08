@@ -780,6 +780,20 @@ async function createDistributionPackages() {
             executableSource = osSimplifiedSource;
           } else if (await fileExists(osSimplifiedSource + ".exe")) {
             executableSource = osSimplifiedSource + ".exe";
+          } else {
+            // Try matching based on architecture only (e.g. pluton-x64, pluton-arm64)
+            // This seems to be what pkg is outputting: pluton-x64, pluton-arm64
+            const arch = platform.split("-")[1]; // x64 or arm64
+            const archSimplifiedSource = join(
+              pkgBuildsDir,
+              `${OUTPUT_NAME}-${arch}`
+            );
+
+            if (await fileExists(archSimplifiedSource)) {
+              executableSource = archSimplifiedSource;
+            } else if (await fileExists(archSimplifiedSource + ".exe")) {
+              executableSource = archSimplifiedSource + ".exe";
+            }
           }
         }
       }
