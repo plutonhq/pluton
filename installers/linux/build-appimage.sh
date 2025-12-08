@@ -84,6 +84,10 @@ build_appimage() {
     # For PRO edition, look for pluton-pro-linux-x64, for regular look for pluton-linux-x64
     local DIST_NAME="$(echo "$OUTPUT_NAME" | tr '[:upper:]' '[:lower:]')"
     local DIST_DIR="${ROOT_DIR}/dist/executables/${DIST_NAME}-${PLATFORM_ID}"
+    
+    # Debug info
+    echo -e "${YELLOW}Looking for distribution directory: ${DIST_DIR}${NC}"
+    
     if [ ! -d "$DIST_DIR" ]; then
         # Fallback to old location
         DIST_DIR="${ROOT_DIR}/dist/${DIST_NAME}-${PLATFORM_ID}"
@@ -96,6 +100,9 @@ build_appimage() {
         FAILED_ARCHS+=("$ARCH (no dist)")
         return 0
     fi
+
+    echo -e "${YELLOW}Contents of distribution directory (${DIST_DIR}):${NC}"
+    ls -la "$DIST_DIR"
 
     # Download appimagetool if not present (always use x86_64 version)
     local APPIMAGETOOL="${SCRIPT_DIR}/appimagetool-${APPIMAGETOOL_ARCH}.AppImage"

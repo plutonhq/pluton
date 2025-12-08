@@ -770,6 +770,16 @@ async function createDistributionPackages() {
       }
     }
 
+    // Special handling for Windows: pkg might output 'pluton-win.exe' instead of 'pluton-win-x64.exe'
+    // when the target is 'node24-win-x64'
+    if (
+      platform === "win-x64" &&
+      !(await fileExists(executableSource)) &&
+      (await fileExists(join(pkgBuildsDir, `${OUTPUT_NAME}-win.exe`)))
+    ) {
+      executableSource = join(pkgBuildsDir, `${OUTPUT_NAME}-win.exe`);
+    }
+
     const executableDest = join(packageDir, config.executableName);
 
     if (await fileExists(executableSource)) {
@@ -904,6 +914,17 @@ async function createDistributionPackages() {
     }
 
     console.log(`✅ Distribution package created: ${OUTPUT_NAME}-${platform}/`);
+
+    // Debug: List contents of the created package
+    try {
+      const files = await readdir(packageDir);
+      console.log(`   📂 Contents of ${packageDir}:`);
+      for (const f of files) {
+        console.log(`     - ${f}`);
+      }
+    } catch (err) {
+      console.warn(`   ⚠️ Could not list contents: ${err.message}`);
+    }
   }
 
   console.log("\n✅ All distribution packages created successfully");
