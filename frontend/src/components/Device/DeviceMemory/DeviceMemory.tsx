@@ -19,7 +19,8 @@ const DeviceMemory = ({ memory }: DeviceMemoryProps) => {
 
       const memoryGroups: Record<string, number> = {};
       (memoryLayout as DeviceMetrics['memory']['layout']).forEach((mem) => {
-         const key = `${mem.manufacturer} ${formatBytes(mem.size)} ${mem.type}`;
+         const manufacturer = mem.manufacturer || 'Unknown Manufacturer';
+         const key = `${manufacturer} ${formatBytes(mem.size)} ${mem.type}`;
          memoryGroups[key] = (memoryGroups[key] || 0) + 1;
       });
       const sortedGroups = Object.entries(memoryGroups).sort((a, b) => b[1] - a[1]);
@@ -29,7 +30,10 @@ const DeviceMemory = ({ memory }: DeviceMemoryProps) => {
 
       if (remainingCount > 0) {
          const tooltipContent = (memoryLayout as DeviceMetrics['memory']['layout'])
-            .map((mem) => `<div>1x ${mem.manufacturer} ${formatBytes(mem.size)} ${mem.type} (${mem.formFactor})</div>`)
+            .map((mem) => {
+               const manufacturer = mem.manufacturer || 'Unknown Manufacturer';
+               return `<div>1x ${manufacturer} ${formatBytes(mem.size)} ${mem.type} (${mem.formFactor})</div>`;
+            })
             .join('');
          return (
             <>
