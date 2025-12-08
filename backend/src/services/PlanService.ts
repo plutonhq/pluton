@@ -148,9 +148,6 @@ export class PlanService {
 
 		planLogger('create', planId).info('Backup Plan created.');
 
-		// Kick off the first backup immediately.
-		this.performBackup(planId);
-
 		return createdPlan;
 	}
 
