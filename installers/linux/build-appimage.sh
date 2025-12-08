@@ -28,7 +28,7 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 APPDIR="${SCRIPT_DIR}/AppDir"
 
 # Get version from package.json
-VERSION=$(grep -o '"version": *"[^"]*"' "${ROOT_DIR}/backend/package.json" | head -1 | cut -d'"' -f4)
+VERSION=$(grep -o '"version": *"[^"]*"' "${ROOT_DIR}/package.json" | head -1 | cut -d'"' -f4)
 if [ -z "$VERSION" ]; then
     VERSION="0.0.0"
 fi
