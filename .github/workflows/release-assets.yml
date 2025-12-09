@@ -105,7 +105,7 @@ jobs:
   docker:
     name: Build Docker Image
     needs: build-linux
-    environment: production
+    environment: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -132,10 +132,20 @@ jobs:
         id: version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "VERSION=${{ github.event.inputs.tag }}" | sed 's/^v//' >> $GITHUB_OUTPUT
+            # For manual dispatch, use the input tag, stripping 'v' prefix if present
+            VERSION="${{ github.event.inputs.tag }}"
           else
-            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+            # For release events, GITHUB_REF is like refs/tags/v1.2.3 or refs/tags/pluton-v1.2.3
+            # We want just the version number (e.g., 1.2.3)
+            VERSION=${GITHUB_REF#refs/tags/}
           fi
+
+          # Strip 'v' prefix if present
+          VERSION=${VERSION#v}
+          # Strip 'pluton-v' prefix if present (common in monorepos)
+          VERSION=${VERSION#pluton-v}
+
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build and push
         uses: docker/build-push-action@v5
