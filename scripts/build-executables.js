@@ -737,21 +737,6 @@ async function createDistributionPackages() {
       `${OUTPUT_NAME}-${config.pkgTarget}`
     );
 
-    // Debug: List contents of pkg-builds to help diagnose naming issues
-    if (platform === Object.keys(targets)[0]) {
-      try {
-        const buildFiles = await readdir(pkgBuildsDir);
-        console.log(`   📂 Contents of ${pkgBuildsDir}:`);
-        for (const f of buildFiles) {
-          console.log(`     - ${f}`);
-        }
-      } catch (err) {
-        console.warn(
-          `   ⚠️ Could not list pkg-builds contents: ${err.message}`
-        );
-      }
-    }
-
     // Check for variations if the exact target name doesn't exist
     if (!(await fileExists(executableSource))) {
       // Try with .exe extension (for Windows targets)
@@ -944,17 +929,6 @@ async function createDistributionPackages() {
     }
 
     console.log(`✅ Distribution package created: ${OUTPUT_NAME}-${platform}/`);
-
-    // Debug: List contents of the created package
-    try {
-      const files = await readdir(packageDir);
-      console.log(`   📂 Contents of ${packageDir}:`);
-      for (const f of files) {
-        console.log(`     - ${f}`);
-      }
-    } catch (err) {
-      console.warn(`   ⚠️ Could not list contents: ${err.message}`);
-    }
   }
 
   console.log("\n✅ All distribution packages created successfully");
