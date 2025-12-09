@@ -105,6 +105,7 @@ jobs:
   docker:
     name: Build Docker Image
     needs: build-linux
+    environment: production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
