@@ -799,14 +799,15 @@ async function createDistributionPackages() {
       }
     }
 
-    // Special handling for Windows: pkg might output 'pluton-win.exe' instead of 'pluton-win-x64.exe'
-    // when the target is 'node24-win-x64'
-    if (
-      platform === "win-x64" &&
-      !(await fileExists(executableSource)) &&
-      (await fileExists(join(pkgBuildsDir, `${OUTPUT_NAME}-win.exe`)))
-    ) {
-      executableSource = join(pkgBuildsDir, `${OUTPUT_NAME}-win.exe`);
+    // Special handling for Windows: pkg might output 'pluton.exe' or 'pluton-win.exe'
+    if (platform === "win-x64" && !(await fileExists(executableSource))) {
+      if (await fileExists(join(pkgBuildsDir, `${OUTPUT_NAME}.exe`))) {
+        executableSource = join(pkgBuildsDir, `${OUTPUT_NAME}.exe`);
+      } else if (
+        await fileExists(join(pkgBuildsDir, `${OUTPUT_NAME}-win.exe`))
+      ) {
+        executableSource = join(pkgBuildsDir, `${OUTPUT_NAME}-win.exe`);
+      }
     }
 
     const executableDest = join(packageDir, config.executableName);
@@ -978,6 +979,11 @@ async function createLinuxTarballs() {
   const linuxTargets = Object.keys(targets).filter((t) =>
     t.startsWith("linux")
   );
+
+  if (linuxTargets.length === 0) {
+    console.log("No Linux targets to compress, skipping...");
+    return;
+  }
 
   for (const platform of linuxTargets) {
     const sourceDir = join(executablesDir, `${OUTPUT_NAME}-${platform}`);
