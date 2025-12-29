@@ -14,6 +14,7 @@ import { isPlanSettingsValid } from '../../../utils/plans';
 import IntervalField from '../../common/form/IntervalField/IntervalField';
 import PlanFormNav from './PlanFormNav';
 import { useGetDevice } from '../../../services/devices';
+import PlanPruneSettings from '../PlanSettings/PlanPruneSettings';
 
 type PlanFormProps = {
    title: string;
@@ -39,11 +40,11 @@ const PlanForm = ({ title, planSettings, type, onPlanSettingsChange, onSubmit, i
 
    const buttonTexts: Record<number, { title: string; onClick: () => void }> = {
       1: {
-         title: 'Next: Configure Source/Destination',
+         title: 'Next: Configure Source & Destination',
          onClick: () => isPlanSettingsValid(planSettings, step) && setStep(step + 1),
       },
       2: {
-         title: 'Next: Setup Schedule',
+         title: 'Next: Setup Schedule & Retention',
          onClick: () => isPlanSettingsValid(planSettings, step) && setStep(step + 1),
       },
       3: { title: 'Next: Advanced Settings', onClick: () => isPlanSettingsValid(planSettings, step) && setStep(step + 1) },
@@ -68,31 +69,34 @@ const PlanForm = ({ title, planSettings, type, onPlanSettingsChange, onSubmit, i
       <SidePanel
          title={title}
          icon={<Icon type={'backup'} size={20} />}
+         width="100%"
          close={close}
          withTabs={true}
          footer={
-            <>
-               <div className={classes.footerLeft}>
-                  <div className={classes.summary}>
-                     {type === 'add' && step > 1 && (
-                        <button className={PFClasses.backButton} onClick={() => step > 0 && setStep(step - 1)} disabled={isSubmitting}>
-                           <Icon type="arrow-left" size={14} /> Back
+            <div className={PFClasses.planFormFooter}>
+               <div className={PFClasses.footerContainer}>
+                  <div className={classes.footerLeft}>
+                     <div className={classes.summary}>
+                        {type === 'add' && step > 1 && (
+                           <button className={PFClasses.backButton} onClick={() => step > 0 && setStep(step - 1)} disabled={isSubmitting}>
+                              <Icon type="arrow-left" size={14} /> Back
+                           </button>
+                        )}
+                     </div>
+                  </div>
+                  <div className={classes.footerRight}>
+                     {type === 'add' ? (
+                        <button className={classes.createButton} onClick={buttonTexts[step].onClick}>
+                           <Icon type="check" size={12} /> {buttonTexts[step].title}
+                        </button>
+                     ) : (
+                        <button className={classes.createButton} onClick={() => isPlanSettingsValid(planSettings, false) && onSubmit()}>
+                           <Icon type="check" size={12} /> {'Update Plan'}
                         </button>
                      )}
                   </div>
                </div>
-               <div className={classes.footerRight}>
-                  {type === 'add' ? (
-                     <button className={classes.createButton} onClick={buttonTexts[step].onClick}>
-                        <Icon type="check" size={12} /> {buttonTexts[step].title}
-                     </button>
-                  ) : (
-                     <button className={classes.createButton} onClick={() => isPlanSettingsValid(planSettings, false) && onSubmit()}>
-                        <Icon type="check" size={12} /> {'Update Plan'}
-                     </button>
-                  )}
-               </div>
-            </>
+            </div>
          }
       >
          <PlanFormNav step={step} type={type} gotoStep={gotoStep} />
@@ -236,6 +240,15 @@ const PlanForm = ({ title, planSettings, type, onPlanSettingsChange, onSubmit, i
                         hint="Number of Active Restorable Snapshots to Keep"
                      />
                   </div>
+                  <PlanPruneSettings
+                     plan={planSettings}
+                     onUpdate={(pruneSettings) =>
+                        onPlanSettingsChange({
+                           ...planSettings,
+                           settings: { ...planSettings.settings, prune: pruneSettings },
+                        })
+                     }
+                  />
                </div>
             )}
             {step === 4 && (

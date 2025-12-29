@@ -56,9 +56,9 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate }: PlanAdvan
                   <li onClick={() => setAdvancedTab('General')} className={advancedTab === 'General' ? classes.advancedTabActive : ''}>
                      <Icon size={13} type="folders" /> General
                   </li>
-                  <li onClick={() => setAdvancedTab('Prune')} className={advancedTab === 'Prune' ? classes.advancedTabActive : ''}>
+                  {/* <li onClick={() => setAdvancedTab('Prune')} className={advancedTab === 'Prune' ? classes.advancedTabActive : ''}>
                      <Icon size={13} type="prune" /> Prune
-                  </li>
+                  </li> */}
                   <li onClick={() => setAdvancedTab('Performance')} className={advancedTab === 'Performance' ? classes.advancedTabActive : ''}>
                      <Icon size={13} type="performance" /> Performance
                   </li>
@@ -88,9 +88,9 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate }: PlanAdvan
                   }
                />
             )}
-            {advancedTab === 'Prune' && (
+            {/* {advancedTab === 'Prune' && (
                <PlanPruneSettings plan={plan} onUpdate={(prune) => onUpdate({ ...plan, settings: { ...settings, prune } })} />
-            )}
+            )} */}
             {advancedTab === 'Performance' && (
                <PlanPerformanceSettings plan={plan} onUpdate={(performance) => onUpdate({ ...plan, settings: { ...settings, performance } })} />
             )}

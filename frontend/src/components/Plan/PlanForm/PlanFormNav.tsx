@@ -32,7 +32,7 @@ const PlanFormNav = ({ step, type, gotoStep }: PlanFProps) => {
                   {step === 2 ? '●' : ''}
                </span>
                <i>
-                  <Icon type="folders" size={12} /> Source/Destination
+                  <Icon type="folders" size={12} /> Source & Destination
                </i>
             </li>
             <li
@@ -44,7 +44,7 @@ const PlanFormNav = ({ step, type, gotoStep }: PlanFProps) => {
                   {step === 3 ? '●' : ''}
                </span>
                <i>
-                  <Icon type="clock" size={12} /> Schedule
+                  <Icon type="clock" size={12} /> Schedule & Retention
                </i>
             </li>
             <li className={` ${step === 4 ? PFClasses.stepCurrent : ''}`} onClick={() => gotoStep(4)}>
