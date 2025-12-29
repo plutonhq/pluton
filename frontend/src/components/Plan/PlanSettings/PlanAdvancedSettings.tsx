@@ -41,7 +41,7 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate }: PlanAdvan
                customClasses={classes.advancedSettingsSelect}
                options={[
                   { label: 'General', value: 'General', icon: 'folders' },
-                  { label: 'Prune', value: 'Prune', icon: 'prune' },
+                  // { label: 'Prune', value: 'Prune', icon: 'prune' },
                   { label: 'Performance', value: 'Performance', icon: 'performance' },
                   { label: 'Notification', value: 'Notification', icon: 'notification' },
                   { label: 'Misc.', value: 'Misc', icon: 'settings-alt' },

@@ -28,7 +28,7 @@ class SecurityKeyManager {
 
 	public async setupInitialKeys(): Promise<void> {
 		const keysPath = path.join(appPaths.getDataDir(), 'keys.json');
-		
+
 		// 1. Check if keys already exist (Optimization)
 		try {
 			const existingContent = JSON.parse(await fs.readFile(keysPath, 'utf-8'));
@@ -67,12 +67,12 @@ class SecurityKeyManager {
 
 			const finalContent = {
 				...currentFileContent,
-				...newKeyData
+				...newKeyData,
 			};
 
 			await fs.writeFile(keysPath, JSON.stringify(finalContent, null, 2), { mode: 0o600 });
 			console.log(`[SecurityKeyManager] Cryptographic keys securely stored at ${keysPath}`);
-			
+
 			// Update local state
 			this.keyData = finalContent as KeyData; // Cast or update interface
 		} catch (error) {

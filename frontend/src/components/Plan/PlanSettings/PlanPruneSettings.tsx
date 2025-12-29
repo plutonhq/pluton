@@ -16,7 +16,7 @@ const PlanPruneSettings = ({ plan, onUpdate }: PlanPruneSettingsProps) => {
    return (
       <>
          <div className={classes.field}>
-            <label className={classes.label}>Snapshot Removal Policy</label>
+            <label className={classes.label}>Backup Retention Policy</label>
             <Select
                options={[
                   { label: 'Remove by Age', value: 'forgetByAge' },
@@ -29,7 +29,7 @@ const PlanPruneSettings = ({ plan, onUpdate }: PlanPruneSettingsProps) => {
          </div>
          {pruneSettings.policy === 'forgetByAge' && (
             <div className={classes.field}>
-               <label className={classes.label}>Remove Snapshots Older Than</label>
+               <label className={classes.label}>Remove Backups Older Than</label>
                <div className={classes.forgetByAgeField}>
                   <NumberInput
                      fieldValue={pruneSettings.forgetAge ? parseInt(pruneSettings.forgetAge.replace(/\D/g, ''), 10) : 3}
@@ -62,7 +62,7 @@ const PlanPruneSettings = ({ plan, onUpdate }: PlanPruneSettingsProps) => {
          )}
          {pruneSettings.policy === 'forgetByDate' && (
             <div className={classes.field} style={{ width: '200px' }}>
-               <label className={classes.label}>Remove Snapshots Older Than</label>
+               <label className={classes.label}>Remove Backups Older Than</label>
                <Input type="date" fieldValue={pruneSettings.forgetDate || ''} onUpdate={(val) => onUpdate({ ...pruneSettings, forgetDate: val })} />
             </div>
          )}
@@ -71,7 +71,7 @@ const PlanPruneSettings = ({ plan, onUpdate }: PlanPruneSettingsProps) => {
                <div className={classes.field}>
                   <label className={classes.label}>Custom Policy Settings</label>
                   <div className={classes.customPolicyOption}>
-                     <span>Keep Daily Snapshots for </span>
+                     <span>Keep Daily Backups for </span>
                      <NumberInput
                         fieldValue={pruneSettings.keepDailySnaps || ''}
                         onUpdate={(val) => onUpdate({ ...pruneSettings, keepDailySnaps: val })}
@@ -79,7 +79,7 @@ const PlanPruneSettings = ({ plan, onUpdate }: PlanPruneSettingsProps) => {
                      <span>Days</span>
                   </div>
                   <div className={classes.customPolicyOption}>
-                     <span>Keep Weekly Snapshots for </span>
+                     <span>Keep Weekly Backups for </span>
                      <NumberInput
                         fieldValue={pruneSettings.keepWeeklySnaps || ''}
                         onUpdate={(val) => onUpdate({ ...pruneSettings, keepWeeklySnaps: val })}
@@ -87,7 +87,7 @@ const PlanPruneSettings = ({ plan, onUpdate }: PlanPruneSettingsProps) => {
                      <span>Days</span>
                   </div>
                   <div className={classes.customPolicyOption}>
-                     <span>Keep Monthly Snapshots for </span>
+                     <span>Keep Monthly Backups for </span>
                      <NumberInput
                         fieldValue={pruneSettings.keepMonthlySnaps || ''}
                         onUpdate={(val) => onUpdate({ ...pruneSettings, keepMonthlySnaps: val })}
