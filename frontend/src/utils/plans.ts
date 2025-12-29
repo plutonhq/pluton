@@ -52,9 +52,15 @@ export function isPlanSettingsValid(newPlan: NewPlanSettings, step: number | fal
       toast.error(`Storage is required`);
       return false;
    }
-   if ((step === 2 || step === false) && newPlan.sourceConfig.includes.length === 0) {
-      toast.error(`Sources are required`);
-      return false;
+   if (step === 2 || step === false) {
+      if (newPlan.sourceConfig.includes.length === 0) {
+         toast.error(`Sources are required`);
+         return false;
+      }
+      if (newPlan.storage.id === 'local' && newPlan.storagePath === '') {
+         toast.error(`Storage Path is required`);
+         return false;
+      }
    }
    if ((step === 4 || step === false) && newPlan.settings.notification.email.enabled && !newPlan.settings.notification.email.emails) {
       toast.error(`Notification Email not provided`);

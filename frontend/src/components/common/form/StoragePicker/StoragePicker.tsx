@@ -17,9 +17,10 @@ interface StoragePickerProps {
 }
 
 const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false, deviceId }: StoragePickerProps) => {
-   const [slectedStorage, setSelectedStorage] = useState<null | storageItem>();
+   const [selectedStorage, setSelectedStorage] = useState<null | storageItem>();
    const [showFolderPicker, setShowFolderPicker] = useState(false);
    const [path, setPath] = useState(() => storagePath);
+   const isLocalStorage = selectedStorage?.type === 'local';
 
    const { data: allStorageData } = useGetStorages();
    const allUserStorages = (allStorageData?.result as storageItem[]) || [];
@@ -50,10 +51,12 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
    }, [allStorageData]);
 
    useEffect(() => {
-      if (slectedStorage) {
-         onUpdate({ storage: slectedStorage, path });
+      if (selectedStorage) {
+         onUpdate({ storage: selectedStorage, path });
       }
-   }, [slectedStorage, path]);
+   }, [selectedStorage, path]);
+
+   console.log('Storage path :', path, !disabled && isLocalStorage && !path);
 
    return (
       <div className={classes.storagePicker}>
@@ -61,7 +64,7 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
             <div>
                <div className={classes.storage}>
                   <Select
-                     fieldValue={slectedStorage?.id ? slectedStorage.id : ''}
+                     fieldValue={selectedStorage?.id ? selectedStorage.id : ''}
                      options={[{ label: 'Select Storage', value: '', icon: 'storages' }, ...storageOptions]}
                      onUpdate={selectStorage}
                      full={true}
@@ -73,10 +76,12 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
                      disabled={disabled}
                      fieldValue={path}
                      onUpdate={(val) => setPath(val)}
-                     placeholder="folder-or-bucket/subfolder"
+                     placeholder={isLocalStorage ? 'Select a folder' : `folder-or-bucket/subfolder`}
                      full={true}
+                     required={!disabled && isLocalStorage}
+                     error={(!disabled && isLocalStorage && !path ? 'Required' : '') as string}
                   />
-                  {slectedStorage?.type && !disabled && slectedStorage.type === 'local' && (
+                  {selectedStorage?.type && !disabled && selectedStorage.type === 'local' && (
                      <button
                         className={classes.fileManagerBtn}
                         data-tooltip-id="appTooltip"
