@@ -46,12 +46,14 @@ const SidePanel = ({ close, children, title, icon, footer, width, withTabs }: Si
       <div className={classes.sidePanel}>
          <div className={`${classes.wrapper} ${isActive ? classes.active : ''} ${withTabs ? classes.noPadding : ''}`} style={{ width: width }}>
             <div className={classes.header}>
-               <h3>
-                  {icon && icon} {title}
-               </h3>
-               <button className={classes.close} onClick={handleClose}>
-                  <Icon type="close" size={24} />
-               </button>
+               <div className={classes.headerContent}>
+                  <h3>
+                     {icon && icon} {title}
+                  </h3>
+                  <button className={classes.close} onClick={handleClose}>
+                     <Icon type="close" size={24} />
+                  </button>
+               </div>
             </div>
             {!withTabs ? (
                <div className={`${classes.content} styled__scrollbar ${footer ? classes.hasFooter : classes.noFooter}`}>{children}</div>

@@ -153,7 +153,9 @@ export const FileManager = ({
                   <Icon type={isPathSelected(item.path) ? 'check-circle-filled' : 'check-circle'} />
                </button>
                {item.type != 'file' ? <Icon type={`fm-${item.type}`} size={18} /> : <FileIcon filename={item.name} />}
-               {item.name}
+               <span className={classes.fileNameText} title={item.name}>
+                  {item.name}
+               </span>
             </div>
             {isMobileDevice ? (
                <div className={classes.mobileFileInfo}>

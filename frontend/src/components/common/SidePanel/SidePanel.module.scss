@@ -37,17 +37,23 @@
 .header {
    display: flex;
    align-items: center;
-   justify-content: space-between;
-   padding: 20px;
+   justify-content: center;
    border-bottom: 1px solid var(--content-shadow-color);
-   h3 {
-      font-size: 1rem;
-      margin: 0;
-   }
-   img {
-      max-height: 18px;
-      vertical-align: text-top;
-      margin-right: 4px;
+   .headerContent {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 20px;
+      box-sizing: border-box;
+      h3 {
+         font-size: 1rem;
+         margin: 0;
+      }
+      img {
+         max-height: 18px;
+         vertical-align: text-top;
+         margin-right: 4px;
+      }
    }
 }
 

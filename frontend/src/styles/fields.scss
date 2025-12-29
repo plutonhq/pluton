@@ -28,19 +28,19 @@
       color: var(--error);
       margin-left: 0.125rem;
    }
+}
 
-   .fieldLabelError {
-      position: absolute;
-      right: 0.625rem;
-      top: -0.738rem;
-      background-color: var(--error-bg-active);
-      color: var(--error-active-text);
-      padding: 0.063rem 0.75rem;
-      border-radius: 4px;
-      font-size: 0.9em;
-      letter-spacing: 0.013rem;
-      z-index: 2;
-   }
+%fieldErrorLabel {
+   position: absolute;
+   right: 0.625rem;
+   top: -0.738rem;
+   background-color: var(--error-bg-active);
+   color: var(--error-active-text);
+   padding: 0.063rem 0.75rem;
+   border-radius: 4px;
+   font-size: 0.9em;
+   letter-spacing: 0.013rem;
+   z-index: 2;
 }
 
 %fieldDescription {

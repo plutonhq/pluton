@@ -145,11 +145,22 @@
    text-align: left;
    word-break: break-all;
    gap: 6px;
+   max-width: 300px;
    color: var(--content-text-color);
    button {
       opacity: 0.3;
       color: var(--icon-color);
    }
+   .fileNameText {
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+   }
+}
+
+.fileSize {
+   max-width: 70px;
 }
 
 .selected {

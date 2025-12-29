@@ -256,7 +256,7 @@ const PathPicker = ({ onUpdate, single = false, disallowChange = false, paths = 
                               setShowPicker(false);
                            }}
                         >
-                           <Icon type="check" size={12} /> Update Sources
+                           <Icon type="check" size={12} /> {openPath ? `Update Sources` : 'Add Sources'}
                         </button>
                      </div>
                   </div>

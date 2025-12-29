@@ -43,7 +43,7 @@ const SMTPSettings = ({ settings, onUpdate, showTestModal }: SMTPSettingsProps) 
    };
 
    return (
-      <div>
+      <div className={classes.integrations}>
          <div className={classes.field}>
             <Input
                label="SMTP Server*"
