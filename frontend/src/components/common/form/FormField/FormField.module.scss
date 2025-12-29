@@ -11,6 +11,10 @@
       @extend %fieldLabel;
    }
 
+   .fieldErrorLabel {
+      @extend %fieldErrorLabel;
+   }
+
    .description {
       @extend %fieldDescription;
    }

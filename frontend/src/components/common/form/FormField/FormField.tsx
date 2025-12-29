@@ -26,9 +26,9 @@ const FormField = ({ label, description, hint, error, required, children, inline
                         <Icon type="help" size={13} />
                      </i>
                   )}
-                  {error && <span className={classes.fieldError}>{error}</span>}
                </label>
             )}
+            {error && <span className={classes.fieldErrorLabel}>{error}</span>}
             {children}
          </div>
          {description && <span className={classes.description}>{description}</span>}
