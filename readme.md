@@ -25,8 +25,7 @@
 
 Pluton is a self-hosted backup management platform that simplifies automated, incremental backups across your storage destinations. Pluton leverages powerful open-source tools - Restic for secure incremental backups and Rclone for versatile cloud storage connectivity - wrapped in an intuitive web interface designed for both beginners and advanced users.
 
-[Website](https://usepluton.com/) &nbsp; |  &nbsp; [Documentation](https://docs.usepluton.com/)
-
+[Website](https://usepluton.com/) &nbsp; | &nbsp; [Documentation](https://docs.usepluton.com/)
 
 ### Features
 
@@ -42,7 +41,6 @@ Pluton is a self-hosted backup management platform that simplifies automated, in
 - &nbsp; **Extensive Logging**: View app and backup logs right from the UI for better debugging.
 - &nbsp; **Run Scripts before/after**: Ability to run scripts before and after running backups.
 
-
 ## Installation
 
 To run Pluton, make sure you have Docker and Docker Compose installed on your machine. Then, use the provided `docker-compose.yml` file to run the application.
@@ -53,14 +51,14 @@ services:
     image: plutonhq/pluton:latest
     container_name: pluton-backup
     restart: unless-stopped
-    
+
     ports:
       - "${SERVER_PORT:-5173}:${SERVER_PORT:-5173}"
-    
+
     volumes:
       # Main data volume - contains database, config, logs
       - pluton-data:/data
-      
+
       # Optional: Mount host directories to backup
 
       # Example: Make user's documents folders Accessible to Pluton
@@ -72,32 +70,30 @@ services:
       # Example: Make a Docker volume (named 'wp-data') Accessible to Pluton
       # - /var/lib/docker/volumes/wp-data/_data:/mnt/wordpress:ro
       # - C:/ProgramData/docker/volumes/wp-data/_data:/mnt/wordpress:ro  # Windows
-    
+
     environment:
       # ===== REQUIRED: Security & Authentication =====
       # Generate secure random strings (min 12 characters each)
-      SECRET: ${SECRET}                           # Master encryption key for securing sensitive data
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}           # Encryption key for restic/rclone Snapshot encryption
-      APIKEY: ${APIKEY}                           # API authentication key
-      USER_NAME: ${USER_NAME}                     # Admin username for login
-      USER_PASSWORD: ${USER_PASSWORD}             # Admin password for login
-      
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY} # Encryption key for restic/rclone Snapshot encryption
+      USER_NAME: ${USER_NAME} # Admin username for login
+      USER_PASSWORD: ${USER_PASSWORD} # Admin password for login
+
       # ===== Application Settings =====
       APP_TITLE: ${APP_TITLE:-Pluton}
       APP_URL: ${APP_URL:-http://localhost:5173}
       SERVER_PORT: ${SERVER_PORT:-5173}
       MAX_CONCURRENT_BACKUPS: ${MAX_CONCURRENT_BACKUPS:-2}
-      SESSION_DURATION: ${SESSION_DURATION:-7}    # How long frontend login Session lasts in Days
-      
+      SESSION_DURATION: ${SESSION_DURATION:-7} # How long frontend login Session lasts in Days
+
       # ===== User Interface Security Settings =====
       ALLOW_CUSTOM_RESTORE_PATH: ${ALLOW_CUSTOM_RESTORE_PATH:-true}
       ALLOW_FILE_BROWSER: ${ALLOW_FILE_BROWSER:-true}
       DISABLE_EVENT_SCRIPTS: ${DISABLE_EVENT_SCRIPTS:-false}
-      
+
       # ===== Docker-specific (do not change) =====
       NODE_ENV: production
       IS_DOCKER: "true"
-    
+
 volumes:
   pluton-data:
     driver: local
@@ -106,9 +102,7 @@ volumes:
 Then create an `.env` file that contains the required environment variables:
 
 ```env
-SECRET=s0er1R12973fS501Sb
 ENCRYPTION_KEY=s0eK1r12973fS501SW
-APIKEY=f0eT1T12983fSS901DR
 USER_NAME=admin
 USER_PASSWORD=0123456789
 
