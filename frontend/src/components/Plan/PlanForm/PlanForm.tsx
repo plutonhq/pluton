@@ -69,7 +69,8 @@ const PlanForm = ({ title, planSettings, type, onPlanSettingsChange, onSubmit, i
       <SidePanel
          title={title}
          icon={<Icon type={'backup'} size={20} />}
-         width="100%"
+         width={type === 'add' ? '100%' : undefined}
+         headerWidth={type === 'add' ? '740px' : undefined}
          close={close}
          withTabs={true}
          footer={

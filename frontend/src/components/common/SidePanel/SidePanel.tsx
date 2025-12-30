@@ -8,13 +8,15 @@ type SidePanelProps = {
    icon: React.ReactNode;
    children: React.ReactNode;
    width?: string;
+   headerWidth?: string;
    withTabs?: boolean;
    footer?: React.ReactNode;
    close: () => void;
 };
 
-const SidePanel = ({ close, children, title, icon, footer, width, withTabs }: SidePanelProps) => {
+const SidePanel = ({ close, children, title, icon, footer, width, headerWidth, withTabs }: SidePanelProps) => {
    const [isActive, setIsActive] = useState(false);
+   const isFullWidth = width === '100%' || width === '100vw';
 
    useEffect(() => {
       const body = document.querySelector('body');
@@ -43,10 +45,10 @@ const SidePanel = ({ close, children, title, icon, footer, width, withTabs }: Si
    };
 
    return createPortal(
-      <div className={classes.sidePanel}>
+      <div className={classes.sidePanel + (isFullWidth ? ` ${classes.fullWidth}` : '')}>
          <div className={`${classes.wrapper} ${isActive ? classes.active : ''} ${withTabs ? classes.noPadding : ''}`} style={{ width: width }}>
             <div className={classes.header}>
-               <div className={classes.headerContent}>
+               <div className={classes.headerContent} style={{ maxWidth: headerWidth ? headerWidth : undefined }}>
                   <h3>
                      {icon && icon} {title}
                   </h3>
