@@ -31,6 +31,8 @@
             color: var(--content-text-color);
             text-transform: capitalize;
             font-size: 0.75rem;
+            display: flex;
+            gap: 3px;
             span {
                color: var(--icon-color);
             }

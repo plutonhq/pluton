@@ -13,7 +13,7 @@ const Footer = ({ version = '1.0.0', hideUpgradeLink = false, changeLogUrl }: Fo
             <span>Pluton v{version}</span> <i className="pipe">|</i>
             {!hideUpgradeLink && (
                <>
-                  <a href="https://usepluton.com/pro-upgrade" target="_blank">
+                  <a href="https://usepluton.com/pluton-pro/" target="_blank">
                      Upgrade
                   </a>{' '}
                   <i className="pipe">|</i>
