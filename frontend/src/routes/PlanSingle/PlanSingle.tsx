@@ -62,17 +62,22 @@ const PlanSingle = () => {
          );
       }
 
-      const { isActive, method, title, stats, settings } = plan;
+      const { isActive, method, title, description, stats, settings } = plan;
       const prune = settings.prune;
       const snapshotsCount = stats.snapshots?.length || 0;
       const isSync = method === 'sync';
 
       return (
-         <div className={classes.plans}>
+         <div className={classes.planSingle}>
             <PageHeader
                title={
                   <>
                      {title}{' '}
+                     {description && (
+                        <span className={classes.planDescription} data-tooltip-id="appTooltip" data-tooltip-content={description}>
+                           <Icon type="note" size={13} />
+                        </span>
+                     )}
                      {!isActive && (
                         <span className="label warn">
                            <Icon size={14} type={'pause'} color="#bf8d20" /> Paused

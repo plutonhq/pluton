@@ -156,6 +156,7 @@ export type PlanStats = {
 export type Plan = {
    id: string;
    title: string;
+   description?: string;
    method: string;
    inProgress: boolean;
    isActive: boolean;
@@ -180,6 +181,7 @@ export type Plan = {
 
 export interface NewPlanSettings {
    id?: string;
+   description?: string;
    title: string;
    method: string;
    sourceConfig: {

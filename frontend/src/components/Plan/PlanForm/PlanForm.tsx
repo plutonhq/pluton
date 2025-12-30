@@ -121,6 +121,16 @@ const PlanForm = ({ title, planSettings, type, onPlanSettingsChange, onSubmit, i
                         onChange={(e) => onPlanSettingsChange({ ...planSettings, title: e.target.value })}
                      />
                   </div>
+                  <div className={classes.field}>
+                     <label className={classes.label}>Backup Plan Description</label>
+                     <input
+                        className={classes.titleInput}
+                        type="text"
+                        placeholder="Plan Description"
+                        value={planSettings.description || ''}
+                        onChange={(e) => onPlanSettingsChange({ ...planSettings, description: e.target.value })}
+                     />
+                  </div>
                   {/* <PlanTypeSettings
                      plan={planSettings}
                      onUpdate={(plan: NewPlanSettings) => onPlanSettingsChange({ ...plan })}

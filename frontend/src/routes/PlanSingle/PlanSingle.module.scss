@@ -1,3 +1,12 @@
+.planSingle {
+   .planDescription {
+      margin-left: 6px;
+      :global(.icon) {
+         color: var(--icon-color);
+      }
+   }
+}
+
 .planActions {
    position: relative;
    .moreOptions {
@@ -50,7 +59,7 @@
 }
 
 @media only screen and (max-width: 768px) {
-   .plans {
+   .planSingle {
       :global([class*='_header_']) {
          flex-direction: column;
          align-items: flex-start;

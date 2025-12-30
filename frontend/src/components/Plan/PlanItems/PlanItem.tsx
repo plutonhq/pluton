@@ -18,6 +18,7 @@ const PlanItem = ({ plan, layout = 'list' }: PlanItemProps) => {
    const {
       id,
       title,
+      description,
       sourceConfig = { includes: [], excludes: [] },
       settings,
       inProgress,
@@ -111,6 +112,16 @@ const PlanItem = ({ plan, layout = 'list' }: PlanItemProps) => {
                <NavLink to={`/plan/${id}`}>
                   <div className={classes.title}>
                      <h4>{title}</h4>
+                     {description && (
+                        <i
+                           className={classes.planDescription}
+                           data-tooltip-id="appTooltip"
+                           data-tooltip-content={description}
+                           data-tooltip-place="top"
+                        >
+                           <Icon type="note" size={13} />
+                        </i>
+                     )}
                      {encryption && (
                         <i data-tooltip-id="appTooltip" data-tooltip-content={`Encrypted`} data-tooltip-place="top">
                            <Icon type="encrypted" size={14} />

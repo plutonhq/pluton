@@ -68,6 +68,7 @@ export class PlanService {
 		const planId = generateUID();
 		const {
 			title,
+			description,
 			storage,
 			storagePath,
 			sourceConfig,
@@ -90,6 +91,7 @@ export class PlanService {
 		let newPlanData: NewPlan = {
 			id: planId,
 			title: title.trim(),
+			description: description?.trim() || '',
 			storageId: storage.id,
 			storagePath: theStoragePath,
 			method,

@@ -185,6 +185,7 @@ export type PlanStats = {
 
 export interface NewPlanReq {
 	title: string;
+	description?: string;
 	method: string;
 	sourceConfig: {
 		includes: string[];

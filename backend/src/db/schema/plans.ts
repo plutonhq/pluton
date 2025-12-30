@@ -15,6 +15,7 @@ export const plans = sqliteTable('plans', {
 		.notNull()
 		.default(sql`(unixepoch())`),
 	title: text('title').notNull(),
+	description: text('description'),
 	isActive: integer('active', { mode: 'boolean' }).notNull().default(true),
 	inProgress: integer('in_progress', { mode: 'boolean' }),
 	updatedAt: integer('updated_at', { mode: 'timestamp' }),
