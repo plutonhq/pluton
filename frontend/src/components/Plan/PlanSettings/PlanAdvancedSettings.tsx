@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import Icon from '../../common/Icon/Icon';
 import classes from './PlanSettings.module.scss';
 import PlanNotificationSettings from './PlanNotificationSettings';
-import PlanPruneSettings from './PlanPruneSettings';
 import PlanPerformanceSettings from './PlanPerformanceSettings';
 import { NewPlanSettings } from '../../../@types/plans';
 import TagsInput from '../../common/form/TagsInput/TagsInput';
