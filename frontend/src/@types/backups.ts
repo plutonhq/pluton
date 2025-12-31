@@ -36,6 +36,8 @@ export interface BackupTaskStats {
 
 export type Backup = {
    id: string;
+   title?: string;
+   description?: string;
    snapshotId: string;
    started: number;
    ended: number;

@@ -165,4 +165,31 @@ export class BackupController {
 			return;
 		}
 	}
+
+	async updateBackup(req: Request, res: Response): Promise<void> {
+		if (!req.params.id) {
+			res.status(400).json({
+				success: false,
+				error: 'Backup ID is required',
+			});
+			return;
+		}
+
+		if (!req.body || Object.keys(req.body).length === 0) {
+			res.status(400).json({
+				success: false,
+				error: 'Update data is required',
+			});
+			return;
+		}
+		try {
+			const updatedBackup = await this.backupService.updateBackup(req.params.id, req.body);
+			res.status(200).json({ success: true, result: updatedBackup });
+		} catch (error: any) {
+			res.status(500).json({
+				success: false,
+				error: error?.message || 'Failed to update backup',
+			});
+		}
+	}
 }

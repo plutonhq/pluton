@@ -219,6 +219,8 @@ export type PlanChildItem = Pick<
 export type PlanBackupItem = Pick<
 	Backup,
 	| 'id'
+	| 'title'
+	| 'description'
 	| 'status'
 	| 'inProgress'
 	| 'errorMsg'

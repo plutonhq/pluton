@@ -39,10 +39,25 @@
          display: flex;
          justify-content: space-between;
          position: relative;
+         .editIcon {
+            position: absolute;
+            z-index: 2;
+            visibility: hidden;
+            opacity: 0;
+            cursor: pointer;
+            transition: all 0.12s linear;
+         }
          .backupTitle {
             cursor: pointer;
+
             &:hover {
                color: var(--content-text-color);
+            }
+         }
+         .planDescription {
+            margin-left: 6px;
+            :global(.icon) {
+               color: var(--icon-color);
             }
          }
          & > div {
@@ -155,7 +170,26 @@
          &.backupsTableRowActive {
             background-color: var(--background-color);
          }
+
+         &:hover {
+            .backupTitle {
+               :global(.icon) {
+                  opacity: 0;
+                  visibility: hidden;
+               }
+            }
+            .editIcon {
+               visibility: visible;
+               opacity: 1;
+            }
+         }
       }
+   }
+}
+
+.updateModalContent {
+   .field {
+      margin-bottom: 15px;
    }
 }
 

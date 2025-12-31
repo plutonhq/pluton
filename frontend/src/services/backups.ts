@@ -206,6 +206,32 @@ export function useCancelBackup() {
    });
 }
 
+// Update Backup Title and Description
+export async function updateBackup({ backupId, updatePayload }: { backupId: string; updatePayload: { title?: string; description?: string } }) {
+   console.log('updatePayload :', updatePayload);
+   const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/backups/${backupId}`, {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify(updatePayload),
+      headers: header,
+   });
+   // Check if response is ok
+   const data = await res.json();
+   if (!data.success) {
+      throw new Error(data.error);
+   }
+   return data;
+}
+export function useUpdateBackup() {
+   return useMutation({
+      mutationFn: updateBackup,
+      onSuccess: (res, payload) => {
+         console.log('res :', payload, res);
+      },
+   });
+}
+
 // Get Snapshot Files
 export async function getSnapshotFiles({ backupId }: { backupId: string }) {
    const res = await fetch(`${API_URL}/backups/${backupId}/files`, {

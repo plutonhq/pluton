@@ -6,11 +6,12 @@ import { formatBytes, formatDateTime, formatDuration, formatNumberToK, timeAgo }
 import Icon from '../../common/Icon/Icon';
 import classes from './Backups.module.scss';
 import ActionModal from '../../common/ActionModal/ActionModal';
-import { useCancelBackupDownload, useDeleteBackup, useDownloadBackup, useGetBackupDownload } from '../../../services/backups';
+import { useCancelBackupDownload, useDeleteBackup, useDownloadBackup, useGetBackupDownload, useUpdateBackup } from '../../../services/backups';
 import { useQueryClient } from '@tanstack/react-query';
 import RestoreWizard from '../../Restore/RestoreWizard/RestoreWizard';
 import StatusLabel from '../../common/StatusLabel/StatusLabel';
 import BackupEvents from '../BackupEvents/BackupEvents';
+import Input from '../../common/form/Input/Input';
 
 const DownloadLabel = ({ download, downloadBackup }: { download: Backup['download']; downloadBackup: () => void }) => {
    if (download?.status === 'started') {
@@ -79,8 +80,10 @@ const Backups = ({
    const [showDeleteModal, setShowDeleteModal] = useState<Backup | false>(false);
    const [showRestoreModal, setShowRestoreModal] = useState<Backup | false>(false);
    const [showBackupEvents, setShowBackupEvents] = useState<false | string>(false);
+   const [showEditModal, setShowEditModal] = useState<Backup | false>(false);
    const queryClient = useQueryClient();
    const deleteBackupMutation = useDeleteBackup();
+   const updateBackupMutation = useUpdateBackup();
    const downloadBackupMutation = useDownloadBackup();
    const cancelDownloadMutation = useCancelBackupDownload();
    const getDownloadMutation = useGetBackupDownload();
@@ -100,6 +103,30 @@ const Backups = ({
             setShowDeleteModal(false);
          },
       });
+   };
+
+   const updateBackup = (backup: Backup) => {
+      const payload = {
+         title: backup.title,
+         description: backup.description,
+      };
+      console.log('update :', backup.id, payload);
+      if (!payload.title && !payload.description) {
+         return;
+      }
+      updateBackupMutation.mutate(
+         { backupId: backup.id, updatePayload: payload },
+         {
+            onError: () => {
+               toast.error(`Failed to Update "backup-${backup.id}"`);
+            },
+            onSuccess: () => {
+               queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+               toast.success(`Backup "backup-${backup.id}" Updated Successfully.`);
+               setShowEditModal(false);
+            },
+         },
+      );
    };
 
    const downloadBackup = (backupId: string) => {
@@ -141,7 +168,8 @@ const Backups = ({
             {backups
                .filter((s) => !s.inProgress)
                .map((snapshot) => {
-                  const { id, started, ended, download, status, errorMsg, duration, totalFiles, totalSize, changes, active } = snapshot;
+                  const { id, title, description, started, ended, download, status, errorMsg, duration, totalFiles, totalSize, changes, active } =
+                     snapshot;
                   const isDownloading = download && download.status === 'started';
 
                   return (
@@ -150,9 +178,22 @@ const Backups = ({
                         className={`${classes.backupsTableRow} ${showSnapOptions && showSnapOptions === id ? classes.backupsTableRowActive : ''}`}
                      >
                         <div>
-                           <span className={classes.backupTitle} onClick={() => !isSync && setShowBackupEvents(id)}>
-                              <Icon type={isSync ? 'sync' : 'box'} size={14} /> {isSync ? 'sync' : 'backup'}-{id}{' '}
+                           <span
+                              className={classes.editIcon}
+                              onClick={() => setShowEditModal(snapshot)}
+                              data-tooltip-id="htmlToolTip"
+                              data-tooltip-html={`Edit Title & Description`}
+                           >
+                              <Icon type="edit" size={12} />
                            </span>
+                           <span className={classes.backupTitle} onClick={() => !isSync && setShowBackupEvents(id)}>
+                              <Icon type={isSync ? 'sync' : 'box'} size={14} /> {title ? title : isSync ? `sync-${id}` : `backup-${id}`}{' '}
+                           </span>
+                           {description && (
+                              <span className={classes.backupDescription} data-tooltip-id="htmlToolTip" data-tooltip-content={description}>
+                                 <Icon type="note" size={13} />
+                              </span>
+                           )}
                            {!isSync && active && (
                               <span className={classes.activeBackup} data-tooltip-id="htmlToolTip" data-tooltip-html={`Active Snapshot`}>
                                  <Icon type="bolt" size={14} />
@@ -286,6 +327,43 @@ const Backups = ({
                sourceId={sourceId}
                sourceType={sourceType}
                close={() => setShowBackupEvents(false)}
+            />
+         )}
+         {showEditModal && (
+            <ActionModal
+               title="Edit Backup Title & Description"
+               message={
+                  <div className={classes.updateModalContent}>
+                     <div className={classes.field}>
+                        <Input
+                           label="Title"
+                           fieldValue={showEditModal.title || ''}
+                           onUpdate={(val) => setShowEditModal({ ...showEditModal, title: val })}
+                           placeholder="Enter Backup Title"
+                           full={true}
+                           inline={false}
+                        />
+                     </div>
+                     <div className={classes.field}>
+                        <Input
+                           label="Description"
+                           fieldValue={showEditModal.description || ''}
+                           onUpdate={(val) => setShowEditModal({ ...showEditModal, description: val })}
+                           placeholder="Enter Backup Description"
+                           full={true}
+                           inline={false}
+                        />
+                     </div>
+                  </div>
+               }
+               closeModal={() => !updateBackupMutation.isPending && setShowEditModal(false)}
+               width="400px"
+               primaryAction={{
+                  title: 'Update Backup',
+                  type: 'default',
+                  isPending: updateBackupMutation.isPending,
+                  action: () => updateBackup(showEditModal),
+               }}
             />
          )}
       </div>

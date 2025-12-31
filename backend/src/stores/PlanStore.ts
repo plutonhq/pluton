@@ -35,6 +35,8 @@ export class PlanStore {
 					orderBy: (backups, { desc }) => [desc(backups.ended)],
 					columns: {
 						id: true,
+						title: true,
+						description: true,
 						status: true,
 						errorMsg: true,
 						download: true,
@@ -102,6 +104,8 @@ export class PlanStore {
 					orderBy: (backups, { desc }) => [desc(backups.ended)],
 					columns: {
 						id: true,
+						title: true,
+						description: true,
 						status: true,
 						errorMsg: true,
 						download: true,

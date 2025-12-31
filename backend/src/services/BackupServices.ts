@@ -17,6 +17,7 @@ import {
 import { BaseBackupManager } from '../managers';
 import { jobQueue } from '../jobs/JobQueue';
 import { SnapShotFile } from '../types/restic';
+import { Backup } from 'src/db/schema/backups';
 
 export class BackupService {
 	protected broker: any;
@@ -211,6 +212,17 @@ export class BackupService {
 			);
 		}
 		return snapshotFilesResult.result;
+	}
+
+	async updateBackup(backupId: string, data: Partial<Backup>): Promise<any> {
+		const backup = await this.backupStore.getById(backupId);
+		if (!backup) {
+			throw new Error('Backup not found');
+		}
+		const title = data.title?.trim() || '';
+		const description = data.description?.trim() || '';
+		const updatedBackup = await this.backupStore.update(backupId, { title, description });
+		return updatedBackup;
 	}
 
 	async getStorageName(storageId: string): Promise<string> {

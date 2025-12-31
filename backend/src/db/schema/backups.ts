@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm/sql';
+import { desc, sql } from 'drizzle-orm/sql';
 import { sqliteTable, text, integer, AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-zod';
 import { storages } from './storages';
@@ -15,6 +15,8 @@ import { relations } from 'drizzle-orm';
 
 export const backups = sqliteTable('backups', {
 	id: text('id').notNull().primaryKey(),
+	title: text('title'),
+	description: text('description'),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.notNull()
 		.default(sql`(unixepoch())`),
