@@ -223,7 +223,8 @@ export class PlanService {
 		if (!plan) throw new NotFoundError('Plan not found.');
 		const storageName = plan.storage?.name || '';
 		const options = {
-			storageName: storageName === 'Local' ? 'local' : storageName,
+			storageName:
+				storageName === 'Local' || storageName === 'Local Storage' ? 'local' : storageName,
 			storagePath: plan.storagePath || '',
 			encryption: plan.settings.encryption || true,
 			removeRemoteData,

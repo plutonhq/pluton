@@ -135,7 +135,7 @@ export class PlanController {
 				});
 				return;
 			}
-			const removeRemoteData = req.params.removeData ? true : false;
+			const removeRemoteData = req.query.removeData ? true : false;
 			await this.planService.deletePlan(req.params.id, removeRemoteData);
 			res.status(200).json({
 				success: true,
