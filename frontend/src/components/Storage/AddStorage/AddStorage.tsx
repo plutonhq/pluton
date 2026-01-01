@@ -44,25 +44,26 @@ const AddStorage = ({ close }: AddStorageProps) => {
 
    const storageFields = useMemo(() => {
       const allFields: storageOptionField[] = storageProviders[storageType as keyof typeof storageProviders]?.settings || [];
-      const groupedFields = { required: [], optional: [] };
+      const groupedFields = { required: [], optional: [], authFields: { fields: [], types: [] } } as {
+         required: storageOptionField[];
+         optional: storageOptionField[];
+         authFields: { fields: storageOptionField[]; types: string[] };
+      };
 
       allFields.forEach((field: storageOptionField) => {
          if (field.required) {
             (groupedFields.required as storageOptionField[]).push(field);
          } else {
-            (groupedFields.optional as storageOptionField[]).push(field);
+            if (!field.authFieldType) {
+               (groupedFields.optional as storageOptionField[]).push(field);
+            }
          }
       });
+      const types: string[] = storageProviders[storageType as keyof typeof storageProviders]?.authTypes;
+      const authFields = allFields.filter((f) => f.authFieldType);
+      groupedFields.authFields = { fields: authFields, types };
 
       return groupedFields;
-   }, [storageProviders, storageType]);
-
-   const authFields = useMemo(() => {
-      const types: string[] = storageProviders[storageType as keyof typeof storageProviders]?.authTypes;
-      const allFields: storageOptionField[] = storageProviders[storageType as keyof typeof storageProviders]?.settings || [];
-      const authFields = allFields.filter((f) => f.authFieldType);
-
-      return { fields: authFields, types };
    }, [storageProviders, storageType]);
 
    // Initialize credentials when storage type changes
@@ -237,11 +238,11 @@ const AddStorage = ({ close }: AddStorageProps) => {
                </div>
             </div>
 
-            {storageType && authFields.fields.length > 0 && (
+            {storageType && storageFields.authFields.fields.length > 0 && (
                <StorageAuthSettings
                   storageType={storageType}
-                  fields={authFields.fields}
-                  authTypes={authFields.types}
+                  fields={storageFields.authFields.fields}
+                  authTypes={storageFields.authFields.types}
                   settings={storageCredentials}
                   onUpdate={(newSettings) => setStorageCredentials(newSettings)}
                   errors={inputError}
