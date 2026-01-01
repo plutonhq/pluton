@@ -9,6 +9,7 @@
 
    .fieldLabel {
       @extend %fieldLabel;
+      font-weight: 600;
    }
 
    .fieldErrorLabel {

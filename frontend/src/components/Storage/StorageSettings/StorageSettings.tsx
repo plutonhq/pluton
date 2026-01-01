@@ -152,6 +152,7 @@ const StorageSettings = ({ fields, onUpdate, settings, errors = {} }: StorageSet
                               onUpdate({ ...settings, [field.value]: newVal });
                            }}
                            error={errors[field.value] || ''}
+                           inline={true}
                         />
                         {field.allowCustom && customFieldsActive[field.value] && (
                            <div key={field.value} className={classes.field} style={{ margin: '20px 0' }}>
