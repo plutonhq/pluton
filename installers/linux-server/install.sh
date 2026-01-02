@@ -19,7 +19,11 @@ NC='\033[0m' # No Color
 # Product name
 PRODUCT_NAME="Pluton"
 
-# CDN base URL
+# GitHub releases URL
+GITHUB_REPO="plutonhq/pluton"
+GITHUB_RELEASES_URL="https://github.com/${GITHUB_REPO}/releases"
+
+# CDN base URL (for installer scripts only)
 CDN_BASE_URL="https://dl.usepluton.com/server"
 
 # Installation paths
@@ -367,7 +371,20 @@ stop_existing_service() {
 download_files() {
     local arch="$1"
     local version="$2"
-    local download_url="${CDN_BASE_URL}/releases/${version}/pluton-linux-${arch}.tar.gz"
+    local download_url
+    
+    # Build download URL based on version
+    if [ "$version" = "latest" ]; then
+        download_url="${GITHUB_RELEASES_URL}/latest/download/pluton-linux-${arch}.tar.gz"
+    else
+        # Support both "v1.0.0" and "1.0.0" version formats
+        local tag_version="$version"
+        if [[ ! "$version" =~ ^v && ! "$version" =~ ^pluton-v ]]; then
+            tag_version="pluton-v${version}"
+        fi
+        download_url="${GITHUB_RELEASES_URL}/download/${tag_version}/pluton-linux-${arch}.tar.gz"
+    fi
+    
     local archive_path="${TMP_DIR}/pluton-linux-${arch}.tar.gz"
     
     echo -e "${BLUE}Downloading ${PRODUCT_NAME} (${arch}, ${version})...${NC}"
