@@ -102,6 +102,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  upload-scripts:
+    name: Upload Installer Scripts to R2
+    runs-on: ubuntu-latest
+    environment: ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare scripts directory
+        run: |
+          mkdir -p dist/scripts
+          cp installers/linux-server/install.sh dist/scripts/
+          cp installers/linux-server/uninstall.sh dist/scripts/
+
+      - name: Upload scripts to R2
+        uses: ryand56/r2-upload-action@latest
+        with:
+          r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          r2-bucket: ${{ secrets.R2_BUCKET }}
+          source-dir: dist/scripts
+          destination-dir: server/scripts
+          keep-file-fresh: true
+
   docker:
     name: Build Docker Image
     needs: build-linux
