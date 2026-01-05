@@ -1,7 +1,7 @@
 {
    "name": "@plutonhq/core-frontend",
    "description": "Pluton Core Frontend Library",
-   "version": "0.0.12",
+   "version": "0.1.0",
    "author": "Plutonhq",
    "license": "Apache-2.0",
    "publishConfig": {

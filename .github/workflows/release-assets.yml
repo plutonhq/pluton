@@ -69,6 +69,8 @@ jobs:
   build-windows:
     name: Build Windows Assets
     runs-on: windows-latest
+    env:
+      TSA_URL: http://timestamp.digicert.com
     steps:
       - uses: actions/checkout@v4
 
@@ -81,6 +83,26 @@ jobs:
           node-version: "24"
           cache: "pnpm"
 
+      # Setup Google Cloud SDK ---
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GCP_CREDENTIALS_JSON }}"
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v2"
+
+      # Setup Jsign and Certificate ---
+      - name: Setup Code Signing Tools
+        run: |
+          # 1. Download Jsign JAR (Runs on any machine with Java, which windows-latest has)
+          curl -L -o jsign.jar https://github.com/ebourg/jsign/releases/download/6.0/jsign-6.0.jar
+
+          # 2. Decode the certificate from secrets to a file
+          $certBytes = [System.Convert]::FromBase64String("${{ secrets.SIGNING_CERT_BASE64 }}")
+          [System.IO.File]::WriteAllBytes("certificate.crt", $certBytes)
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -90,8 +112,51 @@ jobs:
       - name: Build Executables
         run: node scripts/build-executables.js --platform windows
 
+      # Sign the main executable BEFORE packaging
+      # This ensures the .exe inside "Program Files" is trusted
+      - name: Sign Main Executable
+        shell: powershell
+        run: |
+          # Get Google Access Token
+          $Token = gcloud auth print-access-token
+
+          # Path to the built executable (Adjust if build-executables.js outputs elsewhere)
+          $ExePath = "dist\executables\pluton-win-x64\pluton.exe"
+
+          echo "Signing $ExePath..."
+
+          java -jar jsign.jar `
+            --storetype GOOGLECLOUD `
+            --storepass "$Token" `
+            --keystore "${{ secrets.GCP_KMS_KEYRING }}" `
+            --alias "${{ secrets.GCP_KMS_KEY_ALIAS }}" `
+            --certfile "certificate.crt" `
+            --tsaurl "${{ env.TSA_URL }}" `
+            "$ExePath"
+
       - name: Build Windows Installer
         run: node installers/windows/build-installer.js
+
+      # Sign the final Installer ---
+      # This ensures SmartScreen trusts the setup file users download
+      - name: Sign Installer
+        shell: powershell
+        run: |
+          $Token = gcloud auth print-access-token
+
+          # Find the generated installer (handling potential naming variations)
+          $InstallerPath = Get-ChildItem "dist\installers\*.exe" | Select-Object -First 1 -ExpandProperty FullName
+
+          echo "Signing $InstallerPath..."
+
+          java -jar jsign.jar `
+            --storetype GOOGLECLOUD `
+            --storepass "$Token" `
+            --keystore "${{ secrets.GCP_KMS_KEYRING }}" `
+            --alias "${{ secrets.GCP_KMS_KEY_ALIAS }}" `
+            --certfile "certificate.crt" `
+            --tsaurl "${{ env.TSA_URL }}" `
+            "$InstallerPath"
 
       - name: Upload Windows Assets
         uses: softprops/action-gh-release@v2
