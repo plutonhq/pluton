@@ -69,6 +69,7 @@ jobs:
   build-windows:
     name: Build Windows Assets
     runs-on: windows-latest
+    environment: ci
     env:
       TSA_URL: http://timestamp.digicert.com
     steps:
