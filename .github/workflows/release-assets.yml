@@ -98,7 +98,7 @@ jobs:
       - name: Setup Code Signing Tools
         run: |
           # 1. Download Jsign JAR (Runs on any machine with Java, which windows-latest has)
-          curl -L -o jsign.jar https://github.com/ebourg/jsign/releases/download/6.0/jsign-6.0.jar
+          curl -L -o jsign.jar https://github.com/ebourg/jsign/releases/download/7.4/jsign-7.4.jar
 
           # 2. Decode the certificate from secrets to a file
           $certBytes = [System.Convert]::FromBase64String("${{ secrets.SIGNING_CERT_BASE64 }}")
