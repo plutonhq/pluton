@@ -115,3 +115,10 @@ And finally, run:
 ```
 docker compose up -d
 ```
+
+## Acknowledgements
+
+Pluton is built on the shoulders of giants. We would like to thank the creators and contributors of the following projects:
+
+- [Restic](https://restic.net/) (BSD 2-Clause License): For providing the robust and secure backup foundation.
+- [Rclone](https://rclone.org/) (MIT License): For enabling seamless connectivity to a vast array of cloud storage providers.
