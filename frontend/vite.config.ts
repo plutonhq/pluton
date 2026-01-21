@@ -94,6 +94,10 @@ export default defineConfig(({ mode }) => {
          // },
       },
       css: {
+         modules: {
+            generateScopedName: '_[local]_[hash:base64:5]',
+            localsConvention: 'camelCase',
+         },
          preprocessorOptions: {
             scss: {
                api: 'modern', // or "modern"
