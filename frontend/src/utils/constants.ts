@@ -16,7 +16,7 @@ export const DEFAULT_PLAN_SETTINGS: NewPlanSettings = {
    storagePath: '',
    settings: {
       interval: { type: 'daily', time: '10:00AM', days: '', hours: '', minutes: 5 },
-      compression: false,
+      compression: true,
       encryption: true,
       retries: 5,
       retryDelay: 300, // in seconds
