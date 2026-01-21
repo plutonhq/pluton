@@ -210,6 +210,7 @@
    display: grid;
    grid-template-columns: 1fr 180px minmax(80px, auto);
    padding: 12px;
+   box-sizing: border-box;
    border-bottom: 1px solid var(--line-color);
 
    &.fileIsDir {
@@ -252,6 +253,7 @@
    font-style: italic;
    opacity: 0.8;
    padding: 0px 12px;
+   align-items: center;
 
    &:hover {
       background-color: var(--primary-color-light);
