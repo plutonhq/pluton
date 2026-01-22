@@ -69,6 +69,10 @@ Source: "..\..\dist\executables\pluton-win-x64\drizzle\*"; DestDir: "{app}\drizz
 ; NSSM for service management (Assumes you have downloaded nssm.exe to installers/windows/tools/)
 Source: "tools\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 
+; Visual C++ Redistributable (required for native Node.js modules like @napi-rs/keyring)
+; Download from: https://aka.ms/vs/17/release/vc_redist.x64.exe
+Source: "tools\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: ignoreversion deleteafterinstall; Check: not IsVCRedistInstalled
+
 ; Application icon for shortcuts
 Source: "setup.ico"; DestDir: "{app}"; DestName: "pluton.ico"; Flags: ignoreversion
 
@@ -87,6 +91,9 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 ; They will be configured via the web interface and stored securely in Windows Credential Manager.
 
 [Run]
+; Install Visual C++ Redistributable if not already installed (required for native Node.js modules)
+Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Visual C++ Redistributable..."; Flags: waituntilterminated; Check: not IsVCRedistInstalled
+
 ; Install the service using NSSM (will fail silently if service already exists on upgrade - that's OK)
 Filename: "{app}\nssm.exe"; Parameters: "install {#MyAppServiceName} ""{app}\{#MyAppExeName}"""; Flags: runhidden; StatusMsg: "Installing service..."
 ; Set service description
@@ -122,6 +129,31 @@ var
   
   // Variables to store inputs
   ServerPort, MaxConcurrentBackups: string;
+
+// Check if Visual C++ Redistributable 2015-2022 (x64) is installed
+// Required for native Node.js modules compiled with MSVC (e.g., @napi-rs/keyring)
+function IsVCRedistInstalled: Boolean;
+var
+  Version: String;
+begin
+  Result := False;
+  // Check for VC++ 2015-2022 Redistributable (x64) - version 14.x
+  // The minimum version we need is 14.0 (VS 2015), but newer versions are backward compatible
+  if RegQueryStringValue(HKLM, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Version', Version) then
+  begin
+    Log('VC++ Redistributable found: ' + Version);
+    Result := True;
+  end
+  else if RegQueryStringValue(HKLM, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Version', Version) then
+  begin
+    Log('VC++ Redistributable found (WOW6432Node): ' + Version);
+    Result := True;
+  end
+  else
+  begin
+    Log('VC++ Redistributable not found - will install');
+  end;
+end;
 
 // Check if service exists by querying its status
 function ServiceExists(ServiceName: String): Boolean;
