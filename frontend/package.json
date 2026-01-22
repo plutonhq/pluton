@@ -1,7 +1,7 @@
 {
    "name": "@plutonhq/core-frontend",
    "description": "Pluton Core Frontend Library",
-   "version": "0.1.0",
+   "version": "0.1.5",
    "author": "Plutonhq",
    "license": "Apache-2.0",
    "publishConfig": {
@@ -82,8 +82,18 @@
          "types": "./dist-lib/routes/*/*.d.ts",
          "import": "./dist-lib/routes/*/*.js"
       },
-      "./routes/*/*.module.scss": "./dist-lib/routes/*/*.module.scss.js",
-      "./components/*/*.module.scss": "./dist-lib/components/*/*.module.scss.js",
+      "./routes/*/*.module.scss": {
+         "import": "./dist-lib/routes/*/*.module.scss.js",
+         "default": "./dist-lib/routes/*/*.module.scss.js"
+      },
+      "./components/*/*.module.scss": {
+         "import": "./dist-lib/components/*/*.module.scss.js",
+         "default": "./dist-lib/components/*/*.module.scss.js"
+      },
+      "./components/*/*/*.module.scss": {
+         "import": "./dist-lib/components/*/*/*.module.scss.js",
+         "default": "./dist-lib/components/*/*/*.module.scss.js"
+      },
       "./routes/*/*": "./dist-lib/routes/*/*",
       "./components/*/*": "./dist-lib/components/*/*",
       "./services": {
@@ -113,7 +123,9 @@
          "types": "./dist-lib/config/*.d.ts",
          "import": "./dist-lib/config/*.js"
       },
-      "./styles/*": "./dist-lib/styles/*",
+      "./styles/*.scss": "./dist-lib/styles/*.scss",
+      "./styles/*.css": "./dist-lib/styles/*.css",
+      "./styles/core-frontend.css": "./dist-lib/styles/core-frontend.css",
       "./router": {
          "types": "./dist-lib/router.d.ts",
          "import": "./dist-lib/router.js"

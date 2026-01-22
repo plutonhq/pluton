@@ -1,0 +1,8 @@
+/*
+ * Placeholder file for development mode.
+ * In dev mode, Vite processes SCSS files on-the-fly, so CSS module styles are generated automatically.
+ * In production builds (npm package), this file is replaced with the pre-compiled CSS bundle
+ * containing all CSS module styles with consistent hashes.
+ * 
+ * DO NOT add styles here - they will be overwritten in production.
+ */

@@ -1,10 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
+import { resolve, basename } from 'path';
 import { copyFileSync, mkdirSync, readdirSync, statSync } from 'fs';
+import { createHash } from 'crypto';
 import { join, dirname } from 'path';
 
-// Plugin to copy SCSS files to dist-lib
+// Plugin to copy non-module SCSS files to dist-lib
+// Module SCSS files are NOT copied because they're pre-compiled to .module.scss.js
+// with consistent hashes. Only utility/mixin SCSS files are copied for @use/@extend.
+// NOTE: core-frontend.css is excluded because Vite generates it with all compiled CSS modules.
 function copyScssPlugin() {
    return {
       name: 'copy-scss',
@@ -17,16 +21,25 @@ function copyScssPlugin() {
 
                if (statSync(srcPath).isDirectory()) {
                   copyScssFiles(srcPath, distPath);
-               } else if (entry.endsWith('.scss') || entry.endsWith('.css') || entry.endsWith('.png')) {
+               } else if (entry.endsWith('.png')) {
+                  // Always copy images
                   mkdirSync(dirname(distPath), { recursive: true });
                   copyFileSync(srcPath, distPath);
+               } else if (entry.endsWith('.scss') || entry.endsWith('.css')) {
+                  // Skip .module.scss files - they have pre-compiled .js mappings
+                  // Only copy utility SCSS files (mixins, variables, placeholders)
+                  // Also skip core-frontend.css - Vite generates this with compiled CSS modules
+                  if (!entry.includes('.module.') && entry !== 'core-frontend.css') {
+                     mkdirSync(dirname(distPath), { recursive: true });
+                     copyFileSync(srcPath, distPath);
+                  }
                }
             });
          };
 
-         // Copy SCSS files from src to dist-lib
+         // Copy non-module SCSS files from src to dist-lib
          copyScssFiles(resolve(__dirname, 'src'), resolve(__dirname, 'dist-lib'));
-         console.log('✓ SCSS/CSS/PNG files copied to dist-lib');
+         console.log('✓ Non-module SCSS/CSS/PNG files copied to dist-lib');
       },
    };
 }
@@ -110,7 +123,14 @@ export default defineConfig(({ command, mode }) => ({
       },
       modules: {
          localsConvention: 'camelCase',
-         generateScopedName: '[name]__[local]___[hash:base64:5]',
+         // Use content-based hash that's deterministic regardless of file path
+         // This ensures the same hash is generated in library build and consumer builds
+         generateScopedName: (name, filename, css) => {
+            // Use only the filename (not full path) + class name + css content for hash
+            const file = basename(filename).replace(/\.module\.s?css$/, '');
+            const hash = createHash('md5').update(`${file}_${name}_${css}`).digest('base64').slice(0, 5).replace(/[+/=]/g, 'x');
+            return `_${name}_${hash}`;
+         },
       },
    },
    resolve: {
