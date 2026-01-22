@@ -212,7 +212,7 @@ async function buildFrontend() {
 
   exec("pnpm run build", {
     cwd: frontendDir,
-    env: { ...process.env, USE_PUBLISHED_CORE_FRONTEND: true },
+    env: { ...process.env, USE_PUBLISHED_CORE_FRONTEND: 'true' },
   });
 
   console.log("✅ Frontend build completed");
