@@ -105,7 +105,7 @@
 		"checkUpdates": "npx npm-check -u",
 		"db:studio": "npx drizzle-kit studio --port 4983",
 		"dev": "cross-env NODE_ENV=development tsx watch -r dotenv/config src/index.ts",
-		"generate-migration": "drizzle-kit generate:sqlite",
+		"generate-migration": "npx drizzle-kit generate",
 		"lint": "eslint src/**/*.ts",
 		"migrate-db": "tsx -r dotenv/config src/db/migrate.ts",
 		"start": "node dist/index.js",
