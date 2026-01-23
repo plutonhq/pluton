@@ -38,11 +38,11 @@ const serviceName = outputName
   .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
   .join("");
 
-// Get version from backend/package.json
-const backendPackageJson = JSON.parse(
-  readFileSync(join(rootDir, "backend", "package.json"), "utf-8")
+// Get version from root package.json (monorepo source of truth)
+const rootPackageJson = JSON.parse(
+  readFileSync(join(rootDir, "package.json"), "utf-8"),
 );
-const version = backendPackageJson.version || "0.0.0";
+const version = rootPackageJson.version || "0.0.0";
 
 console.log("╔═══════════════════════════════════════════════════════════╗");
 console.log("║   🪟 Windows Installer Build Script                       ║");
@@ -69,15 +69,15 @@ let issContent = readFileSync(templateIssPath, "utf-8");
 // Replace the #define values at the top of the file
 issContent = issContent.replace(
   /#define MyAppName ".*"/,
-  `#define MyAppName "${displayName}"`
+  `#define MyAppName "${displayName}"`,
 );
 issContent = issContent.replace(
   /#define MyAppVersion ".*"/,
-  `#define MyAppVersion "${version}"`
+  `#define MyAppVersion "${version}"`,
 );
 issContent = issContent.replace(
   /#define MyAppServiceName ".*"/,
-  `#define MyAppServiceName "${serviceName}"`
+  `#define MyAppServiceName "${serviceName}"`,
 );
 
 // Update file paths to use the correct distribution folder
@@ -88,7 +88,7 @@ issContent = issContent.replace(/pluton-win-x64/g, distFolderName);
 // Update output filename
 issContent = issContent.replace(
   /OutputBaseFilename=.*/,
-  `OutputBaseFilename=${outputName}-setup`
+  `OutputBaseFilename=${outputName}-setup`,
 );
 
 // Write the generated .iss file
@@ -114,7 +114,7 @@ for (const path of possibleIsccPaths) {
 if (!isccPath) {
   console.error("❌ Inno Setup compiler (ISCC.exe) not found!");
   console.error(
-    "   Please install Inno Setup from: https://jrsoftware.org/isdownload.php"
+    "   Please install Inno Setup from: https://jrsoftware.org/isdownload.php",
   );
   console.error("   Expected locations:");
   possibleIsccPaths.forEach((p) => console.error(`     - ${p}`));
@@ -132,7 +132,7 @@ try {
   });
 
   console.log(
-    "\n╔═══════════════════════════════════════════════════════════╗"
+    "\n╔═══════════════════════════════════════════════════════════╗",
   );
   console.log("║   ✅ Windows Installer Build Complete!                    ║");
   console.log("╚═══════════════════════════════════════════════════════════╝");

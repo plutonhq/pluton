@@ -1,5 +1,7 @@
 import { build } from 'esbuild';
-import packageJson from '../package.json' with { type: 'json' };
+// Read version from root package.json (monorepo source of truth)
+import rootPackageJson from '../../package.json' with { type: 'json' };
+import backendPackageJson from '../package.json' with { type: 'json' };
 import { readFile } from 'fs/promises';
 import { extname, join } from 'path';
 import { createRequire } from 'module';
@@ -47,7 +49,7 @@ console.log('--- Starting Pluton Executable Build Process (esbuild) ---');
 
 // 1. Set the environment variables
 process.env.NODE_ENV = 'production';
-process.env.APP_VERSION = packageJson.version;
+process.env.APP_VERSION = rootPackageJson.version;
 
 console.log(`Setting NODE_ENV=${process.env.NODE_ENV}`);
 console.log(`Setting APP_VERSION=${process.env.APP_VERSION}`);
@@ -59,7 +61,7 @@ try {
 	// Get dependencies to mark as external
 	// We mark all dependencies as external because pkg will handle them
 	// or they are native modules that shouldn't be bundled
-	const dependencies = Object.keys(packageJson.dependencies || {});
+	const dependencies = Object.keys(backendPackageJson.dependencies || {});
 
 	// Remove better-sqlite3 from external list because we are aliasing it
 	const bs3Index = dependencies.indexOf('better-sqlite3');
@@ -101,7 +103,7 @@ try {
 		define: {
 			'import.meta.url': '__import_meta_url',
 			'process.env.NODE_ENV': '"production"',
-			'process.env.APP_VERSION': JSON.stringify(packageJson.version),
+			'process.env.APP_VERSION': JSON.stringify(rootPackageJson.version),
 		},
 		inject: [join(process.cwd(), 'scripts/esbuild-import-meta-url-shim.js')],
 	});

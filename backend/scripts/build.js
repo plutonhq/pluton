@@ -2,13 +2,14 @@ import { execSync } from 'child_process';
 import { readdir, readFile, writeFile } from 'fs/promises';
 import { join, extname } from 'path';
 import { minify } from 'terser';
-import packageJson from '../package.json' with { type: 'json' };
+// Read version from root package.json (monorepo source of truth)
+import rootPackageJson from '../../package.json' with { type: 'json' };
 
 console.log('--- Starting Pluton Build Process ---');
 
 // 1. Set the environment variables
 process.env.NODE_ENV = 'production';
-process.env.APP_VERSION = packageJson.version;
+process.env.APP_VERSION = rootPackageJson.version;
 
 console.log(`Setting NODE_ENV=${process.env.NODE_ENV}`);
 console.log(`Setting APP_VERSION=${process.env.APP_VERSION}`);
