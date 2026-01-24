@@ -152,7 +152,7 @@ export async function createApp(): Promise<{ app: Express }> {
 	// Rate Limiter
 	const apiLimiter = rateLimit({
 		windowMs: 15 * 60 * 1000, // 15 minutes
-		max: 500, // Limit each IP to 500 requests per window
+		max: 1000, // Limit each IP to 1000 requests per window
 		standardHeaders: true,
 		legacyHeaders: false,
 	});
