@@ -56,7 +56,8 @@ export class NotificationChannelResolver {
 					console.log('[Decrypted]  :', fieldPath, decryptedValue);
 					setNestedValue(integrationDecrypted, fieldPath, decryptedValue);
 				} catch (error) {
-					setNestedValue(integrationDecrypted, fieldPath, value);
+					// Handle decryption errors (e.g., if value is not encrypted)
+					console.warn(`Failed to decrypt field ${fieldPath}:`, error);
 				}
 			}
 		});

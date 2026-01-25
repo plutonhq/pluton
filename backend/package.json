@@ -1,7 +1,7 @@
 {
 	"name": "@plutonhq/core-backend",
 	"description": "Pluton Core Backend Library",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"author": "plutonhq",
 	"license": "Apache-2.0",
 	"publishConfig": {
@@ -98,7 +98,8 @@
 			"public/**/*",
 			"node_modules/**/*",
 			"!node_modules/better-sqlite3/**/*",
-			"drizzle/**/*"
+			"drizzle/**/*",
+			"src/notifications/templates/**/*"
 		]
 	},
 	"scripts": {

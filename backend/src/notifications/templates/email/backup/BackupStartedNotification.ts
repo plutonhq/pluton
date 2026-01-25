@@ -1,13 +1,11 @@
 import ejs from 'ejs';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { configService } from '../../../../services/ConfigService';
 import { Plan } from '../../../../db/schema/plans';
 import { providers } from '../../../../utils/providers';
 import { BackupNotificationJSONPayload, BackupTaskStats } from '../../../../types/backups';
 import { formatBytes, formatNumberToK } from '../../../../utils/formatter';
 import { BaseNotification } from '../../../BaseNotification';
+import { loadBackupTemplate } from '../../../templateLoader';
 
 export interface BackupStartedPayload {
 	appTitle: string;
@@ -71,20 +69,7 @@ export class BackupStartedNotification extends BaseNotification {
 			? providers[data.storageType]?.name || data.storageType
 			: '';
 
-		// const __filename = fileURLToPath(import.meta.url);
-		// const __dirname = path.dirname(__filename);
-		// const templatePath = path.join(__dirname, 'BackupStartedNotification.ejs');
-		const templatePath = path.join(
-			process.cwd(),
-			'src',
-			'notifications',
-			'templates',
-			'email',
-			'backup',
-			'BackupStartedNotification.ejs'
-		);
-		const templateString = fs.readFileSync(templatePath, 'utf-8');
-
+		const templateString = loadBackupTemplate('BackupStartedNotification.ejs');
 		const renderedBody = ejs.render(templateString, {
 			...data,
 			appUrl: configService.config.APP_URL,

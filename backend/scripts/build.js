@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { readdir, readFile, writeFile } from 'fs/promises';
+import { readdir, readFile, writeFile, cp } from 'fs/promises';
 import { join, extname } from 'path';
 import { minify } from 'terser';
 // Read version from root package.json (monorepo source of truth)
@@ -27,7 +27,29 @@ try {
 	process.exit(1); // Exit with an error code
 }
 
-// 3. Remove console.logs from production build
+// 3. Copy templates to dist folder (they are not compiled by tsc)
+async function copyTemplates() {
+	const srcTemplates = join(process.cwd(), 'src', 'notifications', 'templates');
+	const destTemplates = join(process.cwd(), 'dist', 'notifications', 'templates');
+
+	try {
+		await cp(srcTemplates, destTemplates, { recursive: true });
+		console.log('✅ Templates copied to dist folder!');
+	} catch (error) {
+		console.error('Error copying templates:', error);
+		throw error;
+	}
+}
+
+try {
+	console.log('Copying templates to dist folder...');
+	await copyTemplates();
+} catch (error) {
+	console.error('❌ Failed to copy templates:', error);
+	process.exit(1);
+}
+
+// 4. Remove console.logs from production build
 async function removeConsoleLogs(dir) {
 	try {
 		const entries = await readdir(dir, { withFileTypes: true });

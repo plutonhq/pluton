@@ -1,8 +1,5 @@
-import { readFileSync } from 'fs';
-import path from 'path';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 import { configService } from '../services/ConfigService';
+import { loadEmailWrapperTemplate } from './templateLoader';
 
 export abstract class BaseNotification {
 	protected subject: string = '';
@@ -32,27 +29,7 @@ export abstract class BaseNotification {
 	}
 
 	protected loadEmailTemplate(): string {
-		try {
-			// Get the path to the email template
-			// const __filename = fileURLToPath(import.meta.url);
-			// const __dirname = dirname(__filename);
-			// return readFileSync(path.join(__dirname, 'templates', 'email', 'email.html'), {
-			// 	encoding: 'utf-8',
-			// });
-			const templatePath = path.join(
-				process.cwd(),
-				'src',
-				'notifications',
-				'templates',
-				'email',
-				'email.html'
-			);
-			console.log('💌 template Path :', templatePath);
-			return readFileSync(templatePath, 'utf-8');
-		} catch (err) {
-			console.log('Error loading email template:', err);
-			return ''; // Fallback to empty string if file read fails
-		}
+		return loadEmailWrapperTemplate();
 	}
 
 	protected applyEmailTemplate(

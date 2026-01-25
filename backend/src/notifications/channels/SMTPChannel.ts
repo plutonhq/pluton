@@ -15,7 +15,7 @@ export class SMTPChannel implements NotificationChannel {
 		const smtpConfig = this.smtpSettings;
 		const senderName = smtpConfig?.senderName || 'Pluton Backup';
 
-		console.log('smtpConfig :', smtpConfig);
+		// console.log('smtpConfig :', smtpConfig);/
 		this.transporter = nodemailer.createTransport({
 			host: smtpConfig.server,
 			port: smtpConfig.port,
@@ -53,7 +53,7 @@ export class SMTPChannel implements NotificationChannel {
 			};
 
 			const result = await this.transporter.sendMail(mailOptions);
-			console.log('Email Send Result :', result);
+			// console.log('Email Send Result :', result);
 
 			return {
 				success: true,
