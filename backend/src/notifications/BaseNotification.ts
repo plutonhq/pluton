@@ -45,7 +45,7 @@ export abstract class BaseNotification {
 				'notifications',
 				'templates',
 				'email',
-				'base-email.html'
+				'email.html'
 			);
 			console.log('💌 template Path :', templatePath);
 			return readFileSync(templatePath, 'utf-8');
