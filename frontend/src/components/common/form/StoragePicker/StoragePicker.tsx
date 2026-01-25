@@ -5,6 +5,7 @@ import { useGetStorages } from '../../../../services/storage';
 import Input from '../Input/Input';
 import FolderPicker from '../../FolderPicker/FolderPicker';
 import Icon from '../../Icon/Icon';
+import AddStorage from '../../../Storage/AddStorage/AddStorage';
 
 type storageItem = { name: string; id: string; type: string };
 
@@ -19,6 +20,7 @@ interface StoragePickerProps {
 const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false, deviceId }: StoragePickerProps) => {
    const [selectedStorage, setSelectedStorage] = useState<null | storageItem>();
    const [showFolderPicker, setShowFolderPicker] = useState(false);
+   const [showAddStorageModal, setShowAddStorageModal] = useState(false);
    const [path, setPath] = useState(() => storagePath);
    const isLocalStorage = selectedStorage?.type === 'local';
 
@@ -37,6 +39,9 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
 
    const selectStorage = (storageID: string) => {
       console.log('storageID :', storageID);
+      if (storageID === 'add_new') {
+         return setShowAddStorageModal(true);
+      }
       const theStorage = allStorages.find((s) => s.id == storageID);
       if (theStorage || storageID === 'local') {
          setSelectedStorage(theStorage);
@@ -65,7 +70,11 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
                <div className={classes.storage}>
                   <Select
                      fieldValue={selectedStorage?.id ? selectedStorage.id : ''}
-                     options={[{ label: 'Select Storage', value: '', icon: 'storages' }, ...storageOptions]}
+                     options={[
+                        { label: 'Select Storage', value: '', icon: 'storages' },
+                        ...storageOptions,
+                        { label: '+ Add New Storage', value: 'add_new', icon: 'plus' },
+                     ]}
                      onUpdate={selectStorage}
                      full={true}
                      disabled={disabled}
@@ -104,6 +113,7 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
                onSelect={(newVal) => setPath(newVal)}
             />
          )}
+         {showAddStorageModal && <AddStorage close={() => setShowAddStorageModal(false)} />}
       </div>
    );
 };
