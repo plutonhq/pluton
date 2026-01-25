@@ -197,6 +197,7 @@ export class PlanStore {
 		// Only allow certain fields to be updated
 		const allowedFields = [
 			'title',
+			'description',
 			'isActive',
 			'inProgress',
 			'storagePath',
