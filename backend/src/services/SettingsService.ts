@@ -4,6 +4,7 @@ import { Settings, settingsUpdateSchema } from '../db/schema/settings';
 import { TestEmailNotification } from '../notifications/templates/email/test-email/TestEmailNotification';
 import { SettingsStore } from '../stores/SettingsStore';
 import { AppSettings, IntegrationTypes } from '../types/settings';
+import { INotificationChannelResolver } from '../types/notifications';
 import { NotificationChannelResolver } from '../notifications/channels/NotificationChannelResolver';
 import { appPaths } from '../utils/AppPaths';
 import { AppError, NotFoundError } from '../utils/AppError';
@@ -12,6 +13,7 @@ import { AppError, NotFoundError } from '../utils/AppError';
  * A class for managing settings operations.
  */
 export class SettingsService {
+	protected notificationChannelResolver: INotificationChannelResolver = NotificationChannelResolver;
 	constructor(protected settingsStore: SettingsStore) {}
 
 	async getMainSettings(): Promise<Settings | null> {
@@ -63,7 +65,7 @@ export class SettingsService {
 		const appSettings = settings;
 
 		const integrationType = type;
-		appSettings.integration = NotificationChannelResolver.encryptSecrets(
+		appSettings.integration = this.notificationChannelResolver.encryptSecrets(
 			appSettings.integration as AppSettings['integration']
 		);
 		try {
@@ -77,16 +79,12 @@ export class SettingsService {
 
 			// Send the test email
 			const notificationClass = new TestEmailNotification({ integrationType, appTitle });
-			const senderChannel = await NotificationChannelResolver.getChannel(integrationType);
+			const senderChannel = await this.notificationChannelResolver.getChannel(integrationType);
 			const sendRes = await senderChannel.send(notificationClass, {
 				emails: test.email,
 			});
-
-			console.log('sendRes :', sendRes);
-			console.log(
-				'appSettings?.integration?.[integrationType] :',
-				theAppSettings?.integration?.[integrationType]
-			);
+			// console.log('senderChannel :', senderChannel);
+			// console.log('sendRes :', integrationType, sendRes);
 
 			// Set the integration status to connected
 			if (sendRes.success) {

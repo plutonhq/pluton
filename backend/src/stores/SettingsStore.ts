@@ -4,12 +4,15 @@ import { DatabaseType } from '../db';
 import { Settings, NewSettings, settings } from '../db/schema/settings';
 import { AppSettings, INTEGRATIONS_AVAILABLE, IntegrationTypes } from '../types/settings';
 import { NotificationChannelResolver } from '../notifications/channels/NotificationChannelResolver';
+import { INotificationChannelResolver } from '../types/notifications';
 
 /**
  * SettingsStore is a class for managing application settings records in the database.
  */
 export class SettingsStore {
-	constructor(private db: DatabaseType) {}
+	protected resolver: INotificationChannelResolver = NotificationChannelResolver;
+
+	constructor(protected db: DatabaseType) {}
 
 	async getFirst(): Promise<Settings | null> {
 		const appSettings = await this.db.query.settings.findFirst();
@@ -70,7 +73,7 @@ export class SettingsStore {
 		// Decrypt Secret Fields
 		if (theSettings?.integration) {
 			try {
-				theSettings.integration = NotificationChannelResolver.decryptSecrets(
+				theSettings.integration = this.resolver.decryptSecrets(
 					theSettings.integration
 				);
 				return theSettings;
@@ -83,15 +86,15 @@ export class SettingsStore {
 
 	async encryptIntegrationSecrets(appSettings: AppSettings) {
 		const theSettings = { ...appSettings };
-		// Decrypt Secret Fields
+		// Encrypt Secret Fields
 		if (theSettings?.integration) {
 			try {
-				theSettings.integration = NotificationChannelResolver.encryptSecrets(
+				theSettings.integration = this.resolver.encryptSecrets(
 					theSettings.integration
 				);
 				return theSettings;
 			} catch (error: any) {
-				console.log('Error decrypting password:', error);
+				console.log('Error encrypting password:', error);
 				false;
 			}
 		}

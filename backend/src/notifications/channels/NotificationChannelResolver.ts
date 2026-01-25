@@ -5,11 +5,12 @@ import { getNestedValue, setNestedValue } from '../../utils/helpers';
 import { db } from '../../db/index';
 import { SettingsStore } from '../../stores/SettingsStore';
 import { configService } from '../../services/ConfigService';
+import { NotificationChannel } from '../NotificationChannel';
 
 export class NotificationChannelResolver {
 	static secretFields: string[] = ['smtp.password'];
 
-	static async getChannel(channelType: IntegrationTypes = 'smtp') {
+	static async getChannel(channelType: IntegrationTypes = 'smtp'): Promise<NotificationChannel> {
 		const settingsStore = new SettingsStore(db);
 		const settingsData = await settingsStore.getFirst();
 		const integration = settingsData?.settings?.integration;

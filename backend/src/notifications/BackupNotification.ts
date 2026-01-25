@@ -1,5 +1,6 @@
 import { BackupCompletionStats, BackupTaskStats } from '../types/backups';
 import { PlanFull } from '../types/plans';
+import { INotificationChannelResolver } from '../types/notifications';
 import { BackupStartedNotification } from './templates/email/backup/BackupStartedNotification';
 import { BackupSuccessNotification } from './templates/email/backup/BackupSuccessNotification';
 import { BackupFailedNotification } from './templates/email/backup/BackupFailedNotification';
@@ -21,6 +22,7 @@ export class BackupNotification {
 	protected BackupStartedNotificationClass = BackupStartedNotification;
 	protected BackupSuccessNotificationClass = BackupSuccessNotification;
 	protected BackupFailedNotificationClass = BackupFailedNotification;
+	protected notificationChannelResolver: INotificationChannelResolver = NotificationChannelResolver;
 
 	shouldSend(notificationCase: string, notificationType: string) {
 		return (
@@ -51,7 +53,7 @@ export class BackupNotification {
 			const emailType = notification?.email?.type || 'smtp';
 
 			if (!notification?.email?.emails) throw new Error('Email Notification Emails Missing.');
-			const emailChannel = await NotificationChannelResolver.getChannel(emailType);
+			const emailChannel = await this.notificationChannelResolver.getChannel(emailType);
 			const notificationClass = await this.getNotificationClass(
 				plan,
 				notificationType,
