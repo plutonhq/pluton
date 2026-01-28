@@ -16,6 +16,7 @@ interface IAppPaths {
 	progress: string;
 	stats: string;
 	temp: string;
+	cache: string;
 	downloads: string;
 	restores: string;
 	sync: string;
@@ -118,6 +119,7 @@ class AppPaths {
 			progress: path.join(baseDir, 'progress'),
 			stats: path.join(baseDir, 'stats'),
 			temp: path.join(tempBase, 'pluton'),
+			cache: path.join(tempBase, 'pluton', 'cache'),
 			downloads: path.join(tempBase, 'pluton', 'downloads'),
 			restores: path.join(tempBase, 'pluton', 'restores'),
 			sync: path.join(baseDir, 'sync'),
@@ -132,6 +134,7 @@ class AppPaths {
 			this.paths.progress,
 			this.paths.stats,
 			this.paths.temp,
+			this.paths.cache,
 			this.paths.downloads,
 			this.paths.restores,
 			this.paths.sync,
@@ -209,6 +212,10 @@ class AppPaths {
 	public getDownloadsDir(): string {
 		this.checkInitialized();
 		return this.paths.downloads;
+	}
+	public getCacheDir(): string {
+		this.checkInitialized();
+		return this.paths.cache;
 	}
 	public getRestoresDir(): string {
 		this.checkInitialized();

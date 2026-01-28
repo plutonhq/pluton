@@ -16,6 +16,7 @@ export class CleanDownloadsTask extends Task {
 			appPaths.getDownloadsDir(),
 			appPaths.getRestoresDir(),
 			appPaths.getProgressDir(),
+			appPaths.getCacheDir(),
 		];
 
 		for (const dir of dirsToClean) {

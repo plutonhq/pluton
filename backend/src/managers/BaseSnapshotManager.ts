@@ -4,6 +4,8 @@ import { generateResticRepoPath, resticPathToWindows } from '../utils/restic/hel
 import { DownloadHandler } from './handlers/DownloadHandler';
 import { configService } from '../services/ConfigService';
 import { SnapShotFile } from '../types/restic';
+import { appPaths } from '../utils/AppPaths';
+import { readFile, writeFile } from 'fs/promises';
 
 export class BaseSnapshotManager extends EventEmitter {
 	private downloadHandler: DownloadHandler;
@@ -116,6 +118,15 @@ export class BaseSnapshotManager extends EventEmitter {
 		backupId: string,
 		options: { storagePath: string; storageName: string; encryption: boolean }
 	): Promise<{ success: boolean; result: SnapShotFile[] | string }> {
+		const filename = `backup-${backupId}-snapshot.json`;
+		const snapshotFilePath = `${appPaths.getCacheDir()}/${filename}`;
+
+		try {
+			const snapshotCache = await readFile(snapshotFilePath, 'utf8');
+			const files = JSON.parse(snapshotCache);
+			return { success: true, result: files };
+		} catch (error: any) {}
+
 		try {
 			let snapshotId: string | undefined;
 			const { success, result } = await getSnapshotByTag('backup-' + backupId, options);
@@ -156,6 +167,9 @@ export class BaseSnapshotManager extends EventEmitter {
 					permissions: item.permissions,
 					isAvailable: true,
 				}));
+
+			// write the cache
+			await writeFile(snapshotFilePath, JSON.stringify(files), 'utf8');
 
 			return { success: true, result: files };
 		} catch (error: any) {
