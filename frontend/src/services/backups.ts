@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { API_URL } from '../utils/constants';
 
+const notifiedBackupProgress = new Set<string>();
+
 // Generate Download
 export async function generateBackupDownload({ backupId }: { backupId: string; planId: string }) {
    // const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
@@ -161,11 +163,14 @@ export function useGetBackupProgress(payload: { id: string; sourceId: string; so
 
          if (isFinished) {
             const planId = progressData?.planId || payload.planId;
-            if (planId) {
-               console.log('Invalidate Plan and Reload It :', planId);
-               queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+            if (!notifiedBackupProgress.has(payload.id)) {
+               notifiedBackupProgress.add(payload.id);
+               if (planId) {
+                  console.log('Invalidate Plan and Reload It :', planId);
+                  queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+               }
+               toast.success('Process Complete!');
             }
-            toast.success('Process Complete!');
             return false;
          }
 

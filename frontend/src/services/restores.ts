@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { API_URL } from '../utils/constants';
 
+const notifiedRestoreProgress = new Set<string>();
+
 // Get All Restores
 export async function getAllRestores() {
    const url = new URL(`${API_URL}/restores`);
@@ -239,11 +241,14 @@ export function useGetRestoreProgress(payload: { id: string; sourceId: string; s
 
          if (isFinished) {
             const planId = progressData?.planId || payload.planId;
-            if (planId) {
-               console.log('Invalidate Plan and Reload It :', planId);
-               queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+            if (!notifiedRestoreProgress.has(payload.id)) {
+               notifiedRestoreProgress.add(payload.id);
+               if (planId) {
+                  console.log('Invalidate Plan and Reload It :', planId);
+                  queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+               }
+               toast.success('Restoration Complete!');
             }
-            toast.success('Restoration Complete!');
             return false;
          }
 
