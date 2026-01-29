@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '../Icon/Icon';
 import classes from './LogViewer.module.scss';
 import { useGetDownloadLogs } from '../../../services/plans';
@@ -25,19 +25,27 @@ const LogViewer = ({ type = '', planMethod = 'backup', logs = [], planId, settin
    const allTaskTypes = [...new Set(logs.map((log) => log.module))];
    const [search, setSearch] = useState('');
    const [filters, setFilters] = useState<string[]>(['info', 'error', 'warn']);
-   const [taskTypes, setTaskTypes] = useState<string[]>(allTaskTypes);
+   const [taskTypes, setTaskTypes] = useState<string[]>([]);
    const [currentPage, setCurrentPage] = useState(1);
    const downloadPlanLogsMutation = useGetDownloadLogs();
    const downloadAppLogsMutation = useGetDownloadAppLogs();
 
-   const theLogs = logs.filter((log) => {
-      const matchesSearch = log.msg?.toLowerCase().includes(search.toLowerCase());
-      const matchesBackupId = log.backupId?.toLowerCase().includes(search.toLowerCase());
-      const logType = getLogLevelName(log.level);
-      const matchesFilter = filters.includes(logType);
-      const matchesTaskType = taskTypes.includes(log.module);
-      return (matchesSearch || matchesBackupId) && matchesFilter && matchesTaskType;
-   });
+   useEffect(() => {
+      if (allTaskTypes.length > 0 && taskTypes.length === 0) {
+         setTaskTypes(allTaskTypes);
+      }
+   }, [allTaskTypes.length]);
+
+   const theLogs = logs
+      .filter((log) => {
+         const matchesSearch = log.msg?.toLowerCase().includes(search.toLowerCase());
+         const matchesBackupId = log.backupId?.toLowerCase().includes(search.toLowerCase());
+         const logType = getLogLevelName(log.level);
+         const matchesFilter = filters.includes(logType);
+         const matchesTaskType = taskTypes.includes(log.module);
+         return (matchesSearch || matchesBackupId) && matchesFilter && matchesTaskType;
+      })
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
    const showPagination = theLogs.length > PAGINATION_THRESHOLD;
    const totalPages = Math.ceil(theLogs.length / ITEMS_PER_PAGE);
