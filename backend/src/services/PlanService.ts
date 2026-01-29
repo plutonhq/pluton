@@ -57,7 +57,13 @@ export class PlanService {
 		return result;
 	}
 
-	public async checkActiveBackups(planId: string): Promise<boolean> {
+	public async checkActiveBackupsOrRestore(
+		planId: string,
+		type: 'backup' | 'restore'
+	): Promise<boolean> {
+		if (type === 'restore') {
+			return await this.planStore.hasActiveRestore(planId);
+		}
 		return await this.planStore.hasActiveBackups(planId);
 	}
 

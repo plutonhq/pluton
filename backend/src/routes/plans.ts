@@ -10,7 +10,7 @@ export function createPlanRouter(controller: PlanController, router: Router = Ro
 	router.delete('/:id', authM, controller.deletePlan.bind(controller));
 	router.get('/:id/logs', authM, controller.getLogs.bind(controller));
 	router.get('/:id/logs/download', authM, controller.downloadLogs.bind(controller));
-	router.get('/:id/checkactive', authM, controller.checkActiveBackups.bind(controller));
+	router.get('/:id/checkactive', authM, controller.checkActiveBackupsOrRestore.bind(controller));
 	router.post('/:id/action/backup', authM, controller.performBackup.bind(controller));
 	router.post('/:id/action/resume', authM, controller.resumeBackup.bind(controller));
 	router.post('/:id/action/pause', authM, controller.pauseBackup.bind(controller));

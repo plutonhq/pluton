@@ -17,7 +17,7 @@ import {
 import { BaseBackupManager } from '../managers';
 import { jobQueue } from '../jobs/JobQueue';
 import { SnapShotFile } from '../types/restic';
-import { Backup } from 'src/db/schema/backups';
+import { Backup } from '../db/schema/backups';
 
 export class BackupService {
 	protected broker: any;

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import Icon from '../../common/Icon/Icon';
 import classes from './RestoredFileBrowser.module.scss';
@@ -10,12 +10,13 @@ import FileIcon from '../../common/FileIcon/FileIcon';
 interface RestoredFileBrowserProps {
    files: RestoredFileItem[];
    stats?: RestoredItemsStats;
+   isPreview?: boolean;
 }
 
 const isMobileDevice = isMobile();
 const ITEM_HEIGHT = isMobileDevice ? 65 : 45;
 
-const RestoredFileBrowser = ({ files, stats }: RestoredFileBrowserProps) => {
+const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBrowserProps) => {
    const [selectedFolder, setSelectedFolder] = useState<string>('');
    const [search, setSearch] = useState('');
    const [filters, setFilters] = useState({
@@ -69,9 +70,11 @@ const RestoredFileBrowser = ({ files, stats }: RestoredFileBrowserProps) => {
 
    const directories = useMemo(() => {
       const dirs = new Set<string>();
-      Object.keys(fileSystem).forEach((path) => {
-         const separator = getPathSeparator(path);
-         const parts = splitPath(path);
+      // Derive directories from all files, not filtered fileSystem, to keep tree stable during search
+      files.forEach((file) => {
+         const dirPath = getParentPath(file.path);
+         const separator = getPathSeparator(dirPath);
+         const parts = splitPath(dirPath);
          let currentPath = '';
 
          parts.forEach((part) => {
@@ -81,14 +84,15 @@ const RestoredFileBrowser = ({ files, stats }: RestoredFileBrowserProps) => {
             }
          });
       });
-      const dirsArray = Array.from(dirs);
+      return Array.from(dirs);
+   }, [files]);
 
-      // Set the first directory as selected by default
-      console.log('SelectedFolder :', dirsArray[0]);
-      setSelectedFolder(dirsArray[0] || '');
-
-      return dirsArray;
-   }, [fileSystem]);
+   // Set initial selected folder when directories change
+   useEffect(() => {
+      if (directories.length > 0 && selectedFolder === '') {
+         setSelectedFolder(directories[0]);
+      }
+   }, [directories, selectedFolder]);
 
    const hasSubdirectories = (dir: string) => {
       const separator = getPathSeparator(dir);
@@ -308,7 +312,7 @@ const RestoredFileBrowser = ({ files, stats }: RestoredFileBrowserProps) => {
                   </div>
                   {selectedFolder && totalItems > 0 ? (
                      <List
-                        height={window.innerHeight - 250}
+                        height={window.innerHeight - (isPreview ? 370 : 250)}
                         itemCount={totalItems}
                         itemSize={ITEM_HEIGHT}
                         width="100%"
@@ -317,7 +321,7 @@ const RestoredFileBrowser = ({ files, stats }: RestoredFileBrowserProps) => {
                         {FileRow}
                      </List>
                   ) : (
-                     <div className={classes.fileListEmpty}>Select a folder from the left to browse it's content</div>
+                     <div className={classes.fileListEmpty}>Select a folder from the left to browse its content</div>
                   )}
                </div>
             </div>

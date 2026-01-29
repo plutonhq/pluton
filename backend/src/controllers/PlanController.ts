@@ -42,13 +42,17 @@ export class PlanController {
 		}
 	}
 
-	async checkActiveBackups(req: Request, res: Response): Promise<void> {
+	async checkActiveBackupsOrRestore(req: Request, res: Response): Promise<void> {
 		if (!req.params.id) {
 			res.status(400).json({ success: false, error: 'Plan ID is required' });
 			return;
 		}
 		try {
-			const hasActiveBackup = await this.planService.checkActiveBackups(req.params.id);
+			const type = req.query.type === 'restore' ? 'restore' : 'backup';
+			const hasActiveBackup = await this.planService.checkActiveBackupsOrRestore(
+				req.params.id,
+				type
+			);
 			res.status(200).json({
 				success: true,
 				result: hasActiveBackup,

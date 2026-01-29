@@ -23,6 +23,7 @@ const PlanSingle = () => {
 
    const [searchParams] = useSearchParams();
    const isBackupPending = searchParams.get('pendingbackup') === '1';
+   const isRestorePending = searchParams.get('pendingrestore') === '1';
 
    const {
       showDeleteModal,
@@ -154,6 +155,7 @@ const PlanSingle = () => {
                <PlanProgress
                   plan={plan}
                   isBackupPending={isBackupPending}
+                  isRestorePending={isRestorePending}
                   activeBackups={activeBackups}
                   activeRestores={activeRestores}
                   refetchPlan={refetchPlan}

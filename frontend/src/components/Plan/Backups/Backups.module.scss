@@ -47,7 +47,8 @@
             cursor: pointer;
             transition: all 0.12s linear;
          }
-         .backupTitle {
+         .backupTitle,
+         .restoreTitle {
             cursor: pointer;
 
             &:hover {

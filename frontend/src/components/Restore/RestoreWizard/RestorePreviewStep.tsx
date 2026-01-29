@@ -96,7 +96,7 @@ const RestorePreviewStep = ({ backupId, planId, settings, preview, nextLabel, go
                   </button>
                </div>
             )}
-            {restoreStats && <RestoredFileBrowser files={restoredFiles} stats={restoreStats} />}
+            {restoreStats && <RestoredFileBrowser files={restoredFiles} stats={restoreStats} isPreview={true} />}
          </div>
          <div className={classes.footer}>
             <div className={classes.footerLeft}>

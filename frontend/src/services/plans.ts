@@ -370,8 +370,9 @@ export function useUnlockPlan() {
 }
 
 // Get Backup Progress
-export async function checkActiveBackups(planId: string) {
+export async function checkActiveBackupsOrRestore(planId: string, type: 'backup' | 'restore' = 'backup') {
    const url = new URL(`${API_URL}/plans/${planId}/checkactive`);
+   url.searchParams.append('type', type);
 
    const res = await fetch(url.toString(), {
       method: 'GET',
@@ -384,10 +385,10 @@ export async function checkActiveBackups(planId: string) {
    return data;
 }
 
-export function useCheckActiveBackups() {
+export function useCheckActiveBackupsOrRestore() {
    return useMutation({
       // queryKey: ['planActiveBackups-' + planId],
-      mutationFn: checkActiveBackups,
+      mutationFn: ({ planId, type }: { planId: string; type: 'backup' | 'restore' }) => checkActiveBackupsOrRestore(planId, type),
       // refetchOnMount: true,
    });
 }

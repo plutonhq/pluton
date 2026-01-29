@@ -8,12 +8,13 @@ import classes from './PlanProgress.module.scss';
 interface PlanProgressProps {
    plan: Plan;
    isBackupPending: boolean;
+   isRestorePending?: boolean;
    activeBackups: Backup[];
    activeRestores: RestoreSlim[];
    refetchPlan: () => void;
 }
 
-const PlanProgress = ({ plan, isBackupPending, activeBackups, activeRestores, refetchPlan }: PlanProgressProps) => {
+const PlanProgress = ({ plan, isBackupPending, isRestorePending, activeBackups, activeRestores, refetchPlan }: PlanProgressProps) => {
    return (
       <div>
          {isBackupPending && (
@@ -22,7 +23,7 @@ const PlanProgress = ({ plan, isBackupPending, activeBackups, activeRestores, re
                   <h3>Backup in Progress</h3>
                </div>
                <div className={classes.activeBackupsTable}>
-                  <PlanPendingBackup planId={plan.id} onPendingBackupDetect={() => refetchPlan()} />
+                  <PlanPendingBackup planId={plan.id} onPendingDetect={() => refetchPlan()} />
                </div>
             </div>
          )}
@@ -49,6 +50,16 @@ const PlanProgress = ({ plan, isBackupPending, activeBackups, activeRestores, re
             </div>
          )}
 
+         {isRestorePending && (
+            <div className={classes.activeBackups}>
+               <div className={classes.backupsHeader}>
+                  <h3>Restore in Progress</h3>
+               </div>
+               <div className={classes.activeBackupsTable}>
+                  <PlanPendingBackup planId={plan.id} type="restore" onPendingDetect={() => refetchPlan()} />
+               </div>
+            </div>
+         )}
          {activeRestores.length > 0 && (
             <div className={classes.activeBackups}>
                <div className={classes.backupsHeader}>

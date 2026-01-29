@@ -6,6 +6,7 @@ import { backups } from '../db/schema/backups';
 import { PlanBackupSettings, PlanFull } from '../types/plans';
 import Cryptr from 'cryptr';
 import { configService } from '../services/ConfigService';
+import { restores } from '../db/schema/restores';
 
 /**
  * PlanStore is a class for managing plan records in the database.
@@ -249,6 +250,16 @@ export class PlanStore {
 			.select()
 			.from(backups)
 			.where(and(eq(backups.planId, planId), eq(backups.inProgress, true)))
+			.limit(1);
+
+		return result.length > 0;
+	}
+
+	async hasActiveRestore(planId: string): Promise<boolean> {
+		const result = await this.db
+			.select()
+			.from(restores)
+			.where(and(eq(restores.planId, planId), eq(restores.inProgress, true)))
 			.limit(1);
 
 		return result.length > 0;

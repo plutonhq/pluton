@@ -1,3 +1,5 @@
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router';
 import Icon from '../../common/Icon/Icon';
 import { useRestoreBackup } from '../../../services/restores';
 import classes from './RestoreWizard.module.scss';
@@ -16,20 +18,34 @@ interface RestoreConfirmStepProps {
 
 const RestoreConfirmStep = ({ backupId, planId, settings, stats, snapshotsStats, method, goBack, close }: RestoreConfirmStepProps) => {
    const restoreMutation = useRestoreBackup();
+   const navigate = useNavigate();
    const restoreStats = stats;
    const isSync = method === 'sync';
 
    const restoreBackup = () => {
       console.log('restore :', backupId);
-      restoreMutation.mutate({
-         backupId,
-         planId,
-         overwrite: settings.overwrite,
-         target: settings.type === 'custom' ? settings.path : '',
-         includes: settings.includes,
-         excludes: settings.excludes,
-         deleteOption: settings.delete,
-      });
+      restoreMutation.mutate(
+         {
+            backupId,
+            planId,
+            overwrite: settings.overwrite,
+            target: settings.type === 'custom' ? settings.path : '',
+            includes: settings.includes,
+            excludes: settings.excludes,
+            deleteOption: settings.delete,
+         },
+         {
+            onSuccess: (data: any, variables) => {
+               console.log('Success :', data);
+               toast.success(`Restore Started`, { autoClose: 5000 });
+               const targetPlanId = variables?.planId;
+               if (targetPlanId) {
+                  navigate(`/plan/${targetPlanId}?pendingrestore=1`);
+               }
+               close();
+            },
+         },
+      );
    };
 
    return (
@@ -69,15 +85,6 @@ const RestoreConfirmStep = ({ backupId, planId, settings, stats, snapshotsStats,
                   </button>
                </div>
             )}
-            {restoreMutation.isSuccess && (
-               <p className={classes.restoreSuccessMsg}>
-                  <Icon type="check-circle-filled" size={14} color="lightseagreen" /> Restore Process Started.{' '}
-                  <button onClick={() => location.reload()}>
-                     <Icon type="reload" size={12} /> Reload
-                  </button>{' '}
-                  the page to view the restoration progress.
-               </p>
-            )}
             {restoreMutation.isError && (
                <div className={classes.restoreError}>
                   <Icon type="error" size={14} color="red" /> {restoreMutation.error?.message || 'Failed to Generate Preview'}
@@ -94,7 +101,7 @@ const RestoreConfirmStep = ({ backupId, planId, settings, stats, snapshotsStats,
             </div>
             <div className={classes.footerRight}>
                <button onClick={() => close()} disabled={restoreMutation.isPending}>
-                  {restoreMutation.isSuccess ? 'Close' : 'Cancel'}
+                  Cancel
                </button>
             </div>
          </div>

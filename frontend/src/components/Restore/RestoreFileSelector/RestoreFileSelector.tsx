@@ -165,12 +165,12 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
 
       const restorableFiles = fileSelectCondition ? files.filter((file) => fileSelectCondition(file)) : files;
 
-      console.log('restorableFiles :', restorableFiles);
-
       restorableFiles.forEach((file) => {
          if (isPathSelected(file.path)) {
             selectedFilesCount++;
-            selectedBytes += file.size;
+            if (!file.isDirectory) {
+               selectedBytes += file.size;
+            }
          }
       });
 
@@ -500,7 +500,7 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
                         </div>
                      </div>
                      {selectedFolder ? (
-                        <List height={window.innerHeight - 300} itemCount={directChildren.length} itemSize={ITEM_HEIGHT} width="100%">
+                        <List height={window.innerHeight - 370} itemCount={directChildren.length} itemSize={ITEM_HEIGHT} width="100%">
                            {Row}
                         </List>
                      ) : (
