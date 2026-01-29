@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { toast } from 'react-toastify';
 import { useGetPlan, usePausePlan, usePerformBackup, useResumePlan } from '../services/plans';
 import { Plan } from '../@types/plans';
@@ -37,6 +37,7 @@ export const usePlanSingleActions = (): {
    const [showLogsModal, setShowLogsModal] = useState(false);
 
    const { id } = useParams();
+   const navigate = useNavigate();
 
    const performBackupMutation = usePerformBackup();
    const pauseMutation = usePausePlan();
@@ -94,13 +95,25 @@ export const usePlanSingleActions = (): {
          return;
       }
 
-      toast.promise(performBackupMutation.mutateAsync(plan.id), {
-         pending: `Starting ${isSync ? 'Sync' : 'Backup'}...`,
-         success: `${isSync ? 'Sync' : 'Backup'} initiated successfully! 🚀`,
-         error: {
-            render({ data }: any) {
-               return `${isSync ? 'Sync' : 'Backup'} failed to start. ${data?.message || 'Unknown Error.'}`;
-            },
+      const toastId = toast.loading(`Starting ${isSync ? 'Sync' : 'Backup'}...`);
+
+      performBackupMutation.mutate(plan.id, {
+         onSuccess: () => {
+            toast.update(toastId, {
+               render: `${isSync ? 'Sync' : 'Backup'} initiated successfully! 🚀`,
+               type: 'success',
+               isLoading: false,
+               autoClose: 3000,
+            });
+            navigate(`/plan/${plan.id}?pendingbackup=1`);
+         },
+         onError: (error: any) => {
+            toast.update(toastId, {
+               render: `${isSync ? 'Sync' : 'Backup'} failed to start. ${error?.message || 'Unknown Error.'}`,
+               type: 'error',
+               isLoading: false,
+               autoClose: false,
+            });
          },
       });
    };
