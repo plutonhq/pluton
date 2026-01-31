@@ -27,6 +27,9 @@ const copyFilesWindows = (
 	destinationPath: string, // Renamed for clarity, this is your intended destination
 	overwritePolicy: 'always' | 'if-changed' | 'if-newer' | 'never' = 'always'
 ): Promise<void> => {
+	// Check if running as a pkg build (Windows service)
+	const isPkg = (process as any).pkg;
+
 	// Use the arguments directly as Robocopy source and destination
 	const robocopySource = sourcePath;
 	const robocopyDestination = destinationPath;
@@ -34,28 +37,20 @@ const copyFilesWindows = (
 	const robocopyArgsList = [
 		robocopySource,
 		robocopyDestination,
-		// '/B' (Backup mode) is powerful. Use with caution.
-		// It allows copying files even if necessary permissions isn't present,
-		// and can set security information.
-		// For general copying, /E (subdirs, incl. empty) or /S (subdirs, not empty) is common.
-		// Consider if /B is truly needed. If not, remove it or use a more standard option.
-		'/E', // Example: Copy subdirectories, including empty ones.
+		// /E copies subdirectories, including empty ones.
+		'/E',
 	];
 
 	switch (overwritePolicy) {
 		case 'always':
-			// /COPYALL includes Data, Attributes, Timestamps, Security (ACLs), Owner, Auditing info.
-			// /COPY:DATSOU is equivalent to /COPYALL
-			// /COPY:DAT is often sufficient for data backup (Data, Attributes, Timestamps).
-			robocopyArgsList.push('/COPY:DAT', '/W:1', '/R:1'); // Or /COPYALL if needed
+			// /COPY:DAT copies Data, Attributes, Timestamps.
+			// /W:1 /R:1 sets wait time and retry count to 1 for faster failure on locked files.
+			robocopyArgsList.push('/COPY:DAT', '/W:1', '/R:1');
 			break;
 		case 'if-changed':
 			// Robocopy considers files changed if timestamp or size is different.
-			// It doesn't do checksum by default like rsync.
-			// /XO (Exclude Older) + /XC (Exclude Changed - but this skips files present in dest)
-			// Simply using /E or /S without /XO, /XN, /XC will copy if source is newer or different.
-			robocopyArgsList.push('/XO', '/XC'); // This means "copy if newer, skip if same or older, skip if attributes changed but not newer"
-			// Often, just /E is sufficient for "update" behavior.
+			// /XO excludes older files, /XC excludes files with same timestamp and size.
+			robocopyArgsList.push('/XO', '/XC');
 			break;
 		case 'if-newer':
 			robocopyArgsList.push('/XO'); // Exclude Older files (only copy if source is newer)
@@ -65,8 +60,83 @@ const copyFilesWindows = (
 			break;
 	}
 
+	// In pkg builds (Windows service), spawn robocopy directly since the service
+	// already runs with admin privileges. UAC elevation via PowerShell's -Verb runas
+	// fails in services because they run in session 0 (non-interactive).
+	if (isPkg) {
+		return copyFilesWindowsDirect(robocopyArgsList);
+	}
+
+	// In development, use PowerShell with UAC elevation for admin privileges
+	return copyFilesWindowsWithUAC(robocopyArgsList);
+};
+
+/**
+ * Runs robocopy directly without UAC elevation.
+ * Used in pkg builds where the app runs as a Windows service with admin privileges.
+ */
+const copyFilesWindowsDirect = (robocopyArgsList: string[]): Promise<void> => {
+	return new Promise((resolve, reject) => {
+		const subprocess = spawn('robocopy', robocopyArgsList, {
+			stdio: ['ignore', 'pipe', 'pipe'],
+			shell: true,
+		});
+
+		let stdoutData = '';
+		let stderrData = '';
+
+		if (subprocess.stdout) {
+			subprocess.stdout.on('data', data => {
+				stdoutData += data.toString();
+			});
+		}
+		if (subprocess.stderr) {
+			subprocess.stderr.on('data', data => {
+				stderrData += data.toString();
+			});
+		}
+
+		subprocess.on('error', err => {
+			reject(new Error(`Failed to start robocopy process: ${err.message}. Stderr: ${stderrData}`));
+		});
+
+		subprocess.on('close', code => {
+			// Robocopy exit codes:
+			// 0 - No files copied, no errors
+			// 1 - Files copied successfully
+			// 2 - Extra files or directories detected
+			// 4 - Mismatched files or directories detected
+			// 8 - Some files or directories could not be copied (copy errors)
+			// 16 - Serious error. No files copied.
+			// Codes 0-7 are generally considered success (some files may be skipped)
+			if (code !== null && code < 8) {
+				resolve();
+			} else {
+				let errorMessage = `Robocopy process exited with code ${code}.`;
+				if (code === 16) {
+					errorMessage +=
+						' Serious error - this may indicate permission issues, invalid paths, or insufficient disk space.';
+				} else if (code !== null && code >= 8) {
+					errorMessage += ' Some files could not be copied due to errors.';
+				}
+				if (stderrData.trim()) {
+					errorMessage += `\nStderr: ${stderrData.trim()}`;
+				}
+				if (stdoutData.trim()) {
+					errorMessage += `\nOutput: ${stdoutData.trim()}`;
+				}
+				reject(new Error(errorMessage));
+			}
+		});
+	});
+};
+
+/**
+ * Runs robocopy via PowerShell with UAC elevation.
+ * Used in development where admin privileges need to be requested via UAC prompt.
+ */
+const copyFilesWindowsWithUAC = (robocopyArgsList: string[]): Promise<void> => {
 	// Ensure paths with spaces are correctly handled by PowerShell's ArgumentList
-	// The existing map to `"${arg}"` then join with `, ` is for PowerShell array syntax in a string.
 	const quotedArgsForPs = robocopyArgsList.map(arg => `"${arg.replace(/"/g, '`"')}"`).join(', ');
 
 	const psCommand = `
@@ -87,7 +157,7 @@ const copyFilesWindows = (
 
 	return new Promise((resolve, reject) => {
 		const subprocess = spawn('powershell.exe', ['-NoProfile', '-NoLogo', '-Command', psCommand], {
-			stdio: ['ignore', 'pipe', 'pipe'], // Capture stdout/stderr
+			stdio: ['ignore', 'pipe', 'pipe'],
 		});
 
 		let stdoutData = '';
@@ -96,13 +166,11 @@ const copyFilesWindows = (
 		if (subprocess.stdout) {
 			subprocess.stdout.on('data', data => {
 				stdoutData += data.toString();
-				// console.log('Robocopy stdout:', data.toString()); // For live debugging
 			});
 		}
 		if (subprocess.stderr) {
 			subprocess.stderr.on('data', data => {
 				stderrData += data.toString();
-				// console.error('Robocopy stderr:', data.toString()); // For live debugging
 			});
 		}
 
@@ -116,7 +184,6 @@ const copyFilesWindows = (
 			// Robocopy success codes are 0-7 (or 0-3 for stricter success)
 			// >= 8 means errors occurred during copy.
 			if (code !== null && code < 8) {
-				// Relaxed success, includes files skipped or extra files found
 				resolve();
 			} else {
 				let errorMessage = `Robocopy process exited with code ${code}.`;
@@ -124,12 +191,9 @@ const copyFilesWindows = (
 					errorMessage += `\nPowerShell Stderr: ${stderrData.trim()}`;
 				}
 				if (code !== null) {
-					// Robocopy often outputs detailed logs to stdout, even on failure
 					if (stdoutData.trim() && (code >= 8 || code === 16)) {
-						// Show stdout for errors
 						errorMessage += `\nPowerShell Stdout: ${stdoutData.trim()}`;
 					}
-					// Differentiate PowerShell script errors
 					if (code === 2000) {
 						errorMessage = `PowerShell script execution failed (code ${code}). Details: ${stderrData.trim() || stdoutData.trim()}`;
 					} else if (code === 2001) {
