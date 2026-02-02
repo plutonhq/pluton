@@ -155,6 +155,9 @@ export function useGetBackupProgress(payload: { id: string; sourceId: string; so
       refetchOnMount: true,
       retry: false,
       refetchInterval(query) {
+         // Only refetch if the browser tab is active
+         // if (document.hidden) return false;
+
          // console.log('query :', query.state?.data);
          const progressData = query.state?.data;
 

@@ -416,16 +416,21 @@ export const getAvailableCliApps = (platform?: string) => {
 
    switch (platform) {
       case 'win32':
+      case 'windows':
+      case 'Windows':
          return availableShells.Windows;
       case 'darwin':
          return availableShells.MacOs;
       case 'linux':
+      case 'Linux':
          return availableShells.Linux;
       default:
          const allShells: { label: string; value: string }[] = [];
          (Object.keys(availableShells) as typeofOSType[]).map((OSType) => {
             availableShells[OSType].forEach((shell) => {
-               allShells.push({ label: OSType + ': ' + shell.label, value: shell.value });
+               if (allShells.findIndex((s) => s.value === shell.value) === -1) {
+                  allShells.push({ label: `${shell.label} (${shell.value})`, value: shell.value });
+               }
             });
          });
          return allShells;

@@ -234,6 +234,9 @@ export function useGetRestoreProgress(payload: { id: string; sourceId: string; s
       refetchOnMount: true,
       retry: false,
       refetchInterval(query) {
+         // Only refetch if the browser tab is active
+         // if (document.hidden) return false;
+
          const progressData = query.state?.data;
 
          // Check if backup is finished by looking for a "finished" phase event
