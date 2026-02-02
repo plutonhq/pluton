@@ -1,7 +1,7 @@
 {
 	"name": "@plutonhq/core-backend",
 	"description": "Pluton Core Backend Library",
-	"version": "0.1.1",
+	"version": "0.1.3",
 	"author": "plutonhq",
 	"license": "Apache-2.0",
 	"publishConfig": {
