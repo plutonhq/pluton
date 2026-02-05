@@ -61,7 +61,7 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
       }
    }, [selectedStorage, path]);
 
-   console.log('Storage path :', path, !disabled && isLocalStorage && !path);
+   // console.log('Storage path :', path, !disabled && isLocalStorage && !path);
 
    return (
       <div className={classes.storagePicker}>

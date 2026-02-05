@@ -21,7 +21,7 @@ const PlanSourceSettings = ({ plan, onUpdate, error, isEditing }: PlanSourceSett
          ...data.result.map((device: Device) => ({
             label: `${device.name} ${device.id === 'main' ? '(Main)' : ''}`,
             value: device.id,
-            disabled: device.id === 'main' || device.connected ? false : true,
+            // disabled: device.id === 'main' || device.connected ? false : true,
          })),
       );
    }

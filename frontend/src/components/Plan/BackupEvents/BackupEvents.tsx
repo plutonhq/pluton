@@ -22,7 +22,7 @@ interface BackupEventsProps {
 
 const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inProgress, progressData, close }: BackupEventsProps) => {
    const [showError, setShowError] = useState<false | number>(false);
-   const { data: fetchedProgressData } =
+   const { data: fetchedProgressData, isLoading } =
       type === 'backup'
          ? useGetBackupProgressOnce({ id, sourceId, sourceType, planId })
          : useGetRestoreProgressOnce({ id, sourceId, sourceType, planId });
@@ -61,6 +61,11 @@ const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inPro
                   <Icon type="clock" size={14} /> {(progressDataToUse?.duration && formatDuration(progressDataToUse.duration / 1000)) || 'N/A'}
                </div>
             </div>
+            {isLoading && (
+               <div className={classes.loading}>
+                  <Icon type={'loading'} size={30} />
+               </div>
+            )}
             {progressDataToUse && progressDataToUse.events && progressDataToUse.events.length > 0 ? (
                <ul className={classes.eventList}>
                   {progressDataToUse.events.map((event: any, index: number) => {

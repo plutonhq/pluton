@@ -113,6 +113,7 @@ export const usePlanSingleActions = (): {
                type: 'error',
                isLoading: false,
                autoClose: false,
+               closeButton: true,
             });
          },
       });

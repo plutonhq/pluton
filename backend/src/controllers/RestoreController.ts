@@ -99,7 +99,7 @@ export class RestoreController {
 		} catch (error: any) {
 			res.status(500).json({
 				success: false,
-				error: 'Failed to restore plan',
+				error: 'Failed to perform dry restore. ' + (error.message || ''),
 			});
 		}
 	}

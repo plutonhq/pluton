@@ -41,6 +41,14 @@
    }
 }
 
+.loading {
+   padding: 100px 40px;
+   text-align: center;
+   width: 100%;
+   box-sizing: border-box;
+   color: var(--icon-color);
+}
+
 .eventList {
    list-style-type: none;
    margin: 0;
