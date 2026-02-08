@@ -1,6 +1,6 @@
 {
   "name": "pluton",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Pluton - Open Source Backup Software",
   "license": "Apache-2.0",
   "scripts": {
