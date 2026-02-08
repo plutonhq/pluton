@@ -79,7 +79,7 @@ export async function createApp(): Promise<{ app: Express }> {
 		backupStore,
 		storageStore,
 		deviceStore,
-		null
+		restoreStore
 	);
 	const backupService = new BackupService(
 		localBackupAgent,
@@ -87,30 +87,21 @@ export async function createApp(): Promise<{ app: Express }> {
 		planStore,
 		backupStore,
 		restoreStore,
-		storageStore,
-		null
+		storageStore
 	);
 	const restoreService = new RestoreService(
 		localRestoreAgent,
 		planStore,
 		backupStore,
 		restoreStore,
-		storageStore,
-		null
+		storageStore
 	);
-	const deviceService = new DeviceService(
-		localSystemAgent,
-		deviceStore,
-		planStore,
-		storageStore,
-		null
-	);
+	const deviceService = new DeviceService(localSystemAgent, deviceStore, planStore, storageStore);
 	const storageService = new StorageService(
 		localStorageAgent,
 		localSystemAgent,
 		storageStore,
-		planStore,
-		null
+		planStore
 	);
 	const settingsService = new SettingsService(settingsStore);
 

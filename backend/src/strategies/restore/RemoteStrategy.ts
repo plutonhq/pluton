@@ -2,11 +2,9 @@ import { RestoreConfig, RestoreOptions } from '../../types/restores';
 import { RestoreStrategy } from './RestoreStrategy';
 
 export class RemoteStrategy implements RestoreStrategy {
-	protected broker: any;
 	protected deviceId: string;
 
-	constructor(broker: any, deviceId: string) {
-		this.broker = broker;
+	constructor(deviceId: string) {
 		this.deviceId = deviceId;
 	}
 
@@ -41,20 +39,7 @@ export class RemoteStrategy implements RestoreStrategy {
 
 	publishCommand(action: string, payload: any): Promise<{ success: boolean; result: any }> {
 		return new Promise((resolve, reject) => {
-			this.broker.publish(
-				{
-					cmd: 'publish',
-					topic: `command/restore/${this.deviceId}/${action}`,
-					payload: JSON.stringify(payload),
-					qos: 0,
-					dup: false,
-					retain: false,
-				},
-				(error: any) => {
-					if (error) reject({ success: false, result: error?.message || 'Unknown Error' });
-					else resolve({ success: true, result: JSON.stringify(payload) });
-				}
-			);
+			resolve({ success: true, result: null });
 		});
 	}
 }

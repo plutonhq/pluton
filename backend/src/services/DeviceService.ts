@@ -9,24 +9,18 @@ import { StorageStore } from '../stores/StorageStore';
 import { providers } from '../utils/providers';
 
 export class DeviceService {
-	protected broker: any;
 	protected connectedDeviceIds: Set<string> | undefined;
 
 	constructor(
 		protected localSystemManager: BaseSystemManager,
 		protected deviceStore: DeviceStore,
 		protected planStore: PlanStore,
-		protected storageStore: StorageStore,
-		broker?: any
-	) {
-		this.broker = broker;
-	}
+		protected storageStore: StorageStore
+	) {}
 
 	getSystemStrategy(deviceId: string): SystemStrategy {
 		const isRemote = deviceId !== 'main';
-		return isRemote
-			? new RemoteStrategy(this.broker, deviceId)
-			: new LocalStrategy(this.localSystemManager);
+		return isRemote ? new RemoteStrategy(deviceId) : new LocalStrategy(this.localSystemManager);
 	}
 
 	/**

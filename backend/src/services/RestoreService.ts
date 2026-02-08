@@ -16,15 +16,12 @@ export class RestoreService {
 		protected planStore: PlanStore,
 		protected backupStore: BackupStore,
 		protected restoreStore: RestoreStore,
-		protected storageStore: StorageStore,
-		protected broker: any
+		protected storageStore: StorageStore
 	) {}
 
 	getRestoreStrategy(deviceId: string, method: string): RestoreStrategy {
 		const isRemote = deviceId !== 'main';
-		return isRemote
-			? new RemoteStrategy(this.broker, deviceId)
-			: new LocalStrategy(this.localAgent);
+		return isRemote ? new RemoteStrategy(deviceId) : new LocalStrategy(this.localAgent);
 	}
 
 	async getAllRestores() {

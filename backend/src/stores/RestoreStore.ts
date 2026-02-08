@@ -66,4 +66,9 @@ export class RestoreStore {
 
 		return result.changes > 0;
 	}
+
+	async deleteByPlanId(planId: string): Promise<boolean> {
+		const result = await this.db.delete(restores).where(eq(restores.planId, planId));
+		return result.changes > 0;
+	}
 }

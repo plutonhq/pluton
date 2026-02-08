@@ -4,6 +4,7 @@ import { BaseBackupManager } from '../managers/BaseBackupManager';
 import { PlanStore } from '../stores/PlanStore';
 import { BackupStore } from '../stores/BackupStore';
 import { StorageStore } from '../stores/StorageStore';
+import { RestoreStore } from '../stores/RestoreStore';
 import { Plan, NewPlan, planInsertSchema, planUpdateSchema } from '../db/schema/plans';
 import { BackupPlanArgs, NewPlanReq, PlanLogItem } from '../types/plans';
 import { planLogger } from '../utils/logger';
@@ -24,23 +25,19 @@ import { sanitizeStoragePath } from '../utils/sanitizeStoragePath';
  * and delegates remote execution to strategies.
  */
 export class PlanService {
-	protected broker: any;
-
 	constructor(
 		protected localAgent: BaseBackupManager,
 		protected planStore: PlanStore,
 		protected backupStore: BackupStore,
 		protected storageStore: StorageStore,
 		protected deviceStore: DeviceStore,
-		broker: any
-	) {
-		this.broker = broker;
-	}
+		protected restoreStore: RestoreStore
+	) {}
 
 	getStrategy(plan: NewPlan | Plan): BackupStrategy | any {
 		const isRemote = plan.sourceId !== 'main';
 		return isRemote
-			? new RemoteBackupStrategy(this.broker, plan.sourceId)
+			? new RemoteBackupStrategy(plan.sourceId)
 			: new LocalBackupStrategy(this.localAgent);
 	}
 
@@ -244,6 +241,7 @@ export class PlanService {
 		}
 
 		// Finally, remove from our database
+		await this.restoreStore.deleteByPlanId(planId);
 		await this.backupStore.deleteByPlanId(planId);
 		const deleteRes = await this.planStore.delete(planId);
 		if (!deleteRes) {

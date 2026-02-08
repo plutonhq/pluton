@@ -1,13 +1,16 @@
 import { BaseSnapshotManager } from '../../managers/BaseSnapshotManager';
 import { BackupStore } from '../../stores/BackupStore';
-import { planLogger } from '../../utils/logger';
 import { DownloadCompleteEvent, DownloadErrorEvent, DownloadStartEvent } from '../../types/events';
+import { DownloadEventService } from '../events/DownloadEventService';
 
 export class DownloadEventListener {
+	protected downloadEventService: DownloadEventService;
+
 	constructor(
 		protected localAgent: BaseSnapshotManager,
 		protected backupStore: BackupStore
 	) {
+		this.downloadEventService = new DownloadEventService(backupStore, localAgent);
 		this.registerEventListeners();
 	}
 
@@ -28,25 +31,7 @@ export class DownloadEventListener {
 	}
 
 	private async onDownloadStart(eventPayload: DownloadStartEvent) {
-		const { backupId, planId } = eventPayload;
-		try {
-			console.log('onDownloadStart :', eventPayload);
-			const currentTime = Math.floor(new Date().getTime() / 1000);
-			await this.backupStore.update(backupId, {
-				download: {
-					status: 'started',
-					started: currentTime,
-				},
-			});
-			planLogger('download', planId, backupId).info(
-				`Download generation started for backup ${backupId}`
-			);
-		} catch (error: any) {
-			console.log('[error] onDownloadStart :', error);
-			planLogger('download', planId, backupId).error(
-				`Failed to handle download generation start for backup ${backupId}: ${error.message}`
-			);
-		}
+		await this.downloadEventService.onDownloadStart(eventPayload);
 	}
 
 	// private async onDownloadProgress(eventPayload: DownloadProgressEvent) {
@@ -61,59 +46,10 @@ export class DownloadEventListener {
 	// }
 
 	private async onDownloadError(eventPayload: DownloadErrorEvent) {
-		const { backupId, planId, error } = eventPayload;
-		try {
-			console.log('onDownloadError :', eventPayload);
-			const backup = await this.backupStore.getById(backupId);
-			await this.backupStore.update(backupId, {
-				download: {
-					...(backup?.download || {}),
-					status: 'failed',
-					error: error,
-					ended: Math.floor(Date.now() / 1000),
-				},
-			});
-
-			planLogger('download', planId, backupId).error(
-				`Failed to complete download generation for backup ${backupId}. Reason: ${error || 'Unknown'}`
-			);
-		} catch (error: any) {
-			console.log('[error] onDownloadError :', error);
-			planLogger('download', planId, backupId).error(
-				`Failed to handle download generation error for backup ${backupId}: ${error.message}`
-			);
-		}
+		await this.downloadEventService.onDownloadError(eventPayload);
 	}
 
 	private async onDownloadComplete(eventPayload: DownloadCompleteEvent) {
-		const { backupId, planId, success } = eventPayload;
-		try {
-			console.log('onDownloadComplete :', eventPayload);
-
-			const backup = await this.backupStore.getById(backupId);
-			await this.backupStore.update(backupId, {
-				download: {
-					...(backup?.download || {}),
-					status: 'complete',
-					error: '',
-					ended: Math.floor(Date.now() / 1000),
-				},
-			});
-			// try {
-			// 	const progressFile = `${appPaths.getProgressDir()}/download-${backupId}-progress.json`;
-			// 	if (existsSync(progressFile)) {
-			// 		await unlink(progressFile);
-			// 	}
-			// } catch (error) {}
-
-			planLogger('download', planId, backupId).info(
-				`Download generation completed for backup ${backupId}`
-			);
-		} catch (error: any) {
-			console.log('[error] onDownloadComplete :', error);
-			planLogger('download', planId, backupId).error(
-				`Failed to handle download completion for backup ${backupId}. Reason: ${error?.message || 'Unknown'}`
-			);
-		}
+		await this.downloadEventService.onDownloadComplete(eventPayload);
 	}
 }

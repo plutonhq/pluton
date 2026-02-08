@@ -19,21 +19,17 @@ import { AppError, NotFoundError } from '../utils/AppError';
  * A class for managing storage operations.
  */
 export class StorageService {
-	protected broker: any;
 	constructor(
 		protected storageManager: BaseStorageManager,
 		protected systemManager: BaseSystemManager,
 		protected storageStore: StorageStore,
-		protected planStore: PlanStore,
-		broker?: any
-	) {
-		this.broker = broker;
-	}
+		protected planStore: PlanStore
+	) {}
 
 	getSystemStrategy(deviceId: string): SystemStrategy {
 		const isRemote = deviceId !== 'main';
 		return isRemote
-			? new RemoteSystemStrategy(this.broker, deviceId)
+			? new RemoteSystemStrategy(deviceId)
 			: new LocalSystemStrategy(this.systemManager);
 	}
 

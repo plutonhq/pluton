@@ -20,32 +20,26 @@ import { SnapShotFile } from '../types/restic';
 import { Backup } from '../db/schema/backups';
 
 export class BackupService {
-	protected broker: any;
-
 	constructor(
 		protected localSnapshotAgent: BaseSnapshotManager,
 		protected localPlanAgent: BaseBackupManager,
 		protected planStore: PlanStore,
 		protected backupStore: BackupStore,
 		protected restoreStore: RestoreStore,
-		protected storageStore: StorageStore,
-
-		broker: any
-	) {
-		this.broker = broker;
-	}
+		protected storageStore: StorageStore
+	) {}
 
 	getSnapshotStrategy(deviceId: string, method?: string): SnapshotStrategy {
 		const isRemote = deviceId !== 'main';
 		return isRemote
-			? new RemoteSnapshotStrategy(this.broker, deviceId)
+			? new RemoteSnapshotStrategy(deviceId)
 			: new LocalSnapshotStrategy(this.localSnapshotAgent);
 	}
 
 	getBackupStrategy(deviceId: string): BackupStrategy {
 		const isRemote = deviceId !== 'main';
 		return isRemote
-			? new RemoteBackupStrategy(this.broker, deviceId)
+			? new RemoteBackupStrategy(deviceId)
 			: new LocalBackupStrategy(this.localPlanAgent);
 	}
 
