@@ -120,8 +120,7 @@ const jottacloudSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,ltgt,doublequote,colon,question,asterisk,pipe,del,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--jottacloud-encoding',
 	},
 	{

@@ -73,8 +73,7 @@ const yandexSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,del,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--yandex-encoding',
 	},
 	{

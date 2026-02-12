@@ -28,7 +28,7 @@ const cephSettings = [
 		authFieldType: 'client',
 		required: true,
 		default: '',
-		description: 'API Ednpoint to conenct to. eg: https://ceph.endpoint.example.com',
+		description: 'API Endpoint to connect to. Example: https://ceph.endpoint.example.com',
 		command: '--s3-endpoint',
 	},
 	...s3Options,

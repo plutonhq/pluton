@@ -74,8 +74,7 @@ const premiumizemeSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,doublequote,backslash,del,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--premiumizeme-encoding',
 	},
 	{

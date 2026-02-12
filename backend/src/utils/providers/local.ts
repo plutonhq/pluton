@@ -5,8 +5,7 @@ const localSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: '',
-		description:
-			'Enabling this will copy symbolic links from the local storage, and store them as text files, with a .rclonelink suffix.',
+		description: 'Copy symbolic links as text files instead of following them.',
 		command: '--local-links',
 	},
 	{

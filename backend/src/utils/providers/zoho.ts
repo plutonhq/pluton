@@ -22,13 +22,21 @@ const zohoSettings = [
 	{
 		label: 'Region',
 		value: 'region',
-		fieldType: 'string',
+		fieldType: 'select',
 		authFieldType: 'client',
 		required: true,
 		default: '',
 		description:
 			"Zoho region to connect to. You'll have to use the region your organization is registered in. If not sure use the same top level domain as you connect to in your browser.",
 		command: '--zoho-region',
+		options: [
+			{ label: 'United States / Global', value: 'com' },
+			{ label: 'Europe', value: 'eu' },
+			{ label: 'India', value: 'in' },
+			{ label: 'Japan', value: 'jp' },
+			{ label: 'China', value: 'com.cn' },
+			{ label: 'Australia', value: 'com.au' },
+		],
 	},
 	{
 		label: 'OAuth Access Token',
@@ -84,8 +92,7 @@ const zohoSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'del,ctl,invalidutf8',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--zoho-encoding',
 	},
 	{

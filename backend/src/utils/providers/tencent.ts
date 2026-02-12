@@ -29,7 +29,7 @@ const tencentSettings = [
 		required: true,
 		default: '',
 		description:
-			'Your Tencent COS Endpoint. Can be found in your Leviia dashboard. example: examplebucket-1250000000.cos.ap-guangzhou.myqcloud.com',
+			'Your Tencent COS Endpoint. Example: examplebucket-1250000000.cos.ap-guangzhou.myqcloud.com',
 		command: '--s3-endpoint',
 	},
 	...s3Options,

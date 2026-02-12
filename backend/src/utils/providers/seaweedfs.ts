@@ -8,7 +8,7 @@ const seaweedfsSettings = [
 		authFieldType: 'client',
 		required: true,
 		default: '',
-		description: 'R2 Access Key ID.',
+		description: 'Access Key ID.',
 		command: '--s3-access-key-id',
 	},
 	{
@@ -18,7 +18,7 @@ const seaweedfsSettings = [
 		authFieldType: 'client',
 		required: true,
 		default: '',
-		description: 'R2 Secret Access Key (password).',
+		description: 'Secret Access Key (password).',
 		command: '--s3-secret-access-key',
 	},
 	{

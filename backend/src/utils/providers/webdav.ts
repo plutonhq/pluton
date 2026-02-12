@@ -11,11 +11,21 @@ const webdavSettings = [
 	{
 		label: 'Vendor Name',
 		value: 'vendor',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: '',
 		description: 'Name of the WebDAV site/service/software you are using.',
 		command: '--webdav-vendor',
+		options: [
+			{ label: 'Fastmail Files', value: 'fastmail' },
+			{ label: 'Nextcloud', value: 'nextcloud' },
+			{ label: 'Owncloud', value: 'owncloud' },
+			{ label: 'ownCloud Infinite Scale', value: 'infinitescale' },
+			{ label: 'Sharepoint Online', value: 'sharepoint' },
+			{ label: 'Sharepoint (NTLM)', value: 'sharepoint-ntlm' },
+			{ label: 'rclone WebDAV', value: 'rclone' },
+			{ label: 'Other', value: 'other' },
+		],
 	},
 	{
 		label: 'Username',
@@ -33,7 +43,7 @@ const webdavSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Password. NB Input to this must be obscured - see rclone obscure.',
+		description: 'Password.',
 		command: '--webdav-pass',
 	},
 	{
@@ -60,8 +70,7 @@ const webdavSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--webdav-encoding',
 	},
 	{
@@ -70,8 +79,7 @@ const webdavSettings = [
 		fieldType: 'commaseplist',
 		required: false,
 		default: '',
-		description:
-			'Set HTTP headers for all transactions. Use this to set additional HTTP headers for all transactions',
+		description: 'Set additional HTTP headers for all transactions.',
 		command: '--webdav-headers',
 	},
 	{
@@ -90,8 +98,9 @@ const webdavSettings = [
 		required: false,
 		default: '10mi',
 		description:
-			'Nextcloud upload chunk size. We recommend configuring your NextCloud instance to increase the max chunk size to 1 GB for better upload performances. See https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/big_file_upload_configuration.html#adjust-chunk-size-on-nextcloud-side',
+			'Nextcloud upload chunk size. Consider increasing the max chunk size on your Nextcloud instance for better upload performance.',
 		command: '--webdav-nextcloud-chunk-size',
+		condition: [{ vendor: 'nextcloud' }],
 	},
 	{
 		label: 'Exclude OwnCloud Shares',
@@ -101,6 +110,7 @@ const webdavSettings = [
 		default: false,
 		description: 'Exclude ownCloud shares',
 		command: '--webdav-owncloud-exclude-shares',
+		condition: [{ vendor: 'owncloud' }],
 	},
 	{
 		label: 'Exclude OwnCloud Mounts',
@@ -110,6 +120,7 @@ const webdavSettings = [
 		default: false,
 		description: 'Exclude ownCloud mounted storages',
 		command: '--webdav-owncloud-exclude-mounts',
+		condition: [{ vendor: 'owncloud' }],
 	},
 	{
 		label: 'Unix Socket Path',
@@ -128,7 +139,7 @@ const webdavSettings = [
 		required: false,
 		default: false,
 		description:
-			'Preserve authentication on redirect. If the server redirects rclone to a new domain when it is trying to read a file then normally rclone will drop the Authorization: header from the request.',
+			'Preserve authentication on redirect. By default, authorization headers are removed when the server redirects to a different domain.',
 		command: '--webdav-auth-redirect',
 	},
 	{

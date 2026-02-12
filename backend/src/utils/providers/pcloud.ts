@@ -65,7 +65,7 @@ const pcloudSettings = [
 		required: false,
 		default: 'slash,backslash,del,ctl,invalidutf8,dot',
 		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+			'The encoding for the backend.',
 		command: '--pcloud-encoding',
 	},
 	{
@@ -74,18 +74,22 @@ const pcloudSettings = [
 		fieldType: 'string',
 		required: false,
 		default: 'd0',
-		description: 'Fill in for rclone to use a non root folder as its starting point.',
+		description: 'Set a non-root folder as the starting point.',
 		command: '--pcloud-root-folder-id',
 	},
 	{
 		label: 'Hostname',
 		value: 'hostname',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: 'api.pcloud.com',
 		description:
-			'Hostname to connect to. This is normally set when rclone initially does the oauth connection,\nhowever you will need to set it by hand if you are using storage config\nwith rclone authorize.',
+			'Hostname to connect to. This is normally set automatically during the OAuth connection. Change only if you need to use a different region.',
 		command: '--pcloud-hostname',
+		options: [
+			{ label: 'US / Global', value: 'api.pcloud.com' },
+			{ label: 'EU', value: 'eapi.pcloud.com' },
+		],
 	},
 	{
 		label: 'Username',
@@ -95,7 +99,7 @@ const pcloudSettings = [
 		required: false,
 		default: '',
 		description:
-			'Your pcloud username. This is only required when you want to use the cleanup command. Due to a bug\nin the pcloud API the required API does not support OAuth authentication so\nwe have to rely on user password authentication for it.',
+			'Your pcloud username. Only required if you want to use the cleanup command.',
 		command: '--pcloud-username',
 	},
 	{
@@ -105,7 +109,7 @@ const pcloudSettings = [
 		authFieldType: 'password',
 		required: false,
 		default: '',
-		description: 'Your pcloud password. NB Input to this must be obscured - see rclone obscure.',
+		description: 'Your pcloud password.',
 		command: '--pcloud-password',
 	},
 	{

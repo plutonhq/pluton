@@ -26,7 +26,7 @@ const seafileSettings = [
 		authFieldType: 'password',
 		required: false,
 		default: '',
-		description: 'Password. NB Input to this must be obscured - see rclone obscure.',
+		description: 'Password for your Seafile account.',
 		command: '--seafile-pass',
 	},
 	{
@@ -55,7 +55,7 @@ const seafileSettings = [
 		required: false,
 		default: '',
 		description:
-			'Library password (for encrypted libraries only). Leave blank if you pass it through the command line.',
+			'Library password (for encrypted libraries only).',
 		command: '--seafile-library-key',
 	},
 	{
@@ -73,7 +73,7 @@ const seafileSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description: "Should rclone create a library if it doesn't exist.",
+		description: "Create a library automatically if it doesn't exist.",
 		command: '--seafile-create-library',
 	},
 	{
@@ -82,8 +82,7 @@ const seafileSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,doublequote,backslash,ctl,invalidutf8',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--seafile-encoding',
 	},
 	{

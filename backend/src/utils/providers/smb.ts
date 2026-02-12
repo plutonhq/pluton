@@ -36,7 +36,7 @@ const smbSettings = [
 		authFieldType: 'password',
 		required: false,
 		default: '',
-		description: 'SMB password. Note: Input to this must be obscured - see rclone obscure.',
+		description: 'SMB password.',
 		command: '--smb-pass',
 	},
 	{
@@ -56,7 +56,7 @@ const smbSettings = [
 		required: false,
 		default: '',
 		description:
-			"Service principal name. Rclone presents this name to the server. Some servers use this as further authentication, and it often needs to be set for clusters. For example: 'cifs/remotehost:1020'. Leave blank if not sure.",
+			"Service principal name presented to the server. Some servers use this for additional authentication, often needed for clusters. For example: 'cifs/remotehost:1020'. Leave blank if not sure.",
 		command: '--smb-spn',
 	},
 	{
@@ -66,7 +66,7 @@ const smbSettings = [
 		required: false,
 		default: '1m0s',
 		description:
-			'Max time before closing idle connections. If no connections have been returned to the connection pool in the time given, rclone will empty the connection pool. Set to 0 to keep connections indefinitely.',
+			'Max time before closing idle connections. If no connections are used within this time, the connection pool is emptied. Set to 0 to keep connections indefinitely.',
 		command: '--smb-idle-timeout',
 	},
 	{
@@ -95,8 +95,7 @@ const smbSettings = [
 		required: false,
 		default:
 			'Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--smb-encoding',
 	},
 	{

@@ -16,7 +16,7 @@ const megaSettings = [
 		authFieldType: 'password',
 		required: true,
 		default: '',
-		description: 'Password. NB Input to this must be obscured - see rclone obscure.',
+		description: 'Password.',
 		command: '--mega-pass',
 	},
 	{
@@ -26,7 +26,7 @@ const megaSettings = [
 		required: false,
 		default: false,
 		description:
-			'Output more debug from Mega. If this flag is set (along with -vv) it will print further debugging information from the mega backend.',
+			'Output additional debug information from MEGA for troubleshooting.',
 		command: '--mega-debug',
 	},
 	{
@@ -36,7 +36,7 @@ const megaSettings = [
 		required: false,
 		default: false,
 		description:
-			'Delete files permanently rather than putting them into the trash. Normally the mega backend will put all deletions into the trash rather than permanently deleting them.  If you specify this then rclone will permanently delete objects instead.',
+			'Delete files permanently rather than putting them into the trash.',
 		command: '--mega-hard-delete',
 	},
 	{
@@ -46,7 +46,7 @@ const megaSettings = [
 		required: false,
 		default: false,
 		description:
-			'Use HTTPS for transfers. MEGA uses plain text HTTP connections by default. Some ISPs throttle HTTP connections, this causes transfers to become very slow. Enabling this will force MEGA to use HTTPS for all transfers. HTTPS is normally not necessary since all data is already encrypted anyway. Enabling it will increase CPU usage and add network overhead.',
+			'Use HTTPS for transfers. MEGA uses plain HTTP by default. Some ISPs throttle HTTP connections, making transfers slow. Enabling HTTPS increases CPU usage and network overhead but may help with throttled connections.',
 		command: '--mega-use-https',
 	},
 	{
@@ -56,7 +56,7 @@ const megaSettings = [
 		required: false,
 		default: 'slash,invalidutf8,dot',
 		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+			'The encoding for the backend.',
 		command: '--mega-encoding',
 	},
 	{

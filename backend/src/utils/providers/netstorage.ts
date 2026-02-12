@@ -33,12 +33,16 @@ const netstorageSettings = [
 	{
 		label: 'Protocol',
 		value: 'protocol',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: 'https',
 		description:
 			'Select between HTTP or HTTPS protocol. Most users should choose HTTPS, which is the default. HTTP is provided primarily for debugging purposes.',
 		command: '--netstorage-protocol',
+		options: [
+			{ label: 'HTTPS (recommended)', value: 'https' },
+			{ label: 'HTTP', value: 'http' },
+		],
 	},
 	{
 		label: 'Description',

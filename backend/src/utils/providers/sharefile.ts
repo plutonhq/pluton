@@ -22,12 +22,21 @@ const citrixSharefileSettings = [
 	{
 		label: 'Root Folder ID',
 		value: 'root_folder_id',
-		fieldType: 'string',
+		fieldType: 'select',
+		allowCustom: true,
 		required: false,
 		default: '',
 		description:
 			'ID of the root folder. Leave blank to access "Personal Folders".  You can use one of the standard values here or any folder ID (long hex number ID).',
 		command: '--sharefile-root-folder-id',
+		options: [
+			{ label: 'Personal Folders', value: '' },
+			{ label: 'Favorites', value: 'favorites' },
+			{ label: 'All Shared Folders', value: 'allshared' },
+			{ label: 'All Connectors', value: 'connectors' },
+			{ label: 'Home, Favorites, Shared, Connectors', value: 'top' },
+			{ label: 'Custom Folder ID', value: 'custom' },
+		],
 	},
 	{
 		label: 'OAuth Access Token',
@@ -103,8 +112,7 @@ const citrixSharefileSettings = [
 		required: false,
 		default:
 			'slash,ltgt,doublequote,colon,question,asterisk,pipe,backslash,ctl,leftspace,leftperiod,rightspace,rightperiod,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--sharefile-encoding',
 	},
 	{

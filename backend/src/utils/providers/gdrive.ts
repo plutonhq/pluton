@@ -7,7 +7,7 @@ const googleDriveSettings = [
 		required: true,
 		default: '',
 		description:
-			'Google Application Client Id Setting your own is recommended. See https://rclone.org/drive/#making-your-own-client-id for how to create your own. If you leave this blank, it will use an internal key which is low performance.',
+			'Google Application Client ID. Setting your own is recommended for better performance. Leave blank to use the built-in default.',
 		command: '--drive-client-id',
 	},
 	{
@@ -23,13 +23,19 @@ const googleDriveSettings = [
 	{
 		label: 'Scope',
 		value: 'scope',
-		fieldType: 'string',
+		fieldType: 'select',
 		authFieldType: 'all',
 		required: true,
-		default: '',
-		description:
-			'Comma separated list of scopes that rclone should use when requesting access from drive. Scopes: drive.readonly, drive.file, drive.appfolder, drive.metadata.readonly',
+		default: 'drive',
+		description: 'Access level to request from Google Drive.',
 		command: '--drive-scope',
+		options: [
+			{ label: 'Full access (all files)', value: 'drive' },
+			{ label: 'Read-only access', value: 'drive.readonly' },
+			{ label: 'Access rclone files only', value: 'drive.file' },
+			{ label: 'Application Data folder', value: 'drive.appfolder' },
+			{ label: 'Read-only metadata', value: 'drive.metadata.readonly' },
+		],
 	},
 	{
 		label: 'Service Account File',
@@ -38,7 +44,7 @@ const googleDriveSettings = [
 		required: false,
 		default: '',
 		description:
-			'Service Account Credentials JSON file path. Leave blank normally. Needed only if you want use SA instead of interactive login.',
+			'Path to a Service Account credentials JSON file. Leave blank to use interactive login.',
 		command: '--drive-service-account-file',
 	},
 	{
@@ -85,8 +91,7 @@ const googleDriveSettings = [
 		authFieldType: 'client',
 		required: false,
 		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
+		description: 'Use client credentials OAuth flow instead of interactive login.',
 		command: '--drive-client-credentials',
 	},
 	{
@@ -96,7 +101,7 @@ const googleDriveSettings = [
 		required: false,
 		default: '',
 		description:
-			'ID of the root folder. Leave blank normally. Fill in to access "Computers" folders (see docs), or for rclone to use a non root folder as its starting point.',
+			'ID of the root folder. Leave blank to use the default root. Fill in to access "Computers" folders or start from a specific folder.',
 		command: '--drive-root-folder-id',
 	},
 	{
@@ -106,7 +111,7 @@ const googleDriveSettings = [
 		required: false,
 		default: '',
 		description:
-			'Service Account Credentials JSON blob. Leave blank normally. Needed only if you want use SA instead of interactive login.',
+			'Service Account credentials as a JSON string. Leave blank to use interactive login.',
 		command: '--drive-service-account-credentials',
 	},
 	{
@@ -133,8 +138,7 @@ const googleDriveSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: true,
-		description:
-			'Send files to the trash instead of deleting permanently. Defaults to true, namely sending files to the trash. Use --drive-use-trash=false to delete files permanently instead.',
+		description: 'Send files to the trash instead of deleting permanently.',
 		command: '--drive-use-trash',
 	},
 	{
@@ -144,7 +148,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Server side copy contents of shortcuts instead of the shortcut. When doing server side copies, normally rclone will copy shortcuts as shortcuts.',
+			'Copy the actual file contents of shortcuts instead of the shortcut itself.',
 		command: '--drive-copy-shortcut-content',
 	},
 	{
@@ -153,8 +157,7 @@ const googleDriveSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'Skip google documents in all listings. If given, gdocs practically become invisible to rclone.',
+		description: 'Skip Google Docs in all file listings, making them invisible.',
 		command: '--drive-skip-gdocs',
 	},
 	{
@@ -164,7 +167,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Show all Google Docs including non-exportable ones in listings. If you try a server side copy on a Google Form without this flag, you will get this error:',
+			'Show all Google Docs in listings, including non-exportable ones like Google Forms.',
 		command: '--drive-show-all-gdocs',
 	},
 	{
@@ -183,8 +186,7 @@ const googleDriveSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'Only show files that are shared with me. Instructs rclone to operate on your "Shared with me" folder (where Google Drive lets you access the files and folders others have shared with you).',
+		description: 'Only show files from your "Shared with me" folder.',
 		command: '--drive-shared-with-me',
 	},
 	{
@@ -212,7 +214,7 @@ const googleDriveSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Deprecated: See export_formats.',
+		description: 'Deprecated: See Export Formats.',
 		command: '--drive-formats',
 	},
 	{
@@ -240,7 +242,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Allow the filetype to change when uploading Google docs. E.g. file.doc to file.docx. This will confuse sync and reupload every time.',
+			'Allow the file type to change when uploading Google Docs (e.g., file.doc to file.docx). This may cause files to be re-uploaded on each sync.',
 		command: '--drive-allow-import-name-change',
 	},
 	{
@@ -249,8 +251,7 @@ const googleDriveSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'Use file created date instead of modified date. Useful when downloading data and you want the creation date used in place of the last modified date.',
+		description: 'Use the file creation date instead of the last modified date.',
 		command: '--drive-use-created-date',
 	},
 	{
@@ -260,7 +261,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Use date file was shared instead of modified date. Note that, as with "--drive-use-created-date", this flag may have unexpected consequences when uploading/downloading files.',
+			'Use the date a file was shared instead of the last modified date. Like "Use Created Date", this may cause unexpected behavior during transfers.',
 		command: '--drive-use-shared-date',
 	},
 	{
@@ -306,7 +307,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Set to allow files which return cannotDownloadAbusiveFile to be downloaded. If downloading a file returns the error "This file has been identified as malware or spam and cannot be downloaded" with the error code "cannotDownloadAbusiveFile" then supply this flag to rclone to indicate you acknowledge the risks of downloading the file and rclone will download it anyway.',
+			'Allow downloading files that Google has flagged as potential malware or spam.',
 		command: '--drive-acknowledge-abuse',
 	},
 	{
@@ -325,7 +326,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Show sizes as storage quota usage, not actual size. Show the size of a file as the storage quota used. This is the current version plus any older versions that have been set to keep forever.',
+			'Show file sizes as storage quota usage (including all kept versions) instead of the actual file size.',
 		command: '--drive-size-as-quota',
 	},
 	{
@@ -334,7 +335,8 @@ const googleDriveSettings = [
 		fieldType: 'sizesuffix',
 		required: false,
 		default: 'off',
-		description: "If Object's are greater, use drive v2 API to download.",
+		description:
+			'Minimum file size to trigger an alternative download method. Leave as default unless experiencing issues with large files.',
 		command: '--drive-v2-download-min-size',
 	},
 	{
@@ -362,7 +364,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Deprecated: use --server-side-across-configs instead. Allow server-side operations (e.g. copy) to work across different drive configs.',
+			'Deprecated. Allow server-side operations (e.g., copy) to work across different Google Drive configurations.',
 		command: '--drive-server-side-across-configs',
 	},
 	{
@@ -372,7 +374,7 @@ const googleDriveSettings = [
 		required: false,
 		default: true,
 		description:
-			'Disable drive using http2. There is currently an unsolved issue with the google drive backend and HTTP/2.  HTTP/2 is therefore disabled by default for the drive backend but can be re-enabled here.  When the issue is solved this flag will be removed.',
+			'Disable HTTP/2 for Google Drive connections. Disabled by default due to a known issue.',
 		command: '--drive-disable-http2',
 	},
 	{
@@ -382,7 +384,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Make upload limit errors be fatal. At the time of writing it is only possible to upload 750 GiB of data to Google Drive a day (this is an undocumented limit). When this limit is reached Google Drive produces a slightly different error message. When this flag is set it causes these errors to be fatal.  These will stop the in-progress sync.',
+			"Stop the operation when Google Drive's daily upload limit (approximately 750 GB/day) is reached.",
 		command: '--drive-stop-on-upload-limit',
 	},
 	{
@@ -392,7 +394,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Make download limit errors be fatal. At the time of writing it is only possible to download 10 TiB of data from Google Drive a day (this is an undocumented limit). When this limit is reached Google Drive produces a slightly different error message. When this flag is set it causes these errors to be fatal.  These will stop the in-progress sync.',
+			"Stop the operation when Google Drive's daily download limit (approximately 10 TB/day) is reached.",
 		command: '--drive-stop-on-download-limit',
 	},
 	{
@@ -402,7 +404,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'If set skip shortcut files. Normally rclone dereferences shortcut files making them appear as if they are the original file (see the shortcuts section). If this flag is set then rclone will ignore shortcut files completely.',
+			'Skip shortcut files instead of following them to the original file.',
 		command: '--drive-skip-shortcuts',
 	},
 	{
@@ -412,7 +414,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'If set skip dangling shortcut files. If this is set then rclone will not show any dangling shortcuts in listings.',
+			'Skip shortcut files that point to deleted or inaccessible files.',
 		command: '--drive-skip-dangling-shortcuts',
 	},
 	{
@@ -421,8 +423,7 @@ const googleDriveSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description:
-			'Resource key for accessing a link-shared file. If you need to access files shared with a link like this',
+		description: 'Resource key for accessing a link-shared file.',
 		command: '--drive-resource-key',
 	},
 	{
@@ -432,7 +433,7 @@ const googleDriveSettings = [
 		required: false,
 		default: true,
 		description:
-			'Work around a bug in Google Drive listing. Normally rclone will work around a bug in Google Drive when using --fast-list (ListR) where the search "(A in parents) or (B in parents)" returns nothing sometimes. See #3114, #4289 and https://issuetracker.google.com/issues/149522397',
+			'Work around a bug in Google Drive that can cause some files to be missed in listings.',
 		command: '--drive-fast-list-bug-fix',
 	},
 	{
@@ -442,7 +443,7 @@ const googleDriveSettings = [
 		required: false,
 		default: 'read',
 		description:
-			"Control whether owner should be read or written in metadata. Owner is a standard part of the file metadata so is easy to read. But it isn't always desirable to set the owner from the metadata.",
+			'Control whether file ownership information should be read or written in metadata.',
 		command: '--drive-metadata-owner',
 	},
 	{
@@ -452,7 +453,7 @@ const googleDriveSettings = [
 		required: false,
 		default: 'off',
 		description:
-			"Control whether permissions should be read or written in metadata. Reading permissions metadata from files can be done quickly, but it isn't always desirable to set the permissions from the metadata.",
+			'Control whether file permissions should be read or written in metadata.',
 		command: '--drive-metadata-permissions',
 	},
 	{
@@ -462,7 +463,7 @@ const googleDriveSettings = [
 		required: false,
 		default: 'off',
 		description:
-			"Control whether labels should be read or written in metadata. Reading labels metadata from files takes an extra API transaction and will slow down listings. It isn't always desirable to set the labels from the metadata.",
+			'Control whether labels should be read or written in metadata. Reading labels will slow down file listings.',
 		command: '--drive-metadata-labels',
 	},
 	{
@@ -471,8 +472,7 @@ const googleDriveSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'invalidutf8',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'Character encoding for file and folder names.',
 		command: '--drive-encoding',
 	},
 	{
@@ -482,7 +482,7 @@ const googleDriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Get IAM credentials from runtime (environment variables or instance meta data if no env vars). Only applies if service_account_file and service_account_credentials is blank.',
+			'Get IAM credentials from the environment. Only applies if Service Account File and Service Account Credentials are blank.',
 		command: '--drive-env-auth',
 	},
 	{

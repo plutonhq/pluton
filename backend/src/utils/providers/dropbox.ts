@@ -54,8 +54,7 @@ const dropboxSettings = [
 		authFieldType: 'client',
 		required: false,
 		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
+		description: 'Use client credentials OAuth flow instead of interactive login.',
 		command: '--dropbox-client-credentials',
 	},
 	{
@@ -74,8 +73,7 @@ const dropboxSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description:
-			'Impersonate this user when using a business account. Note that if you want to use impersonate, you should make sure this flag is set when running "rclone config" as this will cause rclone to request the "members.read" scope which it won\'t normally. This is needed to lookup a members email address into the internal ID that dropbox uses in the API.',
+		description: 'Impersonate this user when using a Dropbox Business account.',
 		command: '--dropbox-impersonate',
 	},
 	{
@@ -85,7 +83,7 @@ const dropboxSettings = [
 		required: false,
 		default: false,
 		description:
-			"Instructs rclone to work on individual shared files. In this mode rclone's features are extremely limited - only list (ls, lsl, etc.) operations and read operations (e.g. downloading) are supported in this mode. All other operations will be disabled.",
+			'Work with individual shared files. In this mode, only listing and downloading are supported.',
 		command: '--dropbox-shared-files',
 	},
 	{
@@ -95,7 +93,7 @@ const dropboxSettings = [
 		required: false,
 		default: false,
 		description:
-			'Instructs rclone to work on shared folders. When this flag is used with no path only the List operation is supported and all available shared folders will be listed. If you specify a path the first part will be interpreted as the name of shared folder. Rclone will then try to mount this shared to the root namespace. On success shared folder rclone proceeds normally. The shared folder is now pretty much a normal folder and all normal operations are supported.',
+			'Work with shared folders. When enabled without a path, all shared folders are listed. With a path, the first part is treated as the shared folder name.',
 		command: '--dropbox-shared-folders',
 	},
 	{
@@ -113,8 +111,7 @@ const dropboxSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,backslash,del,rightspace,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'Character encoding for file and folder names.',
 		command: '--dropbox-encoding',
 	},
 	{
@@ -129,11 +126,16 @@ const dropboxSettings = [
 	{
 		label: 'Batch Mode',
 		value: 'batch_mode',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: 'sync',
-		description: 'Upload file batching sync|async|off. This sets the batch mode used by rclone.',
+		description: 'Upload file batching mode.',
 		command: '--dropbox-batch-mode',
+		options: [
+			{ label: 'Sync (batch and check completion)', value: 'sync' },
+			{ label: 'Async (batch, no completion check)', value: 'async' },
+			{ label: 'Off (no batching)', value: 'off' },
+		],
 	},
 	{
 		label: 'Batch Size',

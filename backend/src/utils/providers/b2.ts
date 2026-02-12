@@ -44,7 +44,7 @@ const b2Settings = [
 		required: false,
 		default: '',
 		description:
-			'A flag string for X-Bz-Test-Mode header for debugging. This is for debugging purposes only. Setting it to one of the strings below will cause b2 to return specific errors: fail_some_uploads, expire_some_account_authorization_tokens, force_cap_exceeded',
+			'A test mode flag for debugging purposes only. Setting it will cause B2 to return specific errors: fail_some_uploads, expire_some_account_authorization_tokens, force_cap_exceeded.',
 		command: '--b2-test-mode',
 	},
 	{
@@ -74,7 +74,7 @@ const b2Settings = [
 		required: false,
 		default: '200mi',
 		description:
-			'Cutoff for switching to chunked upload. Files above this size will be uploaded in chunks of "--b2-chunk-size".',
+			'Cutoff for switching to chunked upload. Files above this size will be uploaded in chunks of the configured Chunk Size.',
 		command: '--b2-upload-cutoff',
 	},
 	{
@@ -113,7 +113,7 @@ const b2Settings = [
 		required: false,
 		default: false,
 		description:
-			'Disable checksums for large (> upload cutoff) files. Normally rclone will calculate the SHA1 checksum of the input before uploading it so it can add it to metadata on the object. This is great for data integrity checking but can cause long delays for large files to start uploading.',
+			'Disable checksums for large files (above the Upload Cutoff). Checksums ensure data integrity but can cause long delays for large files to start uploading.',
 		command: '--b2-disable-checksum',
 	},
 	{
@@ -123,7 +123,7 @@ const b2Settings = [
 		required: false,
 		default: '',
 		description:
-			'Custom endpoint for downloads. This is usually set to a Cloudflare CDN URL as Backblaze offers free egress for data downloaded through the Cloudflare network. Rclone works with private buckets by sending an "Authorization" header. If the custom endpoint rewrites the requests for authentication, e.g., in Cloudflare Workers, this header needs to be handled properly. Leave blank if you want to use the endpoint provided by Backblaze.',
+			'Custom endpoint for downloads, usually a Cloudflare CDN URL since Backblaze offers free egress through Cloudflare. Leave blank to use the default Backblaze endpoint.',
 		command: '--b2-download-url',
 	},
 	{
@@ -133,7 +133,7 @@ const b2Settings = [
 		required: false,
 		default: '1w',
 		description:
-			'Time before the public link authorization token will expire in s or suffix ms|s|m|h|d. This is used in combination with "rclone link" for making files accessible to the public and sets the duration before the download authorization token will expire.',
+			'Time before the public link authorization token will expire. Used when making files accessible via public links.',
 		command: '--b2-download-auth-duration',
 	},
 	{
@@ -170,8 +170,7 @@ const b2Settings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,backslash,del,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--b2-encoding',
 	},
 	{

@@ -7,7 +7,7 @@ const siaSettings = [
 		required: true,
 		default: 'http://127.0.0.1:9980',
 		description:
-			'Sia daemon API URL, like http://sia.daemon.host:9980. Note that siad must run with --disable-api-security to open API port for other hosts (not recommended). Keep default if Sia daemon runs on localhost.',
+			'Sia daemon API URL, like http://sia.daemon.host:9980. The daemon must have API security disabled to allow connections from other hosts (not recommended). Keep default if the Sia daemon runs on localhost.',
 		command: '--sia-api-url',
 	},
 	{
@@ -37,8 +37,7 @@ const siaSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,question,hash,percent,del,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--sia-encoding',
 	},
 	{

@@ -61,7 +61,7 @@ const azurefilesSettings = [
 		required: false,
 		default: '',
 		description:
-			"ID of the service principal's tenant. Also called its directory ID. Set this if using",
+			"ID of the service principal's tenant, also called its directory ID.",
 		command: '--azurefiles-tenant',
 	},
 	{
@@ -70,7 +70,7 @@ const azurefilesSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'The ID of the client in use. Set this if using',
+		description: 'The ID of the client in use.',
 		command: '--azurefiles-client-id',
 	},
 	{
@@ -79,7 +79,7 @@ const azurefilesSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: "One of the service principal's client secrets Set this if using",
+		description: "One of the service principal's client secrets.",
 		command: '--azurefiles-client-secret',
 	},
 	{
@@ -89,7 +89,7 @@ const azurefilesSettings = [
 		required: false,
 		default: '',
 		description:
-			'Path to a PEM or PKCS12 certificate file including the private key. Set this if using',
+			'Path to a PEM or PKCS12 certificate file including the private key.',
 		command: '--azurefiles-client-certificate-path',
 	},
 	{
@@ -98,7 +98,7 @@ const azurefilesSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Password for the certificate file (optional). Optionally set this if using',
+		description: 'Password for the certificate file (optional).',
 		command: '--azurefiles-client-certificate-password',
 	},
 	{
@@ -117,7 +117,7 @@ const azurefilesSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'User name (usually an email address) Set this if using',
+		description: 'User name (usually an email address).',
 		command: '--azurefiles-username',
 	},
 	{
@@ -126,7 +126,7 @@ const azurefilesSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: "The user's password Set this if using",
+		description: "The user's password.",
 		command: '--azurefiles-password',
 	},
 	{
@@ -156,7 +156,7 @@ const azurefilesSettings = [
 		required: false,
 		default: '',
 		description:
-			'Object ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_mi_res_id specified.',
+			'Object ID of the user-assigned MSI to use, if any. Leave blank if MSI Client ID or MSI Resource ID is specified.',
 		command: '--azurefiles-msi-object-id',
 	},
 	{
@@ -166,7 +166,7 @@ const azurefilesSettings = [
 		required: false,
 		default: '',
 		description:
-			'Object ID of the user-assigned MSI to use, if any. Leave blank if msi_object_id or msi_mi_res_id specified.',
+			'Client ID of the user-assigned MSI to use, if any. Leave blank if MSI Object ID or MSI Resource ID is specified.',
 		command: '--azurefiles-msi-client-id',
 	},
 	{
@@ -176,7 +176,7 @@ const azurefilesSettings = [
 		required: false,
 		default: '',
 		description:
-			'Azure resource ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_object_id specified.',
+			'Azure resource ID of the user-assigned MSI to use, if any. Leave blank if MSI Client ID or MSI Object ID is specified.',
 		command: '--azurefiles-msi-mi-res-id',
 	},
 	{
@@ -195,7 +195,7 @@ const azurefilesSettings = [
 		required: false,
 		default: '4mi',
 		description:
-			'Upload chunk size. Note that this is stored in memory and there may be up to "--transfers" * "--azurefile-upload-concurrency" chunks stored at once in memory.',
+			'Upload chunk size. Chunks are stored in memory, and memory usage depends on the number of concurrent transfers.',
 		command: '--azurefiles-chunk-size',
 	},
 	{
@@ -215,7 +215,7 @@ const azurefilesSettings = [
 		required: false,
 		default: '10gi',
 		description:
-			"Max size for streamed files. Azure files needs to know in advance how big the file will be. When rclone doesn't know it uses this value instead.",
+			"Max size for streamed files. Azure Files needs to know the file size in advance. This value is used when the file size is unknown.",
 		command: '--azurefiles-max-stream-size',
 	},
 	{
@@ -226,7 +226,7 @@ const azurefilesSettings = [
 		default:
 			'slash,ltgt,doublequote,colon,question,asterisk,pipe,backslash,del,ctl,rightperiod,invalidutf8,dot',
 		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+			'The encoding for the backend.',
 		command: '--azurefiles-encoding',
 	},
 	{

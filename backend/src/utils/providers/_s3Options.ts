@@ -2,11 +2,16 @@ const s3Options = [
 	{
 		label: 'Server-side Encryption',
 		value: 'server_side_encryption',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: '',
 		description: 'The server-side encryption algorithm used when storing this object in S3.',
 		command: '--s3-server-side-encryption',
+		options: [
+			{ label: 'None', value: '' },
+			{ label: 'AES256', value: 'AES256' },
+			{ label: 'aws:kms', value: 'aws:kms' },
+		],
 	},
 	{
 		label: 'SSE KMS ID',
@@ -16,25 +21,46 @@ const s3Options = [
 		default: '',
 		description: 'If using KMS ID you must provide the ARN of Key.',
 		command: '--s3-sse-kms-key-id',
+		condition: [{ server_side_encryption: 'aws:kms' }],
 	},
 	{
 		label: 'Storage Class',
 		value: 'storage_class',
-		fieldType: 'string',
+		fieldType: 'select',
+		allowCustom: true,
 		required: false,
 		default: '',
 		description: 'The storage class to use when storing new objects in S3.',
 		command: '--s3-storage-class',
+		options: [
+			{ label: 'Default', value: '' },
+			{ label: 'Standard', value: 'STANDARD' },
+			{ label: 'Reduced Redundancy', value: 'REDUCED_REDUNDANCY' },
+			{ label: 'Standard IA', value: 'STANDARD_IA' },
+			{ label: 'One Zone IA', value: 'ONEZONE_IA' },
+			{ label: 'Glacier', value: 'GLACIER' },
+			{ label: 'Glacier Deep Archive', value: 'DEEP_ARCHIVE' },
+			{ label: 'Intelligent-Tiering', value: 'INTELLIGENT_TIERING' },
+			{ label: 'Glacier Instant Retrieval', value: 'GLACIER_IR' },
+			{ label: 'Custom', value: 'custom' },
+		],
 	},
 	{
 		label: 'Bucket ACL',
 		value: 'bucket_acl',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: '',
 		description:
 			'Canned ACL used when creating buckets. For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl',
 		command: '--s3-bucket-acl',
+		options: [
+			{ label: 'Default (private)', value: '' },
+			{ label: 'Private', value: 'private' },
+			{ label: 'Public Read', value: 'public-read' },
+			{ label: 'Public Read/Write', value: 'public-read-write' },
+			{ label: 'Authenticated Read', value: 'authenticated-read' },
+		],
 	},
 	{
 		label: 'Requester pays',
@@ -48,12 +74,16 @@ const s3Options = [
 	{
 		label: 'Use SSE-C Algorithm',
 		value: 'sse_customer_algorithm',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: '',
 		description:
 			'If using SSE-C, the server-side encryption algorithm used when storing this object in S3.',
 		command: '--s3-sse-customer-algorithm',
+		options: [
+			{ label: 'None', value: '' },
+			{ label: 'AES256', value: 'AES256' },
+		],
 	},
 	{
 		label: 'SSE-C Key',
@@ -62,8 +92,9 @@ const s3Options = [
 		required: false,
 		default: '',
 		description:
-			'To use SSE-C you may provide the secret encryption key used to encrypt/decrypt your data. Alternatively you can provide --sse-customer-key-base64.',
+			'To use SSE-C you may provide the secret encryption key used to encrypt/decrypt your data. Alternatively you can provide SSE-C Key (Base64 Encoded) instead.',
 		command: '--s3-sse-customer-key',
+		condition: [{ sse_customer_algorithm: 'AES256' }],
 	},
 	{
 		label: 'SSE-C Key (Base64 Encoded)',
@@ -72,8 +103,9 @@ const s3Options = [
 		required: false,
 		default: '',
 		description:
-			'If using SSE-C you must provide the secret encryption key encoded in base64 format to encrypt/decrypt your data. Alternatively you can provide --sse-customer-key.',
+			'If using SSE-C you must provide the secret encryption key encoded in base64 format to encrypt/decrypt your data. Alternatively you can provide SSE-C Key instead.',
 		command: '--s3-sse-customer-key-base64',
+		condition: [{ sse_customer_algorithm: 'AES256' }],
 	},
 	{
 		label: 'SSE-C Key (MD5 checksum)',
@@ -82,8 +114,9 @@ const s3Options = [
 		required: false,
 		default: '',
 		description:
-			'If using SSE-C you may provide the secret encryption key MD5 checksum (optional). If you leave it blank, this is calculated automatically from the sse_customer_key provided.',
+			'If using SSE-C you may provide the secret encryption key MD5 checksum (optional). If you leave it blank, this is calculated automatically from the SSE-C Key provided.',
 		command: '--s3-sse-customer-key-md5',
+		condition: [{ sse_customer_algorithm: 'AES256' }],
 	},
 	{
 		label: 'Upload Cutoff',
@@ -92,7 +125,7 @@ const s3Options = [
 		required: false,
 		default: '200mi',
 		description:
-			'Cutoff for switching to chunked upload. Any files larger than this will be uploaded in chunks of chunk_size. The minimum is 0 and the maximum is 5 GiB.',
+			'Cutoff for switching to chunked upload. Any files larger than this will be uploaded in chunks. The minimum is 0 and the maximum is 5 GiB.',
 		command: '--s3-upload-cutoff',
 	},
 	{
@@ -102,7 +135,7 @@ const s3Options = [
 		required: false,
 		default: '5mi',
 		description:
-			'Chunk size to use for uploading. When uploading files larger than upload_cutoff or files with unknown size (e.g. from "rclone rcat" or uploaded with "rclone mount" or google photos or google docs) they will be uploaded as multipart uploads using this chunk size.',
+			'Chunk size to use for uploading. Files larger than the Upload Cutoff will be uploaded as multipart uploads using this chunk size.',
 		command: '--s3-chunk-size',
 	},
 	{
@@ -132,7 +165,7 @@ const s3Options = [
 		required: false,
 		default: false,
 		description:
-			"Don't store MD5 checksum with object metadata. Normally rclone will calculate the MD5 checksum of the input before uploading it so it can add it to metadata on the object. This is great for data integrity checking but can cause long delays for large files to start uploading.",
+			"Don't store MD5 checksum with object metadata. This speeds up uploads of large files but reduces data integrity checking.",
 		command: '--s3-disable-checksum',
 	},
 	{
@@ -142,8 +175,9 @@ const s3Options = [
 		required: false,
 		default: '',
 		description:
-			'Path to the shared credentials file. If env_auth = true then rclone can use a shared credentials file.',
+			'Path to the shared credentials file. Only used when Environment Auth is enabled.',
 		command: '--s3-shared-credentials-file',
+		condition: [{ env_auth: true }],
 	},
 	{
 		label: 'Profile',
@@ -152,8 +186,9 @@ const s3Options = [
 		required: false,
 		default: '',
 		description:
-			'Profile to use in the shared credentials file. If env_auth = true then rclone can use a shared credentials file. This variable controls which profile is used in that file.',
+			'Profile to use in the shared credentials file. Only used when Environment Auth is enabled.',
 		command: '--s3-profile',
+		condition: [{ env_auth: true }],
 	},
 	{
 		label: 'Session Token',
@@ -163,6 +198,7 @@ const s3Options = [
 		default: '',
 		description: 'An AWS session token.',
 		command: '--s3-session-token',
+		condition: [{ env_auth: false }],
 	},
 	{
 		label: 'Upload Concurrency',
@@ -181,7 +217,7 @@ const s3Options = [
 		required: false,
 		default: true,
 		description:
-			'If true use path style access if false use virtual hosted style. If this is true (the default) then rclone will use path style access, if false then rclone will use virtual path style. See the AWS S3 docs for more info.',
+			'If enabled, use path style access. If disabled, use virtual hosted style. See the AWS S3 docs for more info.',
 		command: '--s3-force-path-style',
 	},
 	{
@@ -191,7 +227,7 @@ const s3Options = [
 		required: false,
 		default: false,
 		description:
-			'If true use v2 authentication. If this is false (the default) then rclone will use v4 authentication. If it is set then rclone will use v2 authentication.',
+			'If enabled, use v2 authentication instead of the default v4 authentication.',
 		command: '--s3-v2-auth',
 	},
 	{
@@ -230,7 +266,7 @@ const s3Options = [
 		required: false,
 		default: '1000',
 		description:
-			'Size of listing chunk (response list for each ListObject S3 request). This option is also known as "MaxKeys", "max-items", or "page-size" from the AWS S3 specification. Most services truncate the response list to 1000 objects even if requested more than that. In AWS S3 this is a global maximum and cannot be changed, see AWS S3. In Ceph, this can be increased with the "rgw list buckets max chunk" option.',
+			'Number of objects to request per listing page. Most S3 providers cap this at 1000.',
 		command: '--s3-list-chunk',
 	},
 	{
@@ -250,7 +286,7 @@ const s3Options = [
 		required: false,
 		default: 'unset',
 		description:
-			"Whether to url encode listings: true/false/unset Some providers support URL encoding listings and where this is available this is more reliable when using control characters in file names. If this is set to unset (the default) then rclone will choose according to the provider setting what to apply, but you can override rclone's choice here.",
+			'Whether to URL-encode listings. Some providers support URL encoding which is more reliable with special characters in file names. Leave unset to use the provider default.',
 		command: '--s3-list-url-encode',
 	},
 	{
@@ -260,7 +296,7 @@ const s3Options = [
 		required: false,
 		default: false,
 		description:
-			"If set, don't attempt to check the bucket exists or create it. This can be useful when trying to minimise the number of transactions rclone does if you know the bucket exists already.",
+			"If set, don't attempt to check the bucket exists or create it. Useful if you know the bucket already exists and want to reduce API calls.",
 		command: '--s3-no-check-bucket',
 	},
 	{
@@ -270,7 +306,7 @@ const s3Options = [
 		required: false,
 		default: false,
 		description:
-			"If set, don't HEAD uploaded objects to check integrity. This can be useful when trying to minimise the number of transactions rclone does.",
+			"If set, don't HEAD uploaded objects to check integrity. Useful to reduce API calls.",
 		command: '--s3-no-head',
 	},
 	{
@@ -288,8 +324,7 @@ const s3Options = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--s3-encoding',
 	},
 	{
@@ -317,7 +352,7 @@ const s3Options = [
 		required: false,
 		default: false,
 		description:
-			'Disable usage of http2 for S3 backends. There is currently an unsolved issue with the s3 (specifically minio) backend and HTTP/2.  HTTP/2 is enabled by default for the s3 backend but can be disabled here.  When the issue is solved this flag will be removed.',
+			'Disable HTTP/2 for S3 connections. Enable this if you experience issues with your S3 provider and HTTP/2.',
 		command: '--s3-disable-http2',
 	},
 	{
@@ -357,7 +392,7 @@ const s3Options = [
 		required: false,
 		default: 'unset',
 		description:
-			"Whether to use an unsigned payload in PutObject Rclone has to avoid the AWS SDK seeking the body when calling PutObject. The AWS provider can add checksums in the trailer to avoid seeking but other providers can't.",
+			'Whether to use an unsigned payload when uploading objects. May be needed for non-AWS S3 providers that do not support chunked checksums.',
 		command: '--s3-use-unsigned-payload',
 	},
 	{
@@ -367,7 +402,7 @@ const s3Options = [
 		required: false,
 		default: false,
 		description:
-			'Whether to use a presigned request or PutObject for single part uploads If this is false rclone will use PutObject from the AWS SDK to upload an object.',
+			'Whether to use a presigned request for single part uploads instead of the standard PutObject method.',
 		command: '--s3-use-presigned-request',
 	},
 	{
@@ -396,7 +431,7 @@ const s3Options = [
 		required: false,
 		default: false,
 		description:
-			'Show deleted file markers when using versions. This shows deleted file markers in the listing when using versions. These will appear as 0 size files. The only operation which can be performed on them is deletion.',
+			'Show deleted file markers when using versions. These appear as 0-size files that can only be deleted.',
 		command: '--s3-version-deleted',
 	},
 	{
@@ -406,7 +441,7 @@ const s3Options = [
 		required: false,
 		default: false,
 		description:
-			'If set this will decompress gzip encoded objects. It is possible to upload objects to S3 with "Content-Encoding: gzip" set. Normally rclone will download these files as compressed objects.',
+			'If set, decompress gzip-encoded objects when downloading. By default, compressed objects are downloaded as-is.',
 		command: '--s3-decompress',
 	},
 	{
@@ -416,7 +451,7 @@ const s3Options = [
 		required: false,
 		default: 'unset',
 		description:
-			"Set this if the backend might gzip objects. Normally providers will not alter objects when they are downloaded. If an object was not uploaded with Content-Encoding: gzip then it won't be set on download.",
+			'Set this if the backend might gzip objects. Normally providers will not alter objects when they are downloaded.',
 		command: '--s3-might-gzip',
 	},
 	{
@@ -426,7 +461,7 @@ const s3Options = [
 		required: false,
 		default: 'unset',
 		description:
-			'Whether to send Accept-Encoding: gzip header. By default, rclone will append Accept-Encoding: gzip to the request to download compressed objects whenever possible.',
+			'Whether to send Accept-Encoding: gzip header when downloading objects. By default, compressed downloads are requested whenever possible.',
 		command: '--s3-use-accept-encoding-gzip',
 	},
 	{
@@ -455,7 +490,7 @@ const s3Options = [
 		required: false,
 		default: 'unset',
 		description:
-			'Set if rclone should report BucketAlreadyExists errors on bucket creation. At some point during the evolution of the s3 protocol, AWS started returning an AlreadyOwnedByYou error when attempting to create a bucket that the user already owned, rather than a BucketAlreadyExists error.',
+			'Controls how existing bucket errors are handled during bucket creation. Leave unset to use the provider default.',
 		command: '--s3-use-already-exists',
 	},
 	{
@@ -465,7 +500,7 @@ const s3Options = [
 		required: false,
 		default: 'unset',
 		description:
-			"Set if rclone should use multipart uploads. You can change this if you want to disable the use of multipart uploads. This shouldn't be necessary in normal operation.",
+			'Whether to use multipart uploads. Disabling this is not necessary in normal operation.',
 		command: '--s3-use-multipart-uploads',
 	},
 	{
@@ -475,7 +510,7 @@ const s3Options = [
 		required: false,
 		default: false,
 		description:
-			'Set to use AWS Directory Buckets If you are using an AWS Directory Bucket then set this flag.',
+			'Enable this if you are using an AWS Directory Bucket.',
 		command: '--s3-directory-bucket',
 	},
 	{
@@ -484,8 +519,7 @@ const s3Options = [
 		fieldType: 'bits',
 		required: false,
 		default: 'off',
-		description:
-			'Set to debug the SDK This can be set to a comma separated list of the following functions:',
+		description: 'Set to enable SDK debug logging.',
 		command: '--s3-sdk-log-mode',
 	},
 	{

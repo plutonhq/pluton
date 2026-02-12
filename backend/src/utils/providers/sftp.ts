@@ -37,8 +37,7 @@ const sftpSettings = [
 		required: false,
 		value: 'pass',
 		default: '',
-		description:
-			'SSH password, leave blank to use ssh-agent. NB Input to this must be obscured - see rclone obscure.',
+		description: 'SSH password. Leave blank to use SSH agent.',
 	},
 	{
 		label: 'PEM-Encoded Private Key',
@@ -48,7 +47,7 @@ const sftpSettings = [
 		value: 'key_pem',
 		default: '',
 		description:
-			"Raw PEM-encoded private key. Note that this should be on a single line with line endings replaced with '\\n', eg",
+			'Raw PEM-encoded private key. Must be on a single line with line endings replaced by \\n.',
 	},
 	{
 		label: 'Private Key File',
@@ -58,7 +57,7 @@ const sftpSettings = [
 		value: 'key_file',
 		default: '',
 		description:
-			'Path to PEM-encoded private key file. Leave blank or set key-use-agent to use ssh-agent.',
+			'Path to PEM-encoded private key file. Leave blank or enable Use SSH Agent to use an SSH agent.',
 	},
 	{
 		label: 'Private Key Passphrase',
@@ -68,7 +67,7 @@ const sftpSettings = [
 		value: 'key_file_pass',
 		default: '',
 		description:
-			"The passphrase to decrypt the PEM-encoded private key file. Only PEM encrypted key files (old OpenSSH format) are supported. Encrypted keys\nin the new OpenSSH format can't be used.",
+			'Passphrase to decrypt the PEM-encoded private key file. Only old OpenSSH format encrypted keys are supported.',
 	},
 	{
 		label: 'SSH Public Certificate',
@@ -78,7 +77,7 @@ const sftpSettings = [
 		value: 'pubkey',
 		default: '',
 		description:
-			'SSH public certificate for public certificate based authentication.\nSet this if you have a signed certificate you want to use for authentication.\nIf specified will override pubkey_file.',
+			'SSH public certificate for certificate-based authentication. If specified, overrides the Public Key File setting.',
 	},
 	{
 		label: 'Public Key File',
@@ -98,7 +97,7 @@ const sftpSettings = [
 		value: 'key_use_agent',
 		default: false,
 		description:
-			'When set forces the usage of the ssh-agent. When key-file is also set, the ".pub" file of the specified key-file is read and only the associated key is\nrequested from the ssh-agent. This allows to avoid Too many authentication failures for *username* errors\nwhen the ssh-agent contains many keys.',
+			'Force the use of an SSH agent for authentication. When a Private Key File is also set, only the matching key is requested from the agent.',
 	},
 	{
 		label: 'Allow Insecure Ciphers',
@@ -108,7 +107,7 @@ const sftpSettings = [
 		value: 'use_insecure_cipher',
 		default: false,
 		description:
-			'Enable the use of insecure ciphers and key exchange methods. This enables the use of the following insecure ciphers and key exchange methods:',
+			'Enable the use of insecure ciphers and key exchange methods. Only use this if your server requires legacy encryption.',
 	},
 	{
 		label: 'Disable Hash Check',
@@ -118,7 +117,7 @@ const sftpSettings = [
 		value: 'disable_hashcheck',
 		default: false,
 		description:
-			'Disable the execution of SSH commands to determine if remote file hashing is available. Leave blank or set to false to enable hashing (recommended), set to true to disable hashing.',
+			'Disable checking for remote file hashing support. Leave disabled to enable hashing (recommended).',
 	},
 	{
 		label: 'External SSH Binary',
@@ -128,7 +127,7 @@ const sftpSettings = [
 		value: 'ssh',
 		default: '',
 		description:
-			'Path and arguments to external ssh binary. Normally rclone will use its internal ssh library to connect to the\nSFTP server. However it does not implement all possible ssh options so\nit may be desirable to use an external ssh binary.',
+			'Path and arguments to an external SSH binary. Use this if you need SSH options not supported by the built-in SSH library.',
 	},
 	{
 		label: 'Known Hosts File',
@@ -147,8 +146,7 @@ const sftpSettings = [
 		required: false,
 		value: 'ask_password',
 		default: false,
-		description:
-			'Allow asking for SFTP password when needed. If this is set and no password is supplied then rclone will:',
+		description: 'Allow prompting for an SFTP password when none is configured.',
 	},
 	{
 		label: 'SSH Path Override',
@@ -158,7 +156,7 @@ const sftpSettings = [
 		value: 'path_override',
 		default: '',
 		description:
-			'Override path used by SSH shell commands. This allows checksum calculation when SFTP and SSH paths are\ndifferent. This issue affects among others Synology NAS boxes.',
+			'Override path used by SSH shell commands. Use this when SFTP and SSH paths differ, such as on Synology NAS devices.',
 	},
 	{
 		label: 'Set Remote Modified Time',
@@ -172,11 +170,18 @@ const sftpSettings = [
 	{
 		label: 'Remote Shell Type',
 		command: '--sftp-shell-type',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		value: 'shell_type',
 		default: '',
 		description: 'The type of SSH shell on remote server, if any. Leave blank for autodetect.',
+		options: [
+			{ label: 'Autodetect', value: '' },
+			{ label: 'No shell access', value: 'none' },
+			{ label: 'Unix shell', value: 'unix' },
+			{ label: 'PowerShell', value: 'powershell' },
+			{ label: 'Windows Command Prompt', value: 'cmd' },
+		],
 	},
 	{
 		label: 'MD5 Hash Command',
@@ -222,7 +227,7 @@ const sftpSettings = [
 		value: 'server_command',
 		default: '',
 		description:
-			'Specifies the path or command to run a sftp server on the remote host. The subsystem option is ignored when server_command is defined.',
+			'Path or command to run an SFTP server on the remote host. The SSH Subsystem setting is ignored when this is set.',
 	},
 	{
 		label: 'Use fstat Instead of stat',
@@ -232,7 +237,7 @@ const sftpSettings = [
 		value: 'use_fstat',
 		default: false,
 		description:
-			'If set use fstat instead of stat. Some servers limit the amount of open files and calling Stat after opening\nthe file will throw an error from the server. Setting this flag will call\nFstat instead of Stat which is called on an already open file handle.',
+			'Use fstat instead of stat. Enable this if your server limits open files and throws errors when checking file status.',
 	},
 	{
 		label: 'Disable Concurrent Reads',
@@ -242,7 +247,7 @@ const sftpSettings = [
 		value: 'disable_concurrent_reads',
 		default: false,
 		description:
-			"If set don't use concurrent reads. Normally concurrent reads are safe to use and not using them will\ndegrade performance, so this option is disabled by default.",
+			'Disable concurrent reads. Concurrent reads are normally safe and improve performance.',
 	},
 	{
 		label: 'Disable Concurrent Writes',
@@ -252,7 +257,7 @@ const sftpSettings = [
 		value: 'disable_concurrent_writes',
 		default: false,
 		description:
-			"If set don't use concurrent writes. Normally rclone uses concurrent writes to upload files. This improves\nthe performance greatly, especially for distant servers.",
+			'Disable concurrent writes. Concurrent writes improve upload performance, especially for distant servers.',
 	},
 	{
 		label: 'Idle Connection Timeout',
@@ -262,7 +267,7 @@ const sftpSettings = [
 		value: 'idle_timeout',
 		default: '1m0s',
 		description:
-			'Max time before closing idle connections. If no connections have been returned to the connection pool in the time\ngiven, rclone will empty the connection pool.',
+			'Max time before closing idle connections. If no connections are used within this time, the connection pool is emptied.',
 	},
 	{
 		label: 'Chunk Size',
@@ -272,7 +277,7 @@ const sftpSettings = [
 		value: 'chunk_size',
 		default: '32ki',
 		description:
-			'Upload and download chunk size. This controls the maximum size of payload in SFTP protocol packets.\nThe RFC limits this to 32768 bytes (32k), which is the default. However,\na lot of servers support larger sizes, typically limited to a maximum\ntotal package size of 256k, and setting it larger will increase transfer\nspeed dramatically on high latency links. This includes OpenSSH, and,\nfor example, using the value of 255k works well, leaving plenty of room\nfor overhead while still being within a total packet size of 256k.',
+			'Upload and download chunk size. Increasing this can significantly improve transfer speed on high-latency connections. Most servers support up to 255k.',
 	},
 	{
 		label: 'Max Concurrent Requests per File',
@@ -282,7 +287,7 @@ const sftpSettings = [
 		value: 'concurrency',
 		default: '64',
 		description:
-			'The maximum number of outstanding requests for one file This controls the maximum number of outstanding requests for one file.\nIncreasing it will increase throughput on high latency links at the\ncost of using more memory.',
+			'Maximum number of outstanding requests for one file. Increasing this can improve throughput on high-latency connections at the cost of more memory.',
 	},
 	{
 		label: 'Max Simultaneous Connections',
@@ -292,7 +297,7 @@ const sftpSettings = [
 		value: 'connections',
 		default: '0',
 		description:
-			'Maximum number of SFTP simultaneous connections, 0 for unlimited. Note that setting this is very likely to cause deadlocks so it should\nbe used with care.',
+			'Maximum number of SFTP simultaneous connections, 0 for unlimited. Setting this is likely to cause deadlocks, so use with care.',
 	},
 	{
 		label: 'Environment Variables',
@@ -301,8 +306,7 @@ const sftpSettings = [
 		required: false,
 		value: 'set_env',
 		default: '',
-		description:
-			'Environment variables to pass to sftp and commands Set environment variables in the form:',
+		description: 'Environment variables to pass to SFTP commands.',
 	},
 	{
 		label: 'Session Encryption Ciphers',
@@ -312,7 +316,7 @@ const sftpSettings = [
 		value: 'ciphers',
 		default: '',
 		description:
-			'Space separated list of ciphers to be used for session encryption, ordered by preference. At least one must match with server configuration. This can be checked for example using ssh -Q cipher.',
+			'Space-separated list of ciphers for session encryption, ordered by preference. At least one must match the server configuration.',
 	},
 	{
 		label: 'Key Exchange Algorithms',
@@ -322,7 +326,7 @@ const sftpSettings = [
 		value: 'key_exchange',
 		default: '',
 		description:
-			'Space separated list of key exchange algorithms, ordered by preference. At least one must match with server configuration. This can be checked for example using ssh -Q kex.',
+			'Space-separated list of key exchange algorithms, ordered by preference. At least one must match the server configuration.',
 	},
 	{
 		label: 'Message Authentication Code (MAC) Algorithms',
@@ -332,7 +336,7 @@ const sftpSettings = [
 		value: 'macs',
 		default: '',
 		description:
-			'Space separated list of MACs (message authentication code) algorithms, ordered by preference. At least one must match with server configuration. This can be checked for example using ssh -Q mac.',
+			'Space-separated list of MAC (message authentication code) algorithms, ordered by preference. At least one must match the server configuration.',
 	},
 	{
 		label: 'Host Key Algorithms',
@@ -342,7 +346,7 @@ const sftpSettings = [
 		value: 'host_key_algorithms',
 		default: '',
 		description:
-			'Space separated list of host key algorithms, ordered by preference. At least one must match with server configuration. This can be checked for example using ssh -Q HostKeyAlgorithms.',
+			'Space-separated list of host key algorithms, ordered by preference. At least one must match the server configuration.',
 	},
 	{
 		label: 'SOCKS Proxy',
@@ -362,7 +366,7 @@ const sftpSettings = [
 		value: 'copy_is_hardlink',
 		default: false,
 		description:
-			'Set to enable server side copies using hardlinks. The SFTP protocol does not define a copy command so normally server\nside copies are not allowed with the sftp backend.',
+			'Enable server-side copies using hardlinks. The SFTP protocol does not natively support a copy command, so this uses hardlinks instead.',
 	},
 	{
 		label: 'Description',

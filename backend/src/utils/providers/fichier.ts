@@ -25,7 +25,7 @@ const fichierSettings = [
 		required: false,
 		default: '',
 		description:
-			'If you want to download a shared file that is password protected, add this parameter. NB Input to this must be obscured - see rclone obscure.',
+			'If you want to download a shared file that is password protected, add this parameter.',
 		command: '--fichier-file-password',
 	},
 	{
@@ -35,7 +35,7 @@ const fichierSettings = [
 		required: false,
 		default: '',
 		description:
-			'If you want to list the files in a shared folder that is password protected, add this parameter. NB Input to this must be obscured - see rclone obscure.',
+			'If you want to list the files in a shared folder that is password protected, add this parameter.',
 		command: '--fichier-folder-password',
 	},
 	{
@@ -55,7 +55,7 @@ const fichierSettings = [
 		default:
 			'slash,ltgt,doublequote,singlequote,backquote,dollar,backslash,del,ctl,leftspace,rightspace,invalidutf8,dot',
 		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+			'The encoding for the backend.',
 		command: '--fichier-encoding',
 	},
 	{

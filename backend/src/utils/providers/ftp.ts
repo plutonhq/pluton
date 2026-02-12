@@ -1,4 +1,6 @@
-const ftpSettings = [
+import type { ProviderSetting } from './types';
+
+const ftpSettings: ProviderSetting[] = [
 	{
 		label: 'FTP Host',
 		command: '--ftp-host',
@@ -37,7 +39,7 @@ const ftpSettings = [
 		required: false,
 		value: 'pass',
 		default: '',
-		description: 'FTP password. NB Input to this must be obscured - see rclone obscure.',
+		description: 'FTP password.',
 	},
 	{
 		label: 'Use Implicit FTPS (FTP over TLS)',
@@ -48,7 +50,7 @@ const ftpSettings = [
 		value: 'tls',
 		default: false,
 		description:
-			'Use Implicit FTPS (FTP over TLS). When using implicit FTP over TLS the client connects using TLS\nright from the start which breaks compatibility with\nnon-TLS-aware servers. This is usually served over port 990 rather\nthan port 21. Cannot be used in combination with explicit FTPS.',
+			'Use Implicit FTPS (FTP over TLS). Connects using TLS from the start, usually on port 990. Cannot be used with explicit FTPS.',
 	},
 	{
 		label: 'Use Explicit FTPS (FTP over TLS)',
@@ -59,7 +61,7 @@ const ftpSettings = [
 		value: 'explicit_tls',
 		default: false,
 		description:
-			'Use Explicit FTPS (FTP over TLS). When using explicit FTP over TLS the client explicitly requests\nsecurity from the server in order to upgrade a plain text connection\nto an encrypted one. Cannot be used in combination with implicit FTPS.',
+			'Use Explicit FTPS (FTP over TLS). Upgrades a plain text connection to encrypted. Cannot be used with implicit FTPS.',
 	},
 	{
 		label: 'Max FTP Simultaneous Connections',
@@ -69,7 +71,7 @@ const ftpSettings = [
 		value: 'concurrency',
 		default: '0',
 		description:
-			'Maximum number of FTP simultaneous connections, 0 for unlimited. Note that setting this is very likely to cause deadlocks so it should\nbe used with care.',
+			'Maximum number of FTP simultaneous connections, 0 for unlimited. Setting this is likely to cause deadlocks, so use with care.',
 	},
 	{
 		label: 'Do Not Verify TLS Certificate',
@@ -79,6 +81,7 @@ const ftpSettings = [
 		value: 'no_check_certificate',
 		default: false,
 		description: 'Do not verify the TLS certificate of the server.',
+		condition: [{ tls: true }, { explicit_tls: true }],
 	},
 	{
 		label: 'Disable EPSV',
@@ -134,7 +137,7 @@ const ftpSettings = [
 		value: 'idle_timeout',
 		default: '1m0s',
 		description:
-			'Max time before closing idle connections. If no connections have been returned to the connection pool in the time\ngiven, rclone will empty the connection pool.',
+			'Max time before closing idle connections. If no connections are used within this time, the connection pool is emptied.',
 	},
 	{
 		label: 'Close Response Timeout',
@@ -153,7 +156,8 @@ const ftpSettings = [
 		value: 'tls_cache_size',
 		default: '32',
 		description:
-			'Size of TLS session cache for all control and data connections. TLS cache allows to resume TLS sessions and reuse PSK between connections.\nIncrease if default size is not enough resulting in TLS resumption errors.\nEnabled by default. Use 0 to disable.',
+			'Size of TLS session cache for all control and data connections. Enabled by default; use 0 to disable.',
+		condition: [{ tls: true }, { explicit_tls: true }],
 	},
 	{
 		label: 'Disable TLS 1.3',
@@ -163,6 +167,7 @@ const ftpSettings = [
 		value: 'disable_tls13',
 		default: false,
 		description: 'Disable TLS 1.3 (workaround for FTP servers with buggy TLS)',
+		condition: [{ tls: true }, { explicit_tls: true }],
 	},
 	{
 		label: 'Data Connection Close Timeout',
@@ -180,8 +185,7 @@ const ftpSettings = [
 		required: false,
 		value: 'ask_password',
 		default: false,
-		description:
-			'Allow asking for FTP password when needed. If this is set and no password is supplied then rclone will ask for a password',
+		description: 'Allow prompting for an FTP password when none is configured.',
 	},
 	{
 		label: 'SOCKS Proxy',
@@ -201,7 +205,7 @@ const ftpSettings = [
 		value: 'no_check_upload',
 		default: false,
 		description:
-			"Don't check the upload is OK Normally rclone will try to check the upload exists after it has\nuploaded a file to make sure the size and modification time are as\nexpected.",
+			'Skip verifying uploads. By default, uploaded files are checked to ensure the size and modification time are correct.',
 	},
 	{
 		label: 'Backend Encoding',
@@ -210,8 +214,7 @@ const ftpSettings = [
 		required: false,
 		value: 'encoding',
 		default: 'slash,del,ctl,rightspace,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 	},
 	{
 		label: 'Description',

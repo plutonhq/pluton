@@ -67,7 +67,7 @@ const wasabiSettings = [
 		required: false,
 		default: '',
 		description:
-			'Control lists (ACL) are subresources attached to buckets and objects. They define which Scaleway users have access to the attached object/bucket, and the type of access they have.',
+			'Access control lists (ACL) define which users have access to your buckets and objects, and the type of access they have.',
 		command: '--s3-acl',
 	},
 	...s3Options,

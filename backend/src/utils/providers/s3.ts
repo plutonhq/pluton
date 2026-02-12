@@ -70,13 +70,24 @@ const s3Settings = [
 	{
 		label: 'ACL',
 		value: 'acl',
-		fieldType: 'string',
+		fieldType: 'select',
+		allowCustom: true,
 		authFieldType: 'client',
 		required: false,
 		default: '',
 		description:
-			"Canned ACL used when creating buckets and storing or copying objects. This ACL is used for creating objects and if bucket_acl isn't set, for creating buckets too.",
+			'Canned ACL used when creating buckets and storing or copying objects. This ACL is used for creating objects and, if Bucket ACL is not set, for creating buckets too.',
 		command: '--s3-acl',
+		options: [
+			{ label: 'Default (private)', value: '' },
+			{ label: 'Private', value: 'private' },
+			{ label: 'Public Read', value: 'public-read' },
+			{ label: 'Public Read/Write', value: 'public-read-write' },
+			{ label: 'Authenticated Read', value: 'authenticated-read' },
+			{ label: 'Bucket Owner Read', value: 'bucket-owner-read' },
+			{ label: 'Bucket Owner Full Control', value: 'bucket-owner-full-control' },
+			{ label: 'Custom', value: 'custom' },
+		],
 	},
 	...s3Options,
 ];

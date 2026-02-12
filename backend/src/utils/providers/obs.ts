@@ -52,7 +52,7 @@ const obsSettings = [
 		],
 		required: true,
 		default: '',
-		description: "Select a Region to connect to that region's API Ednpoint.",
+		description: "Select a Region to connect to that region's API Endpoint.",
 		command: '--s3-region',
 	},
 	...s3Options,

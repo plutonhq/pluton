@@ -37,8 +37,7 @@ const filesSettings = [
 		authFieldType: 'password',
 		required: false,
 		default: '',
-		description:
-			'The password used to authenticate with Files.com. NB Input to this must be obscured - see rclone obscure.',
+		description: 'The password used to authenticate with Files.com.',
 		command: '--filescom-password',
 	},
 	{
@@ -47,8 +46,7 @@ const filesSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,backslash,del,ctl,rightspace,rightcrlfhtvt,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--filescom-encoding',
 	},
 	{

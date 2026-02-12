@@ -15,8 +15,7 @@ const gofileSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description:
-			'ID of the root folder Leave this blank normally, rclone will fill it in automatically.',
+		description: 'ID of the root folder. Leave blank normally, it will be filled in automatically.',
 		command: '--gofile-root-folder-id',
 	},
 	{
@@ -25,7 +24,7 @@ const gofileSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Account ID Leave this blank normally, rclone will fill it in automatically.',
+		description: 'Account ID. Leave blank normally, it will be filled in automatically.',
 		command: '--gofile-account-id',
 	},
 	{
@@ -44,8 +43,7 @@ const gofileSettings = [
 		required: false,
 		default:
 			'slash,ltgt,doublequote,colon,question,asterisk,pipe,backslash,del,ctl,leftperiod,rightperiod,invalidutf8,dot,exclamation',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--gofile-encoding',
 	},
 	{

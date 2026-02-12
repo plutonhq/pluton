@@ -22,12 +22,16 @@ const hidriveSettings = [
 	{
 		label: 'Access Scope',
 		value: 'scope_access',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: 'rw',
 		description:
-			'Access permissions to use when requesting access from HiDrive. rw: Read/Write, ro: Read-only',
+			'Access permissions to use when requesting access from HiDrive.',
 		command: '--hidrive-scope-access',
+		options: [
+			{ label: 'Read and Write', value: 'rw' },
+			{ label: 'Read-only', value: 'ro' },
+		],
 	},
 	{
 		label: 'OAuth Access Token',
@@ -71,11 +75,16 @@ const hidriveSettings = [
 	{
 		label: 'Role Scope',
 		value: 'scope_role',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: 'user',
-		description: 'User-level that rclone should use when requesting access from HiDrive.',
+		description: 'User-level to use when requesting access from HiDrive.',
 		command: '--hidrive-scope-role',
+		options: [
+			{ label: 'User (sufficient for most cases)', value: 'user' },
+			{ label: 'Admin', value: 'admin' },
+			{ label: 'Owner', value: 'owner' },
+		],
 	},
 	{
 		label: 'Root Prefix',
@@ -84,7 +93,7 @@ const hidriveSettings = [
 		required: false,
 		default: '/',
 		description:
-			'The root/parent folder for all paths. Fill in to use the specified folder as the parent for all paths given to the storage. This way rclone can use any folder as its starting point.',
+			'The root/parent folder for all paths. Fill in to use the specified folder as the parent for all paths given to the storage.',
 		command: '--hidrive-root-prefix',
 	},
 	{
@@ -142,8 +151,7 @@ const hidriveSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--hidrive-encoding',
 	},
 	{

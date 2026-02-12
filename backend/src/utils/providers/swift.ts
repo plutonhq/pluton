@@ -6,7 +6,7 @@ const swiftSettings = [
 		authFieldType: 'password',
 		required: true,
 		default: '',
-		description: 'User name to log in (OS_USERNAME).',
+		description: 'User name to log in.',
 		command: '--swift-user',
 	},
 	{
@@ -16,7 +16,7 @@ const swiftSettings = [
 		authFieldType: 'password',
 		required: true,
 		default: '',
-		description: 'API key or password (OS_PASSWORD).',
+		description: 'API key or password.',
 		command: '--swift-key',
 	},
 	{
@@ -26,7 +26,7 @@ const swiftSettings = [
 		authFieldType: 'password',
 		required: true,
 		default: '',
-		description: 'Authentication URL for server (OS_AUTH_URL).',
+		description: 'Authentication URL for server.',
 		options: [
 			{ label: 'Rackspace US', value: 'https://auth.api.rackspacecloud.com/v1.0' },
 			{ label: 'Rackspace UK', value: 'https://lon.auth.api.rackspacecloud.com/v1.0' },
@@ -55,8 +55,9 @@ const swiftSettings = [
 		required: false,
 		default: '',
 		description:
-			'User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).',
+			'User ID to log in. Optional — most systems use Username instead. Only used with v3 authentication.',
 		command: '--swift-user-id',
+		condition: [{ auth_version: 0 }, { auth_version: 3 }],
 	},
 	{
 		label: 'User Domain',
@@ -64,8 +65,9 @@ const swiftSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)',
+		description: 'User domain. Optional, only used with v3 authentication.',
 		command: '--swift-domain',
+		condition: [{ auth_version: 0 }, { auth_version: 3 }],
 	},
 	{
 		label: 'Tenant Name',
@@ -74,7 +76,7 @@ const swiftSettings = [
 		required: true,
 		default: '',
 		description:
-			'Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME).',
+			'Tenant name. Optional for v1 auth, otherwise this or Tenant ID is required.',
 		command: '--swift-tenant',
 	},
 	{
@@ -84,7 +86,7 @@ const swiftSettings = [
 		required: false,
 		default: '',
 		description:
-			'Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID).',
+			'Tenant ID. Optional for v1 auth, otherwise this or Tenant Name is required.',
 		command: '--swift-tenant-id',
 	},
 	{
@@ -93,8 +95,9 @@ const swiftSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME).',
+		description: 'Tenant domain. Optional, only used with v3 authentication.',
 		command: '--swift-tenant-domain',
+		condition: [{ auth_version: 0 }, { auth_version: 3 }],
 	},
 	{
 		label: 'Region',
@@ -102,7 +105,7 @@ const swiftSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Region name - optional (OS_REGION_NAME).',
+		description: 'Region name (optional).',
 		command: '--swift-region',
 	},
 	{
@@ -111,7 +114,7 @@ const swiftSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Storage URL - optional (OS_STORAGE_URL).',
+		description: 'Storage URL (optional).',
 		command: '--swift-storage-url',
 	},
 	{
@@ -120,7 +123,7 @@ const swiftSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Auth Token from alternate authentication - optional (OS_AUTH_TOKEN).',
+		description: 'Auth token from alternate authentication (optional).',
 		command: '--swift-auth-token',
 	},
 	{
@@ -129,8 +132,9 @@ const swiftSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Application Credential ID (OS_APPLICATION_CREDENTIAL_ID).',
+		description: 'Application credential ID for authentication.',
 		command: '--swift-application-credential-id',
+		condition: [{ auth_version: 0 }, { auth_version: 3 }],
 	},
 	{
 		label: 'Application Credential Name',
@@ -138,8 +142,9 @@ const swiftSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME).',
+		description: 'Application credential name for authentication.',
 		command: '--swift-application-credential-name',
+		condition: [{ auth_version: 0 }, { auth_version: 3 }],
 	},
 	{
 		label: 'Application Credential Secret',
@@ -147,8 +152,9 @@ const swiftSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET).',
+		description: 'Application credential secret for authentication.',
 		command: '--swift-application-credential-secret',
+		condition: [{ auth_version: 0 }, { auth_version: 3 }],
 	},
 	{
 		label: 'Auth Version',
@@ -157,27 +163,39 @@ const swiftSettings = [
 		required: false,
 		default: '0',
 		description:
-			'AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION).',
+			'Authentication version. Set to 1, 2, or 3 if your Auth URL has no version specified.',
 		command: '--swift-auth-version',
 	},
 	{
 		label: 'Endpoint Type',
 		value: 'endpoint_type',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: 'public',
-		description: 'Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE).',
+		description: 'Endpoint type to choose from the service catalogue.',
 		command: '--swift-endpoint-type',
+		options: [
+			{ label: 'Public (default)', value: 'public' },
+			{ label: 'Internal', value: 'internal' },
+			{ label: 'Admin', value: 'admin' },
+		],
 	},
 	{
 		label: 'Storage Policy',
 		value: 'storage_policy',
-		fieldType: 'string',
+		fieldType: 'select',
+		allowCustom: true,
 		required: false,
 		default: '',
 		description:
 			'The storage policy to use when creating a new container. This applies the specified storage policy when creating a new container. The policy cannot be changed afterwards. The allowed configuration values and their meaning depend on your Swift storage provider.',
 		command: '--swift-storage-policy',
+		options: [
+			{ label: 'Default', value: '' },
+			{ label: 'OVH Public Cloud Storage', value: 'pcs' },
+			{ label: 'OVH Public Cloud Archive', value: 'pca' },
+			{ label: 'Custom', value: 'custom' },
+		],
 	},
 	{
 		label: 'Leave Parts On Error',
@@ -196,7 +214,7 @@ const swiftSettings = [
 		required: false,
 		default: false,
 		description:
-			'When paginating, always fetch unless we received an empty page. Consider using this option if rclone listings show fewer objects than expected, or if repeated syncs copy unchanged objects.',
+			'When paginating, always fetch unless an empty page is received. Enable if file listings show fewer objects than expected or repeated syncs copy unchanged objects.',
 		command: '--swift-fetch-until-empty-page',
 	},
 	{
@@ -206,7 +224,7 @@ const swiftSettings = [
 		required: false,
 		default: '0',
 		description:
-			'When paginating, fetch if the current page is within this percentage of the limit. Consider using this option if rclone listings show fewer objects than expected, or if repeated syncs copy unchanged objects.',
+			'When paginating, fetch if the current page is within this percentage of the limit. Enable if file listings show fewer objects than expected or repeated syncs copy unchanged objects.',
 		command: '--swift-partial-page-fetch-threshold',
 	},
 	{
@@ -216,7 +234,7 @@ const swiftSettings = [
 		required: false,
 		default: '5gi',
 		description:
-			'Above this size files will be chunked. Above this size files will be chunked into a a _segments container or a .file-segments directory. (See the use_segments_container option for more info). Default for this is 5 GiB which is its maximum value, which means only files above this size will be chunked.',
+			'Files above this size will be chunked into segments. Default is 5 GiB, which is also the maximum value.',
 		command: '--swift-chunk-size',
 	},
 	{
@@ -226,7 +244,7 @@ const swiftSettings = [
 		required: false,
 		default: false,
 		description:
-			"Don't chunk files during streaming upload. When doing streaming uploads (e.g. using rcat or mount with --vfs-cache-mode off) setting this flag will cause the swift backend to not upload chunked files.",
+			"Don't chunk files during streaming upload.",
 		command: '--swift-no-chunk',
 	},
 	{
@@ -236,7 +254,7 @@ const swiftSettings = [
 		required: false,
 		default: false,
 		description:
-			'Disable support for static and dynamic large objects Swift cannot transparently store files bigger than 5 GiB. There are two schemes for chunking large files, static large objects (SLO) or dynamic large objects (DLO), and the API does not allow rclone to determine whether a file is a static or dynamic large object without doing a HEAD on the object. Since these need to be treated differently, this means rclone has to issue HEAD requests for objects for example when reading checksums.',
+			'Disable support for static and dynamic large objects. Swift cannot transparently store files bigger than 5 GiB. Enabling this may improve performance but limits large file support.',
 		command: '--swift-no-large-objects',
 	},
 	{
@@ -246,7 +264,7 @@ const swiftSettings = [
 		required: false,
 		default: 'unset',
 		description:
-			'Choose destination for large object segments Swift cannot transparently store files bigger than 5 GiB and rclone will chunk files larger than chunk_size (default 5 GiB) in order to upload them.',
+			'Choose destination for large object segments. Swift cannot store files bigger than 5 GiB, so files larger than the Chunk Size will be split into segments.',
 		command: '--swift-use-segments-container',
 	},
 	{
@@ -256,7 +274,7 @@ const swiftSettings = [
 		required: false,
 		default: 'slash,invalidutf8',
 		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+			'The encoding for the backend.',
 		command: '--swift-encoding',
 	},
 	{

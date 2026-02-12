@@ -16,7 +16,7 @@ const opendriveSettings = [
 		authFieldType: 'password',
 		required: true,
 		default: '',
-		description: 'Password. NB Input to this must be obscured - see rclone obscure.',
+		description: 'Password.',
 		command: '--opendrive-password',
 	},
 	{
@@ -26,8 +26,7 @@ const opendriveSettings = [
 		required: false,
 		default:
 			'slash,ltgt,doublequote,colon,question,asterisk,pipe,backslash,leftspace,leftcrlfhtvt,rightspace,rightcrlfhtvt,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--opendrive-encoding',
 	},
 	{

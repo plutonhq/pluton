@@ -26,7 +26,7 @@ const gphotosSettings = [
 		required: false,
 		default: false,
 		description:
-			'Set to make the Google Photos backend read only. If you choose read only then rclone will only request read only access to your photos, otherwise rclone will request full access.',
+			'Set to read-only access. When enabled, only viewing and downloading photos is allowed.',
 		command: '--gphotos-read-only',
 	},
 	{
@@ -64,8 +64,7 @@ const gphotosSettings = [
 		authFieldType: 'client',
 		required: false,
 		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
+		description: 'Use client credentials OAuth flow instead of interactive login.',
 		command: '--gphotos-client-credentials',
 	},
 	{
@@ -75,7 +74,7 @@ const gphotosSettings = [
 		required: false,
 		default: false,
 		description:
-			"Set to read the size of media items. Normally rclone does not read the size of media items since this takes another transaction.  This isn't necessary for syncing.  However rclone mount needs to know the size of files in advance of reading them, so setting this flag when using rclone mount is recommended if you want to read the media.",
+			'Read the size of media items. This adds an extra request per file but may be needed for some advanced operations.',
 		command: '--gphotos-read-size',
 	},
 	{
@@ -95,7 +94,7 @@ const gphotosSettings = [
 		required: false,
 		default: false,
 		description:
-			'Also view and download archived media. By default, rclone does not request archived media. Thus, when syncing, archived media is not visible in directory listings or transferred.',
+			'Also view and download archived media. By default, archived media is hidden from listings and not transferred.',
 		command: '--gphotos-include-archived',
 	},
 	{
@@ -105,7 +104,7 @@ const gphotosSettings = [
 		required: false,
 		default: '',
 		description:
-			"Use the gphotosdl proxy for downloading the full resolution images The Google API will deliver images and video which aren't full resolution, and/or have EXIF data missing.",
+			'Proxy URL for downloading full-resolution images. Without this, Google may deliver lower-resolution images with missing EXIF data.',
 		command: '--gphotos-proxy',
 	},
 	{
@@ -114,18 +113,22 @@ const gphotosSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,crlf,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'Character encoding for file and folder names.',
 		command: '--gphotos-encoding',
 	},
 	{
 		label: 'Batch Mode',
 		value: 'batch_mode',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: 'sync',
-		description: 'Upload file batching sync|async|off. This sets the batch mode used by rclone.',
+		description: 'Upload file batching mode.',
 		command: '--gphotos-batch-mode',
+		options: [
+			{ label: 'Sync (batch and check completion)', value: 'sync' },
+			{ label: 'Async (batch, no completion check)', value: 'async' },
+			{ label: 'Off (no batching)', value: 'off' },
+		],
 	},
 	{
 		label: 'Batch Size',

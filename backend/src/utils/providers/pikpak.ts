@@ -16,7 +16,7 @@ const pikpakSettings = [
 		authFieldType: 'password',
 		required: true,
 		default: '',
-		description: 'Pikpak password. NB Input to this must be obscured - see rclone obscure.',
+		description: 'Pikpak password.',
 		command: '--pikpak-pass',
 	},
 	{
@@ -34,8 +34,7 @@ const pikpakSettings = [
 		fieldType: 'string',
 		required: false,
 		default: 'mozilla/5.0 (windows nt 10.0; win64; x64; rv',
-		description:
-			'HTTP user agent for pikpak. Defaults to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" or "--pikpak-user-agent" provided on command line.',
+		description: 'HTTP user agent for PikPak.',
 		command: '--pikpak-user-agent',
 	},
 	{
@@ -45,7 +44,7 @@ const pikpakSettings = [
 		required: false,
 		default: '',
 		description:
-			'ID of the root folder. Leave blank normally. Fill in for rclone to use a non root folder as its starting point.',
+			'ID of the root folder. Leave blank normally. Fill in to use a non-root folder as the starting point.',
 		command: '--pikpak-root-folder-id',
 	},
 	{
@@ -54,8 +53,7 @@ const pikpakSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: true,
-		description:
-			'Send files to the trash instead of deleting permanently. Defaults to true, namely sending files to the trash. Use --pikpak-use-trash=false to delete files permanently instead.',
+		description: 'Send files to the trash instead of deleting permanently.',
 		command: '--pikpak-use-trash',
 	},
 	{
@@ -114,8 +112,7 @@ const pikpakSettings = [
 		required: false,
 		default:
 			'slash,ltgt,doublequote,colon,question,asterisk,pipe,backslash,ctl,leftspace,rightspace,rightperiod,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--pikpak-encoding',
 	},
 	{

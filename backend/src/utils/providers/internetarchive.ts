@@ -45,7 +45,7 @@ const internetarchiveSettings = [
 		required: false,
 		default: true,
 		description:
-			"Don't ask the server to test against MD5 checksum calculated by rclone. Normally rclone will calculate the MD5 checksum of the input before uploading it so it can ask the server to check the object against checksum. This is great for data integrity checking but can cause long delays for large files to start uploading.",
+			"Don't verify MD5 checksum with the server before uploading. This speeds up uploads of large files but reduces data integrity checking.",
 		command: '--internetarchive-disable-checksum',
 	},
 	{
@@ -64,8 +64,7 @@ const internetarchiveSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,ltgt,crlf,del,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--internetarchive-encoding',
 	},
 	{

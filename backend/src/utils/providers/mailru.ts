@@ -17,7 +17,7 @@ const mailruSettings = [
 		required: true,
 		default: '',
 		description:
-			'This must be an app password - rclone will not work with your normal password. See the Configuration section in the docs for how to make an app password.',
+			'This must be an app password. Regular passwords are not supported. See your Mail.ru account settings to create an app password.',
 		command: '--mailru-pass',
 	},
 	{
@@ -45,7 +45,7 @@ const mailruSettings = [
 		required: false,
 		default: true,
 		description:
-			'Skip full upload if there is another file with same data hash. This feature is called "speedup" or "put by hash". It is especially efficient in case of generally available files like popular books, video or audio clips, because files are searched by hash in all accounts of all mailru users. It is meaningless and ineffective if source file is unique or encrypted. Please note that rclone may need local memory and disk space to calculate content hash in advance and decide whether full upload is required. Also, if rclone does not know file size in advance (e.g. in case of streaming or partial uploads), it will not even try this optimization.',
+			'Skip full upload if another file with the same data hash already exists. Especially efficient for common files like popular media. Not effective for unique or encrypted files.',
 		command: '--mailru-speedup-enable',
 	},
 	{
@@ -130,8 +130,7 @@ const mailruSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description:
-			'HTTP user agent used internally by client. Defaults to "rclone/VERSION" or "--user-agent" provided on command line.',
+		description: 'HTTP user agent used internally by the client.',
 		command: '--mailru-user-agent',
 	},
 	{
@@ -141,7 +140,7 @@ const mailruSettings = [
 		required: false,
 		default: '',
 		description:
-			'Comma separated list of internal maintenance flags. This option must not be used by an ordinary user. It is intended only to facilitate remote troubleshooting of backend issues. Strict meaning of flags is not documented and not guaranteed to persist between releases. Quirks will be removed when the backend grows stable. Supported quirks: atomicmkdir binlist unknowndirs',
+			'Comma separated list of internal maintenance flags. Used for troubleshooting backend issues.',
 		command: '--mailru-quirks',
 	},
 	{
@@ -151,8 +150,7 @@ const mailruSettings = [
 		required: false,
 		default:
 			'slash,ltgt,doublequote,colon,question,asterisk,pipe,backslash,del,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--mailru-encoding',
 	},
 	{

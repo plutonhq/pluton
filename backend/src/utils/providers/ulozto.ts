@@ -16,8 +16,7 @@ const uloztoSettings = [
 		authFieldType: 'password',
 		required: true,
 		default: '',
-		description:
-			'The password for the user. NB Input to this must be obscured - see rclone obscure.',
+		description: 'The password for the user.',
 		command: '--ulozto-password',
 	},
 	{
@@ -36,8 +35,7 @@ const uloztoSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description:
-			"If set, rclone will use this folder as the root folder for all operations. For example, if the slug identifies 'foo/bar/', 'ulozto:baz' is equivalent to 'ulozto:foo/bar/baz' without any root slug set.",
+		description: 'If set, this folder will be used as the root folder for all operations.',
 		command: '--ulozto-root-folder-slug',
 	},
 	{
@@ -55,8 +53,7 @@ const uloztoSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,backslash,del,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--ulozto-encoding',
 	},
 	{

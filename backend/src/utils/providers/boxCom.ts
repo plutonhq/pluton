@@ -94,7 +94,7 @@ const boxSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '0',
-		description: 'Fill in for rclone to use a non root folder as its starting point.',
+		description: 'Set a non-root folder as the starting point. Use "0" for the root folder.',
 		command: '--box-root-folder-id',
 	},
 	{
@@ -140,7 +140,7 @@ const boxSettings = [
 		required: false,
 		default: '',
 		description:
-			'Impersonate this user ID when using a service account. Setting this flag allows rclone, when using a JWT service account, to act on behalf of another user by setting the as-user header.',
+			'Impersonate this user ID when using a service account, to act on behalf of another user.',
 		command: '--box-impersonate',
 	},
 	{
@@ -150,7 +150,7 @@ const boxSettings = [
 		required: false,
 		default: 'slash,backslash,del,ctl,rightspace,invalidutf8,dot',
 		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+			'The encoding for the backend.',
 		command: '--box-encoding',
 	},
 	{

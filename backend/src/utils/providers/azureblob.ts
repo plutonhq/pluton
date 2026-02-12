@@ -46,7 +46,7 @@ const azureblobSettings = [
 		required: false,
 		default: '',
 		description:
-			"ID of the service principal's tenant. Also called its directory ID. Set this if using",
+			"ID of the service principal's tenant, also called its directory ID.",
 		command: '--azureblob-tenant',
 	},
 	{
@@ -56,7 +56,7 @@ const azureblobSettings = [
 		authFieldType: 'password',
 		required: false,
 		default: '',
-		description: 'The ID of the client in use. Set this if using',
+		description: 'The ID of the client in use.',
 		command: '--azureblob-client-id',
 	},
 	{
@@ -65,7 +65,7 @@ const azureblobSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: "One of the service principal's client secrets Set this if using",
+		description: "One of the service principal's client secrets.",
 		command: '--azureblob-client-secret',
 	},
 	{
@@ -75,7 +75,7 @@ const azureblobSettings = [
 		required: false,
 		default: '',
 		description:
-			'Path to a PEM or PKCS12 certificate file including the private key. Set this if using',
+			'Path to a PEM or PKCS12 certificate file including the private key.',
 		command: '--azureblob-client-certificate-path',
 	},
 	{
@@ -84,7 +84,7 @@ const azureblobSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Password for the certificate file (optional). Optionally set this if using',
+		description: 'Password for the certificate file (optional).',
 		command: '--azureblob-client-certificate-password',
 	},
 	{
@@ -104,7 +104,7 @@ const azureblobSettings = [
 		authFieldType: 'password',
 		required: false,
 		default: '',
-		description: 'User name (usually an email address) Set this if using',
+		description: 'User name (usually an email address).',
 		command: '--azureblob-username',
 	},
 	{
@@ -114,7 +114,7 @@ const azureblobSettings = [
 		authFieldType: 'password',
 		required: false,
 		default: '',
-		description: "The user's password. Set this if using",
+		description: "The user's password.",
 		command: '--azureblob-password',
 	},
 	{
@@ -154,8 +154,9 @@ const azureblobSettings = [
 		required: false,
 		default: '',
 		description:
-			'Object ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_mi_res_id specified.',
+			'Object ID of the user-assigned MSI to use, if any. Leave blank if MSI Client ID or MSI Resource ID is specified.',
 		command: '--azureblob-msi-object-id',
+		condition: [{ use_msi: true }],
 	},
 	{
 		label: 'MSI Client ID',
@@ -164,8 +165,9 @@ const azureblobSettings = [
 		required: false,
 		default: '',
 		description:
-			'Object ID of the user-assigned MSI to use, if any. Leave blank if msi_object_id or msi_mi_res_id specified.',
+			'Client ID of the user-assigned MSI to use, if any. Leave blank if MSI Object ID or MSI Resource ID is specified.',
 		command: '--azureblob-msi-client-id',
+		condition: [{ use_msi: true }],
 	},
 	{
 		label: 'MSI Resource ID',
@@ -174,8 +176,9 @@ const azureblobSettings = [
 		required: false,
 		default: '',
 		description:
-			'Azure resource ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_object_id specified.',
+			'Azure resource ID of the user-assigned MSI to use, if any. Leave blank if MSI Client ID or MSI Object ID is specified.',
 		command: '--azureblob-msi-mi-res-id',
+		condition: [{ use_msi: true }],
 	},
 	{
 		label: 'Use Emulator',
@@ -194,7 +197,7 @@ const azureblobSettings = [
 		required: false,
 		default: false,
 		description:
-			'Use Azure CLI tool az for authentication Set to use the Azure CLI tool az as the sole means of authentication.',
+			'Use the Azure CLI tool (az) as the sole means of authentication.',
 		command: '--azureblob-use-az',
 	},
 	{
@@ -222,7 +225,7 @@ const azureblobSettings = [
 		required: false,
 		default: '4mi',
 		description:
-			'Upload chunk size. Note that this is stored in memory and there may be up to "--transfers" * "--azureblob-upload-concurrency" chunks stored at once in memory.',
+			'Upload chunk size. Chunks are stored in memory, and memory usage depends on the number of concurrent transfers.',
 		command: '--azureblob-chunk-size',
 	},
 	{
@@ -242,18 +245,25 @@ const azureblobSettings = [
 		required: false,
 		default: '5000',
 		description:
-			'Size of blob list. This sets the number of blobs requested in each listing chunk. Default is the maximum, 5000. "List blobs" requests are permitted 2 minutes per megabyte to complete. If an operation is taking longer than 2 minutes per megabyte on average, it will time out ( source ). This can be used to limit the number of blobs items to return, to avoid the time out.',
+			'Number of blobs requested per listing page. Reduce this value if listing operations are timing out.',
 		command: '--azureblob-list-chunk',
 	},
 	{
 		label: 'Access Tier',
 		value: 'access_tier',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: '',
 		description:
 			'Access tier of blob: hot, cool, cold or archive. Archived blobs can be restored by setting access tier to hot, cool or cold. Leave blank if you intend to use default access tier, which is set at account level',
 		command: '--azureblob-access-tier',
+		options: [
+			{ label: 'Default (account-level)', value: '' },
+			{ label: 'Hot', value: 'hot' },
+			{ label: 'Cool', value: 'cool' },
+			{ label: 'Cold', value: 'cold' },
+			{ label: 'Archive', value: 'archive' },
+		],
 	},
 	{
 		label: 'Archive Tier Delete',
@@ -262,7 +272,7 @@ const azureblobSettings = [
 		required: false,
 		default: false,
 		description:
-			'Delete archive tier blobs before overwriting. Archive tier blobs cannot be updated. So without this flag, if you attempt to update an archive tier blob, then rclone will produce the error:',
+			'Delete archive tier blobs before overwriting. Archive tier blobs cannot be updated directly, so this deletes them first before writing new data.',
 		command: '--azureblob-archive-tier-delete',
 	},
 	{
@@ -272,7 +282,7 @@ const azureblobSettings = [
 		required: false,
 		default: false,
 		description:
-			"Don't store MD5 checksum with object metadata. Normally rclone will calculate the MD5 checksum of the input before uploading it so it can add it to metadata on the object. This is great for data integrity checking but can cause long delays for large files to start uploading.",
+			"Don't store MD5 checksum with object metadata. Disabling checksums can speed up uploads for large files but reduces data integrity verification.",
 		command: '--azureblob-disable-checksum',
 	},
 	{
@@ -300,17 +310,22 @@ const azureblobSettings = [
 		required: false,
 		default: 'slash,backslash,del,ctl,rightperiod,invalidutf8',
 		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+			'The encoding for the backend.',
 		command: '--azureblob-encoding',
 	},
 	{
 		label: 'Public Access',
 		value: 'public_access',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: '',
 		description: 'Public access level of a container: blob or container.',
 		command: '--azureblob-public-access',
+		options: [
+			{ label: 'No public access', value: '' },
+			{ label: 'Blob-level public read', value: 'blob' },
+			{ label: 'Full public read (container)', value: 'container' },
+		],
 	},
 	{
 		label: 'Directory Markers',
@@ -329,7 +344,7 @@ const azureblobSettings = [
 		required: false,
 		default: false,
 		description:
-			"If set, don't attempt to check the container exists or create it. This can be useful when trying to minimize the number of transactions rclone does if you know the container exists already.",
+			"If set, don't attempt to check the container exists or create it. Useful if you know the container already exists and want to reduce API calls.",
 		command: '--azureblob-no-check-container',
 	},
 	{
@@ -344,11 +359,16 @@ const azureblobSettings = [
 	{
 		label: 'Delete Snapshots',
 		value: 'delete_snapshots',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: '',
 		description: 'Set to specify how to deal with snapshots on blob deletion.',
 		command: '--azureblob-delete-snapshots',
+		options: [
+			{ label: 'Fail if blob has snapshots', value: '' },
+			{ label: 'Delete blob and all snapshots', value: 'include' },
+			{ label: 'Delete only snapshots', value: 'only' },
+		],
 	},
 	{
 		label: 'Description',

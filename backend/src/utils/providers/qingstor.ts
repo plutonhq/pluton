@@ -95,8 +95,7 @@ const qingstorSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,ctl,invalidutf8',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--qingstor-encoding',
 	},
 	{

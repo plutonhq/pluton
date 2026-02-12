@@ -42,7 +42,7 @@ const qiniuSettings = [
 		],
 		required: true,
 		default: '',
-		description: "Select a Region to connect to that region's API Ednpoint.",
+		description: "Select a Region to connect to that region's API Endpoint.",
 		command: '--s3-region',
 	},
 	{
@@ -61,7 +61,7 @@ const qiniuSettings = [
 		],
 		required: true,
 		default: '',
-		description: 'The storage class to use when storing new objects in Tencent COS',
+		description: 'The storage class to use when storing new objects in Qiniu Kodo.',
 		command: '--s3-storage_class',
 	},
 	{
@@ -76,7 +76,7 @@ const qiniuSettings = [
 		required: false,
 		default: '',
 		description:
-			"Canned ACL used when creating buckets and storing or copying objects. This ACL is used for creating objects and if bucket_acl isn't set, for creating buckets too.",
+			'Access control permissions applied when creating buckets and storing objects.',
 		command: '--s3-acl',
 	},
 

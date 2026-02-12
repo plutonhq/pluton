@@ -2,7 +2,7 @@ const koofrSettings = [
 	{
 		label: 'Storage Provider',
 		value: 'provider',
-		fieldType: 'string',
+		fieldType: 'select',
 		authFieldType: 'client',
 		required: true,
 		default: 'https://app.koofr.net/',
@@ -41,7 +41,7 @@ const koofrSettings = [
 		required: true,
 		default: '',
 		description:
-			'Your password for rclone generate one at https://app.koofr.net/app/admin/preferences/password. NB Input to this must be obscured - see rclone obscure.',
+			'Your app password. Generate one at https://app.koofr.net/app/admin/preferences/password.',
 		command: '--koofr-password',
 	},
 	{
@@ -69,8 +69,7 @@ const koofrSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,backslash,del,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--koofr-encoding',
 	},
 	{

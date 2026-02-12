@@ -37,7 +37,7 @@ const httpSettings = [
 		value: 'no_slash',
 		default: false,
 		description:
-			"Set this if the site doesn't end directories with /. Use this if your target website does not use / on the end of\ndirectories.",
+			"Enable this if the site doesn't end directory paths with /.",
 	},
 	{
 		label: "Don't use HEAD requests",
@@ -47,7 +47,7 @@ const httpSettings = [
 		value: 'no_head',
 		default: false,
 		description:
-			'HEAD requests are mainly used to find file sizes in dir listing.\nIf your site is being very slow to load then you can try this option.\nNormally rclone does a HEAD request for each potential file in a\ndirectory listing to:',
+			'Disable HEAD requests for directory listings. Enable this if your site is very slow to load.',
 	},
 	{
 		label: 'Description',

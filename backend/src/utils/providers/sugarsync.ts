@@ -26,7 +26,7 @@ const sugarsyncSettings = [
 		authFieldType: 'client',
 		required: false,
 		default: '',
-		description: "Sugarsync App ID. Leave blank to use rclone's.",
+		description: "Sugarsync App ID. Leave blank to use the default.",
 		command: '--sugarsync-app-id',
 	},
 	{
@@ -36,7 +36,7 @@ const sugarsyncSettings = [
 		authFieldType: 'client',
 		required: false,
 		default: '',
-		description: "Sugarsync Access Key ID. Leave blank to use rclone's.",
+		description: "Sugarsync Access Key ID. Leave blank to use the default.",
 		command: '--sugarsync-access-key-id',
 	},
 	{
@@ -46,7 +46,7 @@ const sugarsyncSettings = [
 		authFieldType: 'client',
 		required: false,
 		default: '',
-		description: "Sugarsync Private Access Key. Leave blank to use rclone's.",
+		description: "Sugarsync Private Access Key. Leave blank to use the default.",
 		command: '--sugarsync-private-access-key',
 	},
 	{
@@ -65,7 +65,7 @@ const sugarsyncSettings = [
 		required: false,
 		default: '',
 		description:
-			'Sugarsync refresh token. Leave blank normally, will be auto configured by rclone.',
+			'Sugarsync refresh token. Leave blank normally.',
 		command: '--sugarsync-refresh-token',
 	},
 	{
@@ -75,7 +75,7 @@ const sugarsyncSettings = [
 		required: false,
 		default: '',
 		description:
-			'Sugarsync authorization. Leave blank normally, will be auto configured by rclone.',
+			'Sugarsync authorization. Leave blank normally.',
 		command: '--sugarsync-authorization',
 	},
 	{
@@ -85,7 +85,7 @@ const sugarsyncSettings = [
 		required: false,
 		default: '',
 		description:
-			'Sugarsync authorization expiry. Leave blank normally, will be auto configured by rclone.',
+			'Sugarsync authorization expiry. Leave blank normally.',
 		command: '--sugarsync-authorization-expiry',
 	},
 	{
@@ -94,7 +94,7 @@ const sugarsyncSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description: 'Sugarsync root id. Leave blank normally, will be auto configured by rclone.',
+		description: 'Sugarsync root id. Leave blank normally.',
 		command: '--sugarsync-root-id',
 	},
 	{
@@ -104,7 +104,7 @@ const sugarsyncSettings = [
 		required: false,
 		default: '',
 		description:
-			'Sugarsync deleted folder id. Leave blank normally, will be auto configured by rclone.',
+			'Sugarsync deleted folder id. Leave blank normally.',
 		command: '--sugarsync-deleted-id',
 	},
 	{
@@ -113,8 +113,7 @@ const sugarsyncSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--sugarsync-encoding',
 	},
 	{

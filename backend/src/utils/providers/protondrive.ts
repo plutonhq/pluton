@@ -16,8 +16,7 @@ const protondriveSettings = [
 		authFieldType: 'password',
 		required: true,
 		default: '',
-		description:
-			'The password of your proton account. NB Input to this must be obscured - see rclone obscure.',
+		description: 'The password of your Proton account.',
 		command: '--protondrive-password',
 	},
 	{
@@ -26,8 +25,7 @@ const protondriveSettings = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description:
-			'If you account has 2FA enabled. Insert the 2FA code here. The 2FA code The value can also be provided with --protondrive-2fa=000000',
+		description: 'The 2FA code for your Proton account, if 2FA is enabled.',
 		command: '--protondrive-2fa',
 	},
 	{
@@ -82,8 +80,7 @@ const protondriveSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,leftspace,rightspace,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--protondrive-encoding',
 	},
 	{
@@ -93,7 +90,7 @@ const protondriveSettings = [
 		required: false,
 		default: true,
 		description:
-			'Return the file size before encryption The size of the encrypted file will be different from (bigger than) the original file size. Unless there is a reason to return the file size after encryption is performed, otherwise, set this option to true, as features like Open() which will need to be supplied with original content size, will fail to operate properly',
+			'Return the file size before encryption. The encrypted file size will be larger than the original.',
 		command: '--protondrive-original-file-size',
 	},
 	{
@@ -103,7 +100,7 @@ const protondriveSettings = [
 		required: false,
 		default: 'macos-drive@1.0.0-alpha.1+rclone"',
 		description:
-			'The app version string The app version string indicates the client that is currently performing the API request. This information is required and will be sent with every API request.',
+			'The app version string sent with every API request.',
 		command: '--protondrive-app-version',
 	},
 	{
@@ -113,7 +110,7 @@ const protondriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Create a new revision when filename conflict is detected When a file upload is cancelled or failed before completion, a draft will be created and the subsequent upload of the same file to the same location will be reported as a conflict.',
+			'Create a new revision when a filename conflict is detected due to a previously cancelled or failed upload.',
 		command: '--protondrive-replace-existing-draft',
 	},
 	{
@@ -123,7 +120,7 @@ const protondriveSettings = [
 		required: false,
 		default: true,
 		description:
-			"Caches the files and folders metadata to reduce API calls Notice: If you are mounting ProtonDrive as a VFS, please disable this feature, as the current implementation doesn't update or clear the cache when there are external changes.",
+			'Caches files and folders metadata to reduce API calls. Disable if external changes need to be reflected immediately.',
 		command: '--protondrive-enable-caching',
 	},
 	{

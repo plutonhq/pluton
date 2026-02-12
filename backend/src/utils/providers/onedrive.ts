@@ -43,7 +43,7 @@ const onedriveSettings = [
 		required: false,
 		default: '',
 		description:
-			"ID of the service principal's tenant. Also called its directory ID. Set this if using",
+			"ID of the service principal's tenant (also called Directory ID).",
 		command: '--onedrive-tenant',
 	},
 	{
@@ -80,8 +80,7 @@ const onedriveSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
+		description: 'Use client credentials OAuth flow instead of interactive login.',
 		command: '--onedrive-client-credentials',
 	},
 	{
@@ -91,7 +90,7 @@ const onedriveSettings = [
 		required: false,
 		default: '10mi',
 		description:
-			'Chunk size to upload files with - must be multiple of 320k (327,680 bytes). Above this size files will be chunked - must be multiple of 320k (327,680 bytes) and should not exceed 250M (262,144,000 bytes) else you may encounter "Microsoft.SharePoint.Client.InvalidClientQueryException: The request message is too big." Note that the chunks will be buffered into memory.',
+			'Size of upload chunks. Must be a multiple of 320 KB and should not exceed 250 MB.',
 		command: '--onedrive-chunk-size',
 	},
 	{
@@ -106,11 +105,17 @@ const onedriveSettings = [
 	{
 		label: 'Drive Type',
 		value: 'drive_type',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: '',
-		description: 'The type of the drive (personal | business | documentLibrary).',
+		description: 'The type of the drive.',
 		command: '--onedrive-drive-type',
+		options: [
+			{ label: 'Default', value: '' },
+			{ label: 'Personal', value: 'personal' },
+			{ label: 'Business', value: 'business' },
+			{ label: 'Document Library (SharePoint)', value: 'documentLibrary' },
+		],
 	},
 	{
 		label: 'Root Folder ID',
@@ -119,7 +124,7 @@ const onedriveSettings = [
 		required: false,
 		default: '',
 		description:
-			"ID of the root folder. This isn't normally needed, but in special circumstances you might know the folder ID that you wish to access but not be able to get there through a path traversal.",
+			"ID of the root folder. Only needed if you can't navigate to the desired folder by path.",
 		command: '--onedrive-root-folder-id',
 	},
 	{
@@ -130,7 +135,7 @@ const onedriveSettings = [
 		default:
 			'files.read files.readwrite files.read.all files.readwrite.all sites.read.all offline_access',
 		description:
-			'Set scopes to be requested by rclone. Choose or manually enter a custom space separated list with all scopes, that rclone should request.',
+			'Access permissions to request from OneDrive. Choose or enter a custom space-separated list of scopes.',
 		command: '--onedrive-access-scopes',
 	},
 	{
@@ -140,7 +145,7 @@ const onedriveSettings = [
 		required: false,
 		default: false,
 		description:
-			"Disable the request for Sites.Read.All permission. If set to true, you will no longer be able to search for a SharePoint site when configuring drive ID, because rclone will not request Sites.Read.All permission. Set it to true if your organization didn't assign Sites.Read.All permission to the application, and your organization disallows users to consent app permission request on their own.",
+			"Disable the request for Sites.Read.All permission. If enabled, you won't be able to search for SharePoint sites when configuring Drive ID. Use this if your organization doesn't allow this permission.",
 		command: '--onedrive-disable-site-permission',
 	},
 	{
@@ -150,7 +155,7 @@ const onedriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Set to make OneNote files show up in directory listings. By default, rclone will hide OneNote files in directory listings because operations like "Open" and "Update" won\'t work on them.  But this behaviour may also prevent you from deleting them.  If you want to delete OneNote files or otherwise want them to show up in directory listing, set this option.',
+			"Show OneNote files in directory listings. OneNote files are hidden by default since they can't be opened or modified, but enabling this allows you to see and delete them.",
 		command: '--onedrive-expose-onenote-files',
 	},
 	{
@@ -160,7 +165,7 @@ const onedriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Deprecated: use --server-side-across-configs instead. Allow server-side operations (e.g. copy) to work across different onedrive configs.',
+			'Deprecated. Allow server-side operations (e.g., copy) to work across different OneDrive configurations.',
 		command: '--onedrive-server-side-across-configs',
 	},
 	{
@@ -179,7 +184,7 @@ const onedriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Remove all versions on modifying operations. Onedrive for business creates versions when rclone uploads new files overwriting an existing one and when it sets the modification time.',
+			'Remove all previous versions when files are modified. OneDrive for Business creates a new version on each upload.',
 		command: '--onedrive-no-versions',
 	},
 	{
@@ -189,26 +194,35 @@ const onedriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Permanently delete files on removal. Normally files will get sent to the recycle bin on deletion. Setting this flag causes them to be permanently deleted. Use with care.',
+			'Permanently delete files instead of sending them to the recycle bin. Use with care.',
 		command: '--onedrive-hard-delete',
 	},
 	{
 		label: 'Link Scope',
 		value: 'link_scope',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: 'anonymous',
-		description: 'Set the scope of the links created by the link command.',
+		description: 'Set the visibility scope of shared links.',
 		command: '--onedrive-link-scope',
+		options: [
+			{ label: 'Anyone with the link', value: 'anonymous' },
+			{ label: 'Organization (tenant)', value: 'organization' },
+		],
 	},
 	{
 		label: 'Link Type',
 		value: 'link_type',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: 'view',
-		description: 'Set the type of the links created by the link command.',
+		description: 'Set the permission type of shared links.',
 		command: '--onedrive-link-type',
+		options: [
+			{ label: 'Read-only', value: 'view' },
+			{ label: 'Read-write', value: 'edit' },
+			{ label: 'Embeddable', value: 'embed' },
+		],
 	},
 	{
 		label: 'Link Password',
@@ -217,18 +231,26 @@ const onedriveSettings = [
 		required: false,
 		default: '',
 		description:
-			'Set the password for links created by the link command. At the time of writing this only works with OneDrive personal paid accounts.',
+			'Set a password for shared links. Only works with OneDrive Personal paid accounts.',
 		command: '--onedrive-link-password',
 	},
 	{
 		label: 'Hash Type',
 		value: 'hash_type',
-		fieldType: 'string',
+		fieldType: 'select',
 		required: false,
 		default: 'auto',
 		description:
-			'Specify the hash in use for the backend. This specifies the hash type in use. If set to "auto" it will use the default hash which is QuickXorHash.',
+			'Hash algorithm used for file verification. "Auto" uses the recommended QuickXorHash.',
 		command: '--onedrive-hash-type',
+		options: [
+			{ label: 'Auto (recommended)', value: 'auto' },
+			{ label: 'QuickXorHash', value: 'quickxor' },
+			{ label: 'SHA1', value: 'sha1' },
+			{ label: 'SHA256', value: 'sha256' },
+			{ label: 'CRC32', value: 'crc32' },
+			{ label: 'None', value: 'none' },
+		],
 	},
 	{
 		label: 'AV Override',
@@ -237,7 +259,7 @@ const onedriveSettings = [
 		required: false,
 		default: false,
 		description:
-			'Allows download of files the server thinks has a virus. The onedrive/sharepoint server may check files uploaded with an Anti Virus checker. If it detects any potential viruses or malware it will block download of the file.',
+			'Allow downloading files that OneDrive has flagged as potential viruses or malware.',
 		command: '--onedrive-av-override',
 	},
 	{
@@ -246,8 +268,7 @@ const onedriveSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'If set rclone will use delta listing to implement recursive listings. If this flag is set the onedrive backend will advertise ListR support for recursive listings.',
+		description: 'Use delta queries for faster recursive folder listings.',
 		command: '--onedrive-delta',
 	},
 	{
@@ -257,7 +278,7 @@ const onedriveSettings = [
 		required: false,
 		default: 'off',
 		description:
-			"Control whether permissions should be read or written in metadata. Reading permissions metadata from files can be done quickly, but it isn't always desirable to set the permissions from the metadata.",
+			'Control whether file permissions should be read or written in metadata.',
 		command: '--onedrive-metadata-permissions',
 	},
 	{
@@ -267,8 +288,7 @@ const onedriveSettings = [
 		required: false,
 		default:
 			'slash,ltgt,doublequote,colon,question,asterisk,pipe,backslash,del,ctl,leftspace,lefttilde,rightspace,rightperiod,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'Character encoding for file and folder names.',
 		command: '--onedrive-encoding',
 	},
 	{

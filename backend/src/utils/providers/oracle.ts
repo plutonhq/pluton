@@ -98,7 +98,7 @@ const oracleSettings = [
 		required: false,
 		default: '5mi',
 		description:
-			'Chunk size to use for uploading. When uploading files larger than upload_cutoff or files with unknown size (e.g. from "rclone rcat" or uploaded with "rclone mount" they will be uploaded as multipart uploads using this chunk size.',
+			'Chunk size to use for uploading. Files larger than the Upload Cutoff will be uploaded as multipart uploads using this chunk size.',
 		command: '--oos-chunk-size',
 	},
 	{
@@ -148,7 +148,7 @@ const oracleSettings = [
 		required: false,
 		default: false,
 		description:
-			"Don't store MD5 checksum with object metadata. Normally rclone will calculate the MD5 checksum of the input before uploading it so it can add it to metadata on the object. This is great for data integrity checking but can cause long delays for large files to start uploading.",
+			"Don't store MD5 checksum with object metadata. This speeds up uploads of large files but reduces data integrity checking.",
 		command: '--oos-disable-checksum',
 	},
 	{
@@ -157,8 +157,7 @@ const oracleSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,invalidutf8,dot',
-		description:
-			'The encoding for the backend. See the encoding section in the overview for more info.',
+		description: 'The encoding for the backend.',
 		command: '--oos-encoding',
 	},
 	{
@@ -188,7 +187,7 @@ const oracleSettings = [
 		required: false,
 		default: false,
 		description:
-			"If set, don't attempt to check the bucket exists or create it. This can be useful when trying to minimise the number of transactions rclone does if you know the bucket exists already.",
+			"If set, don't attempt to check the bucket exists or create it. Useful if you know the bucket already exists and want to reduce API calls.",
 		command: '--oos-no-check-bucket',
 	},
 	{
@@ -198,7 +197,7 @@ const oracleSettings = [
 		required: false,
 		default: '',
 		description:
-			"To use SSE-C, a file containing the base64-encoded string of the AES-256 encryption key associated with the object. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.'",
+			"To use SSE-C, a file containing the base64-encoded AES-256 encryption key. Only one of SSE Customer Key File, SSE Customer Key, or SSE KMS Key ID is needed.",
 		command: '--oos-sse-customer-key-file',
 	},
 	{
@@ -208,7 +207,7 @@ const oracleSettings = [
 		required: false,
 		default: '',
 		description:
-			'To use SSE-C, the optional header that specifies the base64-encoded 256-bit encryption key to use to encrypt or  decrypt the data. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed. For more information, see Using Your Own Keys for Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm)',
+			'To use SSE-C, the base64-encoded 256-bit encryption key for encrypting or decrypting data. Only one of SSE Customer Key File, SSE Customer Key, or SSE KMS Key ID is needed.',
 		command: '--oos-sse-customer-key',
 	},
 	{
@@ -218,7 +217,7 @@ const oracleSettings = [
 		required: false,
 		default: '',
 		description:
-			'If using SSE-C, The optional header that specifies the base64-encoded SHA256 hash of the encryption key. This value is used to check the integrity of the encryption key. see Using Your Own Keys for Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm).',
+			'If using SSE-C, the base64-encoded SHA256 hash of the encryption key. Used to verify the integrity of the encryption key.',
 		command: '--oos-sse-customer-key-sha256',
 	},
 	{
@@ -228,7 +227,7 @@ const oracleSettings = [
 		required: false,
 		default: '',
 		description:
-			'if using your own master key in vault, this header specifies the OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of a master encryption key used to call the Key Management service to generate a data encryption key or to encrypt or decrypt a data encryption key. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.',
+			'If using your own master key in vault, the OCID of the master encryption key for the Key Management service. Only one of SSE Customer Key File, SSE Customer Key, or SSE KMS Key ID is needed.',
 		command: '--oos-sse-kms-key-id',
 	},
 	{
@@ -238,7 +237,7 @@ const oracleSettings = [
 		required: false,
 		default: '',
 		description:
-			'If using SSE-C, the optional header that specifies "AES256" as the encryption algorithm. Object Storage supports "AES256" as the encryption algorithm. For more information, see Using Your Own Keys for Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm).',
+			'If using SSE-C, the encryption algorithm. Object Storage supports "AES256".',
 		command: '--oos-sse-customer-algorithm',
 	},
 	{
