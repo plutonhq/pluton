@@ -19,10 +19,11 @@ const StorageItem = ({ storage, layout }: StorageItemProps) => {
    const [showEditModal, setShowEditModal] = useState(false);
    const [showDeleteModal, setShowDeleteModal] = useState(false);
    const [showVerifyModal, setShowVerifyModal] = useState(false);
-   const { id, name, type, plans = [], usedSize = 200, storageTypeName } = storage;
+   const { id, name, type, plans = [], usedSize = 200, storageTypeName, settings = {} } = storage;
    const deleteStorageMutation = useDeleteStorage();
    const verifyStorageMutation = useVerifyStorage();
    const isLocalStorage = id === 'local';
+   const description = settings.description as string;
 
    const removeStorage = () => {
       deleteStorageMutation.mutate(storage.id, {
@@ -50,7 +51,13 @@ const StorageItem = ({ storage, layout }: StorageItemProps) => {
 
             <div className={classes.content}>
                <div className={classes.title} onClick={() => !isLocalStorage && setShowEditModal(true)}>
-                  <h4>{name}</h4> {isLocalStorage && <Icon type="lock" size={14} />}
+                  <h4>{name}</h4>
+                  {description && (
+                     <i className={classes.planDescription} data-tooltip-id="appTooltip" data-tooltip-content={description} data-tooltip-place="top">
+                        <Icon type="note" size={13} />
+                     </i>
+                  )}
+                  {isLocalStorage && <Icon type="lock" size={14} />}
                </div>
                <div>{storageTypeName}</div>
             </div>

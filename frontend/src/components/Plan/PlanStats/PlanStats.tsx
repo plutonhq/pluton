@@ -21,7 +21,7 @@ const PlanStats = ({ plan, isSync, lastBackupItem }: PlanStatsProps) => {
       let html = '';
       if (sources && sources.includes && sources.includes.length > 0) {
          html += `<div><strong>Includes</strong></div>`;
-         html += sources.includes.map((p) => `<div>${p}</div>`).join('');
+         html += sources.includes.map((p) => `<div>${plan.device.name} -> ${p}</div>`).join('');
       }
       if (sources && sources.excludes && sources.excludes.length > 0) {
          html += `<div><strong>Excludes</strong></div>`;
