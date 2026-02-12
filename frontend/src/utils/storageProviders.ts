@@ -371,4 +371,39 @@ export const storageProviders = {
       name: 'The local filesystem',
       fields: [],
    },
+   drime: {
+      id: 'drime',
+      name: 'Drime',
+      fields: [{ label: 'API Access Token', value: 'access_token' }],
+   },
+   filelu: {
+      id: 'filelu',
+      name: 'FileLu',
+      fields: [{ label: 'Key', value: 'key' }],
+   },
+   filen: {
+      id: 'filen',
+      name: 'Filen',
+      fields: [
+         { label: 'Email', value: 'email' },
+         { label: 'Password', value: 'password' },
+         { label: 'API Key', value: 'apiKey' },
+      ],
+   },
+   internxt: {
+      id: 'internxt',
+      name: 'Internxt Drive',
+      fields: [
+         { label: 'Email', value: 'email' },
+         { label: 'Password', value: 'password' },
+      ],
+   },
+   shade: {
+      id: 'shade',
+      name: 'Shade',
+      fields: [
+         { label: 'Drive ID', value: 'drive_id' },
+         { label: 'API Key', value: 'api_key' },
+      ],
+   },
 };
