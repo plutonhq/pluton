@@ -72,6 +72,12 @@ import magaluSettings from './providers/magalu';
 import wasabiSettings from './providers/wasabi';
 import synologySettings from './providers/synologyc2';
 import localSettings from './providers/local';
+import drimeSettings from './providers/drime';
+import fileluSettings from './providers/filelu';
+import filenSettings from './providers/filen';
+import internxtSettings from './providers/internxt';
+import shadeSettings from './providers/shade';
+import type { ProviderSetting } from './providers/types';
 
 export interface ProviderConfig {
 	name: string;
@@ -89,17 +95,8 @@ export interface ProviderConfig {
 		About: boolean;
 		EmptyDir: boolean;
 	};
-	settings?: {
-		label: string;
-		value: string;
-		fieldType: string;
-		required: boolean;
-		default: string | boolean;
-		description: string;
-		authFieldType?: string;
-		options?: { label: string; value: string }[];
-	}[];
-	docs?: { label: string; value: string }[];
+	settings?: ProviderSetting[];
+	doc?: string;
 	setup: (credentials: Record<string, string>, type?: string) => string[];
 }
 
@@ -113,6 +110,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'b2': {
 		name: 'Backblaze B2',
+		doc: '/storages/connecting-backblaze-b2',
 		settings: b2Settings,
 		authTypes: ['client'],
 		setup: creds => ['account', creds.account, 'key', creds.key],
@@ -120,6 +118,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	's3': {
 		name: 'AWS S3',
+		doc: '/storages/connecting-aws-s3',
 		settings: s3Settings,
 		authTypes: ['client'],
 		setup: creds => [
@@ -134,6 +133,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'drive': {
 		name: 'Google Drive',
+		doc: '/storages/connecting-google-drive',
 		settings: googleDriveSettings,
 		authTypes: ['client', 'oauth'],
 		setup: (creds, type) =>
@@ -151,6 +151,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'onedrive': {
 		name: 'One Drive',
+		doc: '/storages/connecting-onedrive',
 		settings: onedriveSettings,
 		authTypes: ['client', 'oauth'],
 		setup: (creds, type) =>
@@ -161,6 +162,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'dropbox': {
 		name: 'DropBox',
+		doc: '/storages/connecting-dropbox',
 		settings: dropboxSettings,
 		authTypes: ['client', 'oauth'],
 		setup: (creds, type) =>
@@ -171,6 +173,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'box': {
 		name: 'Box.com',
+		doc: '/storages/connecting-box',
 		settings: boxSettings,
 		authTypes: ['client', 'oauth'],
 		setup: (creds, type) =>
@@ -181,6 +184,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'azureBlob': {
 		name: 'Azure Blob Storage',
+		doc: '/storages/connecting-azure-blob-storage',
 		settings: azureblobSettings,
 		authTypes: ['client', 'password'],
 		setup: creds => ['account', creds.account, 'key', `$(rclone obscure ${creds.key})`],
@@ -188,6 +192,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'gcs': {
 		name: 'Google Cloud Storage',
+		doc: '/storages/connecting-google-cloud-storage',
 		settings: gcsSettings,
 		authTypes: ['client', 'oauth'],
 		setup: (creds, type) =>
@@ -198,6 +203,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'mega': {
 		name: 'Mega',
+		doc: '/storages/connecting-mega',
 		authTypes: ['password'],
 		settings: megaSettings,
 		setup: creds => ['user', creds.user, 'pass', `$(rclone obscure ${creds.password})`],
@@ -205,6 +211,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'pcloud': {
 		name: 'pCloud',
+		doc: '/storages/connecting-pcloud',
 		authTypes: ['oauth', 'client'],
 		settings: pcloudSettings,
 		setup: (creds, type) =>
@@ -215,6 +222,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'swift': {
 		name: 'Oracle Swift',
+		doc: '/storages/connecting-openstack-swift',
 		settings: swiftSettings,
 		authTypes: ['client', 'password'],
 		setup: creds => [
@@ -231,6 +239,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'storj': {
 		name: 'Storj',
+		doc: '/storages/connecting-storj',
 		settings: storjSettings,
 		authTypes: ['client', 'password'],
 		setup: creds => ['access_grant', creds.accessGrant],
@@ -238,6 +247,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'seafile': {
 		name: 'SeaFile',
+		doc: '/storages/connecting-seafile',
 		settings: seafileSettings,
 		authTypes: ['password'],
 		setup: creds => [
@@ -254,6 +264,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'jottacloud': {
 		name: 'Jotta Cloud',
+		doc: '/storages/connecting-jottacloud',
 		authTypes: ['client', 'password'],
 		settings: jottacloudSettings,
 		setup: creds => ['user', creds.user, 'pass', `$(rclone obscure ${creds.password})`],
@@ -261,6 +272,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'yandex': {
 		name: 'Yandex Disk',
+		doc: '/storages/connecting-yandex-disk',
 		authTypes: ['client', 'oauth'],
 		settings: yandexSettings,
 		setup: (creds, type) =>
@@ -271,6 +283,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'zoho': {
 		name: 'Zoho WorkDrive',
+		doc: '/storages/connecting-zoho-workdrive',
 		authTypes: ['client', 'oauth'],
 		settings: zohoSettings,
 		setup: (creds, type) =>
@@ -288,6 +301,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'hidrive': {
 		name: 'HiDrive',
+		doc: '/storages/connecting-hidrive',
 		settings: hidriveSettings,
 		authTypes: ['client', 'oauth'],
 		setup: (creds, type) =>
@@ -305,6 +319,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'koofr': {
 		name: 'Koofr',
+		doc: '/storages/connecting-koofr',
 		settings: koofrSettings,
 		authTypes: ['client'],
 		setup: creds => [
@@ -319,6 +334,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'mailru': {
 		name: 'Mail.ru Cloud',
+		doc: '/storages/connecting-mail-ru-cloud',
 		authTypes: ['client', 'oauth'],
 		settings: mailruSettings,
 		setup: (creds, type) =>
@@ -329,6 +345,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'opendrive': {
 		name: 'Open Drive',
+		doc: '/storages/connecting-opendrive',
 		authTypes: ['password'],
 		settings: opendriveSettings,
 		setup: creds => ['username', creds.username, 'password', `$(rclone obscure ${creds.password})`],
@@ -336,6 +353,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'qingstor': {
 		name: 'QingStor',
+		doc: '/storages/connecting-qingstor',
 		authTypes: ['client'],
 		settings: qingstorSettings,
 		setup: creds => [
@@ -350,6 +368,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'premiumizeme': {
 		name: 'Premiumize.me',
+		doc: '/storages/connecting-premiumize-me',
 		settings: premiumizemeSettings,
 		authTypes: ['client', 'oauth'],
 		setup: (creds, type) =>
@@ -358,6 +377,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'putio': {
 		name: 'Put.io',
+		doc: '/storages/connecting-put-io',
 		settings: putioSettings,
 		authTypes: ['client', 'oauth'],
 		setup: (creds, type) =>
@@ -366,6 +386,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'sharefile': {
 		name: 'Citrix ShareFile',
+		doc: '/storages/connecting-citrix-sharefile',
 		authTypes: ['client', 'oauth'],
 		settings: citrixSharefileSettings,
 		setup: (creds, type) =>
@@ -383,6 +404,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'sugarsync': {
 		name: 'SugarSync',
+		doc: '/storages/connecting-sugarsync',
 		authTypes: ['client'],
 		settings: sugarsyncSettings,
 		setup: creds => [
@@ -411,6 +433,7 @@ export const providers: Record<string, ProviderConfig> = {
 
 	'1fichier': {
 		name: '1Fichier',
+		doc: '/storages/connecting-1fichier',
 		authTypes: ['client'],
 		settings: fichierSettings,
 		setup: creds => ['api_key', `$(rclone obscure ${creds.apiKey})`],
@@ -418,6 +441,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'netstorage': {
 		name: 'Akamai NetStorage',
+		doc: '/storages/connecting-akamai-netstorage',
 		authTypes: ['client'],
 		settings: netstorageSettings,
 		setup: creds => [
@@ -432,6 +456,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'files': {
 		name: 'Files.com', // authentication either using apiKey or username/password
+		doc: '/storages/connecting-files-com',
 		authTypes: ['client', 'password'],
 		settings: filesComSettings,
 		setup: creds => ['api_key', `$(rclone obscure ${creds.apiKey})`],
@@ -439,6 +464,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'gofile': {
 		name: 'GoFile',
+		doc: '/storages/connecting-gofile',
 		authTypes: ['client'],
 		settings: gofileSettings,
 		setup: creds => ['token', `$(rclone obscure ${creds.access_token})`],
@@ -446,6 +472,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'gphotos': {
 		name: 'Google Photos',
+		doc: '/storages/connecting-google-photos',
 		authTypes: ['client', 'password'],
 		settings: gphotosSettings,
 		setup: creds => [
@@ -459,6 +486,7 @@ export const providers: Record<string, ProviderConfig> = {
 
 	'internetarchive': {
 		name: 'Internet Archive',
+		doc: '/storages/connecting-internet-archive',
 		authTypes: ['client'],
 		settings: internetarchiveSettings,
 		setup: creds => [
@@ -471,6 +499,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'linkbox': {
 		name: 'Linkbox',
+		doc: '/storages/connecting-linkbox',
 		authTypes: ['client'],
 		settings: linkboxSettings,
 		setup: creds => ['api_key', `$(rclone obscure ${creds.apiKey})`],
@@ -478,6 +507,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'oracle': {
 		name: 'Oracle Object Storage',
+		doc: '/storages/connecting-oracle-object-storage',
 		authTypes: ['client'],
 		settings: oracleSettings,
 		setup: creds => [
@@ -496,6 +526,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'pikpak': {
 		name: 'PikPak',
+		doc: '/storages/connecting-pikpak',
 		authTypes: ['password'],
 		settings: pikpakSettings,
 		setup: creds => ['username', creds.username, 'password', `$(rclone obscure ${creds.password})`],
@@ -503,6 +534,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'pixeldrain': {
 		name: 'Pixeldrain',
+		doc: '/storages/connecting-pixeldrain',
 		authTypes: ['client'],
 		settings: pixeldrainSettings,
 		setup: creds => ['api_key', `$(rclone obscure ${creds.apiKey})`],
@@ -510,6 +542,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'proton': {
 		name: 'Proton Drive',
+		doc: '/storages/connecting-proton-drive',
 		authTypes: ['password'],
 		settings: protondriveSettings,
 		setup: creds => ['username', creds.username, 'password', `$(rclone obscure ${creds.password})`],
@@ -517,6 +550,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'quatrix': {
 		name: 'Quatrix by Maytech',
+		doc: '/storages/connecting-quatrix',
 		authTypes: ['client'],
 		settings: quatrixSettings,
 		setup: creds => [
@@ -531,6 +565,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'sia': {
 		name: 'Sia',
+		doc: '/storages/connecting-sia',
 		authTypes: ['client'],
 		settings: siaSettings,
 		setup: creds => ['api_url', creds.apiUrl, 'password', `$(rclone obscure ${creds.password})`],
@@ -538,6 +573,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'ulozto': {
 		name: 'Uloz.to',
+		doc: '/storages/connecting-uloz-to',
 		authTypes: ['password'],
 		settings: uloztoSettings,
 		setup: creds => ['username', creds.username, 'password', `$(rclone obscure ${creds.password})`],
@@ -545,6 +581,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'hdfs': {
 		name: 'HDFS',
+		doc: '/storages/connecting-hdfs',
 		authTypes: ['password'],
 		settings: hdfsSettings,
 		setup: creds => ['namenode', creds.namenode, 'username', creds.username],
@@ -552,6 +589,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'smb': {
 		name: 'SMB',
+		doc: '/storages/connecting-smb',
 		authTypes: ['password'],
 		settings: smbSettings,
 		setup: creds => [
@@ -566,6 +604,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'sftp': {
 		name: 'SFTP',
+		doc: '/storages/connecting-sftp',
 		authTypes: ['password'],
 		settings: sftpSettings,
 		setup: creds => [
@@ -580,6 +619,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'ftp': {
 		name: 'FTP',
+		doc: '/storages/connecting-ftp',
 		authTypes: ['password'],
 		settings: ftpSettings,
 		setup: creds => [
@@ -594,6 +634,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'webdav': {
 		name: 'WebDav',
+		doc: '/storages/connecting-webdav',
 		authTypes: ['password'],
 		settings: webdavSettings,
 		setup: creds => [
@@ -608,6 +649,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'http': {
 		name: 'HTTP (Read Only)',
+		doc: '/storages/connecting-http',
 		authTypes: ['noauth'],
 		settings: httpSettings,
 		setup: creds => ['url', creds.url],
@@ -616,6 +658,7 @@ export const providers: Record<string, ProviderConfig> = {
 	// S3 Compatible API
 	'r2': {
 		name: 'Cloudflare R2',
+		doc: '/storages/connecting-cloudflare-r2',
 		authTypes: ['client'],
 		settings: r2Settings,
 		features: providerFeatures['s3'],
@@ -634,6 +677,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'oss': {
 		name: 'Alibaba Cloud Object Storage System (OSS)',
+		doc: '/storages/connecting-alibaba-cloud-oss',
 		authTypes: ['client'],
 		settings: ossSettings,
 		features: providerFeatures['s3'],
@@ -654,6 +698,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'ceph': {
 		name: 'Ceph',
+		doc: '/storages/connecting-ceph',
 		authTypes: ['client'],
 		settings: cephSettings,
 		features: providerFeatures['s3'],
@@ -672,6 +717,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'dreamobjects': {
 		name: 'DreamObjects',
+		doc: '/storages/connecting-dreamhost',
 		authTypes: ['client'],
 		settings: dreamobjectsSettings,
 		features: providerFeatures['s3'],
@@ -690,6 +736,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'spaces': {
 		name: 'DigitalOcean Spaces',
+		doc: '/storages/connecting-digitalocean-spaces',
 		authTypes: ['client'],
 		settings: spacesSettings,
 		features: providerFeatures['s3'],
@@ -706,6 +753,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'obs': {
 		name: 'Huawei OBS',
+		doc: '/storages/connecting-huawei-obs',
 		authTypes: ['client'],
 		settings: obsSettings,
 		features: providerFeatures['s3'],
@@ -726,6 +774,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'ibmcos': {
 		name: 'IBM Cloud Object Storage',
+		doc: '/storages/connecting-ibm-cos-s3',
 		authTypes: ['client'],
 		settings: ibmcosSettings,
 		features: providerFeatures['s3'],
@@ -747,6 +796,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'idrive': {
 		name: 'IDrive e2',
+		doc: '/storages/connecting-idrive-e2',
 		authTypes: ['client'],
 		settings: idriveSettings,
 		features: providerFeatures['s3'],
@@ -763,6 +813,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'ionos': {
 		name: 'IONOS Cloud',
+		doc: '/storages/connecting-ionos-cloud',
 		authTypes: ['client'],
 		settings: ionosSettings,
 		features: providerFeatures['s3'],
@@ -779,6 +830,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'minio': {
 		name: 'Minio',
+		doc: '/storages/connecting-minio',
 		authTypes: ['client'],
 		settings: minioSettings,
 		features: providerFeatures['s3'],
@@ -797,6 +849,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'outscale': {
 		name: 'Outscale Object Storage',
+		doc: '/storages/connecting-outscale',
 		authTypes: ['client'],
 		settings: outscaleSettings,
 		features: providerFeatures['s3'],
@@ -818,12 +871,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: qiniuSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'EndPoints & Regions',
-				value: 'https://developer.qiniu.com/kodo/4088/s3-access-domainname',
-			},
-		],
+		doc: '/storages/connecting-qiniu-kodo',
 		setup: creds => [
 			'provider',
 			'Qiniu',
@@ -848,12 +896,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: rackcorpSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'RackCorp S3 Storage Documentation',
-				value: 'https://wiki.rackcorp.com/books/help-and-support-en/page/s3-storage-settings',
-			},
-		],
+		doc: '/storages/connecting-rackcorp',
 		setup: creds => [
 			'provider',
 			'RackCorp',
@@ -874,9 +917,6 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: rcloneSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{ label: 'Rclone S3 Documentation', value: 'https://rclone.org/commands/rclone_serve_s3' },
-		],
 		setup: creds => [
 			'provider',
 			'Rclone',
@@ -896,12 +936,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: scalewaySettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'Scaleway Object Storage Quickstart',
-				value: 'https://www.scaleway.com/en/docs/object-storage/quickstart/',
-			},
-		],
+		doc: '/storages/connecting-scaleway',
 		setup: creds => [
 			'provider',
 			'Scaleway',
@@ -932,12 +967,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: lyvecloudSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'Seagate LyveCloud Quickstart',
-				value: 'https://help.lyvecloud.seagate.com/en/quick-start-guide.html',
-			},
-		],
+		doc: '/storages/connecting-seagate-lyve-cloud',
 		setup: creds => [
 			'provider',
 			'LyveCloud',
@@ -954,12 +984,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: seaweedfsSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'SeaweedFS Documentation',
-				value: 'https://seaweedfs.com/docs/admin/setup/',
-			},
-		],
+		doc: '/storages/connecting-seaweedfs',
 		setup: creds => [
 			'provider',
 			'SeaweedFS',
@@ -976,12 +1001,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: selectelSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'Selectel S3 Documentation',
-				value: 'https://docs.selectel.ru/en/api/object-storage-s3/#section/Getting-started',
-			},
-		],
+		doc: '/storages/connecting-selectel',
 		setup: creds => [
 			'provider',
 			'Selectel',
@@ -1002,17 +1022,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: wasabiSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'Wasabi Quickstart',
-				value: 'https://docs.wasabi.com/v1/docs/getting-started',
-			},
-			{
-				label: 'Wasabi Regions & Endpoints',
-				value:
-					'https://docs.wasabi.com/v1/docs/what-are-the-service-urls-for-wasabi-s-different-storage-regions',
-			},
-		],
+		doc: '/storages/connecting-wasabi',
 		setup: creds => [
 			'provider',
 			'Wasabi',
@@ -1028,6 +1038,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	'leviia': {
 		name: 'Leviia',
+		doc: '/storages/connecting-leviia',
 		authTypes: ['client'],
 		settings: leviiaSettings,
 		features: providerFeatures['s3'],
@@ -1049,12 +1060,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: liaraSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'Liara Storage Documentation',
-				value: 'https://docs.liara.ir/object-storage/about/',
-			},
-		],
+		doc: '/storages/connecting-liara',
 		setup: creds => [
 			'provider',
 			'Liara',
@@ -1071,13 +1077,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: linodeSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'Linode Object Storage Quickstart',
-				value:
-					'https://techdocs.akamai.com/cloud-computing/docs/getting-started-with-object-storage',
-			},
-		],
+		doc: '/storages/connecting-linode',
 		setup: creds => [
 			'provider',
 			'Linode',
@@ -1094,12 +1094,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: magaluSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'Magalu Cloud Storage Quickstart',
-				value: 'https://docs.magalu.cloud/docs/storage/object-storage/quickstart',
-			},
-		],
+		doc: '/storages/connecting-magalu',
 		setup: creds => [
 			'provider',
 			'Magalu',
@@ -1116,12 +1111,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: arvanSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'ArvanCloud Storage Documentation',
-				value: 'https://docs.arvancloud.ir/en/object-storage/dashboard',
-			},
-		],
+		doc: '/storages/connecting-arvan-cloud',
 		setup: creds => [
 			'provider',
 			'ArvanCloud',
@@ -1140,16 +1130,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: tencentSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'Tencent Cloud Object Storage Quickstart',
-				value: 'https://www.tencentcloud.com/document/product/436/32955',
-			},
-			{
-				label: 'Tencent Cloud Object Storage Endpoints',
-				value: 'https://www.tencentcloud.com/document/product/436/6224',
-			},
-		],
+		doc: '/storages/connecting-tencent-cos',
 		setup: creds => [
 			'provider',
 			'TencentCOS',
@@ -1166,12 +1147,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: petaboxSettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'Petabox Documentation',
-				value: 'https://docs.petabox.io/',
-			},
-		],
+		doc: '/storages/connecting-petabox',
 		setup: creds => [
 			'provider',
 			'Petabox',
@@ -1190,16 +1166,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: synologySettings,
 		features: providerFeatures['s3'],
-		docs: [
-			{
-				label: 'Synology C2 Object Storage Quick Start',
-				value: 'https://kb.synology.com/vi-vn/C2/tutorial/Quick_Start_C2_Object_Storage',
-			},
-			{
-				label: 'Retrieving Synology C2 Access Keys',
-				value: 'https://kb.synology.com/en-ca/C2/tutorial/C2_Object_Storage_Access_Key_Management',
-			},
-		],
+		doc: '/storages/connecting-synology',
 		setup: creds => [
 			'provider',
 			'ArvanCloud',
@@ -1214,5 +1181,52 @@ export const providers: Record<string, ProviderConfig> = {
 			'no_check_bucket',
 			'true',
 		],
+	},
+	'drime': {
+		name: 'Drime',
+		doc: '/storages/connecting-drime',
+		authTypes: ['client'],
+		settings: drimeSettings,
+		setup: creds => ['access_token', creds.access_token],
+		features: providerFeatures['drime'],
+	},
+	'filelu': {
+		name: 'FileLu',
+		doc: '/storages/connecting-filelu',
+		authTypes: ['client'],
+		settings: fileluSettings,
+		setup: creds => ['key', creds.key],
+		features: providerFeatures['filelu'],
+	},
+	'filen': {
+		name: 'Filen',
+		doc: '/storages/connecting-filen',
+		authTypes: ['password'],
+		settings: filenSettings,
+		setup: creds => [
+			'email',
+			creds.email,
+			'password',
+			`$(rclone obscure ${creds.password})`,
+			'api_key',
+			`$(rclone obscure ${creds.apiKey})`,
+		],
+		features: providerFeatures['filen'],
+	},
+	'internxt': {
+		name: 'Internxt Drive',
+		doc: '/storages/connecting-internxt',
+		authTypes: ['password'],
+		settings: internxtSettings,
+		setup: creds => ['email', creds.email, 'pass', `$(rclone obscure ${creds.password})`],
+		features: providerFeatures['internxt'],
+	},
+	'shade': {
+		name: 'Shade',
+		doc: '/storages/connecting-shade',
+		authTypes: ['client'],
+		settings: shadeSettings,
+		setup: creds => ['drive_id', creds.drive_id, 'api_key', creds.api_key],
+		features: providerFeatures['shade'],
 	},
 };

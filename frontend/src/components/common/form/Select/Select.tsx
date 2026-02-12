@@ -86,7 +86,7 @@ const Select = ({
                   {search && (
                      <div className={classes.search}>
                         <Icon type="search" size={15} />
-                        <input placeholder="Search Providers..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+                        <input placeholder="Search..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
                         {searchText && (
                            <button onClick={() => setSearchText('')}>
                               <Icon type="close" size={15} />

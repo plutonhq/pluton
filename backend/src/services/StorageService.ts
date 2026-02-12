@@ -76,6 +76,7 @@ export class StorageService {
 					name: providers[key].name,
 					authTypes: providers[key].authTypes,
 					settings: providers[key].settings,
+					doc: providers[key].doc,
 				},
 			}),
 			{}

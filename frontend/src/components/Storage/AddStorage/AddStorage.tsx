@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import classes from './AddStorage.module.scss';
 import Icon from '../../common/Icon/Icon';
-import Select from '../../common/form/Select/Select';
 import { useAddStorage, useGetAvailableStorages } from '../../../services/storage';
 import SidePanel from '../../common/SidePanel/SidePanel';
 import TagsInput from '../../common/form/TagsInput/TagsInput';
@@ -11,6 +10,7 @@ import StorageSettings from '../StorageSettings/StorageSettings';
 // import { useGetDevice } from '../../../services/devices';
 import { shouldDisplayStorageField } from '../../../utils/helpers';
 import StorageAuthSettings from '../StorageAuthSettings/StorageAuthSettings';
+import StorageProviderSelect from '../../common/form/StorageProviderSelect/StorageProviderSelect';
 
 type AddStorageProps = {
    close: () => void;
@@ -32,11 +32,14 @@ const AddStorage = ({ close }: AddStorageProps) => {
    //    deviceData?.result?.os && deviceData?.result?.platform ? isServerEdition(deviceData.result.os, deviceData.result.platform) : false;
    const storageProviders = data?.result || {};
 
+   console.log('storageProviders :', storageProviders);
+
    const providersOptions = useMemo(() => {
       return Object.keys(storageProviders)
          .map((k) => ({
             label: storageProviders[k as keyof typeof storageProviders].name,
             value: k,
+            doc: storageProviders[k as keyof typeof storageProviders].doc,
             image: <img src={`providers/${k}.png`} />,
          }))
          .sort((a, b) => a.label.localeCompare(b.label));
@@ -213,9 +216,10 @@ const AddStorage = ({ close }: AddStorageProps) => {
                <label className={classes.label}>Storage Type*</label>
                {inputError['storageType'] && <span className={classes.fieldErrorLabel}>{inputError['storageType']}</span>}
                <div className={classes.selectField}>
-                  <Select
-                     options={[{ label: 'Select Storage Type', value: '' }, ...providersOptions]}
+                  <StorageProviderSelect
+                     options={[...providersOptions]}
                      fieldValue={storageType}
+                     full={true}
                      onUpdate={(val: string) => {
                         setStorageCredentials({});
                         setStorageSettings({});
@@ -230,9 +234,6 @@ const AddStorage = ({ close }: AddStorageProps) => {
                         );
                         setStorageCredentials(newCredentials);
                      }}
-                     size="large"
-                     full={true}
-                     search={true}
                      error={inputError['storageType']}
                   />
                </div>
