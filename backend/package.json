@@ -1,7 +1,7 @@
 {
 	"name": "@plutonhq/core-backend",
 	"description": "Pluton Core Backend Library",
-	"version": "0.1.4",
+	"version": "0.1.6",
 	"author": "plutonhq",
 	"license": "Apache-2.0",
 	"publishConfig": {
@@ -15,7 +15,6 @@
 	],
 	"dependencies": {
 		"@napi-rs/keyring": "^1.2.0",
-		"aedes": "^0.51.3",
 		"better-sqlite3": "12.2.0",
 		"cookies": "^0.9.1",
 		"cors": "^2.8.5",
@@ -27,7 +26,6 @@
 		"express": "^4.21.2",
 		"express-rate-limit": "^7.5.1",
 		"jsonwebtoken": "^9.0.2",
-		"mqtt": "^5.10.3",
 		"nanoid": "^5.0.9",
 		"node-ssh": "^13.2.0",
 		"nodemailer": "7.0.5",
