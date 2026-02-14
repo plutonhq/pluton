@@ -40,8 +40,15 @@ Pluton is a self-hosted backup management platform that simplifies automated, in
 - &nbsp; **Real-time Progress Tracking**: Track progress of your backups real-time.
 - &nbsp; **Extensive Logging**: View app and backup logs right from the UI for better debugging.
 - &nbsp; **Run Scripts before/after**: Ability to run scripts before and after running backups.
+-
 
-## Installation
+# Installation
+
+## Desktop Installation
+
+Pluton can be installed on Windows and Linux Desktop variants. You can download the installers from the [Website](https://usepluton.com/download) page.
+
+## Docker Installation
 
 To run Pluton, make sure you have Docker and Docker Compose installed on your machine. Then, use the provided `docker-compose.yml` file to run the application.
 
@@ -115,6 +122,12 @@ And finally, run:
 ```
 docker compose up -d
 ```
+
+## Installing on Linux Servers
+
+Pluton can be installed on headless Linux servers. Follow the installation [instruction](https://docs.usepluton.com/docs/getting-started/install-pluton-linux-server/) to get started.
+
+---
 
 ## Acknowledgements
 
