@@ -4,7 +4,7 @@
 # Build arguments (can be overridden at build time)
 ARG APP_VERSION=0.0.1
 ARG RESTIC_VERSION=0.18.1
-ARG RCLONE_VERSION=1.71.2
+ARG RCLONE_VERSION=1.73.0
 
 # Stage 1: Dependencies
 FROM node:24-alpine AS deps

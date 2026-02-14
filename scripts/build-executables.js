@@ -32,7 +32,7 @@ console.log(`📛 Output name: ${OUTPUT_NAME}\n`);
 // Version configuration - Update these to use latest versions
 const BETTER_SQLITE3_VERSION = "12.4.4"; // Latest: Check https://github.com/WiseLibs/better-sqlite3/releases
 const RESTIC_VERSION = "0.18.1"; // Latest: Check https://github.com/restic/restic/releases
-const RCLONE_VERSION = "1.71.2"; // Latest: Check https://rclone.org/downloads/
+const RCLONE_VERSION = "1.73.0"; // Latest: Check https://rclone.org/downloads/
 const KEYRING_VERSION = "1.2.0"; // Latest: Check https://www.npmjs.com/package/@napi-rs/keyring
 
 // Target configurations
@@ -191,7 +191,7 @@ async function installDependencies() {
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log(
     "📦 Step 1: Install Dependencies",
-    process.env.USE_LOCAL_CORE ? "(Skipped)" : ""
+    process.env.USE_LOCAL_CORE ? "(Skipped)" : "",
   );
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
   // FOR PRO: If USE_LOCAL_CORE is set, skip installing dependencies
@@ -212,7 +212,7 @@ async function buildFrontend() {
 
   exec("pnpm run build", {
     cwd: frontendDir,
-    env: { ...process.env, USE_PUBLISHED_CORE_FRONTEND: 'true' },
+    env: { ...process.env, USE_PUBLISHED_CORE_FRONTEND: "true" },
   });
 
   console.log("✅ Frontend build completed");
@@ -298,7 +298,7 @@ async function setupBetterSqlite3() {
       platformAssetsDir,
       "build",
       "Release",
-      "better_sqlite3.node"
+      "better_sqlite3.node",
     );
 
     if (!(await fileExists(nodeFilePath))) {
@@ -309,7 +309,7 @@ async function setupBetterSqlite3() {
 
   if (allSqliteBinariesExist) {
     console.log(
-      "✅ All better-sqlite3 binaries already exist, skipping download\n"
+      "✅ All better-sqlite3 binaries already exist, skipping download\n",
     );
     console.log("💡 To force re-download, delete the dist/pkg-assets folder");
     return;
@@ -323,13 +323,13 @@ async function setupBetterSqlite3() {
       platformAssetsDir,
       "build",
       "Release",
-      "better_sqlite3.node"
+      "better_sqlite3.node",
     );
 
     // Skip if already exists (individual platform caching)
     if (await fileExists(nodeFilePath)) {
       console.log(
-        `  ✓ better-sqlite3 already exists for ${platform}, skipping download`
+        `  ✓ better-sqlite3 already exists for ${platform}, skipping download`,
       );
       continue;
     }
@@ -352,7 +352,7 @@ async function setupBetterSqlite3() {
         execSync(tarCommand, { stdio: "pipe" });
       } catch (tarError) {
         console.warn(
-          `  ⚠️  tar command failed, trying alternative extraction...`
+          `  ⚠️  tar command failed, trying alternative extraction...`,
         );
         // Fallback: Just note the issue, manual extraction may be needed
         console.warn(`  Download available at: ${tempFile}`);
@@ -364,10 +364,10 @@ async function setupBetterSqlite3() {
       console.log(`  ✅ better-sqlite3 binary ready for ${platform}`);
     } catch (error) {
       console.warn(
-        `  ⚠️  Failed to download better-sqlite3 for ${platform}: ${error.message}`
+        `  ⚠️  Failed to download better-sqlite3 for ${platform}: ${error.message}`,
       );
       console.warn(
-        `  You may need to build it manually or copy from node_modules`
+        `  You may need to build it manually or copy from node_modules`,
       );
     }
   }
@@ -393,7 +393,7 @@ async function setupKeyring() {
       pkgAssetsDir,
       platform,
       "keyring",
-      config.keyringNodeFile
+      config.keyringNodeFile,
     );
     if (!(await fileExists(keyringNodePath))) {
       allKeyringBinariesExist = false;
@@ -404,7 +404,7 @@ async function setupKeyring() {
   if (allKeyringBinariesExist) {
     console.log("✅ All keyring binaries already exist, skipping download\n");
     console.log(
-      "💡 To force re-download, delete the dist/pkg-assets/*/keyring folders"
+      "💡 To force re-download, delete the dist/pkg-assets/*/keyring folders",
     );
     return;
   }
@@ -418,7 +418,7 @@ async function setupKeyring() {
     // Skip if already exists (individual platform caching)
     if (await fileExists(keyringNodePath)) {
       console.log(
-        `  ✓ keyring already exists for ${platform}, skipping download`
+        `  ✓ keyring already exists for ${platform}, skipping download`,
       );
       continue;
     }
@@ -432,7 +432,7 @@ async function setupKeyring() {
 
       // Download and extract the npm package
       console.log(
-        `  ⬇️  Downloading ${config.keyringPackage}@${KEYRING_VERSION}...`
+        `  ⬇️  Downloading ${config.keyringPackage}@${KEYRING_VERSION}...`,
       );
       execSync(`npm pack ${config.keyringPackage}@${KEYRING_VERSION}`, {
         cwd: tempDir,
@@ -471,7 +471,7 @@ async function setupKeyring() {
       await rm(tempDir, { recursive: true, force: true });
     } catch (error) {
       console.warn(
-        `  ⚠️  Failed to download keyring for ${platform}: ${error.message}`
+        `  ⚠️  Failed to download keyring for ${platform}: ${error.message}`,
       );
       console.warn(`  Keyring functionality may not work on this platform`);
     }
@@ -594,10 +594,10 @@ async function downloadBinaries() {
         console.log(`  ✅ restic downloaded`);
       } catch (error) {
         console.error(
-          `  ❌ Failed to download restic for ${platform}: ${error.message}`
+          `  ❌ Failed to download restic for ${platform}: ${error.message}`,
         );
         throw new Error(
-          `Failed to download restic for ${platform}: ${error.message}`
+          `Failed to download restic for ${platform}: ${error.message}`,
         );
       }
     }
@@ -615,7 +615,7 @@ async function downloadBinaries() {
         const extractDir = join(binariesDir, `rclone-${platform}-extract`);
         await compressing.zip.uncompress(rcloneTemp, extractDir);
 
-        // Find the rclone executable (usually in a versioned folder like rclone-v1.71.2-linux-amd64/)
+        // Find the rclone executable (usually in a versioned folder like rclone-v1.73.0-linux-amd64/)
         const files = await readdir(extractDir, { recursive: true });
         let found = false;
         for (const file of files) {
@@ -654,10 +654,10 @@ async function downloadBinaries() {
         console.log(`  ✅ rclone downloaded`);
       } catch (error) {
         console.error(
-          `  ❌ Failed to download rclone for ${platform}: ${error.message}`
+          `  ❌ Failed to download rclone for ${platform}: ${error.message}`,
         );
         throw new Error(
-          `Failed to download rclone for ${platform}: ${error.message}`
+          `Failed to download rclone for ${platform}: ${error.message}`,
         );
       }
     }
@@ -724,7 +724,7 @@ async function createDistributionPackages() {
     const packageBinariesDir = join(
       packageDir,
       "binaries",
-      config.binaryPlatform
+      config.binaryPlatform,
     );
 
     // Create package directory structure
@@ -734,7 +734,7 @@ async function createDistributionPackages() {
     // pkg might strip the node version from the filename or add .exe on Windows
     let executableSource = join(
       pkgBuildsDir,
-      `${OUTPUT_NAME}-${config.pkgTarget}`
+      `${OUTPUT_NAME}-${config.pkgTarget}`,
     );
 
     // Check for variations if the exact target name doesn't exist
@@ -758,7 +758,7 @@ async function createDistributionPackages() {
           const osName = platform.split("-")[0];
           const osSimplifiedSource = join(
             pkgBuildsDir,
-            `${OUTPUT_NAME}-${osName}`
+            `${OUTPUT_NAME}-${osName}`,
           );
 
           if (await fileExists(osSimplifiedSource)) {
@@ -771,7 +771,7 @@ async function createDistributionPackages() {
             const arch = platform.split("-")[1]; // x64 or arm64
             const archSimplifiedSource = join(
               pkgBuildsDir,
-              `${OUTPUT_NAME}-${arch}`
+              `${OUTPUT_NAME}-${arch}`,
             );
 
             if (await fileExists(archSimplifiedSource)) {
@@ -807,7 +807,7 @@ async function createDistributionPackages() {
           await chmod(executableDest, 0o755);
         } catch (error) {
           console.warn(
-            `  ⚠️  Could not set executable permissions: ${error.message}`
+            `  ⚠️  Could not set executable permissions: ${error.message}`,
           );
         }
       }
@@ -828,7 +828,7 @@ async function createDistributionPackages() {
         "node_modules",
         "better-sqlite3",
         "build",
-        "Release"
+        "Release",
       );
       await mkdir(sqliteDestDir, { recursive: true });
 
@@ -837,7 +837,7 @@ async function createDistributionPackages() {
         sqliteAssetsDir,
         "build",
         "Release",
-        "better_sqlite3.node"
+        "better_sqlite3.node",
       );
       const destNodeFile = join(sqliteDestDir, "better_sqlite3.node");
 
@@ -851,7 +851,7 @@ async function createDistributionPackages() {
           await copyFile(altSourceNodeFile, destNodeFile);
         } else {
           console.warn(
-            `  ⚠️  better_sqlite3.node not found in expected locations`
+            `  ⚠️  better_sqlite3.node not found in expected locations`,
           );
         }
       }
@@ -869,7 +869,7 @@ async function createDistributionPackages() {
         packageDir,
         "node_modules",
         "@napi-rs",
-        config.keyringPackage.replace("@napi-rs/", "")
+        config.keyringPackage.replace("@napi-rs/", ""),
       );
       await mkdir(keyringDestDir, { recursive: true });
 
@@ -903,7 +903,7 @@ async function createDistributionPackages() {
       console.log(`  ✓ Copied binaries for ${config.binaryPlatform}`);
     } else {
       console.warn(
-        `  ⚠️  Binaries not found for ${config.binaryPlatform} at ${sourceBinariesDir}`
+        `  ⚠️  Binaries not found for ${config.binaryPlatform} at ${sourceBinariesDir}`,
       );
     }
 
@@ -951,7 +951,7 @@ async function createLinuxTarballs() {
 
   // Define Linux targets to compress
   const linuxTargets = Object.keys(targets).filter((t) =>
-    t.startsWith("linux")
+    t.startsWith("linux"),
   );
 
   if (linuxTargets.length === 0) {
@@ -994,7 +994,7 @@ async function createLinuxTarballs() {
       console.log(`  ✅ Created ${tarballName} (${sizeMB} MB)`);
     } catch (error) {
       console.error(
-        `  ❌ Failed to create tarball for ${platform}: ${error.message}`
+        `  ❌ Failed to create tarball for ${platform}: ${error.message}`,
       );
       throw error;
     }
@@ -1025,35 +1025,35 @@ async function main() {
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
     console.log(
-      "\n╔═══════════════════════════════════════════════════════════╗"
+      "\n╔═══════════════════════════════════════════════════════════╗",
     );
     console.log(
-      "║   ✅ Build Completed Successfully!                        ║"
+      "║   ✅ Build Completed Successfully!                        ║",
     );
     console.log(
-      "╚═══════════════════════════════════════════════════════════╝"
+      "╚═══════════════════════════════════════════════════════════╝",
     );
     console.log(`\n⏱️  Total build time: ${duration}s`);
     console.log(
-      `📁 Distribution packages: ${join(rootDir, "dist", "executables")}\n`
+      `📁 Distribution packages: ${join(rootDir, "dist", "executables")}\n`,
     );
 
     console.log("📋 Next steps:");
     console.log("   1. Test executables on target platforms");
     console.log(
-      "   2. Create installers (Windows Inno Setup, Linux/macOS scripts)"
+      "   2. Create installers (Windows Inno Setup, Linux/macOS scripts)",
     );
     console.log("   3. Sign executables (optional but recommended)");
     console.log("   4. Create release packages/archives\n");
   } catch (error) {
     console.error(
-      "\n╔═══════════════════════════════════════════════════════════╗"
+      "\n╔═══════════════════════════════════════════════════════════╗",
     );
     console.error(
-      "║   ❌ Build Failed!                                        ║"
+      "║   ❌ Build Failed!                                        ║",
     );
     console.error(
-      "╚═══════════════════════════════════════════════════════════╝\n"
+      "╚═══════════════════════════════════════════════════════════╝\n",
     );
     console.error(error);
     process.exit(1);
