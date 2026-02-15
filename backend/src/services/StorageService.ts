@@ -175,7 +175,7 @@ export class StorageService {
 
 				//decrypt the existing credentials
 				const existingCreds = existingStorage?.credentials;
-				let decryptedOldCred: Record<string, string> = {};
+				const decryptedOldCred: Record<string, string> = {};
 				try {
 					if (existingCreds) {
 						const eCreds = existingCreds as Record<string, string>;
@@ -189,7 +189,7 @@ export class StorageService {
 				}
 
 				// If old creds and new creds are same, no need to send them
-				let credsDifferent =
+				const credsDifferent =
 					JSON.stringify(decryptedOldCred) !== JSON.stringify(credentials) ? true : false;
 
 				const deviceUpdatePromises = devicesWithStorage.map(async sourceId => {

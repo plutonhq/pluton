@@ -48,7 +48,7 @@ export class SettingsStore {
 	async update(id: number, updates: AppSettings): Promise<Settings | null> {
 		if (updates?.integration) {
 			const processedSettings = await this.encryptIntegrationSecrets(updates);
-			if (processedSettings?.integration) {
+			if (processedSettings && processedSettings?.integration) {
 				updates.integration = processedSettings.integration;
 			}
 			updates.integration = this.setIntegrationConnectedStatus(updates.integration);
@@ -73,13 +73,11 @@ export class SettingsStore {
 		// Decrypt Secret Fields
 		if (theSettings?.integration) {
 			try {
-				theSettings.integration = this.resolver.decryptSecrets(
-					theSettings.integration
-				);
+				theSettings.integration = this.resolver.decryptSecrets(theSettings.integration);
 				return theSettings;
 			} catch (error: any) {
 				console.log('Error decrypting password:', error);
-				null;
+				return null;
 			}
 		}
 	}
@@ -89,13 +87,11 @@ export class SettingsStore {
 		// Encrypt Secret Fields
 		if (theSettings?.integration) {
 			try {
-				theSettings.integration = this.resolver.encryptSecrets(
-					theSettings.integration
-				);
+				theSettings.integration = this.resolver.encryptSecrets(theSettings.integration);
 				return theSettings;
 			} catch (error: any) {
 				console.log('Error encrypting password:', error);
-				false;
+				return false;
 			}
 		}
 	}

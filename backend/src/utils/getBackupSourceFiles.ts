@@ -7,7 +7,7 @@ async function getBackupSourceFiles(
 	sourcePaths: string[],
 	rawPath: boolean = false
 ): Promise<{ success: boolean; result: SnapShotFile[] | string }> {
-	let filesList: SnapShotFile[] = [];
+	const filesList: SnapShotFile[] = [];
 	let errorMessage = '';
 	let success = true;
 

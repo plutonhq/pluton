@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { getInstallType } from '../utils/installHelpers';
 
 // Read package.json once at startup
-let appVersion: string = process.env.APP_VERSION || 'dev';
+const appVersion: string = process.env.APP_VERSION || 'dev';
 
 /**
  * Middleware that adds the application version from package.json to response headers

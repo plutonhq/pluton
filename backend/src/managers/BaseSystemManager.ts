@@ -499,7 +499,7 @@ export class BaseSystemManager {
 			}
 
 			// ...existing code for handling specific paths...
-			let formattedPath = requestedPath;
+			const formattedPath = requestedPath;
 			const normalizedPath = formattedPath.match(/^[A-Za-z]:$/)
 				? formattedPath + '\\'
 				: formattedPath;

@@ -24,8 +24,7 @@ export class BackupController {
 
 			// Pipe the stream directly to response
 			fileStream.pipe(res);
-
-			res;
+			return;
 		} catch (error: any) {
 			res.status(500).json({
 				success: false,

@@ -40,7 +40,7 @@ export abstract class BaseNotification {
 			className?: string;
 		}
 	): string {
-		let emailTemplate = this.loadEmailTemplate();
+		const emailTemplate = this.loadEmailTemplate();
 		if (!emailTemplate) return content;
 
 		// Generate Current Date

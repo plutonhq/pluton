@@ -17,7 +17,7 @@ export const parseRcloneFilesList = (
 	raw: boolean = false
 ) => {
 	let latestFileDate = new Date().toISOString();
-	let filesList: SnapShotFile[] = [];
+	const filesList: SnapShotFile[] = [];
 	const getSrcRootFolder = srcPath.split('/').pop() || '';
 	const initPath = raw ? '/' + getSrcRootFolder : toResticPath(srcPath);
 

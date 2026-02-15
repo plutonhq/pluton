@@ -86,9 +86,9 @@ export class BackupNotification {
 		output: 'html' | 'json' | 'push' = 'html'
 	) {
 		let notificationClass;
-		let deviceName = plan.device?.name || '';
-		let storageName = plan.storage?.name || '';
-		let storageType = plan.storage?.type || '';
+		const deviceName = plan.device?.name || '';
+		const storageName = plan.storage?.name || '';
+		const storageType = plan.storage?.type || '';
 		switch (notificationType) {
 			case 'start':
 				notificationClass = new this.BackupStartedNotificationClass({

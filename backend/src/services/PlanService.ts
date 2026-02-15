@@ -90,7 +90,7 @@ export class PlanService {
 			throw new NotFoundError('Storage not found.');
 		}
 
-		let theStoragePath = sanitizeStoragePath(storagePath, planStorage.type);
+		const theStoragePath = sanitizeStoragePath(storagePath, planStorage.type);
 		let newPlanData: NewPlan = {
 			id: planId,
 			title: title.trim(),
