@@ -11,6 +11,7 @@ const mockAppPaths = {
 	getDownloadsDir: jest.fn(),
 	getRestoresDir: jest.fn(),
 	getProgressDir: jest.fn(),
+	getCacheDir: jest.fn(),
 };
 
 jest.mock('fs/promises', () => ({
@@ -42,6 +43,7 @@ describe('CleanDownloadsTask', () => {
 		mockAppPaths.getDownloadsDir.mockReturnValue('/downloads');
 		mockAppPaths.getRestoresDir.mockReturnValue('/restores');
 		mockAppPaths.getProgressDir.mockReturnValue('/progress');
+		mockAppPaths.getCacheDir.mockReturnValue('/cache');
 
 		mockReaddir.mockResolvedValue([]);
 		mockStat.mockResolvedValue({
@@ -73,10 +75,12 @@ describe('CleanDownloadsTask', () => {
 			expect(mockAppPaths.getDownloadsDir).toHaveBeenCalled();
 			expect(mockAppPaths.getRestoresDir).toHaveBeenCalled();
 			expect(mockAppPaths.getProgressDir).toHaveBeenCalled();
+			expect(mockAppPaths.getCacheDir).toHaveBeenCalled();
 
 			expect(mockReaddir).toHaveBeenCalledWith('/downloads');
 			expect(mockReaddir).toHaveBeenCalledWith('/restores');
 			expect(mockReaddir).toHaveBeenCalledWith('/progress');
+			expect(mockReaddir).toHaveBeenCalledWith('/cache');
 		});
 
 		it('removes files older than 96 hours', async () => {
@@ -163,7 +167,7 @@ describe('CleanDownloadsTask', () => {
 
 			await cleanTask.run(job);
 
-			expect(mockRm).toHaveBeenCalledTimes(9); // 3 files × 3 directories
+			expect(mockRm).toHaveBeenCalledTimes(12); // 3 files × 4 directories
 		});
 
 		it('handles empty directories', async () => {
@@ -219,7 +223,7 @@ describe('CleanDownloadsTask', () => {
 			};
 
 			await expect(cleanTask.run(job)).resolves.not.toThrow();
-			expect(mockCronLogger.error).toHaveBeenCalledTimes(3); // Once per directory
+			expect(mockCronLogger.error).toHaveBeenCalledTimes(4); // Once per directory
 		});
 
 		it('continues cleaning other directories if one fails', async () => {
@@ -249,7 +253,7 @@ describe('CleanDownloadsTask', () => {
 			await cleanTask.run(job);
 
 			expect(mockCronLogger.error).toHaveBeenCalledTimes(1);
-			expect(mockRm).toHaveBeenCalledTimes(2); // 2 remaining directories
+			expect(mockRm).toHaveBeenCalledTimes(3); // 3 remaining directories
 		});
 
 		it('uses recursive and force flags when removing', async () => {

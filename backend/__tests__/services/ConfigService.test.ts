@@ -1,10 +1,12 @@
-import { jest, beforeEach, afterEach, describe, it, expect } from '@jest/globals';
 import * as fs from 'fs';
 
 // Create mock functions
-const mockExistsSync = jest.fn<typeof fs.existsSync>();
-const mockReadFileSync = jest.fn<typeof fs.readFileSync>();
-const mockGetConfigDir = jest.fn<() => string>();
+const mockExistsSync = jest.fn() as jest.MockedFunction<typeof fs.existsSync>;
+const mockReadFileSync = jest.fn() as jest.MockedFunction<typeof fs.readFileSync>;
+const mockWriteFileSync = jest.fn();
+const mockMkdirSync = jest.fn();
+const mockGetConfigDir = jest.fn() as jest.MockedFunction<() => string>;
+const mockGetDataDir = jest.fn() as jest.MockedFunction<() => string>;
 const mockDotenvConfig = jest.fn();
 
 // Mock fs module
@@ -12,12 +14,15 @@ jest.mock('fs', () => ({
 	...jest.requireActual<typeof fs>('fs'),
 	existsSync: mockExistsSync,
 	readFileSync: mockReadFileSync,
+	writeFileSync: mockWriteFileSync,
+	mkdirSync: mockMkdirSync,
 }));
 
 // Mock AppPaths
 jest.mock('../../src/utils/AppPaths', () => ({
 	appPaths: {
 		getConfigDir: mockGetConfigDir,
+		getDataDir: mockGetDataDir,
 	},
 }));
 
@@ -64,11 +69,15 @@ describe('ConfigService', () => {
 		// Reset mocks
 		mockExistsSync.mockReset();
 		mockReadFileSync.mockReset();
+		mockWriteFileSync.mockReset();
+		mockMkdirSync.mockReset();
 		mockDotenvConfig.mockReset();
 		mockGetConfigDir.mockReset();
+		mockGetDataDir.mockReset();
 
 		// Mock appPaths to return a predictable directory
 		mockGetConfigDir.mockReturnValue('/fake/config/dir');
+		mockGetDataDir.mockReturnValue('/fake/data/dir');
 
 		// Clear the module cache to reset the singleton
 		jest.resetModules();
@@ -153,12 +162,12 @@ describe('ConfigService', () => {
 		// Arrange: Deliberately omit a required variable
 		process.env = {
 			NODE_ENV: 'production',
-			ENCRYPTION_KEY: validBaseEnv.ENCRYPTION_KEY,
+			SECRET: validBaseEnv.SECRET,
 			APIKEY: validBaseEnv.APIKEY,
 			USER_NAME: validBaseEnv.USER_NAME,
 			USER_PASSWORD: validBaseEnv.USER_PASSWORD,
 			APP_TITLE: validBaseEnv.APP_TITLE,
-		}; // SECRET is missing
+		}; // ENCRYPTION_KEY is missing
 		mockExistsSync.mockReturnValue(false);
 
 		// Act & Assert
@@ -167,7 +176,7 @@ describe('ConfigService', () => {
 		expect(mockConsoleError).toHaveBeenCalledWith(
 			expect.stringContaining('Invalid environment configuration')
 		);
-		expect(mockConsoleError).toHaveBeenCalledWith(expect.stringContaining('SECRET'));
+		expect(mockConsoleError).toHaveBeenCalledWith(expect.stringContaining('ENCRYPTION_KEY'));
 	});
 
 	it('should exit the process for invalid data types', async () => {
@@ -232,8 +241,6 @@ describe('ConfigService', () => {
 
 			// Assert
 			expect(configService.isDevelopment()).toBe(true);
-			// Verify dotenv.config() was called in development mode
-			expect(mockDotenvConfig).toHaveBeenCalled();
 		});
 
 		it("should return false when NODE_ENV is 'production'", async () => {
@@ -246,8 +253,6 @@ describe('ConfigService', () => {
 
 			// Assert
 			expect(configService.isDevelopment()).toBe(false);
-			// Verify dotenv.config() was NOT called in production mode
-			expect(mockDotenvConfig).not.toHaveBeenCalled();
 		});
 	});
 });

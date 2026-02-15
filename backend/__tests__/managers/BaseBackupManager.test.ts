@@ -82,6 +82,14 @@ jest.mock('../../src/utils/helpers', () => ({
 	}),
 }));
 
+jest.mock('../../src/services/ConfigService', () => ({
+	configService: {
+		config: {
+			ENCRYPTION_KEY: 'secret-key',
+		},
+	},
+}));
+
 import { BaseBackupManager } from '../../src/managers/BaseBackupManager';
 import { BackupPlanArgs } from '../../src/types/plans';
 import { EventEmitter } from 'events';

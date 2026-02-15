@@ -24,7 +24,6 @@ describe('DeviceService', () => {
 	let mockSystemManager: jest.Mocked<BaseSystemManager>;
 	let mockLocalStrategy: jest.Mocked<LocalStrategy>;
 	let mockRemoteStrategy: jest.Mocked<RemoteStrategy>;
-	const mockBroker = {}; // A placeholder for the broker if needed
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -37,10 +36,7 @@ describe('DeviceService', () => {
 
 		// Mock strategy constructors and instances
 		mockLocalStrategy = new LocalStrategy(mockSystemManager) as jest.Mocked<LocalStrategy>;
-		mockRemoteStrategy = new RemoteStrategy(
-			mockBroker,
-			'remote-device'
-		) as jest.Mocked<RemoteStrategy>;
+		mockRemoteStrategy = new RemoteStrategy('remote-device') as jest.Mocked<RemoteStrategy>;
 		(LocalStrategy as jest.Mock).mockReturnValue(mockLocalStrategy);
 		(RemoteStrategy as jest.Mock).mockReturnValue(mockRemoteStrategy);
 
@@ -49,8 +45,7 @@ describe('DeviceService', () => {
 			mockSystemManager,
 			mockDeviceStore,
 			mockPlanStore,
-			mockStorageStore,
-			mockBroker
+			mockStorageStore
 		);
 
 		// Set a mock for connected devices

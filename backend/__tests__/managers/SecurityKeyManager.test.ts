@@ -144,14 +144,17 @@ describe('SecurityKeyManager', () => {
 		});
 
 		it('should not write keys if keys.json already exists', async () => {
-			// Pretend the file already exists
-			mockFileSystem[keysFilePath] = JSON.stringify({ publicKey: 'existing' });
+			// Pretend the file already exists with both required fields
+			mockFileSystem[keysFilePath] = JSON.stringify({
+				publicKey: 'existing',
+				encryptedPrivateKey: 'existing-encrypted',
+			});
 			// Access should succeed
 			(fs.access as jest.Mock).mockResolvedValue(undefined);
 
 			await securityKeyManager.setupInitialKeys();
 
-			expect(crypto.generateKeyPairSync).toHaveBeenCalledWith('ed25519', expect.any(Object));
+			expect(crypto.generateKeyPairSync).not.toHaveBeenCalled();
 			expect(fs.writeFile).not.toHaveBeenCalled();
 		});
 	});

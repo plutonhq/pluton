@@ -79,6 +79,25 @@ jest.mock('../../src/utils/AppPaths', () => ({
 	},
 }));
 
+jest.mock('../../src/services/ConfigService', () => ({
+	configService: {
+		get: jest.fn().mockReturnValue(undefined),
+		getAll: jest.fn().mockReturnValue({}),
+		config: {
+			ENCRYPTION_KEY: 'test-encryption-key',
+		},
+	},
+	ConfigService: {
+		getInstance: jest.fn().mockReturnValue({
+			get: jest.fn().mockReturnValue(undefined),
+			getAll: jest.fn().mockReturnValue({}),
+			config: {
+				ENCRYPTION_KEY: 'test-encryption-key',
+			},
+		}),
+	},
+}));
+
 import os from 'os';
 import si from 'systeminformation';
 import { execSync } from 'child_process';

@@ -6,6 +6,14 @@ jest.mock('../../../src/utils/binaryPathResolver');
 jest.mock('../../../src/utils/rclone/helpers');
 jest.mock('../../../src/utils/AppPaths');
 jest.mock('../../../src/utils/restic/helpers');
+jest.mock('../../../src/services/ConfigService', () => ({
+	configService: {
+		config: {
+			ENCRYPTION_KEY: 'test-encryption-key',
+		},
+		isSetupPending: jest.fn().mockReturnValue(false),
+	},
+}));
 
 import { spawn } from 'child_process';
 import {
@@ -251,12 +259,12 @@ describe('runResticCommand', () => {
 
 		await promise;
 
-		// Verify the final args contain forward slashes
+		// Verify the final args use only the basename (no backslashes)
 		const spawnArgs = mockSpawn.mock.calls[0][1];
 		const rcloneProgramArg = spawnArgs.find((arg: string) => arg.startsWith('rclone.program='));
 		expect(rcloneProgramArg).toBeDefined();
 		expect(rcloneProgramArg).not.toContain('\\');
-		expect(rcloneProgramArg).toContain('/');
+		expect(rcloneProgramArg).toBe('rclone.program=rclone.exe');
 
 		// Restore original platform
 		if (originalPlatform) {
@@ -781,7 +789,7 @@ describe('getSnapshotByTag', () => {
 			encryption: true,
 		});
 
-		expect(capturedEnv?.RESTIC_PASSWORD).toBe('test-key');
+		expect(capturedEnv?.RESTIC_PASSWORD).toBe('test-encryption-key');
 	});
 
 	it('should use empty password when encryption is false', async () => {

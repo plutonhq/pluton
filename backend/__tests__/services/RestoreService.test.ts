@@ -51,8 +51,7 @@ describe('RestoreService', () => {
 			mockPlanStore,
 			mockBackupStore,
 			mockRestoreStore,
-			mockStorageStore,
-			null // broker
+			mockStorageStore
 		);
 	});
 

@@ -51,6 +51,25 @@ jest.mock('../../../src/utils/AppPaths', () => ({
 	},
 }));
 
+jest.mock('../../../src/services/ConfigService', () => ({
+	configService: {
+		get: jest.fn().mockReturnValue(undefined),
+		getAll: jest.fn().mockReturnValue({}),
+		config: {
+			ENCRYPTION_KEY: 'test-encryption-key',
+		},
+	},
+	ConfigService: {
+		getInstance: jest.fn().mockReturnValue({
+			get: jest.fn().mockReturnValue(undefined),
+			getAll: jest.fn().mockReturnValue({}),
+			config: {
+				ENCRYPTION_KEY: 'test-encryption-key',
+			},
+		}),
+	},
+}));
+
 import { EventEmitter } from 'events';
 import { BackupHandler } from '../../../src/managers/handlers/BackupHandler';
 import os from 'os';
@@ -518,7 +537,9 @@ describe('BackupHandler', () => {
 		});
 
 		it('should throw error when encryption enabled but key missing', async () => {
-			delete process.env.ENCRYPTION_KEY;
+			const { configService: cs } = require('../../../src/services/ConfigService');
+			const origKey = cs.config.ENCRYPTION_KEY;
+			cs.config.ENCRYPTION_KEY = '';
 			// The maxProcessor is 2, so required memory is 64MB * 2 = 128MB
 			// Provide way more than needed to ensure this check passes
 			jest.spyOn(os, 'freemem').mockReturnValue(1024 * 1024 * 1024); // 1GB
@@ -535,6 +556,8 @@ describe('BackupHandler', () => {
 			await expect(handler.canRun(encryptedOptions, resticArgsAndEnv)).rejects.toThrow(
 				'Encryption enabled but ENCRYPTION_KEY not found'
 			);
+
+			cs.config.ENCRYPTION_KEY = origKey;
 		});
 
 		it('should throw error when source paths not accessible', async () => {
@@ -696,7 +719,7 @@ describe('BackupHandler', () => {
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.any(Array),
-				expect.objectContaining({ RESTIC_PASSWORD: 'test-key' }),
+				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' }),
 				expect.any(Function),
 				expect.any(Function),
 				expect.any(Function),
@@ -890,7 +913,7 @@ describe('BackupHandler', () => {
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.any(Array),
-				expect.objectContaining({ RESTIC_PASSWORD: 'test-key' })
+				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' })
 			);
 		});
 
@@ -1172,7 +1195,7 @@ describe('BackupHandler', () => {
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.any(Array),
-				expect.objectContaining({ RESTIC_PASSWORD: 'test-key' })
+				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' })
 			);
 		});
 

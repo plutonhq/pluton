@@ -23,7 +23,6 @@ describe('BackupController', () => {
 			null as any,
 			null as any,
 			null as any,
-			null as any,
 			null as any
 		) as jest.Mocked<BackupService>;
 

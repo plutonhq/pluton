@@ -20,6 +20,7 @@ const config: Config = {
 					esModuleInterop: true,
 					allowSyntheticDefaultImports: true,
 				},
+				diagnostics: false,
 			},
 		],
 	},

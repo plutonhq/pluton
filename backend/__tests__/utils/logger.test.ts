@@ -81,17 +81,17 @@ describe('Logger Utility', () => {
 				transport: {
 					targets: [
 						{
+							target: 'pino/file',
+							options: { destination: '/test/logs/app.log', mkdir: true },
+							level: 'info',
+						},
+						{
 							target: 'pino-pretty',
 							options: {
 								colorize: true,
 								translateTime: 'SYS:standard',
 								ignore: 'pid,hostname',
 							},
-							level: 'info',
-						},
-						{
-							target: 'pino/file',
-							options: { destination: '/test/logs/app.log' },
 							level: 'info',
 						},
 					],
@@ -138,7 +138,7 @@ describe('Logger Utility', () => {
 						targets: expect.arrayContaining([
 							expect.objectContaining({
 								target: 'pino/file',
-								options: { destination: '/custom/log/path/app.log' },
+								options: { destination: '/custom/log/path/app.log', mkdir: true },
 							}),
 						]),
 					}),
@@ -198,7 +198,7 @@ describe('Logger Utility', () => {
 					targets: [
 						{
 							target: 'pino/file',
-							options: { destination: '/test/logs/plan-plan-123.log' },
+							options: { destination: '/test/logs/plan-plan-123.log', mkdir: true },
 							level: 'info',
 						},
 					],
@@ -275,7 +275,7 @@ describe('Logger Utility', () => {
 					targets: [
 						{
 							target: 'pino/file',
-							options: { destination: '/test/logs/plan-plan-1.log' },
+							options: { destination: '/test/logs/plan-plan-1.log', mkdir: true },
 							level: 'info',
 						},
 					],
@@ -286,7 +286,7 @@ describe('Logger Utility', () => {
 					targets: [
 						{
 							target: 'pino/file',
-							options: { destination: '/test/logs/plan-plan-2.log' },
+							options: { destination: '/test/logs/plan-plan-2.log', mkdir: true },
 							level: 'info',
 						},
 					],

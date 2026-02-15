@@ -12,6 +12,14 @@ jest.mock('../../../src/utils/restic/helpers', () => ({
 	generateResticRepoPath: (...args: any[]) => mockGenerateResticRepoPath(...args),
 }));
 
+jest.mock('../../../src/services/ConfigService', () => ({
+	configService: {
+		config: {
+			ENCRYPTION_KEY: 'test-key',
+		},
+	},
+}));
+
 import { EventEmitter } from 'events';
 import { PruneHandler } from '../../../src/managers/handlers/PruneHandler';
 

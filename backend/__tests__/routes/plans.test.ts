@@ -54,7 +54,7 @@ describe('Plan Routes', () => {
 			deletePlan: jest.fn(),
 			getPlanLogs: jest.fn(),
 			downloadPlanLogs: jest.fn(),
-			checkActiveBackups: jest.fn(),
+			checkActiveBackupsOrRestore: jest.fn(),
 			performBackup: jest.fn(),
 			resumeBackup: jest.fn(),
 			pauseBackup: jest.fn(),
@@ -230,12 +230,12 @@ describe('Plan Routes', () => {
 
 	describe('GET /api/plans/:id/checkactive', () => {
 		it('should check active backups for a plan when authenticated', async () => {
-			mockPlanService.checkActiveBackups.mockResolvedValue({ active: false } as any);
+			mockPlanService.checkActiveBackupsOrRestore.mockResolvedValue(false);
 
 			const response = await request(app).get('/api/plans/plan-1/checkactive');
 
 			expect(response.status).toBe(200);
-			expect(mockPlanService.checkActiveBackups).toHaveBeenCalledWith('plan-1');
+			expect(mockPlanService.checkActiveBackupsOrRestore).toHaveBeenCalledWith('plan-1', 'backup');
 		});
 	});
 

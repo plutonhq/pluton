@@ -133,22 +133,29 @@ describe('PlanController', () => {
 		});
 	});
 
-	describe('checkActiveBackups', () => {
+	describe('checkActiveBackupsOrRestore', () => {
 		it('should return 400 if plan ID is missing', async () => {
 			mockRequest.params = {};
 
-			await planController.checkActiveBackups(mockRequest as Request, mockResponse as Response);
+			await planController.checkActiveBackupsOrRestore(
+				mockRequest as Request,
+				mockResponse as Response
+			);
 
 			expect(mockStatus).toHaveBeenCalledWith(400);
 		});
 
 		it('should successfully check for active backups', async () => {
 			mockRequest.params = { id: 'plan-1' };
-			mockPlanService.checkActiveBackups.mockResolvedValue(true);
+			mockRequest.query = { type: 'backup' };
+			mockPlanService.checkActiveBackupsOrRestore.mockResolvedValue(true);
 
-			await planController.checkActiveBackups(mockRequest as Request, mockResponse as Response);
+			await planController.checkActiveBackupsOrRestore(
+				mockRequest as Request,
+				mockResponse as Response
+			);
 
-			expect(mockPlanService.checkActiveBackups).toHaveBeenCalledWith('plan-1');
+			expect(mockPlanService.checkActiveBackupsOrRestore).toHaveBeenCalledWith('plan-1', 'backup');
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: true,

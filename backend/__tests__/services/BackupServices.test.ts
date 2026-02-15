@@ -67,8 +67,7 @@ describe('BackupService', () => {
 			mockPlanStore,
 			mockBackupStore,
 			mockRestoreStore,
-			mockStorageStore,
-			null // broker is not used for local strategies
+			mockStorageStore
 		);
 	});
 

@@ -6,6 +6,14 @@ jest.mock('child_process');
 jest.mock('os');
 jest.mock('../../../src/utils/binaryPathResolver');
 jest.mock('../../../src/utils/rclone/helpers');
+jest.mock('../../../src/services/ConfigService', () => ({
+	configService: {
+		config: {
+			ENCRYPTION_KEY: 'test-encryption-key',
+		},
+		isSetupPending: jest.fn().mockReturnValue(false),
+	},
+}));
 jest.mock('../../../src/utils/AppPaths', () => ({
 	appPaths: {
 		getConfigDir: jest.fn().mockReturnValue('/mock/config'),
@@ -240,12 +248,8 @@ describe('runRcloneCommand', () => {
 
 		await promise;
 
-		expect(consoleLogSpy).toHaveBeenCalledWith('rcloneBinary :', '/usr/local/bin/rclone');
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			'runRcloneCommand :',
-			'rclone ls remote:path',
-			expect.any(Object)
-		);
+		// The close event log is the only active console.log in the source
+		expect(consoleLogSpy).toHaveBeenCalledWith('[rclone] Close Fired!! Code :', 0);
 	});
 
 	it('should log close event with exit code', async () => {
@@ -272,8 +276,7 @@ describe('runRcloneCommand', () => {
 		expect(spawn).toHaveBeenCalledWith('/usr/local/bin/rclone', [], expect.any(Object));
 	});
 
-	it('should set RCLONE_CONFIG_PASS from environment', async () => {
-		process.env.ENCRYPTION_KEY = 'my-secret-key';
+	it('should set RCLONE_CONFIG_PASS from configService', async () => {
 		const args = ['config', 'show'];
 
 		const promise = runRcloneCommand(args);
@@ -284,12 +287,12 @@ describe('runRcloneCommand', () => {
 
 		expect(spawn).toHaveBeenCalledWith('/usr/local/bin/rclone', args, {
 			env: expect.objectContaining({
-				RCLONE_CONFIG_PASS: 'my-secret-key',
+				RCLONE_CONFIG_PASS: 'test-encryption-key',
 			}),
 		});
 	});
 
-	it('should handle undefined ENCRYPTION_KEY', async () => {
+	it('should use ENCRYPTION_KEY from configService', async () => {
 		delete process.env.ENCRYPTION_KEY;
 		const args = ['version'];
 
@@ -299,9 +302,10 @@ describe('runRcloneCommand', () => {
 
 		await promise;
 
+		// RCLONE_CONFIG_PASS comes from configService.config.ENCRYPTION_KEY, not process.env
 		expect(spawn).toHaveBeenCalledWith('/usr/local/bin/rclone', args, {
 			env: expect.objectContaining({
-				RCLONE_CONFIG_PASS: undefined,
+				RCLONE_CONFIG_PASS: 'test-encryption-key',
 			}),
 		});
 	});

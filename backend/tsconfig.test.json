@@ -3,6 +3,8 @@
 		"target": "esnext",
 		"module": "esnext",
 		"moduleResolution": "bundler",
+		"noEmit": true,
+		"types": ["node", "jest"],
 		"baseUrl": ".",
 		"paths": {
 			"pluton-core-backend/notifications/channels/NotificationChannelResolver": [

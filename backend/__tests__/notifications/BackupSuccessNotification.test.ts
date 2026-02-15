@@ -1,12 +1,10 @@
 import { BackupSuccessNotification } from '../../src/notifications/templates/email/backup/BackupSuccessNotification';
 import { Plan } from '../../src/db/schema/plans';
 import { configService } from '../../src/services/ConfigService';
-import fs from 'fs';
-import path from 'path';
+import { loadBackupTemplate } from '../../src/notifications/templateLoader';
 import ejs from 'ejs';
 
 // Mock dependencies
-jest.mock('fs');
 jest.mock('ejs');
 jest.mock('../../src/services/ConfigService', () => ({
 	configService: {
@@ -19,7 +17,6 @@ jest.mock('../../src/services/ConfigService', () => ({
 
 describe('BackupSuccessNotification', () => {
 	let mockPlan: Plan;
-	const mockReadFileSync = fs.readFileSync as jest.MockedFunction<typeof fs.readFileSync>;
 	const mockEjsRender = ejs.render as jest.MockedFunction<typeof ejs.render>;
 
 	beforeEach(() => {
@@ -36,7 +33,6 @@ describe('BackupSuccessNotification', () => {
 			storagePath: '/backup/path',
 		} as any;
 
-		mockReadFileSync.mockReturnValue('<div>{{EMAIL_BODY_CONTENT}}</div>');
 		mockEjsRender.mockReturnValue('<div>Success content</div>');
 	});
 
@@ -156,17 +152,7 @@ describe('BackupSuccessNotification', () => {
 				endTime: new Date(),
 			});
 
-			const expectedPath = path.join(
-				process.cwd(),
-				'src',
-				'notifications',
-				'templates',
-				'email',
-				'backup',
-				'BackupSuccessNotification.ejs'
-			);
-
-			expect(mockReadFileSync).toHaveBeenCalledWith(expectedPath, 'utf-8');
+			expect(loadBackupTemplate).toHaveBeenCalledWith('BackupSuccessNotification.ejs');
 			expect(mockEjsRender).toHaveBeenCalled();
 		});
 

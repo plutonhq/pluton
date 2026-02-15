@@ -48,6 +48,25 @@ jest.mock('../../../src/utils/AppPaths', () => ({
 	},
 }));
 
+jest.mock('../../../src/services/ConfigService', () => ({
+	configService: {
+		get: jest.fn().mockReturnValue(undefined),
+		getAll: jest.fn().mockReturnValue({}),
+		config: {
+			ENCRYPTION_KEY: 'test-encryption-key',
+		},
+	},
+	ConfigService: {
+		getInstance: jest.fn().mockReturnValue({
+			get: jest.fn().mockReturnValue(undefined),
+			getAll: jest.fn().mockReturnValue({}),
+			config: {
+				ENCRYPTION_KEY: 'test-encryption-key',
+			},
+		}),
+	},
+}));
+
 import { DownloadHandler } from '../../../src/managers/handlers/DownloadHandler';
 import { processManager } from '../../../src/managers/ProcessManager';
 import { runResticCommand } from '../../../src/utils/restic/restic';
@@ -169,8 +188,8 @@ describe('DownloadHandler', () => {
 			storagePath: '',
 			encryption: true,
 		});
-		expect(receivedEnv).toHaveProperty('RESTIC_PASSWORD', 'secret');
-		expect(receivedEnv).toHaveProperty('RCLONE_CONFIG_PASS', 'secret');
+		expect(receivedEnv).toHaveProperty('RESTIC_PASSWORD', 'test-encryption-key');
+		expect(receivedEnv).toHaveProperty('RCLONE_CONFIG_PASS', 'test-encryption-key');
 	});
 
 	test('download: continues and resolves even if rm fails (cleanup error logged)', async () => {

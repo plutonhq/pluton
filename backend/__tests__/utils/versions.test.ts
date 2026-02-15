@@ -2,6 +2,9 @@ import { execSync } from 'child_process';
 import { getResticVersion, getRcloneVersion } from '../../src/utils/versions';
 
 jest.mock('child_process');
+jest.mock('../../src/utils/binaryPathResolver', () => ({
+	getBinaryPath: jest.fn((name: string) => name),
+}));
 
 const mockedExecSync = execSync as jest.MockedFunction<typeof execSync>;
 

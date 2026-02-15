@@ -16,8 +16,8 @@ import { fileURLToPath } from 'url';
 const isPkg = typeof (process as any).pkg !== 'undefined';
 
 // Get current directory using import.meta.url (works in ESM)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const currentFilePath = fileURLToPath(import.meta.url);
+const currentDirPath = path.dirname(currentFilePath);
 
 /**
  * Get the base path for templates based on the execution context
@@ -28,7 +28,7 @@ function getTemplateBasePath(): string {
 		// __dirname will be /snapshot/.../backend/dist/
 		// Templates are bundled at /snapshot/.../backend/src/notifications/templates/
 		// So we go from dist/ → src/notifications/templates/
-		return path.join(__dirname, '..', 'src', 'notifications', 'templates');
+		return path.join(currentDirPath, '..', 'src', 'notifications', 'templates');
 	}
 
 	// Try multiple paths for non-pkg environments:
@@ -37,7 +37,7 @@ function getTemplateBasePath(): string {
 	// 3. dist/ folder relative to process.cwd() (works for production builds)
 	const possiblePaths = [
 		// Templates relative to this module (dist/notifications/templates or src/notifications/templates)
-		path.join(__dirname, 'templates'),
+		path.join(currentDirPath, 'templates'),
 		// Development: src folder
 		path.join(process.cwd(), 'src', 'notifications', 'templates'),
 		// Production: dist folder (if templates are copied there)

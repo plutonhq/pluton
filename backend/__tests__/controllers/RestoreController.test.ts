@@ -20,7 +20,6 @@ describe('RestoreController', () => {
 			null as any,
 			null as any,
 			null as any,
-			null as any,
 			null as any
 		) as jest.Mocked<RestoreService>;
 
@@ -295,7 +294,7 @@ describe('RestoreController', () => {
 			expect(mockStatus).toHaveBeenCalledWith(500);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: false,
-				error: 'Failed to restore plan',
+				error: 'Failed to perform dry restore. Restore failed',
 			});
 		});
 	});

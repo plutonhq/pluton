@@ -55,7 +55,7 @@ describe('StorageService', () => {
 
 		// Mock strategy constructors and instances
 		mockLocalStrategy = new LocalStrategy(mockSystemManager) as jest.Mocked<LocalStrategy>;
-		mockRemoteStrategy = new RemoteStrategy(null, 'remote-device') as jest.Mocked<RemoteStrategy>;
+		mockRemoteStrategy = new RemoteStrategy('remote-device') as jest.Mocked<RemoteStrategy>;
 		(LocalStrategy as jest.Mock).mockReturnValue(mockLocalStrategy);
 		(RemoteStrategy as jest.Mock).mockReturnValue(mockRemoteStrategy);
 
@@ -67,15 +67,14 @@ describe('StorageService', () => {
 			encrypt: jest.fn(val => `encrypted(${val})`),
 			decrypt: jest.fn(val => val.replace('encrypted(', '').replace(')', '')),
 		} as any;
-		(Cryptr as jest.Mock).mockImplementation(() => mockCryptr);
+		(Cryptr as unknown as jest.Mock).mockImplementation(() => mockCryptr);
 
 		// Instantiate the service with mocked dependencies
 		storageService = new StorageService(
 			mockStorageManager,
 			mockSystemManager,
 			mockStorageStore,
-			mockPlanStore,
-			null // broker
+			mockPlanStore
 		);
 	});
 

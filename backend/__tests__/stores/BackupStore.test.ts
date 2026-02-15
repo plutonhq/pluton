@@ -10,6 +10,8 @@ describe('BackupStore', () => {
 	const mockBackups: Backup[] = [
 		{
 			id: 'backup-1',
+			title: 'Backup 1',
+			description: 'First backup',
 			planId: 'plan-a',
 			status: 'completed',
 			success: true,
@@ -35,6 +37,8 @@ describe('BackupStore', () => {
 		},
 		{
 			id: 'backup-2',
+			title: 'Backup 2',
+			description: 'Second backup',
 			planId: 'plan-b',
 			status: 'failed',
 			success: false,

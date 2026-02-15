@@ -4,6 +4,15 @@
 import { initializeLogger } from '../src/utils/logger';
 import 'dotenv/config';
 
+// Mock templateLoader globally to avoid import.meta.url issues in Jest
+jest.mock('../src/notifications/templateLoader', () => ({
+	loadTemplate: jest.fn().mockReturnValue('<html>{{content}}</html>'),
+	loadEmailWrapperTemplate: jest
+		.fn()
+		.mockReturnValue('<html><body>{{EMAIL_BODY_CONTENT}}</body></html>'),
+	loadBackupTemplate: jest.fn().mockReturnValue('<div>Backup template</div>'),
+}));
+
 beforeAll(() => {
 	console.log('--- JEST SETUP FILE IS RUNNING ---');
 	//initialize logger

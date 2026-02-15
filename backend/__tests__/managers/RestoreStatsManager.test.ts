@@ -13,6 +13,26 @@ jest.mock('../../src/utils/AppPaths', () => ({
 		getStatsDir: jest.fn(),
 	},
 }));
+
+jest.mock('../../src/services/ConfigService', () => ({
+	configService: {
+		get: jest.fn().mockReturnValue(undefined),
+		getAll: jest.fn().mockReturnValue({}),
+		config: {
+			ENCRYPTION_KEY: 'test-encryption-key',
+		},
+	},
+	ConfigService: {
+		getInstance: jest.fn().mockReturnValue({
+			get: jest.fn().mockReturnValue(undefined),
+			getAll: jest.fn().mockReturnValue({}),
+			config: {
+				ENCRYPTION_KEY: 'test-encryption-key',
+			},
+		}),
+	},
+}));
+
 jest.mock('../../src/utils/getBackupSourceFiles');
 jest.mock('fs/promises');
 jest.mock('fs');

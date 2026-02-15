@@ -3,6 +3,19 @@ import { SettingsController } from '../../src/controllers/SettingsController';
 import { SettingsService } from '../../src/services/SettingsService';
 import { AppSettings } from '../../src/types/settings';
 
+jest.mock('../../src/services/ConfigService', () => ({
+	configService: {
+		get: jest.fn().mockReturnValue(undefined),
+		getAll: jest.fn().mockReturnValue({}),
+	},
+	ConfigService: {
+		getInstance: jest.fn().mockReturnValue({
+			get: jest.fn().mockReturnValue(undefined),
+			getAll: jest.fn().mockReturnValue({}),
+		}),
+	},
+}));
+
 jest.mock('../../src/services/SettingsService');
 
 describe('SettingsController', () => {

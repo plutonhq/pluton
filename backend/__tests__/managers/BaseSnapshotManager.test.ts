@@ -33,6 +33,11 @@ jest.mock('../../src/services/ConfigService', () => ({
 	},
 }));
 
+jest.mock('fs/promises', () => ({
+	readFile: jest.fn().mockRejectedValue(new Error('ENOENT: no such file or directory')),
+	writeFile: jest.fn().mockResolvedValue(undefined),
+}));
+
 import {
 	runResticCommand,
 	getSnapshotByTag,
@@ -141,7 +146,6 @@ describe('BaseSnapshotManager', () => {
 		};
 
 		it('should forget snapshot and return updated stats', async () => {
-			process.env.ENCRYPTION_KEY = 'env-secret';
 			(getSnapshotByTag as jest.Mock).mockResolvedValue({
 				success: true,
 				result: { id: 'snap-abc' },
@@ -158,7 +162,7 @@ describe('BaseSnapshotManager', () => {
 			expect(generateResticRepoPath).toHaveBeenCalledWith('store', 'path');
 			expect(runResticCommand).toHaveBeenCalledWith(
 				['-r', 'mock-repo-path', 'forget', 'snap-abc', '--json'],
-				{ RESTIC_PASSWORD: 'env-secret' }
+				{ RESTIC_PASSWORD: 'mySecretKey' }
 			);
 			expect(getBackupPlanStats).toHaveBeenCalledWith('plan-1', 'store', 'path', true);
 			expect(out).toEqual({

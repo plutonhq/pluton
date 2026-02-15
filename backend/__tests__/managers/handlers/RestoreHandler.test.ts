@@ -57,6 +57,25 @@ jest.mock('../../../src/utils/AppPaths', () => ({
 	},
 }));
 
+jest.mock('../../../src/services/ConfigService', () => ({
+	configService: {
+		get: jest.fn().mockReturnValue(undefined),
+		getAll: jest.fn().mockReturnValue({}),
+		config: {
+			ENCRYPTION_KEY: 'test-encryption-key',
+		},
+	},
+	ConfigService: {
+		getInstance: jest.fn().mockReturnValue({
+			get: jest.fn().mockReturnValue(undefined),
+			getAll: jest.fn().mockReturnValue({}),
+			config: {
+				ENCRYPTION_KEY: 'test-encryption-key',
+			},
+		}),
+	},
+}));
+
 jest.mock('../../../src/utils/copyFiles', () => ({
 	__esModule: true,
 	default: (...args: any[]) => mockCopyFilesNatively(...args),
@@ -401,7 +420,10 @@ describe('RestoreHandler', () => {
 		});
 
 		it('should throw error when encryption enabled but key missing', async () => {
-			delete process.env.ENCRYPTION_KEY;
+			const { configService: cs } = require('../../../src/services/ConfigService');
+			const origKey = cs.config.ENCRYPTION_KEY;
+			cs.config.ENCRYPTION_KEY = '';
+
 			jest.spyOn(os, 'freemem').mockReturnValue(1024 * 1024 * 1024);
 			jest.spyOn(os, 'cpus').mockReturnValue(new Array(4));
 
@@ -409,7 +431,7 @@ describe('RestoreHandler', () => {
 				'Snapshot encrypted but ENCRYPTION_KEY not found'
 			);
 
-			process.env.ENCRYPTION_KEY = 'test-key';
+			cs.config.ENCRYPTION_KEY = origKey;
 		});
 
 		it('should throw error when target path not writable', async () => {
@@ -573,7 +595,7 @@ describe('RestoreHandler', () => {
 			});
 
 			expect(result.args).not.toContain('--insecure-no-password');
-			expect(result.env.RESTIC_PASSWORD).toBe('test-key');
+			expect(result.env.RESTIC_PASSWORD).toBe('test-encryption-key');
 		});
 
 		it('should add includes and excludes', () => {

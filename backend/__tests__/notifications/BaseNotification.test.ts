@@ -1,10 +1,8 @@
 import { BaseNotification } from '../../src/notifications/BaseNotification';
 import { configService } from '../../src/services/ConfigService';
-import fs from 'fs';
-import path from 'path';
+import { loadEmailWrapperTemplate } from '../../src/notifications/templateLoader';
 
 // Mock dependencies
-jest.mock('fs');
 jest.mock('../../src/services/ConfigService', () => ({
 	configService: {
 		config: {
@@ -43,7 +41,7 @@ class TestNotification extends BaseNotification {
 
 describe('BaseNotification', () => {
 	let notification: TestNotification;
-	const mockReadFileSync = fs.readFileSync as jest.MockedFunction<typeof fs.readFileSync>;
+	const mockLoadEmailWrapperTemplate = loadEmailWrapperTemplate as jest.Mock;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -102,55 +100,38 @@ describe('BaseNotification', () => {
 	describe('loadEmailTemplate', () => {
 		it('should load email template successfully', () => {
 			const mockTemplate = '<html><body>{{EMAIL_BODY_CONTENT}}</body></html>';
-			mockReadFileSync.mockReturnValue(mockTemplate);
+			mockLoadEmailWrapperTemplate.mockReturnValue(mockTemplate);
 
 			const result = notification.testLoadEmailTemplate();
 
 			expect(result).toBe(mockTemplate);
-			expect(mockReadFileSync).toHaveBeenCalledWith(
-				expect.stringContaining('base-email.html'),
-				'utf-8'
-			);
+			expect(mockLoadEmailWrapperTemplate).toHaveBeenCalled();
 		});
 
-		it('should return empty string on file read error', () => {
-			mockReadFileSync.mockImplementation(() => {
-				throw new Error('File not found');
-			});
+		it('should return empty string when template is not available', () => {
+			mockLoadEmailWrapperTemplate.mockReturnValue('');
 
 			const result = notification.testLoadEmailTemplate();
 
 			expect(result).toBe('');
 		});
 
-		it('should use correct template path', () => {
+		it('should delegate to loadEmailWrapperTemplate', () => {
 			const mockTemplate = '<html>Template</html>';
-			mockReadFileSync.mockReturnValue(mockTemplate);
+			mockLoadEmailWrapperTemplate.mockReturnValue(mockTemplate);
 
 			notification.testLoadEmailTemplate();
 
-			const expectedPath = path.join(
-				process.cwd(),
-				'src',
-				'notifications',
-				'templates',
-				'email',
-				'base-email.html'
-			);
-			expect(mockReadFileSync).toHaveBeenCalledWith(expectedPath, 'utf-8');
+			expect(mockLoadEmailWrapperTemplate).toHaveBeenCalled();
 		});
 
-		it('should handle different error types', () => {
-			mockReadFileSync.mockImplementation(() => {
-				throw new Error('Permission denied');
-			});
+		it('should handle template loader returning empty', () => {
+			mockLoadEmailWrapperTemplate.mockReturnValue('');
 
 			const result = notification.testLoadEmailTemplate();
 			expect(result).toBe('');
 
-			mockReadFileSync.mockImplementation(() => {
-				throw new Error('ENOENT');
-			});
+			mockLoadEmailWrapperTemplate.mockReturnValue('');
 
 			const result2 = notification.testLoadEmailTemplate();
 			expect(result2).toBe('');
@@ -171,7 +152,7 @@ describe('BaseNotification', () => {
 		`;
 
 		beforeEach(() => {
-			mockReadFileSync.mockReturnValue(mockTemplate);
+			mockLoadEmailWrapperTemplate.mockReturnValue(mockTemplate);
 		});
 
 		it('should replace all placeholders correctly', () => {
@@ -227,7 +208,7 @@ describe('BaseNotification', () => {
 		});
 
 		it('should return original content if template loading fails', () => {
-			mockReadFileSync.mockReturnValue('');
+			mockLoadEmailWrapperTemplate.mockReturnValue('');
 
 			const content = '<p>Original content</p>';
 			const data = { appTitle: 'App' };

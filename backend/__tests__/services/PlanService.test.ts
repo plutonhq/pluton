@@ -5,6 +5,7 @@ import { PlanService } from '../../src/services/PlanService';
 import { PlanStore } from '../../src/stores/PlanStore';
 import { StorageStore } from '../../src/stores/StorageStore';
 import { DeviceStore } from '../../src/stores/DeviceStore';
+import { RestoreStore } from '../../src/stores/RestoreStore';
 import { BaseBackupManager } from '../../src/managers/BaseBackupManager';
 import { NewPlanReq, PlanBackupSettings } from '../../src/types/plans';
 import { NotFoundError } from '../../src/utils/AppError';
@@ -15,6 +16,7 @@ jest.mock('../../src/stores/PlanStore');
 jest.mock('../../src/stores/StorageStore');
 jest.mock('../../src/stores/DeviceStore');
 jest.mock('../../src/managers/BaseBackupManager');
+jest.mock('../../src/stores/RestoreStore');
 
 // We also need to mock the strategy that gets instantiated inside the service
 jest.mock('../../src/strategies/backup/LocalStrategy');
@@ -27,6 +29,7 @@ describe('PlanService', () => {
 	let mockBackupStore: jest.Mocked<BackupStore>;
 	let mockStorageStore: jest.Mocked<StorageStore>;
 	let mockDeviceStore: jest.Mocked<DeviceStore>;
+	let mockRestoreStore: jest.Mocked<RestoreStore>;
 	let mockLocalAgent: jest.Mocked<BaseBackupManager>;
 	let mockStrategy: jest.Mocked<LocalStrategy>;
 
@@ -46,9 +49,11 @@ describe('PlanService', () => {
 		mockStorageStore = new StorageStore(null as any) as jest.Mocked<StorageStore>;
 		mockBackupStore = new BackupStore(null as any) as jest.Mocked<BackupStore>;
 		mockDeviceStore = new DeviceStore(null as any) as jest.Mocked<DeviceStore>;
+		mockRestoreStore = new RestoreStore(null as any) as jest.Mocked<RestoreStore>;
 		mockLocalAgent = new BaseBackupManager() as jest.Mocked<BaseBackupManager>;
 
 		mockBackupStore.deleteByPlanId = jest.fn();
+		mockRestoreStore.deleteByPlanId = jest.fn();
 
 		// The service instantiates the strategy, so we need to mock its constructor and methods
 		mockStrategy = new LocalStrategy(mockLocalAgent) as jest.Mocked<LocalStrategy>;
@@ -60,7 +65,7 @@ describe('PlanService', () => {
 			mockBackupStore,
 			mockStorageStore,
 			mockDeviceStore,
-			null as any
+			mockRestoreStore
 		);
 	});
 
@@ -501,7 +506,7 @@ describe('PlanService', () => {
 	// -------------------------------
 	// Tests for checking active backups
 	// -------------------------------
-	describe('checkActiveBackups', () => {
+	describe('checkActiveBackupsOrRestore', () => {
 		const planId = 'plan-456';
 
 		it('should return true if the store reports active backups', async () => {
@@ -509,7 +514,7 @@ describe('PlanService', () => {
 			mockPlanStore.hasActiveBackups.mockResolvedValue(true);
 
 			// Act
-			const result = await planService.checkActiveBackups(planId);
+			const result = await planService.checkActiveBackupsOrRestore(planId, 'backup');
 
 			// Assert
 			expect(mockPlanStore.hasActiveBackups).toHaveBeenCalledWith(planId);
@@ -521,7 +526,7 @@ describe('PlanService', () => {
 			mockPlanStore.hasActiveBackups.mockResolvedValue(false);
 
 			// Act
-			const result = await planService.checkActiveBackups(planId);
+			const result = await planService.checkActiveBackupsOrRestore(planId, 'backup');
 
 			// Assert
 			expect(mockPlanStore.hasActiveBackups).toHaveBeenCalledWith(planId);
