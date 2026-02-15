@@ -115,7 +115,7 @@
 		"test": "jest --config jest.config.ts",
 		"build:pkg": "node ./scripts/build-pkg.js",
 		"clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true});require('fs').rmSync('public',{recursive:true,force:true})\"",
-		"copy:frontend": "node -e \"const fs=require('fs');const path=require('path');function copyDir(s,d){fs.mkdirSync(d,{recursive:true});fs.readdirSync(s,{withFileTypes:true}).forEach(e=>{const sp=path.join(s,e.name),dp=path.join(d,e.name);e.isDirectory()?copyDir(sp,dp):fs.copyFileSync(sp,dp)})};copyDir('../frontend/dist','public')\"",
+		"copy:frontend": "node -e \"const fs=require('fs');const path=require('path');const src='../frontend/dist';if(!fs.existsSync(src)){console.log('Skipping copy:frontend - frontend dist not found');process.exit(0)};function copyDir(s,d){fs.mkdirSync(d,{recursive:true});fs.readdirSync(s,{withFileTypes:true}).forEach(e=>{const sp=path.join(s,e.name),dp=path.join(d,e.name);e.isDirectory()?copyDir(sp,dp):fs.copyFileSync(sp,dp)})};copyDir(src,'public')\"",
 		"build": "pnpm run clean && node ./scripts/build.js && pnpm run copy:frontend",
 		"package": "node ./scripts/build.js",
 		"prepublishOnly": "pnpm run clean && node ./scripts/build.js"
