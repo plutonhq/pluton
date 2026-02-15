@@ -12,6 +12,9 @@ export function toResticPath(srcPath: string) {
 	// Replace backslashes with forward slashes
 	normalizedPath = normalizedPath.replace(/\\/g, '/');
 
+	// Collapse redundant forward slashes (preserve leading // for UNC paths)
+	normalizedPath = normalizedPath.replace(/([^/])\/+/g, '$1/');
+
 	// Remove the colon after the drive letter, if present
 	normalizedPath = normalizedPath.replace(/^([A-Za-z]):/, '$1');
 

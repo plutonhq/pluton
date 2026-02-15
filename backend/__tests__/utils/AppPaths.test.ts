@@ -81,7 +81,10 @@ describe('AppPaths', () => {
 			expect(freshAppPaths.getBaseDir()).toBe(customDir);
 		});
 
-		it('should use ProgramData on Windows', () => {
+		// These Windows tests require the native path module to handle backslashes
+		const windowsIt = process.platform === 'win32' ? it : it.skip;
+
+		windowsIt('should use ProgramData on Windows', () => {
 			// Arrange
 			process.env.NODE_ENV = 'production';
 			process.env.PROGRAMDATA = 'C:\\ProgramData';
@@ -103,7 +106,7 @@ describe('AppPaths', () => {
 			expect(freshAppPaths.getBaseDir()).toBe(expectedPath);
 		});
 
-		it('should use default ProgramData path when PROGRAMDATA is not set on Windows', () => {
+		windowsIt('should use default ProgramData path when PROGRAMDATA is not set on Windows', () => {
 			// Arrange
 			process.env.NODE_ENV = 'production';
 			delete process.env.PROGRAMDATA;

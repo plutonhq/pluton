@@ -54,11 +54,10 @@ jest.mock('https', () => ({
 	default: { get: (...args: any[]) => httpsGetMock(...args) },
 }));
 
-const promisifyMock = jest.fn();
-const promisifiedExecMock = jest.fn();
+const mockPromisifiedExec = jest.fn().mockResolvedValue({ stdout: '', stderr: '' });
 jest.mock('util', () => ({
 	__esModule: true,
-	promisify: (...args: any[]) => promisifyMock(...args),
+	promisify: jest.fn().mockReturnValue(mockPromisifiedExec),
 }));
 
 jest.mock('../../src/utils/versions', () => ({
@@ -109,9 +108,9 @@ describe('BaseSystemManager', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 
-		// util.promisify returns our mocked execAsync function
-		(promisifyMock as jest.Mock).mockReturnValue(promisifiedExecMock);
-		(promisifiedExecMock as jest.Mock).mockResolvedValue({ stdout: '', stderr: '' });
+		// Reset the promisified exec mock for each test
+		mockPromisifiedExec.mockReset();
+		mockPromisifiedExec.mockResolvedValue({ stdout: '', stderr: '' });
 
 		// Default OS platform linux
 		jest.spyOn(os, 'platform').mockReturnValue('linux' as NodeJS.Platform);
@@ -242,7 +241,7 @@ describe('BaseSystemManager', () => {
 				type: 'ext4',
 				mount: '/',
 				// Match current friendly name
-				name: 'Local Disk (/)',
+				name: 'Root (/)',
 			});
 			const net = (res.result as any).network;
 			expect(Array.isArray(net)).toBe(true);
@@ -519,7 +518,7 @@ describe('BaseSystemManager', () => {
 `;
 
 			// Route exec calls by command content to handle preliminary checks
-			(promisifiedExecMock as jest.Mock).mockImplementation((cmd: string) => {
+			(mockPromisifiedExec as jest.Mock).mockImplementation((cmd: string) => {
 				const s = String(cmd);
 				if (/which\s+lsblk|command\s+-v\s+lsblk/i.test(s)) {
 					return Promise.resolve({ stdout: '/usr/bin/lsblk\n', stderr: '' });

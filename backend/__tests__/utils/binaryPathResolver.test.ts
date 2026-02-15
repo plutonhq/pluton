@@ -197,7 +197,10 @@ describe('getBinaryPath', () => {
 			expect(result).toBe(expectedPath);
 		});
 
-		it('appends .exe on Windows for pkg path', () => {
+		// Tests that use Windows-style paths with backslashes require native Windows path module
+		const windowsIt = process.platform === 'win32' ? it : it.skip;
+
+		windowsIt('appends .exe on Windows for pkg path', () => {
 			(process as any).pkg = {};
 			Object.defineProperty(process, 'execPath', {
 				value: 'C:\\Program Files\\app\\app.exe',
@@ -216,7 +219,7 @@ describe('getBinaryPath', () => {
 			expect(result).toBe(expectedPath);
 		});
 
-		it('appends .exe on Windows for production path', () => {
+		windowsIt('appends .exe on Windows for production path', () => {
 			Object.defineProperty(process, 'execPath', { value: 'C:\\app\\myapp.exe', writable: true });
 
 			const expectedPath = path.join('C:\\app', 'restic.exe');

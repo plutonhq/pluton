@@ -239,7 +239,9 @@ describe('runResticCommand', () => {
 		expect(onProgress).toHaveBeenCalledWith(Buffer.from(plainTextData));
 	});
 
-	it('should replace backslashes in rclone binary path on Windows', async () => {
+	// This test requires Windows path semantics (path.basename with backslashes)
+	const windowsIt = process.platform === 'win32' ? it : it.skip;
+	windowsIt('should replace backslashes in rclone binary path on Windows', async () => {
 		const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
 		Object.defineProperty(process, 'platform', {
 			value: 'win32',

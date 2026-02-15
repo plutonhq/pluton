@@ -36,6 +36,7 @@ const config: Config = {
 		// This alias is now even more important to keep imports clean
 		'^#core-backend/(.*)$': '<rootDir>/src/$1',
 	},
+	setupFiles: ['<rootDir>/__tests__/env-setup.ts'],
 	setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
 	transformIgnorePatterns: ['/node_modules/(?!nanoid)/'],
 };

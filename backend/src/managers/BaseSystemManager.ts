@@ -406,7 +406,7 @@ export class BaseSystemManager {
 	}
 
 	private getFriendlyMountName(fs: any): string {
-		if (process.platform === 'win32') {
+		if (os.platform() === 'win32') {
 			return `Local Disk (${fs.mount})`;
 		}
 
