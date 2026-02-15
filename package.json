@@ -4,6 +4,8 @@
   "description": "Pluton - Open Source Backup Software",
   "license": "Apache-2.0",
   "scripts": {
+    "prepare": "pnpm run setup:hooks",
+    "setup:hooks": "node ./scripts/setup-git-hooks.js",
     "build": "turbo run build",
     "build:executables": "node ./scripts/build-executables.js",
     "build:appimage:local": "wsl -e bash -c \"cd /mnt/f/JS/apps/pluton/codebase/pluton-app/pluton/installers/linux && ./build-appimage.sh all pluton\"",
