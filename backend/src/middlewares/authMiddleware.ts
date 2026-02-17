@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import Cookies from 'cookies';
 import { configService } from '../services/ConfigService';
+import { safeCompare } from '../utils/helpers';
 
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
 	const cookies = new Cookies(req, res);
@@ -14,9 +15,11 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
 		'GET:/api/health',
 		'POST:/api/plans',
 	];
-	const verifiedAPI = req.headers.authorization
-		? req.headers.authorization.substring('Bearer '.length) === configService.config.APIKEY
-		: false;
+
+	const verifiedAPI = safeCompare(
+		req.headers.authorization ? req.headers.authorization.substring('Bearer '.length) : '',
+		configService.config.APIKEY || ''
+	);
 	const accessingAllowedRoute =
 		req.url &&
 		req.method &&

@@ -1,4 +1,5 @@
 import { customAlphabet } from 'nanoid';
+import { timingSafeEqual } from 'crypto';
 
 export const isDevMode = process.env.NODE_ENV === 'development';
 
@@ -56,3 +57,8 @@ export function setNestedValue(obj: any, path: string, value: any): void {
 
 	target[lastKey] = value;
 }
+
+export const safeCompare = (a: string, b: string): boolean => {
+	if (a.length !== b.length) return false;
+	return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+};

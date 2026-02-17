@@ -17,21 +17,23 @@ export class UserController {
 		const theUserName = configService.config.USER_NAME;
 
 		if (username === theUserName && password === configService.config.USER_PASSWORD) {
-			const token = jwt.sign({ user: theUserName }, configService.config.SECRET);
-
 			// Express way of setting cookies
 			const sessionDuration = configService.config.SESSION_DURATION || 7;
+			const token = jwt.sign({ user: theUserName }, configService.config.SECRET, {
+				expiresIn: `${sessionDuration}d`,
+			});
 			res.cookie('token', token, {
 				httpOnly: true,
 				sameSite: 'lax',
 				maxAge: sessionDuration * 24 * 60 * 60 * 1000,
+				secure: configService.config.APP_URL?.startsWith('https'),
 			});
 
 			res.status(200).json({ success: true, error: null });
 			return;
 		}
 
-		const error = username !== theUserName ? 'Incorrect Username' : 'Incorrect Password';
+		const error = 'Incorrect Username or Password';
 		res.status(401).json({ success: false, error });
 		return;
 	}
