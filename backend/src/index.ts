@@ -23,6 +23,13 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 if (isMainModule || isDevelopment) {
 	(async () => {
+		// Handle --reset-password CLI command (runs and exits, does not start server)
+		if (process.argv.includes('--reset-password')) {
+			const { handlePasswordReset } = await import('./utils/cliPasswordReset');
+			await handlePasswordReset();
+			return; // handlePasswordReset calls process.exit(), but just in case
+		}
+
 		// For binary installations on Windows/macOS, try to load credentials from keyring
 		if (requiresKeyringSetup() && configService.isSetupPending()) {
 			console.log('[CORE] Attempting to load credentials from system keyring...');
