@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { getResticVersion, getRcloneVersion } from '../../src/utils/versions';
 
 jest.mock('child_process');
@@ -6,7 +6,7 @@ jest.mock('../../src/utils/binaryPathResolver', () => ({
 	getBinaryPath: jest.fn((name: string) => name),
 }));
 
-const mockedExecSync = execSync as jest.MockedFunction<typeof execSync>;
+const mockedExecFileSync = execFileSync as jest.MockedFunction<typeof execFileSync>;
 
 describe('versions', () => {
 	beforeEach(() => {
@@ -16,16 +16,16 @@ describe('versions', () => {
 	describe('getResticVersion', () => {
 		it('should return version when restic is installed', () => {
 			const mockOutput = JSON.stringify({ version: '0.16.0' });
-			mockedExecSync.mockReturnValue(Buffer.from(mockOutput));
+			mockedExecFileSync.mockReturnValue(Buffer.from(mockOutput));
 
 			const version = getResticVersion();
 
 			expect(version).toBe('0.16.0');
-			expect(mockedExecSync).toHaveBeenCalledWith('restic version --json');
+			expect(mockedExecFileSync).toHaveBeenCalledWith('restic', ['version', '--json']);
 		});
 
 		it('should return "not_installed" when restic command fails', () => {
-			mockedExecSync.mockImplementation(() => {
+			mockedExecFileSync.mockImplementation(() => {
 				throw new Error('Command not found');
 			});
 
@@ -35,7 +35,7 @@ describe('versions', () => {
 		});
 
 		it('should return "not_installed" when output is empty', () => {
-			mockedExecSync.mockReturnValue(Buffer.from(''));
+			mockedExecFileSync.mockReturnValue(Buffer.from(''));
 
 			const version = getResticVersion();
 
@@ -44,7 +44,7 @@ describe('versions', () => {
 
 		it('should handle whitespace in output', () => {
 			const mockOutput = `  ${JSON.stringify({ version: '0.15.2' })}  \n`;
-			mockedExecSync.mockReturnValue(Buffer.from(mockOutput));
+			mockedExecFileSync.mockReturnValue(Buffer.from(mockOutput));
 
 			const version = getResticVersion();
 
@@ -52,7 +52,7 @@ describe('versions', () => {
 		});
 
 		it('should return "not_installed" when JSON parsing fails', () => {
-			mockedExecSync.mockReturnValue(Buffer.from('invalid json'));
+			mockedExecFileSync.mockReturnValue(Buffer.from('invalid json'));
 
 			const version = getResticVersion();
 
@@ -61,7 +61,7 @@ describe('versions', () => {
 
 		it('should handle different version formats', () => {
 			const mockOutput = JSON.stringify({ version: '0.17.0-dev' });
-			mockedExecSync.mockReturnValue(Buffer.from(mockOutput));
+			mockedExecFileSync.mockReturnValue(Buffer.from(mockOutput));
 
 			const version = getResticVersion();
 
@@ -72,16 +72,16 @@ describe('versions', () => {
 	describe('getRcloneVersion', () => {
 		it('should return version when rclone is installed', () => {
 			const mockOutput = 'rclone v1.65.0\n- os/version: ...\n- go/version: ...';
-			mockedExecSync.mockReturnValue(Buffer.from(mockOutput));
+			mockedExecFileSync.mockReturnValue(Buffer.from(mockOutput));
 
 			const version = getRcloneVersion();
 
 			expect(version).toBe('1.65.0');
-			expect(mockedExecSync).toHaveBeenCalledWith('rclone version');
+			expect(mockedExecFileSync).toHaveBeenCalledWith('rclone', ['version']);
 		});
 
 		it('should return "not_installed" when rclone command fails', () => {
-			mockedExecSync.mockImplementation(() => {
+			mockedExecFileSync.mockImplementation(() => {
 				throw new Error('Command not found');
 			});
 
@@ -91,7 +91,7 @@ describe('versions', () => {
 		});
 
 		it('should return "not_installed" when version pattern not found', () => {
-			mockedExecSync.mockReturnValue(Buffer.from('some random output'));
+			mockedExecFileSync.mockReturnValue(Buffer.from('some random output'));
 
 			const version = getRcloneVersion();
 
@@ -100,7 +100,7 @@ describe('versions', () => {
 
 		it('should handle different rclone version formats', () => {
 			const mockOutput = 'rclone v1.64.2\nSome other info';
-			mockedExecSync.mockReturnValue(Buffer.from(mockOutput));
+			mockedExecFileSync.mockReturnValue(Buffer.from(mockOutput));
 
 			const version = getRcloneVersion();
 
@@ -109,7 +109,7 @@ describe('versions', () => {
 
 		it('should handle whitespace in output', () => {
 			const mockOutput = '  rclone v1.66.0  \n\n';
-			mockedExecSync.mockReturnValue(Buffer.from(mockOutput));
+			mockedExecFileSync.mockReturnValue(Buffer.from(mockOutput));
 
 			const version = getRcloneVersion();
 
@@ -120,7 +120,7 @@ describe('versions', () => {
 			const mockOutput = `rclone v1.65.1
 - os/arch: linux/amd64
 - go version: go1.21.4`;
-			mockedExecSync.mockReturnValue(Buffer.from(mockOutput));
+			mockedExecFileSync.mockReturnValue(Buffer.from(mockOutput));
 
 			const version = getRcloneVersion();
 

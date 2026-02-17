@@ -97,6 +97,14 @@ jest.mock('../../src/services/ConfigService', () => ({
 	},
 }));
 
+const mockSaveResticGlobalSettings = jest.fn();
+const mockSaveRcloneGlobalSettings = jest.fn();
+jest.mock('../../src/utils/globalSettings', () => ({
+	__esModule: true,
+	saveResticGlobalSettings: (...args: any[]) => mockSaveResticGlobalSettings(...args),
+	saveRcloneGlobalSettings: (...args: any[]) => mockSaveRcloneGlobalSettings(...args),
+}));
+
 import os from 'os';
 import si from 'systeminformation';
 import { execSync } from 'child_process';
@@ -410,54 +418,53 @@ describe('BaseSystemManager', () => {
 	});
 
 	describe('updateSettings', () => {
-		it('writes environment vars on linux', async () => {
-			jest.spyOn(os, 'platform').mockReturnValue('linux' as any);
-			readFileMock.mockResolvedValue('RCLONE_TEMP_DIR=/old\nSOME=keep\n');
+		it('persists restic and rclone settings via globalSettings helpers', async () => {
+			const resticSettings = {
+				maxProcessor: 4,
+				cacheDir: '/cache/restic',
+				tmpDir: '/tmp',
+				readConcurrency: 8,
+				packSize: '4M',
+			};
+			const rcloneSettings = {
+				tempDir: '/tmp/rclone',
+				cacheDir: '/cache/rclone',
+				bwlimit: '10M:100k',
+				timeout: '5m',
+				retries: 3,
+				lowLevelRetries: 5,
+				transfers: 4,
+				checkers: 8,
+				bufferSize: '16M',
+				multiThreadStream: 4,
+				configPass: 'secret',
+			};
 
 			const manager = new BaseSystemManager();
 			const res = await manager.updateSettings({
 				tempDir: '/tmp/pluton',
-				restic: {
-					maxProcessor: 4,
-					cacheDir: '/cache/restic',
-					tmpDir: '/tmp', // not used by code, but fine
-					readConcurrency: 8,
-					packSize: '4M',
-				},
-				rclone: {
-					tempDir: '/tmp/rclone',
-					cacheDir: '/cache/rclone',
-					bwlimit: '10M:100k',
-					timeout: '5m',
-					retries: 3,
-					lowLevelRetries: 5,
-					transfers: 4,
-					checkers: 8,
-					bufferSize: '16M',
-					multiThreadStream: 4,
-					// configPass included below in deletion test
-					configPass: 'secret',
-				},
+				restic: resticSettings,
+				rclone: rcloneSettings,
 			} as any);
 
 			expect(res.success).toBe(true);
-			expect(writeFileMock).toHaveBeenCalledTimes(1);
-			const content = (writeFileMock.mock.calls[0] as any[])[1] as string;
-			expect(content).toEqual(expect.stringContaining('GOMAXPROCS=4'));
-			expect(content).toEqual(expect.stringContaining('RESTIC_CACHE_DIR=/cache/restic'));
-			expect(content).toEqual(expect.stringContaining('RESTIC_READ_CONCURRENCY=8'));
-			expect(content).toEqual(expect.stringContaining('RESTIC_PACK_SIZE=4M'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_TEMP_DIR=/tmp/rclone'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_CACHE_DIR=/cache/rclone'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_BWLIMIT=10M:100k'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_TIMEOUT=5m'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_RETRIES=3'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_LOW_LEVEL_RETRIES=5'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_TRANSFERS=4'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_CHECKERS=8'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_BUFFER_SIZE=16M'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_MULTI_THREAD_STREAMS=4'));
-			expect(content).toEqual(expect.stringContaining('RCLONE_CONFIG_PASS=secret'));
+			expect(res.result).toBe('Global rclone/restic settings updated successfully!');
+			expect(mockSaveResticGlobalSettings).toHaveBeenCalledWith(resticSettings);
+			expect(mockSaveRcloneGlobalSettings).toHaveBeenCalledWith(rcloneSettings);
+		});
+
+		it('returns failure when saving throws', async () => {
+			mockSaveResticGlobalSettings.mockImplementation(() => {
+				throw new Error('disk full');
+			});
+
+			const manager = new BaseSystemManager();
+			const res = await manager.updateSettings({
+				restic: { maxProcessor: 2 },
+			} as any);
+
+			expect(res.success).toBe(false);
+			expect(res.result).toBe('disk full');
 		});
 	});
 

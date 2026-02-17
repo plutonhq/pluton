@@ -4,7 +4,12 @@ import { EventEmitter } from 'events';
 jest.mock('child_process');
 jest.mock('../../../src/utils/binaryPathResolver');
 jest.mock('../../../src/utils/rclone/helpers');
-jest.mock('../../../src/utils/AppPaths');
+jest.mock('../../../src/utils/AppPaths', () => ({
+	appPaths: {
+		getConfigDir: jest.fn().mockReturnValue('/mock/config'),
+		getTempDir: jest.fn().mockReturnValue('/mock/temp'),
+	},
+}));
 jest.mock('../../../src/utils/restic/helpers');
 jest.mock('../../../src/services/ConfigService', () => ({
 	configService: {
