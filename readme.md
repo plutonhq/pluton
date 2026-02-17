@@ -46,7 +46,7 @@ Pluton is a self-hosted backup management platform that simplifies automated, in
 
 ## Desktop Installation
 
-Pluton can be installed on Windows and Linux Desktop variants. You can download the installers from the [Website](https://usepluton.com/download) page.
+Pluton can be installed on Windows and Linux Desktop variants. You can download the installers from the [Download](https://usepluton.com/download) page.
 
 ## Docker Installation
 
