@@ -181,7 +181,7 @@ export async function createApp(): Promise<{ app: Express }> {
 
 	// For any other request that doesn't match an API route or a static file,
 	// serve the index.html file. This is the key for Single Page Applications.
-	app.get('*', (req, res) => {
+	app.get('{*path}', (req, res) => {
 		res.sendFile(path.join(publicPath, 'index.html'));
 	});
 
