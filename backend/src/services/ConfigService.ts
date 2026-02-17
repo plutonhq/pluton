@@ -1,9 +1,12 @@
 import { z } from 'zod';
 import fs from 'fs';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { appPaths } from '../utils/AppPaths';
 import path from 'path';
 import { requiresKeyringSetup } from '../utils/installHelpers';
+
+const BCRYPT_SALT_ROUNDS = 10;
 
 // Schema for the .env config file (with optional sensitive fields for setup mode)
 const baseConfigSchema = z.object({
@@ -68,12 +71,14 @@ const userConfigSchema = baseConfigSchema
 const finalConfigSchema = configSchema.extend({
 	SECRET: z.string().min(12),
 	APIKEY: z.string().min(12),
+	PASSWORD_HASH: z.string().min(1).optional(),
 });
 
 // Setup mode config schema (doesn't require sensitive fields)
 const setupModeConfigSchema = baseConfigSchema.extend({
 	SECRET: z.string().min(12),
 	APIKEY: z.string().min(12),
+	PASSWORD_HASH: z.string().min(1).optional(),
 	SETUP_PENDING: z.literal(true),
 });
 
@@ -164,17 +169,21 @@ class ConfigService {
 		this.keysPath = path.join(appPaths.getDataDir(), 'keys.json');
 		const secrets = this.loadOrGenerateSecrets(envConfig.SECRET, envConfig.APIKEY);
 
-		// 4. Merge all sources (file overrides env, which overrides defaults)
+		// 4. Hash the password if provided via env var
+		const passwordHash = this.hashPasswordIfNeeded(envConfig.USER_PASSWORD);
+
+		// 5. Merge all sources (file overrides env, which overrides defaults)
 		const mergedConfig = {
 			...envConfig,
 			...fileConfig,
 			SECRET: secrets.SECRET, // System secrets fill in the gaps
 			APIKEY: secrets.APIKEY,
+			PASSWORD_HASH: passwordHash,
 			IS_DOCKER: rawEnv.IS_DOCKER === 'true' || rawEnv.IS_DOCKER === '1',
 			IS_BINARY: (process as any).pkg ? true : false,
 		};
 
-		// 5. Validate final configuration
+		// 6. Validate final configuration
 		const parsedConfig = finalConfigSchema.safeParse(mergedConfig);
 
 		if (!parsedConfig.success) {
@@ -192,6 +201,7 @@ class ConfigService {
 					ENCRYPTION_KEY: '', // Will be set during setup
 					USER_NAME: 'admin', // Default value
 					USER_PASSWORD: '', // Will be set during setup
+					PASSWORD_HASH: '', // Will be set during setup
 					SETUP_PENDING: true,
 				} as SetupModeConfig;
 
@@ -260,8 +270,83 @@ class ConfigService {
 	}
 
 	/**
+	 * Hash a plaintext password and store the hash in keys.json.
+	 * If no plaintext password is provided, returns the existing hash from keys.json (if any).
+	 */
+	private hashPasswordIfNeeded(plaintextPassword?: string): string | undefined {
+		let keysFileContent: Record<string, any> = {};
+		try {
+			if (fs.existsSync(this.keysPath)) {
+				keysFileContent = JSON.parse(fs.readFileSync(this.keysPath, 'utf-8'));
+			}
+		} catch (error) {
+			// Ignore read errors
+		}
+
+		// If a plaintext password is provided (from env var), hash it and store
+		if (plaintextPassword) {
+			const hash = bcrypt.hashSync(plaintextPassword, BCRYPT_SALT_ROUNDS);
+			try {
+				const newContent = { ...keysFileContent, PASSWORD_HASH: hash };
+				const dir = path.dirname(this.keysPath);
+				if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+				fs.writeFileSync(this.keysPath, JSON.stringify(newContent, null, 2), { mode: 0o600 });
+				console.log('[ConfigService] Password hash stored in keys.json');
+			} catch (error) {
+				console.error(`[ConfigService] Failed to save password hash to keys.json: ${error}`);
+			}
+			return hash;
+		}
+
+		// Otherwise, return the existing hash from keys.json (for keyring/setup flow)
+		return keysFileContent.PASSWORD_HASH || undefined;
+	}
+
+	/**
+	 * Hash a password and store the hash in keys.json.
+	 * Used by SetupController and password change endpoints.
+	 */
+	public hashAndStorePassword(plaintextPassword: string): string {
+		const hash = bcrypt.hashSync(plaintextPassword, BCRYPT_SALT_ROUNDS);
+
+		let keysFileContent: Record<string, any> = {};
+		try {
+			if (fs.existsSync(this.keysPath)) {
+				keysFileContent = JSON.parse(fs.readFileSync(this.keysPath, 'utf-8'));
+			}
+		} catch (error) {
+			// Ignore read errors
+		}
+
+		try {
+			const newContent = { ...keysFileContent, PASSWORD_HASH: hash };
+			const dir = path.dirname(this.keysPath);
+			if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+			fs.writeFileSync(this.keysPath, JSON.stringify(newContent, null, 2), { mode: 0o600 });
+			console.log('[ConfigService] Password hash updated in keys.json');
+		} catch (error) {
+			console.error(`[ConfigService] Failed to save password hash to keys.json: ${error}`);
+		}
+
+		// Update in-memory config
+		(this._config as any).PASSWORD_HASH = hash;
+
+		return hash;
+	}
+
+	/**
+	 * Verify a plaintext password against the stored bcrypt hash.
+	 */
+	public verifyPassword(plaintextPassword: string): boolean {
+		const hash = (this._config as any).PASSWORD_HASH;
+		if (!hash) return false;
+		return bcrypt.compareSync(plaintextPassword, hash);
+	}
+
+	/**
 	 * Gets the singleton instance of the ConfigService.
 	 */
+
 	public static getInstance(): ConfigService {
 		if (!ConfigService.instance) {
 			ConfigService.instance = new ConfigService();
@@ -289,10 +374,14 @@ class ConfigService {
 			throw new Error('Setup is not pending. Cannot complete setup.');
 		}
 
+		// Hash the password and store in keys.json
+		const passwordHash = this.hashAndStorePassword(credentials.USER_PASSWORD);
+
 		// Update the config with the new credentials
 		this._config = {
 			...this._config,
 			...credentials,
+			PASSWORD_HASH: passwordHash,
 			SETUP_PENDING: false,
 		} as AppConfig;
 
@@ -315,6 +404,7 @@ class ConfigService {
 			const credentials = await keyringService.getAllCredentials();
 
 			if (credentials.ENCRYPTION_KEY && credentials.USER_NAME && credentials.USER_PASSWORD) {
+				// All credentials present - complete normal setup
 				ConfigService.instance.completeSetup({
 					ENCRYPTION_KEY: credentials.ENCRYPTION_KEY,
 					USER_NAME: credentials.USER_NAME,

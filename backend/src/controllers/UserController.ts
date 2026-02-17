@@ -16,7 +16,7 @@ export class UserController {
 
 		const theUserName = configService.config.USER_NAME;
 
-		if (username === theUserName && password === configService.config.USER_PASSWORD) {
+		if (username === theUserName && configService.verifyPassword(password)) {
 			// Express way of setting cookies
 			const sessionDuration = configService.config.SESSION_DURATION || 7;
 			const token = jwt.sign({ user: theUserName }, configService.config.SECRET, {

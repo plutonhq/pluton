@@ -4,6 +4,10 @@ import { configService } from '../../src/services/ConfigService';
 import jwt from 'jsonwebtoken';
 
 jest.mock('jsonwebtoken');
+
+const mockVerifyPassword = jest.fn();
+const mockHashAndStorePassword = jest.fn();
+
 jest.mock('../../src/services/ConfigService', () => ({
 	configService: {
 		config: {
@@ -12,6 +16,8 @@ jest.mock('../../src/services/ConfigService', () => ({
 			SECRET: 'test-secret',
 			SESSION_DURATION: 7,
 		},
+		verifyPassword: (...args: any[]) => mockVerifyPassword(...args),
+		hashAndStorePassword: (...args: any[]) => mockHashAndStorePassword(...args),
 	},
 }));
 
@@ -26,6 +32,8 @@ describe('UserController', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockVerifyPassword.mockReturnValue(false);
+		mockHashAndStorePassword.mockReturnValue('$2a$10$mockhash');
 
 		mockJson = jest.fn().mockReturnThis();
 		mockStatus = jest.fn().mockReturnValue({ json: mockJson });
@@ -76,33 +84,45 @@ describe('UserController', () => {
 
 		it('should return 401 if username is incorrect', async () => {
 			mockRequest.body = { username: 'wronguser', password: 'testpass' };
+			mockVerifyPassword.mockReturnValue(true);
 
 			await userController.loginUser(mockRequest as Request, mockResponse as Response);
 
 			expect(mockStatus).toHaveBeenCalledWith(401);
-			expect(mockJson).toHaveBeenCalledWith({ success: false, error: 'Incorrect Username' });
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				error: 'Incorrect Username or Password',
+			});
 		});
 
 		it('should return 401 if password is incorrect', async () => {
 			mockRequest.body = { username: 'testuser', password: 'wrongpass' };
+			mockVerifyPassword.mockReturnValue(false);
 
 			await userController.loginUser(mockRequest as Request, mockResponse as Response);
 
 			expect(mockStatus).toHaveBeenCalledWith(401);
-			expect(mockJson).toHaveBeenCalledWith({ success: false, error: 'Incorrect Password' });
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				error: 'Incorrect Username or Password',
+			});
 		});
 
 		it('should successfully login with correct credentials', async () => {
 			mockRequest.body = { username: 'testuser', password: 'testpass' };
+			mockVerifyPassword.mockReturnValue(true);
 			(jwt.sign as jest.Mock).mockReturnValue('mock-token');
 
 			await userController.loginUser(mockRequest as Request, mockResponse as Response);
 
-			expect(jwt.sign).toHaveBeenCalledWith({ user: 'testuser' }, 'test-secret');
+			expect(jwt.sign).toHaveBeenCalledWith({ user: 'testuser' }, 'test-secret', {
+				expiresIn: '7d',
+			});
 			expect(mockCookie).toHaveBeenCalledWith('token', 'mock-token', {
 				httpOnly: true,
 				sameSite: 'lax',
 				maxAge: 7 * 24 * 60 * 60 * 1000,
+				secure: undefined,
 			});
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({ success: true, error: null });
@@ -113,6 +133,7 @@ describe('UserController', () => {
 			(configService.config as any).SESSION_DURATION = undefined;
 
 			mockRequest.body = { username: 'testuser', password: 'testpass' };
+			mockVerifyPassword.mockReturnValue(true);
 			(jwt.sign as jest.Mock).mockReturnValue('mock-token');
 
 			await userController.loginUser(mockRequest as Request, mockResponse as Response);
@@ -121,6 +142,7 @@ describe('UserController', () => {
 				httpOnly: true,
 				sameSite: 'lax',
 				maxAge: 7 * 24 * 60 * 60 * 1000,
+				secure: undefined,
 			});
 
 			(configService.config as any).SESSION_DURATION = originalDuration;

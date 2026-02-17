@@ -15,6 +15,7 @@
 	],
 	"dependencies": {
 		"@napi-rs/keyring": "^1.2.0",
+		"bcryptjs": "^3.0.3",
 		"better-sqlite3": "12.2.0",
 		"cookies": "^0.9.1",
 		"cors": "^2.8.5",

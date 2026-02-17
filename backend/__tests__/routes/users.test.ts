@@ -8,6 +8,10 @@ import Cookies from 'cookies';
 
 jest.mock('jsonwebtoken');
 jest.mock('cookies');
+
+const mockVerifyPassword = jest.fn();
+const mockHashAndStorePassword = jest.fn();
+
 jest.mock('../../src/services/ConfigService', () => ({
 	configService: {
 		config: {
@@ -16,6 +20,8 @@ jest.mock('../../src/services/ConfigService', () => ({
 			SECRET: 'test-secret',
 			SESSION_DURATION: 7,
 		},
+		verifyPassword: (...args: any[]) => mockVerifyPassword(...args),
+		hashAndStorePassword: (...args: any[]) => mockHashAndStorePassword(...args),
 	},
 }));
 
@@ -25,6 +31,8 @@ describe('User Routes', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockVerifyPassword.mockReturnValue(false);
+		mockHashAndStorePassword.mockReturnValue('$2a$10$mockhash');
 		userController = new UserController();
 
 		app = express();
@@ -48,25 +56,28 @@ describe('User Routes', () => {
 		});
 
 		it('should return 401 if username is incorrect', async () => {
+			mockVerifyPassword.mockReturnValue(true);
 			const response = await request(app)
 				.post('/api/user/login')
 				.send({ username: 'wronguser', password: 'testpass' });
 
 			expect(response.status).toBe(401);
-			expect(response.body).toEqual({ success: false, error: 'Incorrect Username' });
+			expect(response.body).toEqual({ success: false, error: 'Incorrect Username or Password' });
 		});
 
 		it('should return 401 if password is incorrect', async () => {
+			mockVerifyPassword.mockReturnValue(false);
 			const response = await request(app)
 				.post('/api/user/login')
 				.send({ username: 'testuser', password: 'wrongpass' });
 
 			expect(response.status).toBe(401);
-			expect(response.body).toEqual({ success: false, error: 'Incorrect Password' });
+			expect(response.body).toEqual({ success: false, error: 'Incorrect Username or Password' });
 		});
 
 		it('should successfully login with correct credentials', async () => {
 			(jwt.sign as jest.Mock).mockReturnValue('mock-token');
+			mockVerifyPassword.mockReturnValue(true);
 
 			const response = await request(app)
 				.post('/api/user/login')
@@ -74,7 +85,9 @@ describe('User Routes', () => {
 
 			expect(response.status).toBe(200);
 			expect(response.body).toEqual({ success: true, error: null });
-			expect(jwt.sign).toHaveBeenCalledWith({ user: 'testuser' }, 'test-secret');
+			expect(jwt.sign).toHaveBeenCalledWith({ user: 'testuser' }, 'test-secret', {
+				expiresIn: '7d',
+			});
 		});
 	});
 
