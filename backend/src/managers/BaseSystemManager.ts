@@ -1,6 +1,6 @@
 import os from 'os';
 import { execSync } from 'child_process';
-import { chmod, readdir, readFile, stat, writeFile, mkdtemp, rm } from 'fs/promises';
+import { chmod, readdir, stat, mkdtemp, rm } from 'fs/promises';
 import { createWriteStream } from 'fs';
 import path from 'path';
 import si from 'systeminformation';
@@ -13,6 +13,7 @@ import { DeviceSettings, DiscoveredFilesystem, LsblkDevice, LsblkOutput } from '
 import { BaseStorageManager } from './BaseStorageManager';
 import { runCommand } from '../utils/runCommand';
 import { appPaths } from '../utils/AppPaths';
+import { saveRcloneGlobalSettings, saveResticGlobalSettings } from '../utils/globalSettings';
 
 const execAsync = promisify(exec);
 
@@ -632,89 +633,24 @@ export class BaseSystemManager {
 		deviceSettings: DeviceSettings
 	): Promise<{ success: boolean; result: string }> {
 		try {
-			const platform = os.platform();
-			const envVars: [string, string | number | undefined][] = [];
-
-			// Collect Restic env vars
+			// Persist restic global settings to data/config/restic_global.json
 			if (deviceSettings.restic) {
-				const { maxProcessor, cacheDir, readConcurrency, packSize } = deviceSettings.restic;
-				envVars.push(
-					['GOMAXPROCS', maxProcessor],
-					['RESTIC_CACHE_DIR', cacheDir],
-					['RESTIC_READ_CONCURRENCY', readConcurrency],
-					['RESTIC_PACK_SIZE', packSize]
-				);
+				saveResticGlobalSettings(deviceSettings.restic);
 			}
 
-			// Collect Rclone env vars
+			// Persist rclone global settings to data/config/rclone_global.json
 			if (deviceSettings.rclone) {
-				const {
-					tempDir,
-					cacheDir,
-					bwlimit,
-					timeout,
-					retries,
-					lowLevelRetries,
-					transfers,
-					checkers,
-					bufferSize,
-					multiThreadStream,
-					configPass,
-				} = deviceSettings.rclone;
-
-				envVars.push(
-					['RCLONE_TEMP_DIR', tempDir],
-					['RCLONE_CACHE_DIR', cacheDir],
-					['RCLONE_BWLIMIT', bwlimit],
-					['RCLONE_TIMEOUT', timeout],
-					['RCLONE_RETRIES', retries],
-					['RCLONE_LOW_LEVEL_RETRIES', lowLevelRetries],
-					['RCLONE_TRANSFERS', transfers],
-					['RCLONE_CHECKERS', checkers],
-					['RCLONE_BUFFER_SIZE', bufferSize],
-					['RCLONE_MULTI_THREAD_STREAMS', multiThreadStream],
-					['RCLONE_CONFIG_PASS', configPass]
-				);
-			}
-
-			if (platform === 'win32') {
-				for (const [key, value] of envVars) {
-					if (value === null || value === undefined) {
-						// Check if key exists before attempting deletion
-						try {
-							await execAsync(`REG QUERY "HKCU\\Environment" /v ${key}`);
-							await execAsync(`REG DELETE "HKCU\\Environment" /F /V ${key}`);
-						} catch {
-							// Key doesn't exist, skip deletion
-							continue;
-						}
-					} else {
-						await execAsync(`SETX ${key} "${value}"`);
-					}
-				}
-			} else {
-				const envFile = '/etc/environment';
-				let content = await readFile(envFile, 'utf8');
-
-				for (const [key, value] of envVars) {
-					content = content.replace(new RegExp(`^${key}=.*`, 'm'), '');
-					if (value !== null && value !== undefined) {
-						content += `\n${key}=${value}`;
-					}
-				}
-
-				content = content.replace(/\n+/g, '\n').trim();
-				await writeFile(envFile, content);
+				saveRcloneGlobalSettings(deviceSettings.rclone);
 			}
 
 			return {
 				success: true,
-				result: 'System environment variables updated successfully!',
+				result: 'Global rclone/restic settings updated successfully!',
 			};
 		} catch (error: any) {
 			return {
 				success: false,
-				result: error?.message || 'Failed to update system environment variables',
+				result: error?.message || 'Failed to update global settings',
 			};
 		}
 	}

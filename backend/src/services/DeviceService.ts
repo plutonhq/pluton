@@ -9,7 +9,7 @@ import { LocalStrategy, RemoteStrategy, SystemStrategy } from '../strategies/sys
 import { StorageStore } from '../stores/StorageStore';
 import { providers } from '../utils/providers';
 import { configService } from './ConfigService';
-import { AppError } from 'src/utils/AppError';
+import { AppError } from '../utils/AppError';
 
 export class DeviceService {
 	protected connectedDeviceIds: Set<string> | undefined;

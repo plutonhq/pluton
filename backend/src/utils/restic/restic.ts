@@ -7,6 +7,7 @@ import { getBinaryPath } from '../binaryPathResolver';
 import { appPaths } from '../AppPaths';
 import { generateResticRepoPath } from './helpers';
 import { configService } from '../../services/ConfigService';
+import { buildResticEnvFromSettings, buildRcloneEnvFromSettings } from '../globalSettings';
 
 export function runResticCommand(
 	args: string[],
@@ -32,12 +33,16 @@ export function runResticCommand(
 		const currentPath = env?.PATH || process.env.PATH || process.env.Path || '';
 		const newPath = `${rcloneDir}${path.delimiter}${currentPath}`;
 
+		// Inject global restic & rclone settings from data/config/*.json
+		const globalResticEnv = buildResticEnvFromSettings();
+		const globalRcloneEnv = buildRcloneEnvFromSettings();
+
 		const envVars = {
-			// ...process.env,
-			...env,
+			...globalResticEnv,
+			...globalRcloneEnv,
+			...env, // Per-call overrides still take precedence
 			PATH: newPath,
 			RCLONE_CONFIG: rcloneConfigPath,
-			// RCLONE_PROGRESS: 'true',
 			LOCALAPPDATA: localAppData,
 			RCLONE_CONFIG_PASS: configService.config.ENCRYPTION_KEY,
 		};

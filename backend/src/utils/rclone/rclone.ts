@@ -3,18 +3,23 @@ import os from 'os';
 import { getBinaryPath } from '../binaryPathResolver';
 import { getRcloneConfigPath } from './helpers';
 import { configService } from '../../services/ConfigService';
+import { buildRcloneEnvFromSettings } from '../globalSettings';
 
 export function runRcloneCommand(args: string[], env?: Record<string, string>): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const rcloneBinary = getBinaryPath('rclone');
 		const rcloneConfigPath = getRcloneConfigPath();
 		const localAppData = process.env.LOCALAPPDATA || os.homedir();
+		// Inject global rclone settings from data/config/rclone_global.json
+		const globalRcloneEnv = buildRcloneEnvFromSettings();
+
 		const envVars = {
 			PATH: process.env.PATH, // Needed for docker instances
 			RCLONE_CONFIG: rcloneConfigPath,
 			LOCALAPPDATA: localAppData,
 			RCLONE_CONFIG_PASS: configService.config.ENCRYPTION_KEY,
-			...env,
+			...globalRcloneEnv,
+			...env, // Per-call overrides still take precedence
 		};
 		// console.log('rcloneBinary :', rcloneBinary);
 		const rcProcess = spawn(rcloneBinary, args, { env: envVars });
