@@ -18,7 +18,15 @@ if [ "$run_tests" -eq 0 ]; then
   exit 0
 fi
 
-echo "[pre-push] Pushing to main. Running backend test suite..."
+echo "[pre-push] Pushing to main. Running backend lint, test, and build..."
+
+echo "[pre-push] Running lint..."
+pnpm --filter @plutonhq/core-backend lint
+
+echo "[pre-push] Running tests..."
 pnpm --filter @plutonhq/core-backend test
 
-echo "[pre-push] Backend tests passed. Continuing push."
+echo "[pre-push] Running build..."
+pnpm --filter @plutonhq/core-backend build
+
+echo "[pre-push] All checks passed. Continuing push."
