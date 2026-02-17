@@ -27,6 +27,7 @@ export class RestoreController {
 		try {
 			if (!req.params.id) {
 				res.status(400).json({ success: false, error: 'Restore ID is required' });
+				return;
 			}
 
 			const restore = await this.restoreService.getRestore(req.params.id);
@@ -65,6 +66,7 @@ export class RestoreController {
 		try {
 			if (!req.params.id) {
 				res.status(400).json({ success: false, error: 'Restore ID is required' });
+				return;
 			}
 
 			await this.restoreService.deleteRestore(req.params.id);

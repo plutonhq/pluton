@@ -50,8 +50,6 @@ export function runResticCommand(
 			path.join(appPaths.getTempDir(), 'restic-cache'),
 		];
 
-		console.log('runResticCommand :', [resticBinary, ...finalArgs], envVars);
-
 		const resticProcess = spawn(resticBinary, finalArgs, { env: envVars });
 
 		if (onProcess) {

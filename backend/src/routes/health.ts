@@ -2,9 +2,37 @@ import { Router, Request, Response } from 'express';
 import { existsSync } from 'fs';
 import { db } from '../db';
 import { getBinaryPath } from '../utils/binaryPathResolver';
+import authMiddleware from '../middlewares/authMiddleware';
 
 export function createHealthRouter(router: Router = Router()): Router {
+	/**
+	 * Public health endpoint — returns only overall status.
+	 * Safe for Docker health checks / load balancers.
+	 */
 	router.get('/', async (req: Request, res: Response) => {
+		try {
+			// Quick database check to determine overall health
+			let dbOk = false;
+			try {
+				db.run('SELECT 1');
+				dbOk = true;
+			} catch {
+				dbOk = false;
+			}
+
+			const status = dbOk ? 'healthy' : 'unhealthy';
+			const statusCode = dbOk ? 200 : 503;
+			res.status(statusCode).json({ status });
+		} catch (error) {
+			res.status(503).json({ status: 'unhealthy' });
+		}
+	});
+
+	/**
+	 * Detailed health endpoint — auth required.
+	 * Returns component-level checks for debugging.
+	 */
+	router.get('/details', authMiddleware, async (req: Request, res: Response) => {
 		try {
 			const health = {
 				status: 'healthy',

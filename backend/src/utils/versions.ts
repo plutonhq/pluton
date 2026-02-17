@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { getBinaryPath } from './binaryPathResolver';
 
 /**
@@ -11,7 +11,7 @@ import { getBinaryPath } from './binaryPathResolver';
 export function getResticVersion(): string {
 	try {
 		const resticBinary = getBinaryPath('restic');
-		const resticOutput = execSync(`${resticBinary} version --json`).toString().trim();
+		const resticOutput = execFileSync(resticBinary, ['version', '--json']).toString().trim();
 		return resticOutput ? JSON.parse(resticOutput).version : 'not_installed';
 	} catch {
 		return 'not_installed';
@@ -28,7 +28,7 @@ export function getResticVersion(): string {
 export function getRcloneVersion(): string {
 	try {
 		const rcloneBinary = getBinaryPath('rclone');
-		const rcloneOutput = execSync(`${rcloneBinary} version`).toString().trim();
+		const rcloneOutput = execFileSync(rcloneBinary, ['version']).toString().trim();
 		const versionMatch = rcloneOutput.match(/rclone v(\d+\.\d+\.\d+)/);
 		return versionMatch ? versionMatch[1] : 'not_installed';
 	} catch {

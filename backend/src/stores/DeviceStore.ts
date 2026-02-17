@@ -49,19 +49,6 @@ export class DeviceStore {
 		return result[0] || null;
 	}
 
-	async updateVersions(id: string, dependency: string, version: string): Promise<Device | null> {
-		const result = await this.db
-			.update(devices)
-			.set({
-				versions: sql`json_set(${devices.versions}, '$.${dependency}', ${version})`,
-				updatedAt: sql`(unixepoch())`,
-			})
-			.where(eq(devices.id, id))
-			.returning();
-
-		return result[0] || null;
-	}
-
 	async delete(id: string): Promise<boolean> {
 		const result = await this.db.delete(devices).where(eq(devices.id, id));
 

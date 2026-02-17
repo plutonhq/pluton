@@ -57,6 +57,11 @@ export function sanitizeStoragePath(storagePath: string, storageType: string): s
 			remotePath = remotePath.slice(0, -1);
 		}
 
+		// 4. disallow any remaining ".." segments to prevent directory traversal in remote storage contexts
+		if (remotePath.startsWith('..') || remotePath.includes('/../') || remotePath.endsWith('/..')) {
+			throw new AppError(400, 'Invalid path: Directory traversal not allowed.');
+		}
+
 		return remotePath;
 	}
 }
