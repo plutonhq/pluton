@@ -2,6 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import express, { type Express } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { db } from './db';
 import { createPlanRouter } from './routes/plans';
@@ -133,6 +134,14 @@ export async function createApp(): Promise<{ app: Express }> {
 	app.use(versionMiddleware);
 	app.use(express.json());
 
+	// helmet security middleware
+	app.use(
+		helmet({
+			contentSecurityPolicy: false, // Let the SPA handle its own CSP, or configure manually
+			hsts: false, // Don't force HTTPS — users may run over HTTP on LAN
+		})
+	);
+
 	//  Serve static files from the 'public' directory
 	// The frontend build files will be placed here
 	const __filename = fileURLToPath(import.meta.url);
@@ -149,8 +158,19 @@ export async function createApp(): Promise<{ app: Express }> {
 	});
 
 	app.use('/api/', apiLimiter);
-	app.use('/api/setup', createSetupRouter(setupController)); // Setup route (no auth required)
-	app.use('/api/user', createUserRouter(userController));
+
+	// Strict rate limiter for setup routes (unauthenticated)
+	const setupLimiter = rateLimit({
+		windowMs: 15 * 60 * 1000, // 15 minutes
+		max: 10, // Only 10 attempts per window
+		standardHeaders: true,
+		legacyHeaders: false,
+	});
+	// Strict authentication rate limiter to prevent brute-force attacks
+	const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+
+	app.use('/api/setup', setupLimiter, createSetupRouter(setupController)); // Setup route (no auth required)
+	app.use('/api/user', authLimiter, createUserRouter(userController));
 	app.use('/api/plans', createPlanRouter(planController));
 	app.use('/api/backups', createBackupRouter(backupController));
 	app.use('/api/devices', createDeviceRouter(deviceController));
