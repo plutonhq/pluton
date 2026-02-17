@@ -19,6 +19,7 @@ const baseConfigSchema = z.object({
 	// User Interface
 	ALLOW_CUSTOM_RESTORE_PATH: z.coerce.boolean().default(true).optional(),
 	ALLOW_FILE_BROWSER: z.coerce.boolean().default(true).optional(),
+	FILE_BROWSER_ROOT: z.string().optional(),
 
 	// Security (optional in setup mode)
 	ENCRYPTION_KEY: z
@@ -58,6 +59,7 @@ const userConfigSchema = baseConfigSchema
 		MQTT_PORT: true,
 		ALLOW_CUSTOM_RESTORE_PATH: true,
 		ALLOW_FILE_BROWSER: true,
+		FILE_BROWSER_ROOT: true,
 		DISABLE_EVENT_SCRIPTS: true,
 	})
 	.partial();

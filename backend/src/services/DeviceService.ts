@@ -1,3 +1,4 @@
+import path from 'path';
 import { Device } from '../db/schema/devices';
 import { BaseSystemManager } from '../managers/BaseSystemManager';
 import { DeviceStore } from '../stores/DeviceStore';
@@ -7,6 +8,8 @@ import { DeviceLogger } from '../utils/logger';
 import { LocalStrategy, RemoteStrategy, SystemStrategy } from '../strategies/system';
 import { StorageStore } from '../stores/StorageStore';
 import { providers } from '../utils/providers';
+import { configService } from './ConfigService';
+import { AppError } from 'src/utils/AppError';
 
 export class DeviceService {
 	protected connectedDeviceIds: Set<string> | undefined;
@@ -223,21 +226,34 @@ export class DeviceService {
 		return response.result;
 	}
 
-	async getBrowsePath(id: string, path: string): Promise<any> {
+	async getBrowsePath(id: string, reqPath: string): Promise<any> {
 		const device = await this.deviceStore.getById(id);
 		if (!device) {
-			throw new Error('Device not found.');
+			throw new AppError(404, 'Device not found.');
+		}
+
+		if (configService.config.ALLOW_FILE_BROWSER === false) {
+			throw new AppError(403, 'File browser is disabled');
+		}
+
+		const browserRoot = configService.config.FILE_BROWSER_ROOT;
+		if (browserRoot && reqPath) {
+			const resolved = path.resolve(reqPath);
+			const resolvedRoot = path.resolve(browserRoot);
+			if (!resolved.startsWith(resolvedRoot)) {
+				throw new AppError(403, 'Access denied: path outside allowed root');
+			}
 		}
 
 		const strategy = this.getSystemStrategy(id);
-		const response = await strategy.getBrowsePath(path);
+		const response = await strategy.getBrowsePath(reqPath);
 		return response;
 	}
 
 	async getMountPoints(id: string): Promise<any> {
 		const device = await this.deviceStore.getById(id);
 		if (!device) {
-			throw new Error('Device not found.');
+			throw new AppError(404, 'Device not found.');
 		}
 
 		const strategy = this.getSystemStrategy(id);
@@ -248,14 +264,14 @@ export class DeviceService {
 	async updateRestic(id: string, version: string): Promise<string> {
 		const device = await this.deviceStore.getById(id);
 		if (!device) {
-			throw new Error('Device not found.');
+			throw new AppError(404, 'Device not found.');
 		}
 
 		const strategy = this.getSystemStrategy(id);
 		const response = await strategy.updateRestic();
 		const updatedVersion = response.result;
 		if (!response.success) {
-			throw new Error('Failed to update restic');
+			throw new AppError(500, 'Failed to update restic');
 		}
 
 		try {
@@ -274,7 +290,7 @@ export class DeviceService {
 	async updateRclone(id: string, version: string): Promise<string> {
 		const device = await this.deviceStore.getById(id);
 		if (!device) {
-			throw new Error('Device not found.');
+			throw new AppError(404, 'Device not found.');
 		}
 
 		const strategy = this.getSystemStrategy(id);
@@ -282,7 +298,7 @@ export class DeviceService {
 		const updatedVersion = response.result;
 
 		if (!response.success) {
-			throw new Error('Failed to update rclone');
+			throw new AppError(500, 'Failed to update rclone');
 		}
 		try {
 			const versions = device.versions || { restic: '', rclone: '', agent: '' };
