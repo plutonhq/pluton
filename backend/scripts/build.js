@@ -33,7 +33,7 @@ async function copyTemplates() {
 	const destTemplates = join(process.cwd(), 'dist', 'notifications', 'templates');
 
 	try {
-		await cp(srcTemplates, destTemplates, { recursive: true });
+		await cp(srcTemplates, destTemplates, { recursive: true, filter: src => !src.endsWith('.ts') });
 		console.log('✅ Templates copied to dist folder!');
 	} catch (error) {
 		console.error('Error copying templates:', error);
