@@ -1,6 +1,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import express, { type Express } from 'express';
+import { IncomingMessage, ServerResponse } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -135,9 +136,45 @@ export async function createApp(): Promise<{ app: Express }> {
 	app.use(express.json());
 
 	// helmet security middleware
+	const appUrl = configService.config.APP_URL || 'http://localhost';
+	const serverPort = configService.config.SERVER_PORT;
+	const isDev = configService.isDevelopment();
+
+	// Dynamically derive the request origin from the Host header.
+	// This handles all access methods: localhost, LAN IPs, custom domains,
+	// and reverse proxies (Nginx, Traefik, etc.) that set x-forwarded-proto.
+	const dynamicOrigin = (req: IncomingMessage, _res: ServerResponse) => {
+		const host = req.headers.host;
+		if (host) {
+			const proto = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+			return `${proto}://${host}`;
+		}
+		return `http://localhost:${serverPort}`;
+	};
+
+	// In dev, also allow explicit localhost/127.0.0.1 with the backend port
+	// so the Vite dev server (different origin) can reach the API.
+	const connectSrc: (string | typeof dynamicOrigin)[] = ["'self'", appUrl, dynamicOrigin];
+	if (isDev) {
+		connectSrc.push(`http://localhost:${serverPort}`, `http://127.0.0.1:${serverPort}`);
+	}
+
 	app.use(
 		helmet({
-			contentSecurityPolicy: false, // Let the SPA handle its own CSP, or configure manually
+			contentSecurityPolicy: {
+				directives: {
+					defaultSrc: ["'self'"],
+					scriptSrc: ["'self'", "'unsafe-inline'"],
+					styleSrc: ["'self'", "'unsafe-inline'"],
+					imgSrc: ["'self'", 'data:', 'blob:'],
+					fontSrc: ["'self'", 'data:'],
+					connectSrc,
+					frameAncestors: ["'none'"],
+					baseUri: ["'self'"],
+					formAction: ["'self'"],
+					upgradeInsecureRequests: isDev ? null : [],
+				},
+			},
 			hsts: false, // Don't force HTTPS — users may run over HTTP on LAN
 		})
 	);
