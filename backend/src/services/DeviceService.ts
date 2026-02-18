@@ -1,5 +1,5 @@
 import path from 'path';
-import { Device } from '../db/schema/devices';
+import { Device, deviceUpdateSchema } from '../db/schema/devices';
 import { BaseSystemManager } from '../managers/BaseSystemManager';
 import { DeviceStore } from '../stores/DeviceStore';
 import { PlanStore } from '../stores/PlanStore';
@@ -144,20 +144,19 @@ export class DeviceService {
 			throw new Error('Device not found.');
 		}
 
-		const updatedObj: { name?: string; settings?: any; tags?: string[] } = {};
-		if (data.name) {
-			updatedObj.name = data.name;
+		// Validate the update object against the schema
+		let updatedObj: Partial<Device> = {};
+		try {
+			updatedObj = deviceUpdateSchema.parse({
+				name: data.name ?? existingDevice.name,
+				settings: data.settings ?? existingDevice.settings,
+				tags: data.tags ?? existingDevice.tags,
+			});
+		} catch (error) {
+			console.error('Error parsing Device data:', error);
+			throw new AppError(400, 'Invalid device data provided');
 		}
 
-		if (data.settings) {
-			updatedObj.settings = data.settings;
-		}
-
-		if (data.tags) {
-			updatedObj.tags = data.tags;
-		}
-
-		// TODO: set the restic and rclone settings values as env variables from the device settings
 		if (data.settings) {
 			if (existingDevice.id !== 'main') {
 				try {

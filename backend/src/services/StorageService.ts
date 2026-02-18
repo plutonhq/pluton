@@ -152,8 +152,8 @@ export class StorageService {
 			try {
 				parsedStorageData = storageUpdateSchema.parse(storagePayload);
 			} catch (error) {
-				console.error('Error parsing plan data:', error);
-				throw error;
+				console.error('Error parsing storage data:', error);
+				throw new AppError(400, 'Invalid storage data provided');
 			}
 			const { authType, credentials, settings, tags } = parsedStorageData;
 			// Update remote settings of all the devices first
