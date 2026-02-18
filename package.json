@@ -22,7 +22,7 @@
     "release-please": "^17.2.1",
     "syncpack": "^14.0.0",
     "turbo": "^2.6.0",
-    "typescript": "^5.0.0",
+    "typescript": "^5.9.3",
     "unbzip2-stream": "^1.4.3"
   },
   "pkg": {
