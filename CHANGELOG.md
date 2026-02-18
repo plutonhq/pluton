@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.4.0](https://github.com/plutonhq/pluton/compare/pluton-v0.3.1...pluton-v0.4.0) (2026-02-15)
+
+
+### Features
+
+* add new remote storage integrations ([fd12166](https://github.com/plutonhq/pluton/commit/fd121665b6558f5aceb89ee262616105ec1f3be7))
+
+
+### Bug Fixes
+
+* ambiguous storage field labels. ([e3413e8](https://github.com/plutonhq/pluton/commit/e3413e8ecf9aeb79e588f6eb0337a8f3d4f95edb))
+* minor ui issues. ([2f90765](https://github.com/plutonhq/pluton/commit/2f90765523938ff0f66b5d5a3e0bba4c5f0bc499))
+
+
+### Code Refactoring
+
+* remote storage selection ui in storage creation ui. ([a123951](https://github.com/plutonhq/pluton/commit/a1239518f1120c53017179670d5bd127f878f219))
+
 ## [0.3.1](https://github.com/plutonhq/pluton/compare/pluton-v0.3.0...pluton-v0.3.1) (2026-02-08)
 
 
