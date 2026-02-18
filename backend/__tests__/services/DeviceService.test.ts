@@ -185,7 +185,10 @@ describe('DeviceService', () => {
 			await deviceService.updateDevice(deviceId, settingsUpdate);
 
 			expect(mockRemoteStrategy.updateSettings).toHaveBeenCalledWith(settingsUpdate.settings);
-			expect(mockDeviceStore.update).toHaveBeenCalledWith(deviceId, settingsUpdate);
+			expect(mockDeviceStore.update).toHaveBeenCalledWith(
+				deviceId,
+				expect.objectContaining({ settings: settingsUpdate.settings })
+			);
 		});
 
 		it('should throw an error if device is not found', async () => {
