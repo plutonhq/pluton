@@ -1,23 +1,21 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import crypto from 'crypto';
-import Cryptr from 'cryptr';
-import { appPaths } from '../utils/AppPaths';
-import { configService } from '../services/ConfigService';
 
-interface KeyData {
-	publicKey: string;
-	encryptedPrivateKey: string;
-}
-
+/**
+ * SecurityKeyManager provides HMAC-SHA256 based signing and verification
+ * for bidirectional command integrity between server and agent.
+ *
+ * Each device has its own unique signing key (stored encrypted in the DB).
+ * All signing/verification methods require the caller to provide the
+ * per-device signing key, ensuring key isolation between agents.
+ *
+ * Canonical message format (parts joined by newline):
+ * - Server→Agent commands: timestamp + commandID + type + payloadJSON
+ * - Agent→Server requests: timestamp + method + path + body
+ */
 class SecurityKeyManager {
 	private static instance: SecurityKeyManager;
-	private keyData: KeyData | null = null;
-	private decryptedPrivateKey: string | null = null;
 
-	private constructor() {
-		this.loadKeys();
-	}
+	private constructor() {}
 
 	public static getInstance(): SecurityKeyManager {
 		if (!SecurityKeyManager.instance) {
@@ -26,104 +24,120 @@ class SecurityKeyManager {
 		return SecurityKeyManager.instance;
 	}
 
+	/**
+	 * No-op for backward compatibility.
+	 */
 	public async setupInitialKeys(): Promise<void> {
-		const keysPath = path.join(appPaths.getDataDir(), 'keys.json');
-
-		// 1. Check if keys already exist (Optimization)
-		try {
-			const existingContent = JSON.parse(await fs.readFile(keysPath, 'utf-8'));
-			if (existingContent.publicKey && existingContent.encryptedPrivateKey) {
-				console.log('[SecurityKeyManager] Keys already exist. Skipping generation.');
-				this.keyData = existingContent;
-				return;
-			}
-		} catch (e) {
-			// File might not exist or be corrupt, proceed to generate
-		}
-
-		console.log('[SecurityKeyManager] Generating new Ed25519 key pair...');
-		const keyPair = crypto.generateKeyPairSync('ed25519', {
-			privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
-			publicKeyEncoding: { type: 'spki', format: 'pem' },
-		});
-
-		const cryptr = new Cryptr(configService.config.SECRET);
-		const encryptedPrivateKey = cryptr.encrypt(keyPair.privateKey);
-
-		const newKeyData = {
-			publicKey: keyPair.publicKey,
-			encryptedPrivateKey: encryptedPrivateKey,
-		};
-
-		// 2. MERGE with existing data (Crucial to preserve SECRET/APIKEY)
-		try {
-			let currentFileContent = {};
-			try {
-				const fileStr = await fs.readFile(keysPath, 'utf-8');
-				currentFileContent = JSON.parse(fileStr);
-			} catch (e) {
-				// File doesn't exist yet, that's fine
-			}
-
-			const finalContent = {
-				...currentFileContent,
-				...newKeyData,
-			};
-
-			await fs.writeFile(keysPath, JSON.stringify(finalContent, null, 2), { mode: 0o600 });
-			console.log(`[SecurityKeyManager] Cryptographic keys securely stored at ${keysPath}`);
-
-			// Update local state
-			this.keyData = finalContent as KeyData; // Cast or update interface
-		} catch (error) {
-			console.error('[SecurityKeyManager] Error saving keys:', error);
-			throw error;
-		}
+		console.log('[SecurityKeyManager] Using HMAC-SHA256 signing with per-device keys.');
 	}
 
-	private async loadKeys(): Promise<void> {
-		try {
-			const keysPath = path.join(appPaths.getDataDir(), 'keys.json');
-			const fileContent = await fs.readFile(keysPath, 'utf-8');
-			this.keyData = JSON.parse(fileContent);
-		} catch (error) {}
+	// ========================================================================
+	// Core HMAC-SHA256 Operations
+	// ========================================================================
+
+	/**
+	 * Compute HMAC-SHA256 over parts joined by newline separator.
+	 * Returns base64-encoded signature.
+	 * @param signingKey - The per-device signing key to use
+	 */
+	private computeHMAC(signingKey: string, ...parts: string[]): string {
+		const message = parts.join('\n');
+		const hmac = crypto.createHmac('sha256', signingKey);
+		hmac.update(message);
+		return hmac.digest('base64');
 	}
 
-	public getPublicKey(): string | null {
-		return this.keyData?.publicKey || null;
+	/**
+	 * Verify an HMAC-SHA256 signature using constant-time comparison.
+	 * @param signingKey - The per-device signing key to use
+	 */
+	private verifyHMAC(signingKey: string, signature: string, ...parts: string[]): boolean {
+		const expected = this.computeHMAC(signingKey, ...parts);
+		const sigBuf = Buffer.from(signature, 'base64');
+		const expectedBuf = Buffer.from(expected, 'base64');
+		if (sigBuf.length !== expectedBuf.length) return false;
+		return crypto.timingSafeEqual(sigBuf, expectedBuf);
 	}
 
-	private getPrivateKey(): string {
-		if (this.decryptedPrivateKey) {
-			return this.decryptedPrivateKey;
+	// ========================================================================
+	// Command Signing (Server → Agent)
+	// ========================================================================
+
+	/**
+	 * Sign a command being sent to an agent.
+	 * @param signingKey - The per-device signing key
+	 * @param timestamp - Unix milliseconds as string
+	 * @param commandID - Unique command identifier
+	 * @param commandType - Command type (e.g., "backup:PERFORM_BACKUP")
+	 * @param payloadJSON - JSON string of the command payload
+	 * @returns base64-encoded HMAC-SHA256 signature
+	 */
+	public signCommand(
+		signingKey: string,
+		timestamp: string,
+		commandID: string,
+		commandType: string,
+		payloadJSON: string
+	): string {
+		return this.computeHMAC(signingKey, timestamp, commandID, commandType, payloadJSON);
+	}
+
+	/**
+	 * Verify a command signature.
+	 * @param signingKey - The per-device signing key
+	 */
+	public verifyCommand(
+		signingKey: string,
+		signature: string,
+		timestamp: string,
+		commandID: string,
+		commandType: string,
+		payloadJSON: string
+	): boolean {
+		return this.verifyHMAC(signingKey, signature, timestamp, commandID, commandType, payloadJSON);
+	}
+
+	// ========================================================================
+	// Request Signing (Agent → Server)
+	// ========================================================================
+
+	/**
+	 * Verify a signed request from an agent.
+	 * @param signingKey - The per-device signing key
+	 * @param signature - base64-encoded HMAC-SHA256 from X-Signature header
+	 * @param timestamp - Unix milliseconds string from X-Signature-Timestamp header
+	 * @param method - HTTP method (GET, POST, etc.)
+	 * @param path - Request path (e.g., "/api/agent/events")
+	 * @param body - Request body as string (empty string for GET/no-body requests)
+	 * @returns true if signature is valid
+	 */
+	public verifyRequest(
+		signingKey: string,
+		signature: string,
+		timestamp: string,
+		method: string,
+		path: string,
+		body: string
+	): boolean {
+		return this.verifyHMAC(signingKey, signature, timestamp, method, path, body);
+	}
+
+	/**
+	 * Validate that a timestamp is within the acceptable skew window (±5 minutes).
+	 * @param timestampStr - Unix milliseconds as string
+	 * @returns null if valid, error message string if invalid
+	 */
+	public validateTimestamp(timestampStr: string): string | null {
+		const ts = parseInt(timestampStr, 10);
+		if (isNaN(ts)) {
+			return 'Invalid timestamp format';
 		}
-
-		if (!this.keyData) {
-			throw new Error('Keys are not loaded.');
+		const skew = Math.abs(Date.now() - ts);
+		const maxSkewMs = 5 * 60 * 1000; // 5 minutes
+		if (skew > maxSkewMs) {
+			return `Timestamp skew ${skew}ms exceeds maximum ${maxSkewMs}ms`;
 		}
-
-		try {
-			const cryptr = new Cryptr(configService.config.SECRET);
-			this.decryptedPrivateKey = cryptr.decrypt(this.keyData.encryptedPrivateKey);
-			return this.decryptedPrivateKey;
-		} catch (error) {
-			throw new Error('Failed to decrypt private key. The master SECRET may have changed.');
-		}
-	}
-
-	public signPayload(payload: object): string {
-		const privateKey = this.getPrivateKey();
-		const dataToSign = Buffer.from(JSON.stringify(payload));
-		const signature = crypto.sign(null, dataToSign, privateKey);
-
-		return signature.toString('base64');
-	}
-
-	public verifyPayload(payload: object, signature: string, publicKey: string): boolean {
-		const dataToVerify = Buffer.from(JSON.stringify(payload));
-		const signatureBuffer = Buffer.from(signature, 'base64');
-
-		return crypto.verify(null, dataToVerify, publicKey, signatureBuffer);
+		return null;
 	}
 }
 

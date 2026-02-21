@@ -1,29 +1,4 @@
-import path from 'path';
-import { promises as fs } from 'fs';
 import crypto from 'crypto';
-import Cryptr from 'cryptr';
-
-const mockDataDir = path.join('/tmp', 'pluton-test-data');
-const mockConfigDir = path.join('/tmp', 'pluton-test-config');
-
-// Mock AppPaths BEFORE any imports that depend on it
-jest.mock('../../src/utils/AppPaths', () => ({
-	appPaths: {
-		getDataDir: jest.fn(() => mockDataDir),
-		getConfigDir: jest.fn(() => mockConfigDir),
-		getBaseDir: jest.fn(),
-		getDbDir: jest.fn(),
-		getSchedulesPath: jest.fn(),
-		getLogsDir: jest.fn(),
-		getProgressDir: jest.fn(),
-		getStatsDir: jest.fn(),
-		getTempDir: jest.fn(),
-		getDownloadsDir: jest.fn(),
-		getRestoresDir: jest.fn(),
-		getSyncDir: jest.fn(),
-		getRescueDir: jest.fn(),
-	},
-}));
 
 // Mock ConfigService BEFORE any imports that depend on it
 jest.mock('../../src/services/ConfigService', () => ({
@@ -45,82 +20,26 @@ jest.mock('../../src/services/ConfigService', () => ({
 	},
 }));
 
-// IMPORTANT: mock 'fs' (not 'fs/promises') to match the implementation import
-jest.mock('fs', () => ({
-	promises: {
-		readFile: jest.fn(),
-		writeFile: jest.fn(),
-		access: jest.fn(),
-	},
-}));
-
-// Mock crypto and cryptr
-jest.mock('crypto');
-jest.mock('cryptr');
-
 describe('SecurityKeyManager', () => {
-	const keysFilePath = path.join(mockDataDir, 'keys.json');
-	const fakeKeyPair = {
-		publicKey: '---BEGIN FAKE PUBLIC KEY---',
-		privateKey: '---BEGIN FAKE PRIVATE KEY---',
-	};
-
-	let mockFileSystem: Record<string, string>;
 	let securityKeyManager: any;
 
-	const applyFsMocks = () => {
-		(fs.readFile as jest.Mock).mockImplementation(async (filePath: string, encoding?: string) => {
-			if (mockFileSystem[filePath]) return mockFileSystem[filePath];
-			const error = new Error(`ENOENT: no such file or directory`);
-			(error as any).code = 'ENOENT';
-			throw error;
-		});
+	// Per-device signing key used for all tests
+	const testSigningKey = 'per-device-test-signing-key-abc123';
 
-		(fs.writeFile as jest.Mock).mockImplementation(async (filePath: string, data: string) => {
-			mockFileSystem[filePath] = data;
-		});
-
-		(fs.access as jest.Mock).mockImplementation(async (filePath: string) => {
-			if (!mockFileSystem[filePath]) {
-				const error = new Error('File not found');
-				(error as any).code = 'ENOENT';
-				throw error;
-			}
-			// If it exists, resolve with no error
-			return;
-		});
+	/** Helper: compute the expected HMAC-SHA256 for given parts joined by newline. */
+	const expectedHMAC = (...parts: string[]): string => {
+		const hmac = crypto.createHmac('sha256', testSigningKey);
+		hmac.update(parts.join('\n'));
+		return hmac.digest('base64');
 	};
 
 	beforeAll(async () => {
-		// Import SecurityKeyManager after setting up module mocks
 		const module = await import('../../src/managers/SecurityKeyManager');
 		securityKeyManager = module.securityKeyManager;
-
-		// Allow async constructor loadKeys to settle (it will fail silently with no keys)
-		await new Promise(resolve => setImmediate(resolve));
 	});
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockFileSystem = {};
-
-		// Re-apply fs mocks after clearing
-		applyFsMocks();
-
-		// Re-apply Cryptr mock after clearing
-		(Cryptr as unknown as jest.Mock).mockImplementation(() => ({
-			encrypt: jest.fn((data: string) => `encrypted-${data}`),
-			decrypt: jest.fn((data: string) => data.replace('encrypted-', '')),
-		}));
-
-		// Re-apply crypto mocks after clearing
-		(crypto.generateKeyPairSync as unknown as jest.Mock).mockReturnValue(fakeKeyPair);
-		(crypto.sign as unknown as jest.Mock).mockReturnValue(Buffer.from('fake-signature'));
-		(crypto.verify as unknown as jest.Mock).mockReturnValue(true);
-
-		// Reset internal state on the singleton
-		(securityKeyManager as any).keyData = null;
-		(securityKeyManager as any).decryptedPrivateKey = null;
 	});
 
 	it('should be a singleton', async () => {
@@ -128,105 +47,183 @@ describe('SecurityKeyManager', () => {
 		expect(module.securityKeyManager).toBe(securityKeyManager);
 	});
 
+	// ========================================================================
+	// setupInitialKeys & getPublicKey
+	// ========================================================================
+
 	describe('setupInitialKeys', () => {
-		it('should generate, encrypt, and save keys if keys.json does not exist', async () => {
+		it('should be a no-op that resolves without error', async () => {
+			const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 			await securityKeyManager.setupInitialKeys();
-
-			expect(crypto.generateKeyPairSync).toHaveBeenCalledWith('ed25519', expect.any(Object));
-			expect(Cryptr).toHaveBeenCalledWith('test-secret-key');
-			expect(fs.writeFile).toHaveBeenCalledTimes(1);
-			expect(fs.writeFile).toHaveBeenCalledWith(
-				keysFilePath,
-				expect.stringContaining(fakeKeyPair.publicKey),
-				{ mode: 0o600 }
+			expect(consoleSpy).toHaveBeenCalledWith(
+				expect.stringContaining('HMAC-SHA256')
 			);
-			expect(securityKeyManager.getPublicKey()).toBe(fakeKeyPair.publicKey);
-		});
-
-		it('should not write keys if keys.json already exists', async () => {
-			// Pretend the file already exists with both required fields
-			mockFileSystem[keysFilePath] = JSON.stringify({
-				publicKey: 'existing',
-				encryptedPrivateKey: 'existing-encrypted',
-			});
-			// Access should succeed
-			(fs.access as jest.Mock).mockResolvedValue(undefined);
-
-			await securityKeyManager.setupInitialKeys();
-
-			expect(crypto.generateKeyPairSync).not.toHaveBeenCalled();
-			expect(fs.writeFile).not.toHaveBeenCalled();
+			consoleSpy.mockRestore();
 		});
 	});
 
-	describe('Key Loading and Retrieval', () => {
-		it('should load keys from file on initialization', async () => {
-			mockFileSystem[keysFilePath] = JSON.stringify({
-				publicKey: 'loaded-public-key',
-				encryptedPrivateKey: 'encrypted-loaded-private-key',
-			});
-
-			// Manually call loadKeys to simulate fresh initialization
-			await (securityKeyManager as any).loadKeys();
-
-			expect(fs.readFile).toHaveBeenCalledWith(keysFilePath, 'utf-8');
-			expect(securityKeyManager.getPublicKey()).toBe('loaded-public-key');
-		});
-
-		it('should decrypt and cache the private key on first request', async () => {
-			mockFileSystem[keysFilePath] = JSON.stringify({
-				publicKey: 'loaded-public-key',
-				encryptedPrivateKey: 'encrypted-loaded-private-key',
-			});
-
-			await (securityKeyManager as any).loadKeys();
-
-			const privateKey1 = (securityKeyManager as any).getPrivateKey();
-			const privateKey2 = (securityKeyManager as any).getPrivateKey();
-
-			expect(Cryptr).toHaveBeenCalledWith('test-secret-key');
-			expect(privateKey1).toBe('loaded-private-key');
-			expect(privateKey2).toBe('loaded-private-key');
+	describe('getPublicKey', () => {
+		it('should return null (no Ed25519 keys)', () => {
+			expect(securityKeyManager.getPublicKey()).toBeNull();
 		});
 	});
 
-	describe('Crypto Operations', () => {
-		beforeEach(async () => {
-			mockFileSystem[keysFilePath] = JSON.stringify({
-				publicKey: fakeKeyPair.publicKey,
-				encryptedPrivateKey: `encrypted-${fakeKeyPair.privateKey}`,
-			});
-			await (securityKeyManager as any).loadKeys();
+	// ========================================================================
+	// Command Signing & Verification (Server → Agent)
+	// ========================================================================
+
+	describe('signCommand / verifyCommand', () => {
+		const timestamp = '1700000000000';
+		const commandID = 'cmd-abc-123';
+		const commandType = 'backup:PERFORM_BACKUP';
+		const payloadJSON = JSON.stringify({ planId: 'plan-1', backupId: 'bk-1' });
+
+		it('should return a base64 HMAC-SHA256 signature for a command', () => {
+			const sig = securityKeyManager.signCommand(testSigningKey, timestamp, commandID, commandType, payloadJSON);
+			expect(sig).toBe(expectedHMAC(timestamp, commandID, commandType, payloadJSON));
+			// Must be valid base64
+			expect(() => Buffer.from(sig, 'base64')).not.toThrow();
 		});
 
-		it('should sign a payload using the decrypted private key', () => {
-			const payload = { data: 'sign this' };
-			const signature = securityKeyManager.signPayload(payload);
-
-			expect(crypto.sign).toHaveBeenCalledTimes(1);
-			expect(crypto.sign).toHaveBeenCalledWith(
-				null,
-				Buffer.from(JSON.stringify(payload)),
-				fakeKeyPair.privateKey
-			);
-			expect(signature).toBe(Buffer.from('fake-signature').toString('base64'));
-		});
-
-		it('should verify a payload signature', () => {
-			const payload = { data: 'verify this' };
-			const signature = 'base64-signature';
-			const publicKey = 'some-public-key';
-
-			const isValid = securityKeyManager.verifyPayload(payload, signature, publicKey);
-
-			expect(crypto.verify).toHaveBeenCalledTimes(1);
-			expect(crypto.verify).toHaveBeenCalledWith(
-				null,
-				Buffer.from(JSON.stringify(payload)),
-				publicKey,
-				Buffer.from(signature, 'base64')
-			);
+		it('should verify a valid command signature', () => {
+			const sig = securityKeyManager.signCommand(testSigningKey, timestamp, commandID, commandType, payloadJSON);
+			const isValid = securityKeyManager.verifyCommand(testSigningKey, sig, timestamp, commandID, commandType, payloadJSON);
 			expect(isValid).toBe(true);
+		});
+
+		it('should reject a tampered command signature', () => {
+			const sig = securityKeyManager.signCommand(testSigningKey, timestamp, commandID, commandType, payloadJSON);
+			const isValid = securityKeyManager.verifyCommand(testSigningKey, sig, timestamp, commandID, 'backup:DELETE_BACKUP', payloadJSON);
+			expect(isValid).toBe(false);
+		});
+
+		it('should reject a completely invalid signature', () => {
+			const isValid = securityKeyManager.verifyCommand(testSigningKey, 'bm90LXZhbGlk', timestamp, commandID, commandType, payloadJSON);
+			expect(isValid).toBe(false);
+		});
+
+		it('should produce different signatures for different payloads', () => {
+			const sig1 = securityKeyManager.signCommand(testSigningKey, timestamp, commandID, commandType, '{"a":1}');
+			const sig2 = securityKeyManager.signCommand(testSigningKey, timestamp, commandID, commandType, '{"a":2}');
+			expect(sig1).not.toBe(sig2);
+		});
+
+		it('should produce different signatures for different signing keys', () => {
+			const sig1 = securityKeyManager.signCommand('device-key-1', timestamp, commandID, commandType, payloadJSON);
+			const sig2 = securityKeyManager.signCommand('device-key-2', timestamp, commandID, commandType, payloadJSON);
+			expect(sig1).not.toBe(sig2);
+		});
+
+		it('should not verify with a different signing key', () => {
+			const sig = securityKeyManager.signCommand('device-key-1', timestamp, commandID, commandType, payloadJSON);
+			const isValid = securityKeyManager.verifyCommand('device-key-2', sig, timestamp, commandID, commandType, payloadJSON);
+			expect(isValid).toBe(false);
+		});
+	});
+
+	// ========================================================================
+	// Request Verification (Agent → Server)
+	// ========================================================================
+
+	describe('verifyRequest', () => {
+		const timestamp = '1700000000000';
+		const method = 'POST';
+		const path = '/api/agent/events';
+		const body = JSON.stringify({ status: 'ok' });
+
+		it('should verify a correctly signed request', () => {
+			const sig = expectedHMAC(timestamp, method, path, body);
+			expect(securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, method, path, body)).toBe(true);
+		});
+
+		it('should reject a request with wrong method', () => {
+			const sig = expectedHMAC(timestamp, method, path, body);
+			expect(securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, 'GET', path, body)).toBe(false);
+		});
+
+		it('should reject a request with wrong path', () => {
+			const sig = expectedHMAC(timestamp, method, path, body);
+			expect(securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, method, '/api/other', body)).toBe(false);
+		});
+
+		it('should reject a request with tampered body', () => {
+			const sig = expectedHMAC(timestamp, method, path, body);
+			expect(securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, method, path, '{"status":"hacked"}')).toBe(false);
+		});
+
+		it('should handle empty body for GET requests', () => {
+			const sig = expectedHMAC(timestamp, 'GET', '/api/agent/poll', '');
+			expect(securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, 'GET', '/api/agent/poll', '')).toBe(true);
+		});
+
+		it('should reject verification with wrong signing key', () => {
+			const sig = expectedHMAC(timestamp, method, path, body);
+			expect(securityKeyManager.verifyRequest('wrong-key', sig, timestamp, method, path, body)).toBe(false);
+		});
+	});
+
+	// ========================================================================
+	// Timestamp Validation
+	// ========================================================================
+
+	describe('validateTimestamp', () => {
+		it('should return null for a timestamp within the skew window', () => {
+			const now = Date.now().toString();
+			expect(securityKeyManager.validateTimestamp(now)).toBeNull();
+		});
+
+		it('should return null for a timestamp slightly in the past (< 5 min)', () => {
+			const fourMinAgo = (Date.now() - 4 * 60 * 1000).toString();
+			expect(securityKeyManager.validateTimestamp(fourMinAgo)).toBeNull();
+		});
+
+		it('should return an error string for a timestamp too far in the past (> 5 min)', () => {
+			const sixMinAgo = (Date.now() - 6 * 60 * 1000).toString();
+			const result = securityKeyManager.validateTimestamp(sixMinAgo);
+			expect(result).not.toBeNull();
+			expect(result).toContain('skew');
+		});
+
+		it('should return an error string for a timestamp too far in the future', () => {
+			const sixMinAhead = (Date.now() + 6 * 60 * 1000).toString();
+			const result = securityKeyManager.validateTimestamp(sixMinAhead);
+			expect(result).not.toBeNull();
+			expect(result).toContain('skew');
+		});
+
+		it('should return an error for non-numeric timestamp', () => {
+			const result = securityKeyManager.validateTimestamp('not-a-number');
+			expect(result).toBe('Invalid timestamp format');
+		});
+
+		it('should return an error for empty string', () => {
+			const result = securityKeyManager.validateTimestamp('');
+			expect(result).toBe('Invalid timestamp format');
+		});
+	});
+
+	// ========================================================================
+	// Legacy Compatibility
+	// ========================================================================
+
+	describe('signPayload (deprecated)', () => {
+		it('should return empty string and warn', () => {
+			const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+			const payload = { data: 'sign this' };
+			const sig = securityKeyManager.signPayload(payload);
+			expect(sig).toBe('');
+			expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('deprecated'));
+			warnSpy.mockRestore();
+		});
+	});
+
+	describe('verifyPayload (deprecated)', () => {
+		it('should always return false', () => {
+			const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+			const isValid = securityKeyManager.verifyPayload({ data: 'test' }, 'signature', 'publicKey');
+			expect(isValid).toBe(false);
+			expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('deprecated'));
+			warnSpy.mockRestore();
 		});
 	});
 });
