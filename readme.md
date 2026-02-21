@@ -32,7 +32,7 @@ Pluton is a self-hosted backup management platform that simplifies automated, in
 - &nbsp; **Automated backups** with encryption, compression and retention policies powered by Restic
 - &nbsp; **Flexible scheduling** For automated backup jobs with fine-grained retention policies
 - &nbsp; **End-to-end encryption** Backups are totally encrypted from your local machine to your cloud storage.
-- &nbsp; **50+ Storage Support**: Store encrypted data to your favorite cloud storages (powered by rclone).
+- &nbsp; **70+ Storage Support**: Store encrypted data to your favorite cloud storages (powered by rclone).
 - &nbsp; **Easy Restore & Download**: Restore or download backed up snapshot data easily with just a few clicks.
 - &nbsp; **Event Notifications**: Get email notifications on Backup start, end, completion or failure.
 - &nbsp; **Auto Retry Logic**: Automatically retries backups if it fails with customization options.
