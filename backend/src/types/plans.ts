@@ -112,9 +112,8 @@ export type PlanScript = {
 	id: string;
 	type: string;
 	enabled: boolean;
-	command: string;
+	scriptPath: string; // Absolute path to a script file on the device
 	logOutput: boolean;
-	shell?: string; // bash, powershell, cmd
 	timeout?: number;
 	abortOnError?: boolean; // only when event type is onBackupStart
 };

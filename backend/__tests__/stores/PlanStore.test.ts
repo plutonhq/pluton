@@ -31,7 +31,7 @@ describe('PlanStore', () => {
 			],
 			settings: {
 				scripts: {
-					onBackupStart: [{ id: 's1', command: 'echo "start"' }],
+					onBackupStart: [{ id: 's1', scriptPath: '/scripts/start.sh' }],
 				},
 			},
 		} as any,
@@ -85,9 +85,6 @@ describe('PlanStore', () => {
 		};
 
 		planStore = new PlanStore(mockDb as DatabaseType);
-
-		jest.spyOn(planStore, 'decryptScripts').mockImplementation(async scripts => scripts);
-		jest.spyOn(planStore, 'encryptScripts').mockImplementation(async scripts => scripts);
 	});
 
 	describe('getAll', () => {
@@ -128,15 +125,16 @@ describe('PlanStore', () => {
 		});
 
 		it('should decrypt scripts when retrieving plans', async () => {
+			// Scripts are now plain scriptPath fields (no encryption) — this test
+			// verifies plans with scripts can be retrieved without errors.
 			// Arrange
 			mockDb.query.plans.findMany.mockResolvedValue(mockPlans);
 
 			// Act
-			await planStore.getAll();
+			const result = await planStore.getAll();
 
 			// Assert
-			// We just need to confirm the method was called. The spy is set up in beforeEach.
-			expect(planStore.decryptScripts).toHaveBeenCalledWith(mockPlans[0].settings.scripts);
+			expect(result).toBeDefined();
 		});
 	});
 
@@ -303,13 +301,10 @@ describe('PlanStore', () => {
 			expect(setPayload.id).toBeUndefined(); // Crucial check
 		});
 
-		it('should encrypt scripts before updating', async () => {
-			// Arrange
-			const encryptSpy = jest
-				.spyOn(planStore, 'encryptScripts')
-				.mockResolvedValue({ onBackupStart: [{ id: 's1', command: 'encrypted-command' }] } as any);
+		it('should handle update with scripts settings', async () => {
+			// Scripts are now plain scriptPath fields (no encryption needed)
 			const updates = {
-				settings: { scripts: { onBackupStart: [{ id: 's1', command: 'decrypted' }] } },
+				settings: { scripts: { onBackupStart: [{ id: 's1', scriptPath: '/scripts/backup.sh' }] } },
 			};
 			mockDb.update().returning.mockResolvedValue([{}]);
 
@@ -317,9 +312,8 @@ describe('PlanStore', () => {
 			await planStore.update('plan-1', updates as any);
 
 			// Assert
-			expect(encryptSpy).toHaveBeenCalled();
 			const setPayload = mockDb.update().set.mock.calls[0][0];
-			expect(setPayload.settings.scripts.onBackupStart[0].command).toBe('encrypted-command');
+			expect(setPayload.settings.scripts.onBackupStart[0].scriptPath).toBe('/scripts/backup.sh');
 		});
 	});
 
@@ -377,28 +371,4 @@ describe('PlanStore', () => {
 		});
 	});
 
-	describe('encryptScripts and decryptScripts (real implementation)', () => {
-		// This block ensures the original methods are restored ONLY for the test(s) inside this describe.
-		beforeEach(() => {
-			(planStore.encryptScripts as jest.Mock).mockRestore();
-			(planStore.decryptScripts as jest.Mock).mockRestore();
-		});
-
-		it('should correctly encrypt and then decrypt script commands', async () => {
-			// Arrange
-			const originalScripts = {
-				onBackupStart: [{ id: 's1', command: 'echo "hello world"' }],
-				onBackupEnd: [{ id: 's2', command: '/usr/bin/my_script.sh' }],
-			};
-
-			// Act
-			const encrypted = await planStore.encryptScripts(originalScripts as any);
-			const decrypted = await planStore.decryptScripts(encrypted);
-
-			// Assert
-			expect(encrypted!.onBackupStart![0].command).not.toBe('echo "hello world"');
-			expect(encrypted!.onBackupEnd![0].command).not.toBe('/usr/bin/my_script.sh');
-			expect(decrypted).toEqual(originalScripts);
-		});
-	});
 });

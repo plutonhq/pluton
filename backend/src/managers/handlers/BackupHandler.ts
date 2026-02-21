@@ -716,12 +716,10 @@ export class BackupHandler {
 	) {
 		const phase = this.getPhaseFromScriptEvent(eventName);
 		const scripts = options?.settings?.scripts?.[eventName] || [];
-		const secret = configService.config.SECRET as string;
 
 		await runScriptsForEvent(
 			eventName,
 			scripts,
-			secret,
 			async scriptName => {
 				await this.updateProgress(planId, backupId, phase, scriptName + '_START', false);
 			},

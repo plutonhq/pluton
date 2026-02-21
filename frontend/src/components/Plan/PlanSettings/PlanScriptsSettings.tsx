@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { NewPlanSettings } from '../../../@types/plans';
 import Icon from '../../common/Icon/Icon';
 import Toggle from '../../common/form/Toggle/Toggle';
-import Select from '../../common/form/Select/Select';
-import { getAvailableCliApps, secondsToMinutes } from '../../../utils/helpers';
+import { secondsToMinutes } from '../../../utils/helpers';
 import NumberInput from '../../common/form/NumberInput/NumberInput';
 
 interface PlanScriptsSettingsProps {
@@ -77,10 +76,9 @@ const PlanScriptsSettings = ({
                            onClick={() => {
                               const newScript = {
                                  id: Math.random().toString(36).substring(2, 15),
-                                 type: 'command',
+                                 type: 'script',
                                  enabled: true,
-                                 command: '',
-                                 shell: 'default',
+                                 scriptPath: '',
                                  logOutput: false,
                                  abortOnError: false,
                               };
@@ -152,15 +150,16 @@ const PlanScriptsSettings = ({
                                  )}
                               </div>
 
-                              <textarea
-                                 value={script?.command || ''}
-                                 data-gramm="false" // Disable Grammarly
-                                 placeholder="Enter script command here..."
+                              <input
+                                 type="text"
+                                 className={classes.scriptPathInput}
+                                 value={script?.scriptPath || ''}
+                                 placeholder="Enter absolute path to script file (e.g. /opt/scripts/pre-backup.sh)"
                                  onChange={(e) => {
                                     const updatedScripts = [...(scripts || [])];
                                     updatedScripts[index] = {
                                        ...updatedScripts[index],
-                                       command: e.target.value,
+                                       scriptPath: e.target.value,
                                     };
                                     onUpdate({ ...settings, [eventKey]: updatedScripts });
                                  }}
@@ -215,23 +214,6 @@ const PlanScriptsSettings = ({
                                        <span>Abort on Error</span>
                                     </div>
                                     <i className="pipe">|</i>
-                                    <div className={classes.scriptOptionCheckbox}>
-                                       {/* <span>Shell</span> */}
-                                       <Select
-                                          size="mini"
-                                          options={getAvailableCliApps(platform)}
-                                          fieldValue={script?.shell || 'default'}
-                                          onUpdate={(value) => {
-                                             const updatedScripts = [...(scripts || [])];
-                                             updatedScripts[index] = {
-                                                ...updatedScripts[index],
-                                                shell: value,
-                                             };
-                                             onUpdate({ ...settings, [eventKey]: updatedScripts });
-                                          }}
-                                          inline={true}
-                                       />
-                                    </div>
                                     <div
                                        title="Timeout Settings"
                                        className={`${classes.scriptOptionTimeout} ${script.id === showTimeoutSettings ? classes.hasTimeOutSettings : ''}`}

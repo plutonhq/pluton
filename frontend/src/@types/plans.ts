@@ -122,9 +122,8 @@ export type PlanScript = {
    id: string;
    type: string;
    enabled: boolean;
-   command: string;
+   scriptPath: string; // Absolute path to a script file on the device
    logOutput: boolean;
-   shell?: string;
    timeout?: number;
    abortOnError?: boolean;
 };

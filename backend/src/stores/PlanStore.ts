@@ -4,8 +4,6 @@ import { DatabaseType } from '../db';
 import { NewPlan, Plan, plans } from '../db/schema/plans';
 import { backups } from '../db/schema/backups';
 import { PlanBackupSettings, PlanFull } from '../types/plans';
-import Cryptr from 'cryptr';
-import { configService } from '../services/ConfigService';
 import { restores } from '../db/schema/restores';
 
 /**
@@ -68,9 +66,6 @@ export class PlanStore {
 
 		if (result) {
 			const plans = result.map(async plan => {
-				if (plan?.settings?.scripts) {
-					plan.settings.scripts = await this.decryptScripts(plan.settings.scripts);
-				}
 				return {
 					...plan,
 					backups: this.handleBackupStats(plan.method, plan.backups, plan.stats),
@@ -138,9 +133,6 @@ export class PlanStore {
 
 		if (thePlan && thePlan.backups) {
 			thePlan.backups = this.handleBackupStats(thePlan.method, thePlan.backups, thePlan.stats);
-		}
-		if (thePlan?.settings?.scripts) {
-			thePlan.settings.scripts = await this.decryptScripts(thePlan.settings.scripts);
 		}
 
 		return thePlan || null;
@@ -220,13 +212,6 @@ export class PlanStore {
 			return null;
 		}
 
-		// Encrypt scripts if they are present
-		if ((updatedPlan.settings as PlanBackupSettings)?.scripts) {
-			(updatedPlan.settings as PlanBackupSettings).scripts = await this.encryptScripts(
-				(updatedPlan.settings as PlanBackupSettings).scripts
-			);
-		}
-
 		const result = await this.db
 			.update(plans)
 			.set({
@@ -267,51 +252,5 @@ export class PlanStore {
 
 	async setActive(id: string, isActive: boolean): Promise<Plan | null> {
 		return this.update(id, { isActive });
-	}
-
-	async encryptScripts(scripts: Plan['settings']['scripts']): Promise<Plan['settings']['scripts']> {
-		try {
-			const planScripts = { ...scripts };
-			const cryptr = new Cryptr(configService.config.SECRET as string);
-
-			for (const [scriptType, scriptArray] of Object.entries(planScripts)) {
-				if (scriptArray && Array.isArray(scriptArray)) {
-					planScripts[scriptType as keyof typeof planScripts] = scriptArray.map(script => {
-						const encryptedCommand = cryptr.encrypt(script.command);
-						return {
-							...script,
-							command: encryptedCommand,
-						};
-					});
-				}
-			}
-			return planScripts;
-		} catch (error) {
-			console.error('Error encrypting scripts:', error);
-			throw new Error('Failed to encrypt Plan scripts');
-		}
-	}
-
-	async decryptScripts(scripts: Plan['settings']['scripts']): Promise<Plan['settings']['scripts']> {
-		try {
-			const planScripts = { ...scripts };
-			const cryptr = new Cryptr(configService.config.SECRET as string);
-
-			for (const [scriptType, scriptArray] of Object.entries(planScripts)) {
-				if (scriptArray && Array.isArray(scriptArray)) {
-					planScripts[scriptType as keyof typeof planScripts] = scriptArray.map(script => {
-						const decryptedCommand = cryptr.decrypt(script.command);
-						return {
-							...script,
-							command: decryptedCommand,
-						};
-					});
-				}
-			}
-			return planScripts;
-		} catch (error) {
-			console.error('Error decrypting scripts:', error);
-			throw new Error('Failed to decrypt Plan scripts');
-		}
 	}
 }
