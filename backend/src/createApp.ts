@@ -207,7 +207,7 @@ export async function createApp(): Promise<{ app: Express }> {
 	const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
 
 	app.use('/api/setup', setupLimiter, createSetupRouter(setupController)); // Setup route (no auth required)
-	app.use('/api/user', authLimiter, createUserRouter(userController));
+	app.use('/api/user', createUserRouter(userController, authLimiter));
 	app.use('/api/plans', createPlanRouter(planController));
 	app.use('/api/backups', createBackupRouter(backupController));
 	app.use('/api/devices', createDeviceRouter(deviceController));
