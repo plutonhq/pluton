@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.5.0](https://github.com/plutonhq/pluton/compare/pluton-v0.4.0...pluton-v0.5.0) (2026-02-21)
+
+
+### Features
+
+* adds password hashing for harden security ([fed43a2](https://github.com/plutonhq/pluton/commit/fed43a2fe3c7f063a514da11789a409cdba9a53f))
+* adds password reset mechanism ([780ced1](https://github.com/plutonhq/pluton/commit/780ced1e9a761cbb4d86ef69c41391a058ba5e21))
+
+
+### Bug Fixes
+
+* broken ALLOW_FILE_BROWSER config ([ca01522](https://github.com/plutonhq/pluton/commit/ca015222a198cfc1037321b986d577ebf7c2e7c0))
+* missing content security policy ([bbb1f2d](https://github.com/plutonhq/pluton/commit/bbb1f2d61df7a23d359d6a077faf0ce68fc048dd))
+* Missing device update input validation ([bb9b40a](https://github.com/plutonhq/pluton/commit/bb9b40a16849c4d91307d0dab7c827d816d65154))
+* missing security headers ([6e5b153](https://github.com/plutonhq/pluton/commit/6e5b1535e8439961fc1231ad6d3129f5eaef99cf))
+* resolves broken global restic and rclone settings. ([42d84c0](https://github.com/plutonhq/pluton/commit/42d84c0fe8379017ab5459ab363d0263ff463af4))
+* resolves malicious command execution vulnerability ([2e0fb5f](https://github.com/plutonhq/pluton/commit/2e0fb5fe7e47a5fa623df9fd632fd5a90bfc4102))
+* resolves rate limiting issue in the frontend ([efd1af0](https://github.com/plutonhq/pluton/commit/efd1af04affd3288646c3d17e6d3717c850ff1aa))
+* various security issues. ([9d96362](https://github.com/plutonhq/pluton/commit/9d96362653a7249b0d45093512ae7f8a77764b92))
+
+
+### Code Refactoring
+
+* request singing method of agent/server communication ([e7ed295](https://github.com/plutonhq/pluton/commit/e7ed29546d793261bb91fc4c3582ec45f88953dd))
+
 ## [0.4.0](https://github.com/plutonhq/pluton/compare/pluton-v0.3.1...pluton-v0.4.0) (2026-02-15)
 
 
