@@ -112,18 +112,7 @@ export class CronManager<T extends ScheduleOptions> {
 		}
 
 		try {
-			// === DEBUG LOGGING START ===
-			const cronInstanceId = `cron_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-			console.log(
-				`[DEBUG_CRON] ATTEMPTING TO CREATE new Cron instance ${cronInstanceId} for plan ${id}.`
-			);
-			// === DEBUG LOGGING END ===
-
 			const cron = new Cron(cronExpression, () => {
-				// === DEBUG LOGGING START ===
-				console.log(`[DEBUG_CRON] FIRING Cron instance ${cronInstanceId} for plan ${id}.`);
-				// === DEBUG LOGGING END ===
-				console.log('[scheduleTask] :', `Executing cron task for ${id}`, typeof options);
 				if (
 					options &&
 					typeof options === 'object' &&

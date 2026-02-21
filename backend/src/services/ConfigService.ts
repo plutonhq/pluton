@@ -248,7 +248,6 @@ class ConfigService {
 		// Save if something changed or didn't exist
 		if (finalSecret !== keysFileContent.SECRET || finalApiKey !== keysFileContent.APIKEY) {
 			try {
-				// IMPORTANT: Preserve existing data (like publicKey/encryptedPrivateKey)
 				const newContent = {
 					...keysFileContent,
 					SECRET: finalSecret,
