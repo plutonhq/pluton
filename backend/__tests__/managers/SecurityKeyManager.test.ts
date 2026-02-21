@@ -55,16 +55,8 @@ describe('SecurityKeyManager', () => {
 		it('should be a no-op that resolves without error', async () => {
 			const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 			await securityKeyManager.setupInitialKeys();
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('HMAC-SHA256')
-			);
+			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('HMAC-SHA256'));
 			consoleSpy.mockRestore();
-		});
-	});
-
-	describe('getPublicKey', () => {
-		it('should return null (no Ed25519 keys)', () => {
-			expect(securityKeyManager.getPublicKey()).toBeNull();
 		});
 	});
 
@@ -79,44 +71,120 @@ describe('SecurityKeyManager', () => {
 		const payloadJSON = JSON.stringify({ planId: 'plan-1', backupId: 'bk-1' });
 
 		it('should return a base64 HMAC-SHA256 signature for a command', () => {
-			const sig = securityKeyManager.signCommand(testSigningKey, timestamp, commandID, commandType, payloadJSON);
+			const sig = securityKeyManager.signCommand(
+				testSigningKey,
+				timestamp,
+				commandID,
+				commandType,
+				payloadJSON
+			);
 			expect(sig).toBe(expectedHMAC(timestamp, commandID, commandType, payloadJSON));
 			// Must be valid base64
 			expect(() => Buffer.from(sig, 'base64')).not.toThrow();
 		});
 
 		it('should verify a valid command signature', () => {
-			const sig = securityKeyManager.signCommand(testSigningKey, timestamp, commandID, commandType, payloadJSON);
-			const isValid = securityKeyManager.verifyCommand(testSigningKey, sig, timestamp, commandID, commandType, payloadJSON);
+			const sig = securityKeyManager.signCommand(
+				testSigningKey,
+				timestamp,
+				commandID,
+				commandType,
+				payloadJSON
+			);
+			const isValid = securityKeyManager.verifyCommand(
+				testSigningKey,
+				sig,
+				timestamp,
+				commandID,
+				commandType,
+				payloadJSON
+			);
 			expect(isValid).toBe(true);
 		});
 
 		it('should reject a tampered command signature', () => {
-			const sig = securityKeyManager.signCommand(testSigningKey, timestamp, commandID, commandType, payloadJSON);
-			const isValid = securityKeyManager.verifyCommand(testSigningKey, sig, timestamp, commandID, 'backup:DELETE_BACKUP', payloadJSON);
+			const sig = securityKeyManager.signCommand(
+				testSigningKey,
+				timestamp,
+				commandID,
+				commandType,
+				payloadJSON
+			);
+			const isValid = securityKeyManager.verifyCommand(
+				testSigningKey,
+				sig,
+				timestamp,
+				commandID,
+				'backup:DELETE_BACKUP',
+				payloadJSON
+			);
 			expect(isValid).toBe(false);
 		});
 
 		it('should reject a completely invalid signature', () => {
-			const isValid = securityKeyManager.verifyCommand(testSigningKey, 'bm90LXZhbGlk', timestamp, commandID, commandType, payloadJSON);
+			const isValid = securityKeyManager.verifyCommand(
+				testSigningKey,
+				'bm90LXZhbGlk',
+				timestamp,
+				commandID,
+				commandType,
+				payloadJSON
+			);
 			expect(isValid).toBe(false);
 		});
 
 		it('should produce different signatures for different payloads', () => {
-			const sig1 = securityKeyManager.signCommand(testSigningKey, timestamp, commandID, commandType, '{"a":1}');
-			const sig2 = securityKeyManager.signCommand(testSigningKey, timestamp, commandID, commandType, '{"a":2}');
+			const sig1 = securityKeyManager.signCommand(
+				testSigningKey,
+				timestamp,
+				commandID,
+				commandType,
+				'{"a":1}'
+			);
+			const sig2 = securityKeyManager.signCommand(
+				testSigningKey,
+				timestamp,
+				commandID,
+				commandType,
+				'{"a":2}'
+			);
 			expect(sig1).not.toBe(sig2);
 		});
 
 		it('should produce different signatures for different signing keys', () => {
-			const sig1 = securityKeyManager.signCommand('device-key-1', timestamp, commandID, commandType, payloadJSON);
-			const sig2 = securityKeyManager.signCommand('device-key-2', timestamp, commandID, commandType, payloadJSON);
+			const sig1 = securityKeyManager.signCommand(
+				'device-key-1',
+				timestamp,
+				commandID,
+				commandType,
+				payloadJSON
+			);
+			const sig2 = securityKeyManager.signCommand(
+				'device-key-2',
+				timestamp,
+				commandID,
+				commandType,
+				payloadJSON
+			);
 			expect(sig1).not.toBe(sig2);
 		});
 
 		it('should not verify with a different signing key', () => {
-			const sig = securityKeyManager.signCommand('device-key-1', timestamp, commandID, commandType, payloadJSON);
-			const isValid = securityKeyManager.verifyCommand('device-key-2', sig, timestamp, commandID, commandType, payloadJSON);
+			const sig = securityKeyManager.signCommand(
+				'device-key-1',
+				timestamp,
+				commandID,
+				commandType,
+				payloadJSON
+			);
+			const isValid = securityKeyManager.verifyCommand(
+				'device-key-2',
+				sig,
+				timestamp,
+				commandID,
+				commandType,
+				payloadJSON
+			);
 			expect(isValid).toBe(false);
 		});
 	});
@@ -133,32 +201,58 @@ describe('SecurityKeyManager', () => {
 
 		it('should verify a correctly signed request', () => {
 			const sig = expectedHMAC(timestamp, method, path, body);
-			expect(securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, method, path, body)).toBe(true);
+			expect(
+				securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, method, path, body)
+			).toBe(true);
 		});
 
 		it('should reject a request with wrong method', () => {
 			const sig = expectedHMAC(timestamp, method, path, body);
-			expect(securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, 'GET', path, body)).toBe(false);
+			expect(
+				securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, 'GET', path, body)
+			).toBe(false);
 		});
 
 		it('should reject a request with wrong path', () => {
 			const sig = expectedHMAC(timestamp, method, path, body);
-			expect(securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, method, '/api/other', body)).toBe(false);
+			expect(
+				securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, method, '/api/other', body)
+			).toBe(false);
 		});
 
 		it('should reject a request with tampered body', () => {
 			const sig = expectedHMAC(timestamp, method, path, body);
-			expect(securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, method, path, '{"status":"hacked"}')).toBe(false);
+			expect(
+				securityKeyManager.verifyRequest(
+					testSigningKey,
+					sig,
+					timestamp,
+					method,
+					path,
+					'{"status":"hacked"}'
+				)
+			).toBe(false);
 		});
 
 		it('should handle empty body for GET requests', () => {
 			const sig = expectedHMAC(timestamp, 'GET', '/api/agent/poll', '');
-			expect(securityKeyManager.verifyRequest(testSigningKey, sig, timestamp, 'GET', '/api/agent/poll', '')).toBe(true);
+			expect(
+				securityKeyManager.verifyRequest(
+					testSigningKey,
+					sig,
+					timestamp,
+					'GET',
+					'/api/agent/poll',
+					''
+				)
+			).toBe(true);
 		});
 
 		it('should reject verification with wrong signing key', () => {
 			const sig = expectedHMAC(timestamp, method, path, body);
-			expect(securityKeyManager.verifyRequest('wrong-key', sig, timestamp, method, path, body)).toBe(false);
+			expect(
+				securityKeyManager.verifyRequest('wrong-key', sig, timestamp, method, path, body)
+			).toBe(false);
 		});
 	});
 
@@ -199,31 +293,6 @@ describe('SecurityKeyManager', () => {
 		it('should return an error for empty string', () => {
 			const result = securityKeyManager.validateTimestamp('');
 			expect(result).toBe('Invalid timestamp format');
-		});
-	});
-
-	// ========================================================================
-	// Legacy Compatibility
-	// ========================================================================
-
-	describe('signPayload (deprecated)', () => {
-		it('should return empty string and warn', () => {
-			const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-			const payload = { data: 'sign this' };
-			const sig = securityKeyManager.signPayload(payload);
-			expect(sig).toBe('');
-			expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('deprecated'));
-			warnSpy.mockRestore();
-		});
-	});
-
-	describe('verifyPayload (deprecated)', () => {
-		it('should always return false', () => {
-			const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-			const isValid = securityKeyManager.verifyPayload({ data: 'test' }, 'signature', 'publicKey');
-			expect(isValid).toBe(false);
-			expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('deprecated'));
-			warnSpy.mockRestore();
 		});
 	});
 });
