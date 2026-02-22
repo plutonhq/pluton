@@ -540,8 +540,7 @@ describe('BackupHandler', () => {
 			const { configService: cs } = require('../../../src/services/ConfigService');
 			const origKey = cs.config.ENCRYPTION_KEY;
 			cs.config.ENCRYPTION_KEY = '';
-			// The maxProcessor is 2, so required memory is 64MB * 2 = 128MB
-			// Provide way more than needed to ensure this check passes
+			// Provide enough memory to pass the memory check (128MB minimum)
 			jest.spyOn(os, 'freemem').mockReturnValue(1024 * 1024 * 1024); // 1GB
 
 			const encryptedOptions = {

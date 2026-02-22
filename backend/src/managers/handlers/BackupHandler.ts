@@ -437,11 +437,12 @@ export class BackupHandler {
 	 */
 	async canRun(options: Record<string, any>, resticArgsAndEnv: ResticArgsAndEnv): Promise<boolean> {
 		// Check system resource availability
+		// Use a fixed minimum (128MB) rather than scaling by CPU count.
+		// Restic's memory usage doesn't scale linearly with cores, and on macOS
+		// os.freemem() excludes reclaimable cached memory, making it appear
+		// much lower than actually available memory.
 		const availableMemory = os.freemem();
-		const processorCount = resticArgsAndEnv?.resticEnv?.GOMAXPROCS
-			? parseInt(resticArgsAndEnv.resticEnv.GOMAXPROCS, 10)
-			: os.cpus().length;
-		const requiredMemory = 64 * 1024 * 1024 * processorCount;
+		const requiredMemory = 128 * 1024 * 1024; // 128MB minimum
 		if (availableMemory < requiredMemory) {
 			throw new Error(`Insufficient memory to perform backup.`);
 		}
