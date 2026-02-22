@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/plutonhq/pluton/compare/pluton-v0.5.1...pluton-v0.5.2) (2026-02-22)
+
+
+### Bug Fixes
+
+* resolves macOS build issue. ([2b5f9e6](https://github.com/plutonhq/pluton/commit/2b5f9e614eec04a373c74f9c5ef314e24944b1e8))
+
 ## [0.5.1](https://github.com/plutonhq/pluton/compare/pluton-v0.5.0...pluton-v0.5.1) (2026-02-22)
 
 
