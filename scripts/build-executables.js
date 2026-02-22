@@ -70,28 +70,28 @@ const allTargets = {
     keyringPackage: `@napi-rs/keyring-linux-arm64-gnu`,
     keyringNodeFile: `keyring.linux-arm64-gnu.node`,
   },
-  //   "macos-x64": {
-  //     pkgTarget: "node24-macos-x64",
-  //     executableName: "pluton",
-  //     binaryPlatform: "darwin-x64",
-  //     nodeVersion: "24",
-  //     betterSqlite3Url: `https://github.com/WiseLibs/better-sqlite3/releases/download/v${BETTER_SQLITE3_VERSION}/better-sqlite3-v${BETTER_SQLITE3_VERSION}-node-v137-darwin-x64.tar.gz`,
-  //     resticUrl: `https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_darwin_amd64.bz2`,
-  //     rcloneUrl: `https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-osx-amd64.zip`,
-  //     keyringPackage: `@napi-rs/keyring-darwin-x64`,
-  //     keyringNodeFile: `keyring.darwin-x64.node`,
-  //   },
-  //   "macos-arm64": {
-  //     pkgTarget: "node24-macos-arm64",
-  //     executableName: "pluton",
-  //     binaryPlatform: "darwin-arm64",
-  //     nodeVersion: "24",
-  //     betterSqlite3Url: `https://github.com/WiseLibs/better-sqlite3/releases/download/v${BETTER_SQLITE3_VERSION}/better-sqlite3-v${BETTER_SQLITE3_VERSION}-node-v137-darwin-arm64.tar.gz`,
-  //     resticUrl: `https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_darwin_arm64.bz2`,
-  //     rcloneUrl: `https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-osx-arm64.zip`,
-  //     keyringPackage: `@napi-rs/keyring-darwin-arm64`,
-  //     keyringNodeFile: `keyring.darwin-arm64.node`,
-  //   },
+  "macos-x64": {
+    pkgTarget: "node24-macos-x64",
+    executableName: "pluton",
+    binaryPlatform: "darwin-x64",
+    nodeVersion: "24",
+    betterSqlite3Url: `https://github.com/WiseLibs/better-sqlite3/releases/download/v${BETTER_SQLITE3_VERSION}/better-sqlite3-v${BETTER_SQLITE3_VERSION}-node-v137-darwin-x64.tar.gz`,
+    resticUrl: `https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_darwin_amd64.bz2`,
+    rcloneUrl: `https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-osx-amd64.zip`,
+    keyringPackage: `@napi-rs/keyring-darwin-x64`,
+    keyringNodeFile: `keyring.darwin-x64.node`,
+  },
+  "macos-arm64": {
+    pkgTarget: "node24-macos-arm64",
+    executableName: "pluton",
+    binaryPlatform: "darwin-arm64",
+    nodeVersion: "24",
+    betterSqlite3Url: `https://github.com/WiseLibs/better-sqlite3/releases/download/v${BETTER_SQLITE3_VERSION}/better-sqlite3-v${BETTER_SQLITE3_VERSION}-node-v137-darwin-arm64.tar.gz`,
+    resticUrl: `https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_darwin_arm64.bz2`,
+    rcloneUrl: `https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-osx-arm64.zip`,
+    keyringPackage: `@napi-rs/keyring-darwin-arm64`,
+    keyringNodeFile: `keyring.darwin-arm64.node`,
+  },
 };
 
 // Parse platform argument
@@ -936,11 +936,11 @@ async function createDistributionPackages() {
 }
 
 /**
- * Step 9: Create Linux Tarballs for Release
+ * Step 9: Create Tarballs for Release (Linux & macOS)
  */
-async function createLinuxTarballs() {
+async function createTarballs() {
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📦 Step 9: Creating Linux Tarballs for Release");
+  console.log("📦 Step 9: Creating Tarballs for Release (Linux & macOS)");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
   const executablesDir = join(rootDir, "dist", "executables");
@@ -949,17 +949,17 @@ async function createLinuxTarballs() {
   // Ensure installers directory exists
   await mkdir(installersDir, { recursive: true });
 
-  // Define Linux targets to compress
-  const linuxTargets = Object.keys(targets).filter((t) =>
-    t.startsWith("linux"),
+  // Define Linux and macOS targets to compress (everything except Windows)
+  const tarballTargets = Object.keys(targets).filter(
+    (t) => t.startsWith("linux") || t.startsWith("macos"),
   );
 
-  if (linuxTargets.length === 0) {
-    console.log("No Linux targets to compress, skipping...");
+  if (tarballTargets.length === 0) {
+    console.log("No Linux/macOS targets to compress, skipping...");
     return;
   }
 
-  for (const platform of linuxTargets) {
+  for (const platform of tarballTargets) {
     const sourceDir = join(executablesDir, `${OUTPUT_NAME}-${platform}`);
     const tarballName = `${OUTPUT_NAME}-${platform}.tar.gz`;
     const tarballPath = join(installersDir, tarballName);
@@ -1000,7 +1000,7 @@ async function createLinuxTarballs() {
     }
   }
 
-  console.log("\n✅ Linux tarballs created successfully");
+  console.log("\n✅ Tarballs created successfully");
   console.log(`📁 Tarballs location: ${installersDir}`);
 }
 
@@ -1020,7 +1020,7 @@ async function main() {
     await downloadBinaries();
     await generateExecutables();
     await createDistributionPackages();
-    await createLinuxTarballs();
+    await createTarballs();
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
