@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.3](https://github.com/plutonhq/pluton/compare/pluton-v0.5.2...pluton-v0.5.3) (2026-02-22)
+
+
+### Bug Fixes
+
+* resolves insufficient memory issue . ([0c29177](https://github.com/plutonhq/pluton/commit/0c29177923f7f1bcf5e8f979803586279cf7f522))
+* resolves macos keychain issue on install ([1df22be](https://github.com/plutonhq/pluton/commit/1df22be37d83865c42b6f0a6aaf13413d225a764))
+
 ## [0.5.2](https://github.com/plutonhq/pluton/compare/pluton-v0.5.1...pluton-v0.5.2) (2026-02-22)
 
 
