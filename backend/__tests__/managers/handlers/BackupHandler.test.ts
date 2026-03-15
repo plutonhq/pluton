@@ -662,14 +662,9 @@ describe('BackupHandler', () => {
 				error: 'Error message',
 			});
 
-			// Test complete handler (it's async)
+			// onComplete is now a no-op (backup_complete is emitted from execute() after replication)
 			await handlers.onComplete(0);
-			expect(completeListener).toHaveBeenCalledWith({
-				planId: 'plan-1',
-				backupId: 'backup-1',
-				success: true,
-				summary: expect.any(Object),
-			});
+			expect(completeListener).not.toHaveBeenCalled();
 		});
 
 		it('should handle non-JSON progress lines gracefully', () => {
@@ -1252,20 +1247,17 @@ describe('BackupHandler', () => {
 
 			await handlers.onComplete(1);
 
-			expect(completeListener).toHaveBeenCalledWith({
-				planId: 'plan-1',
-				backupId: 'backup-1',
-				success: false,
-				summary: expect.any(Object),
-			});
+			// onComplete is now a no-op; backup_complete is emitted in execute() after replication
+			expect(completeListener).not.toHaveBeenCalled();
 		});
 
-		it('should retrieve restic progress on complete', async () => {
+		it('should not retrieve restic progress on complete (moved to execute phase)', async () => {
 			const handlers = handler['createHandlers']('plan-1', 'backup-1');
 
 			await handlers.onComplete(0);
 
-			expect(mockGetResticProgress).toHaveBeenCalledWith('plan-1', 'backup-1');
+			// onComplete is now a no-op; progress retrieval is handled in execute()
+			expect(mockGetResticProgress).not.toHaveBeenCalled();
 		});
 	});
 

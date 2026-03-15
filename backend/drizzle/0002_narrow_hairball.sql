@@ -1,0 +1,1 @@
+ALTER TABLE `backups` ADD `mirrors` text;

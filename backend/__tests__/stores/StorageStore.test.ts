@@ -44,6 +44,9 @@ describe('StorageStore', () => {
 					findMany: jest.fn(),
 					findFirst: jest.fn(),
 				},
+				plans: {
+					findMany: jest.fn().mockResolvedValue([]),
+				},
 			},
 			insert: jest.fn().mockReturnThis(),
 			values: jest.fn().mockReturnThis(),

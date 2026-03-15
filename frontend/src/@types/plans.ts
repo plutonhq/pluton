@@ -70,7 +70,7 @@ export type PlanVerifiedResult = {
 
 export type PlanVerification = {
    status: string;
-   result: PlanVerifiedResult | SyncVerifiedResult;
+   result: Record<string, PlanVerifiedResult> | SyncVerifiedResult;
    startedAt: number;
    hasError: boolean;
    endedAt: number | null;
@@ -128,6 +128,21 @@ export type PlanScript = {
    abortOnError?: boolean;
 };
 
+export interface PlanReplicationStorage {
+   replicationId: string;
+   storageId: string;
+   storagePath: string;
+   storageType: string;
+   storageName?: string;
+   addedAt: number;
+}
+
+export interface PlanReplicationSettings {
+   enabled: boolean;
+   concurrent: boolean;
+   storages: PlanReplicationStorage[];
+}
+
 export type PlanSettings = {
    interval: PlanInterval;
    prune: PlanPrune;
@@ -145,11 +160,18 @@ export type PlanSettings = {
       onBackupFailure?: PlanScript[];
       onBackupComplete?: PlanScript[];
    };
+   replication?: PlanReplicationSettings;
 };
 
 export type PlanStats = {
    size: number;
    snapshots: string[];
+   mirrors?: {
+      replicationId: string;
+      storageId: string;
+      size: number;
+      snapshots: string[];
+   }[];
 };
 
 export type Plan = {

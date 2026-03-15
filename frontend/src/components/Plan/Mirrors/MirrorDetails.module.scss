@@ -1,0 +1,76 @@
+.mirrorStats {
+   display: flex;
+   flex-direction: row;
+   justify-content: space-between;
+   padding: 12px 4px;
+}
+
+.mirrorList {
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   .mirrorItem {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--line-color);
+
+      .mirrorItemContent {
+         display: flex;
+         flex-direction: row;
+         justify-content: space-between;
+      }
+      img {
+         max-width: 14px;
+         vertical-align: middle;
+         margin-right: 2px;
+      }
+      .mirrorItemLabel {
+         i {
+            color: var(--content-text-color-light);
+            font-size: 0.7rem;
+            font-style: normal;
+            margin-left: 5px;
+         }
+      }
+      .mirrorItemStatus {
+         .retryButton {
+            border-radius: 12px;
+            padding: 2px 12px;
+            margin-right: 5px;
+            border: 1px solid var(--line-active-color);
+            cursor: pointer;
+            :global(.icon) {
+               color: var(--icon-color) !important;
+            }
+            &:hover {
+               background-color: var(--primary-color);
+               color: white;
+               border-color: var(--primary-color);
+               :global(.icon) {
+                  color: white !important;
+               }
+            }
+         }
+         span {
+            color: var(--icon-color);
+         }
+         &.mirrorItemStatus.completed {
+            span {
+               color: var(--success-text-color);
+            }
+         }
+         &.mirrorItemStatus.failed {
+            span {
+               color: var(--error-button-color);
+            }
+         }
+      }
+      .mirrorItemError {
+         width: 100%;
+         background-color: var(--error-bg-color);
+         color: var(--error-text-color);
+         border-radius: 6px;
+         padding: 12px;
+         box-sizing: border-box;
+         margin-top: 12px;
+      }
+   }
+}

@@ -392,3 +392,48 @@ export function useCheckActiveBackupsOrRestore() {
       // refetchOnMount: true,
    });
 }
+
+// Remove Replication Storage
+export async function deleteReplicationStorage({
+   planID,
+   storageID,
+   storagePath,
+   removeData,
+   replicationId,
+}: {
+   planID: string;
+   storageID: string;
+   storagePath: string;
+   removeData: boolean;
+   replicationId?: string;
+}) {
+   const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/plans/${planID}/action/delete-replication-storage`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: header,
+      body: JSON.stringify({ storageID, storagePath, removeData, replicationId }),
+   });
+   const data = await res.json();
+   if (!data.success) {
+      throw new Error(data.error);
+   }
+   return data;
+}
+
+export function useDeleteReplicationStorage() {
+   const queryClient = useQueryClient();
+   return useMutation({
+      mutationFn: deleteReplicationStorage,
+      onError: (error: Error) => {
+         console.log('error :', error?.message);
+         toast.error(error.message || `Error removing replication storage.`);
+      },
+      onSuccess: (res, variables) => {
+         console.log('# Replication Storage Removed! :', res, variables);
+         queryClient.invalidateQueries({ queryKey: ['plan', variables.planID] });
+         queryClient.invalidateQueries({ queryKey: ['plans'] });
+         toast.success(res?.message || `Replication storage removed successfully!`, { autoClose: 5000 });
+      },
+   });
+}

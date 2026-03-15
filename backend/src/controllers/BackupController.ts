@@ -43,7 +43,11 @@ export class BackupController {
 		}
 
 		try {
-			const downloadResult = await this.backupService.generateBackupDownload(req.params.id);
+			const replicationId = req.query.replicationId as string | undefined;
+			const downloadResult = await this.backupService.generateBackupDownload(
+				req.params.id,
+				replicationId
+			);
 
 			res.status(200).json({ success: true, result: downloadResult });
 		} catch (error: any) {
@@ -64,7 +68,8 @@ export class BackupController {
 		}
 
 		try {
-			const snapshotFiles = await this.backupService.getSnapshotFiles(req.params.id);
+			const replicationId = req.query.replicationId as string | undefined;
+			const snapshotFiles = await this.backupService.getSnapshotFiles(req.params.id, replicationId);
 
 			res.status(200).json({ success: true, result: snapshotFiles });
 		} catch (error: any) {
@@ -188,6 +193,28 @@ export class BackupController {
 			res.status(500).json({
 				success: false,
 				error: error?.message || 'Failed to update backup',
+			});
+		}
+	}
+
+	async retryFailedReplications(req: Request, res: Response): Promise<void> {
+		if (!req.params.id) {
+			res.status(400).json({
+				success: false,
+				error: 'Backup ID is required',
+			});
+			return;
+		}
+		try {
+			const result = await this.backupService.retryFailedReplications(
+				req.params.id,
+				req.query.replicationId as string
+			);
+			res.status(200).json({ success: true, result });
+		} catch (error: any) {
+			res.status(error.statusCode || 500).json({
+				success: false,
+				error: error?.message || 'Failed to retry replications',
 			});
 		}
 	}

@@ -2,7 +2,7 @@ import Icon from '../../common/Icon/Icon';
 import SidePanel from '../../common/SidePanel/SidePanel';
 import { getBackupEventActionMessage, getRestoreEventActionMessage } from '../../../utils/progressHelpers';
 import classes from './BackupEvents.module.scss';
-import { BackupProgressData } from '../../../@types/backups';
+import { BackupProgressData, ReplicationProgressData } from '../../../@types/backups';
 import { useGetBackupProgressOnce } from '../../../services/backups';
 import { useGetRestoreProgressOnce } from '../../../services/restores';
 import { useMemo, useState } from 'react';
@@ -21,7 +21,7 @@ interface BackupEventsProps {
 }
 
 const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inProgress, progressData, close }: BackupEventsProps) => {
-   const [showError, setShowError] = useState<false | number>(false);
+   const [showError, setShowError] = useState<false | string>(false);
    const { data: fetchedProgressData, isLoading } =
       type === 'backup'
          ? useGetBackupProgressOnce({ id, sourceId, sourceType, planId })
@@ -95,7 +95,7 @@ const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inPro
                            <span className={classes.action}>
                               {type === 'backup' ? getBackupEventActionMessage(event.action) : getRestoreEventActionMessage(event.action)}
                               {event.error && (
-                                 <span className={classes.viewError} onClick={() => setShowError(index)}>
+                                 <span className={classes.viewError} onClick={() => setShowError(`main-${index}`)}>
                                     View Error
                                  </span>
                               )}
@@ -105,10 +105,71 @@ const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inPro
                   })}
                </ul>
             ) : null}
+            {/* Mirror Events */}
+            {progressDataToUse?.mirrors && Object.keys(progressDataToUse.mirrors).length > 0 && (
+               <div className={classes.mirrorsEventsSection}>
+                  {Object.entries(progressDataToUse.mirrors as Record<string, ReplicationProgressData>).map(([storageId, mirror]) => (
+                     <div key={storageId} className={classes.mirrorEventsGroup}>
+                        <div className={classes.mirrorEventsHeader}>
+                           <img src={`/providers/${mirror.storageType}.png`} className={classes.mirrorProviderIcon} />
+                           <span className={classes.mirrorEventsName}>{mirror.storageName}</span>
+                           <span className={`${classes.mirrorEventsStatus} ${classes[`mirror_${mirror.status}`] || ''}`}>{mirror.status}</span>
+                        </div>
+                        {mirror.events && mirror.events.length > 0 ? (
+                           <ul className={classes.eventList}>
+                              {mirror.events.map((event: any, index: number) => {
+                                 const isError = event.error;
+                                 const isCompleted = event.action === 'REPLICATION_COMPLETE';
+                                 const isFailed = event.action === 'REPLICATION_FAILED';
+                                 return (
+                                    <li
+                                       key={index}
+                                       className={`${classes.eventItem} ${isError ? classes.error : ''} ${isCompleted ? classes.completed : ''} ${isFailed ? classes.failed : ''}`}
+                                    >
+                                       <span className={classes.icon}>
+                                          <Icon type={isError ? 'error-circle-filled' : 'check-circle-filled'} size={16} />
+                                       </span>
+                                       <span className={classes.time}>{new Date(event.timestamp).toLocaleTimeString()}</span>
+                                       <span className={classes.phase}>{event.phase}</span>
+                                       <span className={classes.action}>
+                                          {getBackupEventActionMessage(event.action, mirror.storageName)}
+                                          {event.error && (
+                                             <span className={classes.viewError} onClick={() => setShowError(`mirror-${storageId}-${index}`)}>
+                                                View Error
+                                             </span>
+                                          )}
+                                       </span>
+                                    </li>
+                                 );
+                              })}
+                           </ul>
+                        ) : (
+                           <div className={classes.noEvents}>No events recorded</div>
+                        )}
+                     </div>
+                  ))}
+               </div>
+            )}
          </div>
          {showError && (
             <Modal title="Error Details" closeModal={() => setShowError(false)} width="400px">
-               <div className={classes.errorDetails}>{progressDataToUse?.events[showError]?.error || 'Unknown error occurred.'}</div>
+               <div className={classes.errorDetails}>
+                  {(() => {
+                     if (typeof showError === 'string') {
+                        if (showError.startsWith('main-')) {
+                           const idx = parseInt(showError.replace('main-', ''));
+                           return progressDataToUse?.events[idx]?.error || 'Unknown error occurred.';
+                        }
+                        if (showError.startsWith('mirror-')) {
+                           const parts = showError.replace('mirror-', '').split('-');
+                           const eventIdx = parseInt(parts.pop()!);
+                           const sId = parts.join('-');
+                           return (progressDataToUse?.mirrors as any)?.[sId]?.events?.[eventIdx]?.error || 'Unknown error occurred.';
+                        }
+                     }
+                     return 'Unknown error occurred.';
+                  })()}
+               </div>
             </Modal>
          )}
       </SidePanel>

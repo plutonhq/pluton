@@ -1,9 +1,10 @@
-import { BackupCompletionStats, BackupTaskStats } from '../types/backups';
+import { BackupCompletionStats, BackupTaskStats, ReplicationFailureInfo } from '../types/backups';
 import { PlanFull } from '../types/plans';
 import { INotificationChannelResolver } from '../types/notifications';
 import { BackupStartedNotification } from './templates/email/backup/BackupStartedNotification';
 import { BackupSuccessNotification } from './templates/email/backup/BackupSuccessNotification';
 import { BackupFailedNotification } from './templates/email/backup/BackupFailedNotification';
+import { ReplicationFailedNotification } from './templates/email/backup/ReplicationFailedNotification';
 import { planLogger } from '../utils/logger';
 import { NotificationChannelResolver } from '../notifications/channels/NotificationChannelResolver';
 import { configService } from '../services/ConfigService';
@@ -14,14 +15,16 @@ interface BackupDataType {
 	endTime?: Date;
 	error?: string;
 	stats?: BackupTaskStats | BackupCompletionStats;
+	replicationFailures?: ReplicationFailureInfo[];
 }
 
-type NotificationType = 'start' | 'end' | 'success' | 'failure';
+type NotificationType = 'start' | 'end' | 'success' | 'failure' | 'replication_failure';
 
 export class BackupNotification {
 	protected BackupStartedNotificationClass = BackupStartedNotification;
 	protected BackupSuccessNotificationClass = BackupSuccessNotification;
 	protected BackupFailedNotificationClass = BackupFailedNotification;
+	protected ReplicationFailedNotificationClass = ReplicationFailedNotification;
 	protected notificationChannelResolver: INotificationChannelResolver = NotificationChannelResolver;
 
 	shouldSend(notificationCase: string, notificationType: string) {
@@ -90,6 +93,20 @@ export class BackupNotification {
 		const storageName = plan.storage?.name || '';
 		const storageType = plan.storage?.type || '';
 		switch (notificationType) {
+			case 'replication_failure':
+				notificationClass = new this.ReplicationFailedNotificationClass({
+					appTitle: configService.config.APP_TITLE || 'Pluton',
+					plan,
+					deviceName,
+					storageName,
+					storageType,
+					error: backupData?.error || 'Replication failed',
+					startTime: backupData?.startTime || new Date(),
+					endTime: backupData?.endTime || new Date(),
+					failedMirrors: (backupData as any)?.failedMirrors,
+					output,
+				});
+				break;
 			case 'start':
 				notificationClass = new this.BackupStartedNotificationClass({
 					appTitle: configService.config.APP_TITLE || 'Pluton',
@@ -112,6 +129,7 @@ export class BackupNotification {
 					startTime: backupData?.startTime || new Date(),
 					endTime: backupData?.endTime || new Date(),
 					stats: backupData?.stats as BackupCompletionStats,
+					replicationFailures: backupData?.replicationFailures,
 					output,
 				});
 				break;
@@ -131,7 +149,7 @@ export class BackupNotification {
 				break;
 			case 'end':
 				if (backupData?.error) {
-					notificationClass = new BackupFailedNotification({
+					notificationClass = new this.BackupFailedNotificationClass({
 						appTitle: configService.config.APP_TITLE || 'Pluton',
 						plan,
 						deviceName,
@@ -144,7 +162,7 @@ export class BackupNotification {
 						output,
 					});
 				} else {
-					notificationClass = new BackupSuccessNotification({
+					notificationClass = new this.BackupSuccessNotificationClass({
 						appTitle: configService.config.APP_TITLE || 'Pluton',
 						plan,
 						deviceName,

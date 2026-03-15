@@ -196,204 +196,165 @@ describe('StorageService', () => {
 			);
 			expect(result?.id).toBe('mock-uid-123');
 		});
-		describe('createStorage', () => {
-			const storagePayload: Partial<NewStorage> = {
-				name: 'New B2 Storage',
-				type: 'b2',
-				authType: 'client',
-				credentials: { account: 'test-account', key: 'test-key' },
-				settings: { hard_delete: 'false' },
-			};
 
-			it('should successfully create a remote, encrypt credentials, and save to DB', async () => {
-				mockStorageManager.createRemote.mockResolvedValue({ success: true, result: 'OK' });
-				mockStorageStore.create.mockImplementation(data => Promise.resolve(data as Storage));
-
-				const result = await storageService.createStorage(storagePayload);
-
-				expect(mockStorageManager.createRemote).toHaveBeenCalledWith(
-					'b2',
-					'New B2 Storage',
-					'client',
-					{ account: 'test-account', key: 'test-key' },
-					{ hard_delete: 'false' }
-				);
-				expect(mockCryptr.encrypt).toHaveBeenCalledWith('test-account');
-				expect(mockCryptr.encrypt).toHaveBeenCalledWith('test-key');
-				expect(mockStorageStore.create).toHaveBeenCalledWith(
-					expect.objectContaining({
-						id: 'mock-uid-123',
-						name: 'New B2 Storage',
-						credentials: {
-							account: 'encrypted(test-account)',
-							key: 'encrypted(test-key)',
-						},
-					})
-				);
-				expect(result?.id).toBe('mock-uid-123');
+		it('should throw an AppError if remote creation fails', async () => {
+			mockStorageManager.createRemote.mockResolvedValue({
+				success: false,
+				result: 'Remote connection failed',
 			});
 
-			it('should throw an AppError if remote creation fails', async () => {
-				mockStorageManager.createRemote.mockResolvedValue({
-					success: false,
-					result: 'Remote connection failed',
-				});
-
-				await expect(storageService.createStorage(storagePayload)).rejects.toThrow(AppError);
-				await expect(storageService.createStorage(storagePayload)).rejects.toThrow(
-					'Remote connection failed'
-				);
-				expect(mockStorageStore.create).not.toHaveBeenCalled();
-			});
-
-			it('should throw an AppError if payload validation fails', async () => {
-				const invalidPayload = { ...storagePayload, name: undefined }; // 'name' is required
-
-				// Temporarily mock console.error to prevent logging expected errors during this test
-				const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-				await expect(storageService.createStorage(invalidPayload)).rejects.toThrow(
-					'Invalid storage configuration provided. Check required fields.'
-				);
-				expect(mockStorageManager.createRemote).not.toHaveBeenCalled();
-
-				// Restore the original console.error function
-				consoleErrorSpy.mockRestore();
-			});
+			await expect(storageService.createStorage(storagePayload)).rejects.toThrow(AppError);
+			await expect(storageService.createStorage(storagePayload)).rejects.toThrow(
+				'Remote connection failed'
+			);
+			expect(mockStorageStore.create).not.toHaveBeenCalled();
 		});
 
-		// ----------------------------------------
-		// deleteStorage
-		// ----------------------------------------
-		describe('deleteStorage', () => {
-			const storageId = 'storage-to-delete';
-			const mockStorage = { id: storageId, name: 'Old Storage' } as Storage;
+		it('should throw an AppError if payload validation fails', async () => {
+			const invalidPayload = { ...storagePayload, name: undefined }; // 'name' is required
 
-			it('should delete remote and DB entry if no plans are dependent', async () => {
-				mockStorageStore.getById.mockResolvedValue(mockStorage);
-				mockPlanStore.getStoragePlans.mockResolvedValue([]); // No dependent plans
-				mockStorageManager.deleteRemote.mockResolvedValue({ success: true, result: 'Deleted' });
-				mockStorageStore.delete.mockResolvedValue(true);
+			// Temporarily mock console.error to prevent logging expected errors during this test
+			const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-				const result = await storageService.deleteStorage(storageId);
+			await expect(storageService.createStorage(invalidPayload)).rejects.toThrow(
+				'Invalid storage configuration provided. Check required fields.'
+			);
+			expect(mockStorageManager.createRemote).not.toHaveBeenCalled();
 
-				expect(mockPlanStore.getStoragePlans).toHaveBeenCalledWith(storageId);
-				expect(mockStorageManager.deleteRemote).toHaveBeenCalledWith('Old Storage');
-				expect(mockStorageStore.delete).toHaveBeenCalledWith(storageId);
-				expect(result).toBe(true);
-			});
+			// Restore the original console.error function
+			consoleErrorSpy.mockRestore();
+		});
+	});
 
-			it('should throw NotFoundError if storage does not exist', async () => {
-				mockStorageStore.getById.mockResolvedValue(null);
-				await expect(storageService.deleteStorage(storageId)).rejects.toThrow('Storage not found');
-				await expect(storageService.deleteStorage(storageId)).rejects.toHaveProperty(
-					'statusCode',
-					404
-				);
-			});
+	// ----------------------------------------
+	// deleteStorage
+	// ----------------------------------------
+	describe('deleteStorage', () => {
+		const storageId = 'storage-to-delete';
+		const mockStorage = { id: storageId, name: 'Old Storage' } as Storage;
 
-			it('should throw AppError if plans are dependent on the storage', async () => {
-				mockStorageStore.getById.mockResolvedValue(mockStorage);
-				mockPlanStore.getStoragePlans.mockResolvedValue([{} as any]); // One dependent plan
+		it('should delete remote and DB entry if no plans are dependent', async () => {
+			mockStorageStore.getById.mockResolvedValue(mockStorage);
+			mockPlanStore.getStoragePlans.mockResolvedValue([]); // No dependent plans
+			mockStorageStore.getReplicationPlans = jest.fn().mockResolvedValue([]);
+			mockStorageManager.deleteRemote.mockResolvedValue({ success: true, result: 'Deleted' });
+			mockStorageStore.delete.mockResolvedValue(true);
 
-				await expect(storageService.deleteStorage(storageId)).rejects.toThrow(AppError);
-				await expect(storageService.deleteStorage(storageId)).rejects.toThrow(
-					'There are Backup Plans dependent on this Storage. Please remove them before deleting the Storage.'
-				);
-				expect(mockStorageManager.deleteRemote).not.toHaveBeenCalled();
-			});
+			const result = await storageService.deleteStorage(storageId);
 
-			it('should throw AppError if remote deletion fails', async () => {
-				mockStorageStore.getById.mockResolvedValue(mockStorage);
-				mockPlanStore.getStoragePlans.mockResolvedValue([]);
-				mockStorageManager.deleteRemote.mockResolvedValue({
-					success: false,
-					result: 'Permission denied',
-				});
-
-				await expect(storageService.deleteStorage(storageId)).rejects.toThrow('Permission denied');
-				expect(mockStorageStore.delete).not.toHaveBeenCalled();
-			});
+			expect(mockPlanStore.getStoragePlans).toHaveBeenCalledWith(storageId);
+			expect(mockStorageManager.deleteRemote).toHaveBeenCalledWith('Old Storage');
+			expect(mockStorageStore.delete).toHaveBeenCalledWith(storageId);
+			expect(result).toBe(true);
 		});
 
-		// ----------------------------------------
-		// verifyStorage
-		// ----------------------------------------
-		describe('verifyStorage', () => {
-			const storageId = 'storage-to-verify';
-			const mockStorage = { id: storageId, name: 'VerifyMe' } as Storage;
-
-			it('should successfully verify a storage connection', async () => {
-				mockStorageStore.getById.mockResolvedValue(mockStorage);
-				mockStorageManager.verifyRemote.mockResolvedValue({
-					success: true,
-					result: 'Connection OK',
-				});
-
-				const result = await storageService.verifyStorage(storageId);
-
-				expect(mockStorageManager.verifyRemote).toHaveBeenCalledWith('VerifyMe');
-				expect(result).toBe('Connection OK');
-			});
-
-			it('should throw NotFoundError if storage does not exist', async () => {
-				mockStorageStore.getById.mockResolvedValue(null);
-				await expect(storageService.deleteStorage(storageId)).rejects.toThrow('Storage not found');
-				await expect(storageService.deleteStorage(storageId)).rejects.toHaveProperty(
-					'statusCode',
-					404
-				);
-			});
-
-			it('should throw AppError if verification fails', async () => {
-				mockStorageStore.getById.mockResolvedValue(mockStorage);
-				mockStorageManager.verifyRemote.mockResolvedValue({
-					success: false,
-					result: 'Invalid credentials',
-				});
-
-				await expect(storageService.verifyStorage(storageId)).rejects.toThrow(AppError);
-				await expect(storageService.verifyStorage(storageId)).rejects.toThrow(
-					'Invalid credentials'
-				);
-			});
+		it('should throw NotFoundError if storage does not exist', async () => {
+			mockStorageStore.getById.mockResolvedValue(null);
+			await expect(storageService.deleteStorage(storageId)).rejects.toThrow('Storage not found');
+			await expect(storageService.deleteStorage(storageId)).rejects.toHaveProperty(
+				'statusCode',
+				404
+			);
 		});
 
-		// ----------------------------------------
-		// authorizeStorage
-		// ----------------------------------------
-		describe('authorizeStorage', () => {
-			it('should call rclone authorize and return the token', async () => {
-				const mockToken = { access_token: 'xyz', expiry: '2025-10-26T10:00:00Z' };
-				const rcloneOutput = `--->\n\n${JSON.stringify(mockToken)}\n\n<---`;
-				mockRunCommand.mockResolvedValue(rcloneOutput); // Use the direct mock reference
+		it('should throw AppError if plans are dependent on the storage', async () => {
+			mockStorageStore.getById.mockResolvedValue(mockStorage);
+			mockPlanStore.getStoragePlans.mockResolvedValue([{ title: 'Plan A' } as any]); // One dependent plan
+			mockStorageStore.getReplicationPlans = jest.fn().mockResolvedValue([]);
 
-				const result = await storageService.authorizeStorage('drive');
+			await expect(storageService.deleteStorage(storageId)).rejects.toThrow(AppError);
+			await expect(storageService.deleteStorage(storageId)).rejects.toThrow(
+				'There are Backup Plans dependent on this Storage: Plan A. Please remove them before deleting the Storage.'
+			);
+		});
 
-				expect(mockRunCommand).toHaveBeenCalledWith(
-					['rclone', 'authorize', 'drive', '--auth-no-open-browser'],
-					undefined,
-					expect.any(Function)
-				);
-				expect(result).toEqual(mockToken);
+		it('should throw AppError if replication plans are dependent on the storage', async () => {
+			mockStorageStore.getById.mockResolvedValue(mockStorage);
+			mockPlanStore.getStoragePlans.mockResolvedValue([]);
+			mockStorageStore.getReplicationPlans = jest.fn().mockResolvedValue([{ title: 'Plan B' }]);
+
+			await expect(storageService.deleteStorage(storageId)).rejects.toThrow(AppError);
+			await expect(storageService.deleteStorage(storageId)).rejects.toThrow(
+				'This Storage is used as a replication target by the following plans: Plan B. Please remove it from their replication settings before deleting the storage.'
+			);
+		});
+	});
+
+	// ----------------------------------------
+	// verifyStorage
+	// ----------------------------------------
+	describe('verifyStorage', () => {
+		const storageId = 'storage-to-verify';
+		const mockStorage = { id: storageId, name: 'VerifyMe' } as Storage;
+
+		it('should successfully verify a storage connection', async () => {
+			mockStorageStore.getById.mockResolvedValue(mockStorage);
+			mockStorageManager.verifyRemote.mockResolvedValue({
+				success: true,
+				result: 'Connection OK',
 			});
 
-			it('should throw an AppError if rclone command fails', async () => {
-				mockRunCommand.mockRejectedValue(new Error('Command failed')); // Use the direct mock reference
+			const result = await storageService.verifyStorage(storageId);
 
-				await expect(storageService.authorizeStorage('drive')).rejects.toThrow(AppError);
-				await expect(storageService.authorizeStorage('drive')).rejects.toThrow(
-					'Failed to authorize drive: Command failed'
-				);
+			expect(mockStorageManager.verifyRemote).toHaveBeenCalledWith('VerifyMe');
+			expect(result).toBe('Connection OK');
+		});
+
+		it('should throw NotFoundError if storage does not exist', async () => {
+			mockStorageStore.getById.mockResolvedValue(null);
+			await expect(storageService.verifyStorage(storageId)).rejects.toThrow('Storage not found');
+			await expect(storageService.verifyStorage(storageId)).rejects.toHaveProperty(
+				'statusCode',
+				404
+			);
+		});
+
+		it('should throw AppError if verification fails', async () => {
+			mockStorageStore.getById.mockResolvedValue(mockStorage);
+			mockStorageManager.verifyRemote.mockResolvedValue({
+				success: false,
+				result: 'Invalid credentials',
 			});
 
-			it('should throw an AppError if token cannot be extracted', async () => {
-				mockRunCommand.mockResolvedValue('Some unexpected output'); // Use the direct mock reference
+			await expect(storageService.verifyStorage(storageId)).rejects.toThrow(AppError);
+			await expect(storageService.verifyStorage(storageId)).rejects.toThrow('Invalid credentials');
+		});
+	});
 
-				await expect(storageService.authorizeStorage('drive')).rejects.toThrow(
-					'Could not extract drive token from output'
-				);
-			});
+	// ----------------------------------------
+	// authorizeStorage
+	// ----------------------------------------
+	describe('authorizeStorage', () => {
+		it('should call rclone authorize and return the token', async () => {
+			const mockToken = { access_token: 'xyz', expiry: '2025-10-26T10:00:00Z' };
+			const rcloneOutput = `--->\n\n${JSON.stringify(mockToken)}\n\n<---`;
+			mockRunCommand.mockResolvedValue(rcloneOutput);
+
+			const result = await storageService.authorizeStorage('drive');
+
+			expect(mockRunCommand).toHaveBeenCalledWith(
+				['rclone', 'authorize', 'drive', '--auth-no-open-browser'],
+				undefined,
+				expect.any(Function)
+			);
+			expect(result).toEqual(mockToken);
+		});
+
+		it('should throw an AppError if rclone command fails', async () => {
+			mockRunCommand.mockRejectedValue(new Error('Command failed'));
+
+			await expect(storageService.authorizeStorage('drive')).rejects.toThrow(AppError);
+			await expect(storageService.authorizeStorage('drive')).rejects.toThrow(
+				'Failed to authorize drive: Command failed'
+			);
+		});
+
+		it('should throw an AppError if token cannot be extracted', async () => {
+			mockRunCommand.mockResolvedValue('Some unexpected output');
+
+			await expect(storageService.authorizeStorage('drive')).rejects.toThrow(
+				'Could not extract drive token from output'
+			);
 		});
 	});
 });

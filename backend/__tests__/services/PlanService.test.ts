@@ -365,6 +365,7 @@ describe('PlanService', () => {
 				storagePath: '/backups/delete',
 				encryption: true,
 				removeRemoteData: true, // We passed true to the service method
+				replicationStorages: [],
 			});
 			expect(mockBackupStore.deleteByPlanId).toHaveBeenCalledWith(planId);
 			expect(mockPlanStore.delete).toHaveBeenCalledWith(planId);
@@ -599,7 +600,7 @@ describe('PlanService', () => {
 	// -------------------------------
 	describe('pruneBackups', () => {
 		const planId = 'plan-to-prune';
-		const mockPlan = { id: planId, sourceId: 'main' } as any;
+		const mockPlan = { id: planId, sourceId: 'main', settings: {} } as any;
 
 		it('should successfully trigger a prune operation', async () => {
 			// Arrange
@@ -611,7 +612,7 @@ describe('PlanService', () => {
 
 			// Assert
 			expect(mockPlanStore.getById).toHaveBeenCalledWith(planId);
-			expect(mockStrategy.pruneBackups).toHaveBeenCalledWith(planId);
+			expect(mockStrategy.pruneBackups).toHaveBeenCalledWith(planId, []);
 			expect(result).toBe('Prune successful');
 		});
 
@@ -737,7 +738,7 @@ describe('PlanService', () => {
 
 	describe('unlockRepo', () => {
 		const planId = 'plan-to-unlock';
-		const mockPlan = { id: planId, sourceId: 'main' } as any;
+		const mockPlan = { id: planId, sourceId: 'main', settings: {} } as any;
 
 		it('should successfully call the unlockRepo method on the strategy', async () => {
 			// Arrange
@@ -752,7 +753,7 @@ describe('PlanService', () => {
 
 			// Assert
 			expect(mockPlanStore.getById).toHaveBeenCalledWith(planId);
-			expect(mockStrategy.unlockRepo).toHaveBeenCalledWith(planId);
+			expect(mockStrategy.unlockRepo).toHaveBeenCalledWith(planId, []);
 			expect(result).toEqual({ success: true, result: 'Unlocked successfully' });
 		});
 
@@ -778,7 +779,7 @@ describe('PlanService', () => {
 			const result = await planService.unlockRepo(planId);
 
 			// Assert
-			expect(mockStrategy.unlockRepo).toHaveBeenCalledWith(planId);
+			expect(mockStrategy.unlockRepo).toHaveBeenCalledWith(planId, []);
 			expect(result).toEqual({ success: false, result: 'Strategy failed to unlock' });
 		});
 	});

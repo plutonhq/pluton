@@ -89,6 +89,12 @@ export { default as PlanTypeSettings } from './Plan/PlanSettings/PlanTypeSetting
 export { default as PlanStats } from './Plan/PlanStats/PlanStats';
 export { default as PlanUnlockModal } from './Plan/PlanUnlockModal/PlanUnlockModal';
 
+// Mirror/Replication components
+export { default as MirrorStatusBadge } from './Plan/Mirrors/MirrorStatusBadge';
+export { default as MirrorStorageSelector } from './Plan/Mirrors/MirrorStorageSelector';
+export { default as MirrorStorageSelectorModal } from './Plan/Mirrors/MirrorStorageSelectorModal';
+export { default as PlanReplicationSettings } from './Plan/PlanForm/PlanReplicationSettings';
+
 // Restore components
 export { default as PlanRestores } from './Plan/Restores/Restores';
 export { default as RestoreChangeViewer } from './Restore/RestoreChangeViewer/RestoreChangeViewer';

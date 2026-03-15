@@ -166,8 +166,10 @@ describe('RestoreService', () => {
 
 		it('should successfully perform a dry-run restore', async () => {
 			// Arrange
+			const mockPlan = { id: 'plan-1', settings: {} } as any;
 			mockBackupStore.getById.mockResolvedValue(mockBackup);
 			mockRestoreStore.isRestoreRunning.mockResolvedValue(false);
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
 			mockStorageStore.getById.mockResolvedValue(mockStorage);
 			mockRestoreStrategy.getRestoreSnapshotStats.mockResolvedValue({
 				success: true,
@@ -180,7 +182,7 @@ describe('RestoreService', () => {
 			// Assert
 			expect(mockBackupStore.getById).toHaveBeenCalledWith(backupId);
 			expect(mockRestoreStore.isRestoreRunning).toHaveBeenCalledWith(backupId);
-			expect(mockStorageStore.getById).toHaveBeenCalledWith(mockBackup.storageId);
+			expect(mockPlanStore.getById).toHaveBeenCalledWith(mockBackup.planId);
 			expect(mockRestoreStrategy.getRestoreSnapshotStats).toHaveBeenCalled();
 			expect(result).toEqual({ stats: 'some-stats' });
 		});

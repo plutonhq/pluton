@@ -9,7 +9,7 @@ export class RemoteStrategy implements SnapshotStrategy {
 	async removeSnapshot(
 		planId: string,
 		backupId: string,
-		options: { storagePath: string; storageName: string; encryption: boolean; planId: string }
+		options: { storagePath: string; storageName: string; encryption: boolean }
 	) {
 		return await this.publishCommand('REMOVE_SNAPSHOT', { backupId, options });
 	}
@@ -37,6 +37,10 @@ export class RemoteStrategy implements SnapshotStrategy {
 		options: { storagePath: string; storageName: string; encryption: boolean }
 	) {
 		return await this.publishCommand('GET_SNAPSHOT_FILES', { planId, backupId, options });
+	}
+
+	async retryFailedReplication(planId: string, backupId: string, replicationIds: string[]) {
+		return await this.publishCommand('RETRY_REPLICATION', { planId, backupId, replicationIds });
 	}
 
 	publishCommand(action: string, payload: any): Promise<{ success: boolean; result: any }> {

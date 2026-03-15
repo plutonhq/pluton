@@ -1,11 +1,12 @@
 import { EventEmitter } from 'events';
+import { readFile, writeFile } from 'fs/promises';
 import { getBackupPlanStats, getSnapshotByTag, runResticCommand } from '../utils/restic/restic';
 import { generateResticRepoPath, resticPathToWindows } from '../utils/restic/helpers';
 import { DownloadHandler } from './handlers/DownloadHandler';
 import { configService } from '../services/ConfigService';
 import { SnapShotFile } from '../types/restic';
 import { appPaths } from '../utils/AppPaths';
-import { readFile, writeFile } from 'fs/promises';
+import { jobQueue } from '../jobs/JobQueue';
 
 export class BaseSnapshotManager extends EventEmitter {
 	private downloadHandler: DownloadHandler;
@@ -78,32 +79,70 @@ export class BaseSnapshotManager extends EventEmitter {
 	async removeSnapshot(
 		planId: string,
 		backupId: string,
-		options: { storagePath: string; storageName: string; encryption: boolean; planId: string }
+		options: {
+			storagePath: string;
+			storageName: string;
+			encryption: boolean;
+			mirrors?: { replicationId: string; storageName: string; storagePath: string }[];
+		}
 	): Promise<{
 		success: boolean;
 		result: any;
-		stats?: false | { total_size: number; snapshots: string[] };
+		stats?: {
+			primary: null | { total_size: number; snapshots: string[] };
+			mirrors?: { [key: string]: { total_size: number; snapshots: string[] } };
+		};
 	}> {
 		try {
-			const { storageName, storagePath, encryption, planId } = options;
+			const { storageName, storagePath, encryption } = options;
 			const repoPassword = encryption ? configService.config.ENCRYPTION_KEY : '';
-			const repoPath = generateResticRepoPath(storageName, storagePath || '');
-			let snapshotId = '';
-			const { success, result } = await getSnapshotByTag('backup-' + backupId, options);
-			if (success && typeof result !== 'string') {
-				snapshotId = result.id;
-			} else {
-				return { success, result };
+			const reposToRemove: { id: string; name: string; path: string }[] = [
+				{ id: 'primary', name: storageName, path: storagePath },
+			];
+			const planStats: {
+				primary: null | { total_size: number; snapshots: string[] };
+				mirrors?: { [key: string]: { total_size: number; snapshots: string[] } };
+			} = {
+				primary: null,
+				mirrors: {},
+			};
+			const removalOutput: Record<string, string> = {};
+			if (options.mirrors) {
+				options.mirrors.forEach(mirror => {
+					reposToRemove.push({
+						id: mirror.replicationId,
+						name: mirror.storageName,
+						path: mirror.storagePath,
+					});
+				});
 			}
+			for (const repo of reposToRemove) {
+				const repoPath = generateResticRepoPath(repo.name, repo.path || '');
+				const { success, result } = await getSnapshotByTag('backup-' + backupId, {
+					storageName: repo.name,
+					storagePath: repo.path,
+					encryption,
+				});
+				if (!success || typeof result === 'string') {
+					continue;
+				}
+				const snapshotId = result.id;
 
-			const output = await runResticCommand(['-r', repoPath, 'forget', snapshotId, '--json'], {
-				RESTIC_PASSWORD: repoPassword,
-			});
-			console.log('[removeSnapshot] restic output:', output);
-			const planStats = await getBackupPlanStats(planId, storageName, storagePath, encryption);
+				const output = await runResticCommand(['-r', repoPath, 'forget', snapshotId, '--json'], {
+					RESTIC_PASSWORD: repoPassword,
+				});
+				removalOutput[repo.id] = output;
+				console.log('[removeSnapshot] restic output:', output);
+				const repoStats = await getBackupPlanStats(planId, repo.name, repo.path, encryption);
+				if (repo.id === 'primary') {
+					planStats.primary = repoStats || { total_size: 0, snapshots: [] };
+				} else if (repoStats) {
+					planStats.mirrors![repo.id] = repoStats;
+				}
+			}
 			return {
 				success: true,
-				result: output,
+				result: removalOutput,
 				stats: planStats,
 			};
 		} catch (error: any) {
@@ -116,16 +155,18 @@ export class BaseSnapshotManager extends EventEmitter {
 
 	async getSnapshotFiles(
 		backupId: string,
-		options: { storagePath: string; storageName: string; encryption: boolean }
+		options: { storagePath: string; storageName: string; encryption: boolean; skipCache?: boolean }
 	): Promise<{ success: boolean; result: SnapShotFile[] | string }> {
 		const filename = `backup-${backupId}-snapshot.json`;
 		const snapshotFilePath = `${appPaths.getCacheDir()}/${filename}`;
 
-		try {
-			const snapshotCache = await readFile(snapshotFilePath, 'utf8');
-			const files = JSON.parse(snapshotCache);
-			return { success: true, result: files };
-		} catch (error: any) {}
+		if (!options.skipCache) {
+			try {
+				const snapshotCache = await readFile(snapshotFilePath, 'utf8');
+				const files = JSON.parse(snapshotCache);
+				return { success: true, result: files };
+			} catch (error: any) {}
+		}
 
 		try {
 			let snapshotId: string | undefined;
@@ -168,13 +209,29 @@ export class BaseSnapshotManager extends EventEmitter {
 					isAvailable: true,
 				}));
 
-			// write the cache
-			await writeFile(snapshotFilePath, JSON.stringify(files), 'utf8');
+			// write the cache (skip for mirror storage reads to avoid polluting primary cache)
+			if (!options.skipCache) {
+				await writeFile(snapshotFilePath, JSON.stringify(files), 'utf8');
+			}
 
 			return { success: true, result: files };
 		} catch (error: any) {
 			console.log('getSnapshotFiles error :', error);
 			return { success: false, result: error?.message || 'Failed to get snapshot files' };
 		}
+	}
+
+	async retryFailedReplication(
+		planId: string,
+		backupId: string,
+		replicationIds: string[]
+	): Promise<{ success: boolean; result: string }> {
+		jobQueue.add('ReplicationRetry', {
+			planId: planId,
+			backupId,
+			failedReplicationIds: replicationIds,
+		});
+
+		return { success: true, result: 'Replication retry queued' };
 	}
 }

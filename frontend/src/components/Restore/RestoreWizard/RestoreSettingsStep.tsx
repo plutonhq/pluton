@@ -6,16 +6,20 @@ import classes from './RestoreWizard.module.scss';
 import FolderPicker from '../../common/FolderPicker/FolderPicker';
 import { RestoreSettings } from '../../../@types/restores';
 import Toggle from '../../common/form/Toggle/Toggle';
+import { Backup } from '../../..';
 
-interface settingsStepProps {
+interface RestoreSettingsStepProps {
    backupId: string;
+   deviceId: string;
    settings: RestoreSettings;
-   updateSettings: (settings: settingsStepProps['settings']) => void;
+   mirrors?: Backup['mirrors'];
+   primaryStorage: { id: string; type: string; name: string };
+   updateSettings: (settings: RestoreSettingsStepProps['settings']) => void;
    goNext: () => void;
    close: () => void;
 }
 
-const settingsStep = ({ backupId, settings, updateSettings, goNext, close }: settingsStepProps) => {
+const RestoreSettingsStep = ({ settings, mirrors = [], primaryStorage, updateSettings, goNext, close, deviceId }: RestoreSettingsStepProps) => {
    const [showFileManager, setShowFileManager] = useState(false);
    const [showCustomPathError, setShowCustomPathError] = useState(false);
 
@@ -30,17 +34,38 @@ const settingsStep = ({ backupId, settings, updateSettings, goNext, close }: set
    return (
       <div className={classes.stepContent}>
          <div className={classes.step}>
-            <p>
-               Select where you want to restore <strong>"backup-{backupId}"</strong>
-            </p>
+            {mirrors && mirrors.length > 0 && (
+               <div className={classes.settingBlock}>
+                  <Select
+                     customClasses={classes.storageSelect}
+                     label="Select Storage to Restore From"
+                     options={[
+                        {
+                           label: primaryStorage!.name + ' (Primary)',
+                           value: 'primary',
+                           image: <img src={`/providers/${primaryStorage.type}.png`} />,
+                        },
+                        ...mirrors.map((m) => ({
+                           label: m.storageName + ' (Mirror)',
+                           value: m.replicationId,
+                           image: <img src={`/providers/${m.storageType}.png`} />,
+                        })),
+                     ]}
+                     fieldValue={settings.replicationId || primaryStorage.id}
+                     full={true}
+                     onUpdate={(value) => updateSettings({ ...settings, replicationId: value === 'primary' ? undefined : value })}
+                  />
+               </div>
+            )}
+
             <div className={classes.settingBlock}>
                <Select
-                  label=""
+                  label="Select where you want to restore the backup"
                   options={[
                      { label: 'Restore to Original Path(s)', value: 'original' },
                      { label: 'Restore to a Custom Path', value: 'custom' },
                   ]}
-                  fieldValue={settings.type || 'sun'}
+                  fieldValue={settings.type || 'original'}
                   onUpdate={(val: string) => updateSettings({ ...settings, type: val as 'original' | 'custom' })}
                   full={true}
                />
@@ -138,9 +163,7 @@ const settingsStep = ({ backupId, settings, updateSettings, goNext, close }: set
                   label="Delete Files that are not in the Snapshot from the Target Restore Path"
                   fieldValue={settings.delete}
                   inline={false}
-                  onUpdate={(val) => {
-                     updateSettings({ ...settings, delete: val });
-                  }}
+                  onUpdate={(val) => updateSettings({ ...settings, delete: val })}
                />
             </div>
          </div>
@@ -156,7 +179,7 @@ const settingsStep = ({ backupId, settings, updateSettings, goNext, close }: set
 
          {showFileManager && (
             <FolderPicker
-               deviceId={'main'}
+               deviceId={deviceId || 'main'}
                title="Choose a Path to Restore"
                footerText="Select a Path where you want to restore your backup"
                selected={settings.path}
@@ -168,4 +191,4 @@ const settingsStep = ({ backupId, settings, updateSettings, goNext, close }: set
    );
 };
 
-export default settingsStep;
+export default RestoreSettingsStep;

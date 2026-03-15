@@ -90,7 +90,12 @@ export class StorageController {
 			StorageLogger.error(
 				`Error deleting storage #${req.params.id}. Reason : ${error?.message.toString() || 'Unknown Error'}`
 			);
-			res.status(500).json({ success: false, error: 'Failed to delete storage' });
+			res
+				.status(500)
+				.json({
+					success: false,
+					error: `Failed to delete storage. Reason : ${error?.message.toString() || 'Unknown Error'}`,
+				});
 		}
 	}
 

@@ -55,7 +55,7 @@ const GeneralSettings = ({ settings, onUpdate }: GeneralSettingsProps) => {
                   { label: 'Light', value: 'light' },
                ]}
                onUpdate={(val: string) => handleThemeChange(val as 'auto' | 'light' | 'dark')}
-               inline={true}
+               inline={false}
             />
          </div>
       </div>

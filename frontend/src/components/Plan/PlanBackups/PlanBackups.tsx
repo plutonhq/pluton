@@ -14,7 +14,7 @@ const PlanBackups = ({ plan }: PlanBackupsProps) => {
    const AllBackups = useComponentOverride('Backups', Backups);
    const [historyTab, setHistoryTab] = useState<'backups' | 'restores'>('backups');
 
-   const { backups = [], stats, restores = [], method, sourceId, sourceType, settings } = plan;
+   const { backups = [], stats, restores = [], method, sourceId, sourceType, settings, storage } = plan;
 
    const sortedHistory = [...(backups || [])].sort((a, b) => new Date(b.started).getTime() - new Date(a.started).getTime());
    const isSync = method === 'sync';
@@ -44,7 +44,10 @@ const PlanBackups = ({ plan }: PlanBackupsProps) => {
                method={method}
                sourceId={sourceId}
                sourceType={sourceType}
+               deviceId={plan.device.id}
+               storage={storage}
                snapLimit={settings.prune.snapCount}
+               replicationSettings={settings.replication}
             />
          )}
          {historyTab === 'restores' && <Restores restores={restores} planId={plan.id} method={method} sourceId={sourceId} sourceType={sourceType} />}

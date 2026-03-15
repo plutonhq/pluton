@@ -8,8 +8,9 @@ import {
 	BackupCompleteEvent,
 	BackupErrorEvent,
 	PruneEndEvent,
-	BackupProgressEvent,
 	BackupStatUpdateEvent,
+	BackupReplicationStatUpdateEvent,
+	BackupReplicationMirrorSizeUpdateEvent,
 } from '../../types/events';
 import { BackupEventService } from '../events/BackupEventService';
 
@@ -51,6 +52,14 @@ export class BackupEventListener {
 		this.localAgent.on('backup_stats_update', (event: BackupStatUpdateEvent) =>
 			this.onBackupStatsUpdate(event)
 		);
+		this.localAgent.on(
+			'backup_replication_stats_update',
+			(event: BackupReplicationStatUpdateEvent) => this.onReplicationStatsUpdate(event)
+		);
+		this.localAgent.on(
+			'backup_mirror_sizes_update',
+			(event: BackupReplicationMirrorSizeUpdateEvent) => this.onMirrorSizesUpdate(event)
+		);
 		this.localAgent.on('pruneEnd', (event: PruneEndEvent) => this.onPruneEnd(event));
 	}
 
@@ -85,6 +94,20 @@ export class BackupEventListener {
 	protected async onBackupStatsUpdate(data: BackupStatUpdateEvent) {
 		console.log('[BackupEventListener] onBackupStatsUpdate :', data);
 		await this.backupEventService.onBackupStatsUpdate(data);
+	}
+
+	protected async onReplicationStatsUpdate(data: BackupReplicationStatUpdateEvent): Promise<void> {
+		await this.backupEventService.onReplicationStatsUpdate(data);
+	}
+
+	protected async onMirrorSizesUpdate(data: BackupReplicationMirrorSizeUpdateEvent): Promise<void> {
+		try {
+			for (const { replicationId, size } of data.mirrorSizes) {
+				await this.backupStore.updateMirrorStatus(data.backupId, replicationId, { size });
+			}
+		} catch (error: any) {
+			console.warn(`Failed to update mirror sizes for backup ${data.backupId}: ${error?.message}`);
+		}
 	}
 
 	protected async onPruneEnd(data: PruneEndEvent): Promise<void> {

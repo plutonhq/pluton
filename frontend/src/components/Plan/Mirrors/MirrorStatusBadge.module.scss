@@ -1,0 +1,25 @@
+.badge {
+   display: inline-flex;
+   align-items: center;
+   gap: 3px;
+   padding: 1px 4px;
+   cursor: default;
+   white-space: nowrap;
+   cursor: pointer;
+}
+
+.badgeSuccess {
+   color: var(--success-text-color);
+}
+
+.badgePartial {
+   color: var(--warning-button-color);
+}
+
+.badgeFailed {
+   color: var(--error-text-color);
+}
+
+.badgeProgress {
+   color: #7e90c5;
+}

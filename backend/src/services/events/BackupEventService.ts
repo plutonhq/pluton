@@ -195,10 +195,22 @@ export class BackupEventService {
 			// Send Notification
 			const plan = await this.planStore.getById(data.planId);
 			if (plan && plan.settings.notification) {
+				// Include replication failures in the success notification if any mirrors failed
+				const replicationFailures = (backup.mirrors || [])
+					.filter((m: any) => m.status === 'failed')
+					.map((m: any) => ({
+						replicationId: m.replicationId,
+						storageId: m.storageId,
+						storageName: m.storageName,
+						storageType: m.storageType,
+						error: m.error,
+					}));
+
 				await this.backupNotification.send(plan, 'success', {
 					id: data.backupId,
 					startTime: backup.started || new Date(),
 					stats: backup.completionStats || undefined,
+					...(replicationFailures.length > 0 ? { replicationFailures } : {}),
 				});
 			}
 
@@ -291,13 +303,14 @@ export class BackupEventService {
 
 	async onBackupStatsUpdate(data: BackupStatUpdateEvent) {
 		console.log('onBackupStatsUpdate :', data);
-		const { total_size, snapshots = [], backupId, planId, error = '' } = data;
+		const { total_size, snapshots = [], backupId, planId, error = '', mirrors } = data;
 		if (planId && total_size && !Number.isNaN(total_size) && snapshots.length > 0) {
 			try {
 				await this.planStore.update(data.planId, {
 					stats: {
 						size: total_size,
 						snapshots: snapshots,
+						...(mirrors ? { mirrors } : {}),
 					},
 					lastBackupTime: sql`(unixepoch())` as any,
 				});
@@ -359,6 +372,39 @@ export class BackupEventService {
 				backupId: backupId,
 				error: error,
 			});
+		}
+	}
+
+	async onReplicationStatsUpdate(data: {
+		planId: string;
+		backupId: string;
+		mirrors: {
+			replicationId: string;
+			storageId: string;
+			storagePath: string;
+			size: number;
+			snapshots: string[];
+		}[];
+	}): Promise<void> {
+		const { planId, backupId, mirrors } = data;
+		if (!planId || !mirrors || mirrors.length === 0) return;
+		try {
+			const plan = await this.planStore.getById(planId);
+			if (plan && plan.stats) {
+				await this.planStore.update(planId, {
+					stats: {
+						...plan.stats,
+						mirrors,
+					},
+				});
+				planLogger('update', planId, backupId).info(
+					`Updated plan mirror stats. ${mirrors.length} mirror(s) tracked.`
+				);
+			}
+		} catch (error: any) {
+			planLogger('update', planId, backupId).error(
+				`Error updating plan mirror stats: ${error?.message || 'Unknown Error'}`
+			);
 		}
 	}
 }

@@ -235,5 +235,13 @@ export interface DevicePlan {
       type: string;
       typeName: string;
    };
+   replicatedStorages: number;
    size: number;
+}
+
+export interface DeviceStorage {
+   id: string;
+   name: string;
+   type: string;
+   storageTypeName: string;
 }

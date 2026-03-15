@@ -64,6 +64,10 @@ export class BackupFailedNotification extends BaseNotification {
 				included: plan.sourceConfig?.includes.join(', ') || '',
 				excluded: plan.sourceConfig?.excludes.join(', ') || '',
 			},
+			replicationStorages:
+				plan.settings.replication?.enabled && plan.settings.replication?.storages
+					? plan.settings.replication.storages.length
+					: 0,
 			eventName: 'backup_failed',
 		};
 		return JSON.stringify(payload);
@@ -99,6 +103,10 @@ export class BackupFailedNotification extends BaseNotification {
 			formatBytes,
 			formatDuration,
 			formatNumberToK,
+			replicationStorages:
+				data.plan.settings.replication?.enabled && data.plan.settings.replication?.storages
+					? data.plan.settings.replication.storages.length
+					: 0,
 		});
 
 		return this.applyEmailTemplate(renderedBody, {

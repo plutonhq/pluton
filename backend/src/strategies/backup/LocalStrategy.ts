@@ -31,15 +31,28 @@ export class LocalStrategy implements BackupStrategy {
 			storagePath: string;
 			encryption: boolean;
 			removeRemoteData: boolean;
+			replicationStorages?: { storageName: string; storagePath: string }[];
 		}
 	) {
-		const { storageName, storagePath, removeRemoteData, encryption } = options;
+		const { storageName, storagePath, removeRemoteData, encryption, replicationStorages } = options;
 		return await this.localAgent.removeBackup(planId, {
 			storageName,
 			storagePath,
 			removeRemoteData,
 			encryption,
+			replicationStorages,
 		});
+	}
+
+	async removeReplicationStorage(
+		planId: string,
+		options: {
+			storageName: string;
+			storagePath: string;
+			removeData: boolean;
+		}
+	) {
+		return await this.localAgent.removeReplicationStorage(planId, options);
 	}
 
 	async pauseBackup(backupId: string) {
@@ -48,12 +61,18 @@ export class LocalStrategy implements BackupStrategy {
 	async resumeBackup(backupId: string) {
 		return await this.localAgent.resumeBackup(backupId);
 	}
-	async pruneBackups(backupId: string) {
-		return await this.localAgent.pruneBackups(backupId);
+	async pruneBackups(
+		backupId: string,
+		replicationStorages?: { storageName: string; storagePath: string }[]
+	) {
+		return await this.localAgent.pruneBackups(backupId, replicationStorages);
 	}
 
-	async unlockRepo(planId: string) {
-		return await this.localAgent.unlockRepo(planId);
+	async unlockRepo(
+		planId: string,
+		replicationStorages?: { storageName: string; storagePath: string }[]
+	) {
+		return await this.localAgent.unlockRepo(planId, replicationStorages);
 	}
 
 	async updatePlanStorageName(storageId: string, newStorageName: string) {

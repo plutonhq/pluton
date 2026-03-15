@@ -106,7 +106,7 @@ describe('Backup Routes', () => {
 				.set('Cookie', ['token=valid-token']);
 
 			expect(response.status).toBe(200);
-			expect(mockBackupService.getSnapshotFiles).toHaveBeenCalledWith('backup-1');
+			expect(mockBackupService.getSnapshotFiles).toHaveBeenCalledWith('backup-1', undefined);
 		});
 	});
 
@@ -206,7 +206,7 @@ describe('Backup Routes', () => {
 				.send({ files: ['file1.txt', 'file2.txt'] });
 
 			expect(response.status).toBe(200);
-			expect(mockBackupService.generateBackupDownload).toHaveBeenCalledWith('backup-1');
+			expect(mockBackupService.generateBackupDownload).toHaveBeenCalledWith('backup-1', undefined);
 		});
 	});
 

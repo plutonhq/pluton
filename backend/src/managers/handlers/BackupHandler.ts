@@ -10,6 +10,8 @@ import { appPaths } from '../../utils/AppPaths';
 import { BackupPlanArgs } from '../../types/plans';
 import { runScriptsForEvent } from '../../utils/executeUserScript';
 import { configService } from '../../services/ConfigService';
+import { ReplicationOrchestrator } from './ReplicationOrchestrator';
+import { BackupMirror } from '../../types/backups';
 
 type ResticArgsAndEnv = {
 	resticArgs: string[];
@@ -21,10 +23,22 @@ export class BackupHandler {
 	private cancelledBackups = new Set<string>();
 	// private backupAttempts = new Map<string, number>();
 	private progressManager: ProgressManager;
+	private replicationOrchestrator?: ReplicationOrchestrator;
 
 	constructor(protected emitter: EventEmitter) {
 		this.progressManager = new ProgressManager(appPaths.getProgressDir());
 		this.initializeProgressManager();
+	}
+
+	private getReplicationOrchestrator(): ReplicationOrchestrator {
+		if (!this.replicationOrchestrator) {
+			this.replicationOrchestrator = new ReplicationOrchestrator(
+				this.emitter,
+				this.progressManager,
+				this.cancelledBackups
+			);
+		}
+		return this.replicationOrchestrator;
 	}
 
 	private async initializeProgressManager(): Promise<void> {
@@ -89,8 +103,26 @@ export class BackupHandler {
 			// --- 3. POST-BACKUP PHASE ---
 			await this.postBackupPhase(planId, backupId, options);
 
+			// --- 4. REPLICATION PHASE ---
+			if (
+				options.settings?.replication?.enabled &&
+				options.settings.replication.storages?.length > 0
+			) {
+				await this.getReplicationOrchestrator().run(planId, backupId, options);
+			}
+
 			// Mark as completed
 			await this.progressManager.markCompleted(planId, backupId, true);
+
+			// Emit backup_complete AFTER the entire flow (including replication) is done.
+			// This sets inProgress=false in the DB so the frontend hides the progress bar.
+			const progressData = await this.progressManager.getResticProgress(planId, backupId);
+			this.emitter.emit('backup_complete', {
+				planId,
+				backupId,
+				success: true,
+				summary: progressData,
+			});
 
 			// Run After Backup scripts
 			await this.afterBackup(planId, backupId, options);
@@ -103,6 +135,12 @@ export class BackupHandler {
 			// If Cancelled by the user, do not retry or mark as failed.
 			const isCancelled = errorMessage.startsWith('BACKUP_CANCELLED:');
 			if (isCancelled) {
+				this.emitter.emit('backup_complete', {
+					planId,
+					backupId,
+					success: false,
+					summary: null,
+				});
 				return '';
 			}
 
@@ -119,6 +157,14 @@ export class BackupHandler {
 				errorMessage,
 				permanentlyFailed
 			);
+
+			// Emit backup_complete with failure so the DB sets inProgress=false
+			this.emitter.emit('backup_complete', {
+				planId,
+				backupId,
+				success: false,
+				summary: null,
+			});
 
 			if (!permanentlyFailed) {
 				await this.updateProgress(
@@ -360,6 +406,24 @@ export class BackupHandler {
 	}
 
 	/**
+	 * Retries failed replication operations for a specific backup.
+	 * Delegates to ReplicationOrchestrator.
+	 */
+	async retryFailedReplications(
+		planId: string,
+		backupId: string,
+		options: Record<string, any>,
+		failedReplicationIds: string[]
+	): Promise<BackupMirror[]> {
+		return this.getReplicationOrchestrator().retryFailedReplications(
+			planId,
+			backupId,
+			options,
+			failedReplicationIds
+		);
+	}
+
+	/**
 	 * Helper to update backup progress with error handling
 	 */
 	protected async updateProgress(
@@ -489,6 +553,12 @@ export class BackupHandler {
 		try {
 			const killed = processManager.killProcess('backup-' + backupId);
 			console.log('[Cancel] killed:', killed);
+
+			// Also cancel any running replication processes
+			if (this.replicationOrchestrator) {
+				await this.replicationOrchestrator.cancelReplications(backupId);
+			}
+
 			return true;
 		} catch (error: any) {
 			console.log('Error Cancelling Backup. ' + error?.message || '');
@@ -530,13 +600,10 @@ export class BackupHandler {
 				});
 			},
 			onComplete: async (code: number) => {
-				const progressData = await this.progressManager.getResticProgress(planId, backupId);
-				this.emitter.emit('backup_complete', {
-					planId,
-					backupId,
-					success: code === 0,
-					summary: progressData,
-				});
+				// NOTE: Do NOT emit backup_complete here. The restic process finishes
+				// before the replication phase, and backup_complete sets inProgress=false
+				// in the DB, which hides the frontend progress bar prematurely.
+				// backup_complete is emitted from execute() after the full flow completes.
 			},
 		};
 	}

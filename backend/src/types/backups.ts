@@ -44,10 +44,21 @@ export interface BackupProgressStats {
 
 export interface BackupDownload {
 	status: string;
+	storageId?: string;
+	storageName?: string;
+	storageType?: string;
 	started?: number;
 	ended?: number;
 	error?: string;
 	sourceConfig?: Record<string, any>;
+}
+
+export interface ReplicationFailureInfo {
+	replicationId: string;
+	storageId: string;
+	storageName: string;
+	storageType: string;
+	error?: string;
 }
 
 export interface BackupNotificationJSONPayload {
@@ -57,6 +68,7 @@ export interface BackupNotificationJSONPayload {
 	storageName: string;
 	storageType: string;
 	storagePath: string;
+	replicationStorages: number;
 	startTime: Date;
 	planID: string;
 	planTitle: string;
@@ -68,4 +80,18 @@ export interface BackupNotificationJSONPayload {
 	endTime?: Date;
 	error?: string;
 	stats?: BackupTaskStats | BackupCompletionStats;
+	replicationFailures?: ReplicationFailureInfo[];
+}
+
+export interface BackupMirror {
+	replicationId: string;
+	storageId: string;
+	storageName: string;
+	storagePath: string;
+	storageType: string;
+	status: 'pending' | 'started' | 'completed' | 'failed';
+	started?: number;
+	ended?: number;
+	error?: string;
+	size?: number;
 }

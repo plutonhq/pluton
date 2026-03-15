@@ -183,15 +183,14 @@ describe('runResticCommand', () => {
 		expect(onProcess).toHaveBeenCalledWith(mockProcess);
 	});
 
-	it('should resolve with termination message when process receives SIGTERM', async () => {
+	it('should reject with termination message when process receives SIGTERM', async () => {
 		const promise = runResticCommand(['backup', '/test']);
 
 		setImmediate(() => {
 			mockProcess.emit('exit', null, 'SIGTERM');
 		});
 
-		const result = await promise;
-		expect(result).toBe('Process terminated by user');
+		await expect(promise).rejects.toThrow('Process terminated by user');
 	});
 
 	it('should reject when spawn fails', async () => {
@@ -291,7 +290,7 @@ describe('runResticCommand', () => {
 			mockProcess.stderr.emit('data', Buffer.from('some error after cancellation'));
 		});
 
-		await promise;
+		await expect(promise).rejects.toThrow('Process terminated by user');
 
 		expect(onError).not.toHaveBeenCalled();
 	});

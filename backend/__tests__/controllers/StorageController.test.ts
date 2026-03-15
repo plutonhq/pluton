@@ -285,7 +285,7 @@ describe('StorageController', () => {
 			expect(mockStatus).toHaveBeenCalledWith(500);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: false,
-				error: 'Failed to delete storage',
+				error: 'Failed to delete storage. Reason : Delete failed',
 			});
 		});
 	});

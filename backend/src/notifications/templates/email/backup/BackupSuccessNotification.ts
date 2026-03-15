@@ -2,7 +2,11 @@ import ejs from 'ejs';
 import { configService } from '../../../../services/ConfigService';
 import { Plan } from '../../../../db/schema/plans';
 import { providers } from '../../../../utils/providers';
-import { BackupCompletionStats, BackupNotificationJSONPayload } from '../../../../types/backups';
+import {
+	BackupCompletionStats,
+	BackupNotificationJSONPayload,
+	ReplicationFailureInfo,
+} from '../../../../types/backups';
 import { formatBytes, formatDuration, formatNumberToK } from '../../../../utils/formatter';
 import { BaseNotification } from '../../../BaseNotification';
 import { loadBackupTemplate } from '../../../templateLoader';
@@ -16,6 +20,7 @@ export interface BackupSuccessNotificationPayload {
 	startTime: Date;
 	endTime: Date;
 	stats?: BackupCompletionStats;
+	replicationFailures?: ReplicationFailureInfo[];
 	output?: 'html' | 'json' | 'push';
 }
 
@@ -35,8 +40,17 @@ export class BackupSuccessNotification extends BaseNotification {
 	}
 
 	protected buildJSONContent(data: BackupSuccessNotificationPayload): string {
-		const { appTitle, deviceName, storageName, storageType, plan, stats, startTime, endTime } =
-			data;
+		const {
+			appTitle,
+			deviceName,
+			storageName,
+			storageType,
+			plan,
+			stats,
+			startTime,
+			endTime,
+			replicationFailures,
+		} = data;
 		const payload: BackupNotificationJSONPayload = {
 			appTitle,
 			deviceName,
@@ -53,7 +67,12 @@ export class BackupSuccessNotification extends BaseNotification {
 				included: plan.sourceConfig?.includes.join(', ') || '',
 				excluded: plan.sourceConfig?.excludes.join(', ') || '',
 			},
+			replicationStorages:
+				plan.settings.replication?.enabled && plan.settings.replication?.storages
+					? plan.settings.replication.storages.length
+					: 0,
 			eventName: 'backup_success',
+			...(replicationFailures && replicationFailures.length > 0 ? { replicationFailures } : {}),
 		};
 		return JSON.stringify(payload);
 	}
@@ -87,6 +106,11 @@ export class BackupSuccessNotification extends BaseNotification {
 			formatBytes,
 			formatDuration,
 			formatNumberToK,
+			replicationStorages:
+				data.plan.settings.replication?.enabled && data.plan.settings.replication?.storages
+					? data.plan.settings.replication.storages.length
+					: 0,
+			replicationFailures: data.replicationFailures || [],
 		});
 
 		return this.applyEmailTemplate(renderedBody, {

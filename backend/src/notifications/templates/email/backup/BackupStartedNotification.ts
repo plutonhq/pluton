@@ -50,6 +50,10 @@ export class BackupStartedNotification extends BaseNotification {
 				included: plan.sourceConfig?.includes.join(', ') || '',
 				excluded: plan.sourceConfig?.excludes.join(', ') || '',
 			},
+			replicationStorages:
+				plan.settings.replication?.enabled && plan.settings.replication?.storages
+					? plan.settings.replication.storages.length
+					: 0,
 			eventName: 'backup_started',
 		};
 		return JSON.stringify(payload);
@@ -77,6 +81,10 @@ export class BackupStartedNotification extends BaseNotification {
 			startDate,
 			formatBytes,
 			formatNumberToK,
+			replicationStorages:
+				data.plan.settings.replication?.enabled && data.plan.settings.replication?.storages
+					? data.plan.settings.replication.storages.length
+					: 0,
 		});
 
 		return this.applyEmailTemplate(renderedBody, {

@@ -6,10 +6,9 @@ import { useGetDevice, useGetSystemMetrics } from '../../services/devices';
 import DeviceInfo from '../../components/Device/DeviceInfo/DeviceInfo';
 import EditDevice from '../../components/Device/EditDevice/EditDevice';
 import classes from './DeviceSingle.module.scss';
-// import { compareVersions } from '../../utils/helpers';
 import NotFound from '../../components/common/NotFound/NotFound';
 import DeviceBackups from '../../components/Device/DeviceBackups/DeviceBackups';
-import { DevicePlan } from '../../@types/devices';
+import { DevicePlan, DeviceStorage } from '../../@types/devices';
 
 const DeviceSingle = () => {
    const { id } = useParams();
@@ -27,6 +26,7 @@ const DeviceSingle = () => {
    const device = data?.result?.device;
    const metrics = metricsData?.result && metricsData?.result?.system ? metricsData.result : device?.metrics;
    const devicePlans: DevicePlan[] = data?.result?.plans || [];
+   const deviceStorages: DeviceStorage[] = data?.result?.storages || [];
    const deviceName = device?.name;
    const isPending = device?.status && device?.status === 'pending';
 
@@ -73,7 +73,7 @@ const DeviceSingle = () => {
                </div>
             ) : (
                <>
-                  <DeviceBackups plans={devicePlans} />
+                  <DeviceBackups plans={devicePlans} storages={deviceStorages} />
                   {metrics?.system && <DeviceInfo metrics={metrics} isRefetching={false} />}
                </>
             )}

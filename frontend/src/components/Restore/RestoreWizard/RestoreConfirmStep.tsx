@@ -33,6 +33,8 @@ const RestoreConfirmStep = ({ backupId, planId, settings, stats, snapshotsStats,
             includes: settings.includes,
             excludes: settings.excludes,
             deleteOption: settings.delete,
+            storageId: settings.storageId,
+            replicationId: settings.replicationId,
          },
          {
             onSuccess: (data: any, variables) => {

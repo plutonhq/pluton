@@ -24,6 +24,17 @@ export interface ProgressEvent {
 	completed: boolean; // Whether this action is completed
 }
 
+export interface ReplicationProgress {
+	replicationId: string;
+	storageId: string;
+	storageName: string;
+	storageType: string;
+	status: 'pending' | 'running' | 'completed' | 'failed' | 'retrying';
+	resticData?: ResticProgress;
+	error?: string;
+	events: ProgressEvent[];
+}
+
 export interface BackupProgressFile {
 	planId: string;
 	backupId: string;
@@ -32,6 +43,7 @@ export interface BackupProgressFile {
 	lastUpdate: string;
 	duration?: number;
 	events: ProgressEvent[]; // Array of all progress events
+	mirrors?: Record<string, ReplicationProgress>; // Keyed by storageId
 }
 
 export class ProgressManager {
@@ -233,6 +245,112 @@ export class ProgressManager {
 				};
 			}
 			progress.events.push(finalEvent);
+			return progress;
+		});
+	}
+
+	/**
+	 * Initialize replication entries in the progress file
+	 */
+	async initializeReplications(
+		planId: string,
+		backupId: string,
+		mirrors: {
+			replicationId: string;
+			storageId: string;
+			storageName: string;
+			storageType: string;
+		}[]
+	): Promise<void> {
+		await this.synchronizedUpdate(backupId, progress => {
+			// Merge into existing mirrors instead of replacing — preserves completed entries during retry
+			if (!progress.mirrors) {
+				progress.mirrors = {};
+			}
+			for (const mirror of mirrors) {
+				const isRetry = progress.mirrors[mirror.replicationId]?.events?.length > 0;
+				progress.mirrors[mirror.replicationId] = {
+					replicationId: mirror.replicationId,
+					storageId: mirror.storageId,
+					storageName: mirror.storageName,
+					storageType: mirror.storageType,
+					status: isRetry ? 'retrying' : 'pending',
+					events: [],
+				};
+			}
+			progress.lastUpdate = new Date().toISOString();
+			return progress;
+		});
+	}
+
+	/**
+	 * Update a specific replication's progress action
+	 */
+	async updateReplicationAction(
+		planId: string,
+		backupId: string,
+		replicationId: string,
+		action: string,
+		completed: boolean,
+		error?: string
+	): Promise<void> {
+		await this.synchronizedUpdate(backupId, progress => {
+			if (!progress.mirrors?.[replicationId]) return progress;
+
+			const replicationProgress = progress.mirrors[replicationId];
+			const event: ProgressEvent = {
+				timestamp: new Date().toISOString(),
+				phase: 'replicating',
+				action,
+				completed,
+				error,
+			};
+			replicationProgress.events.push(event);
+
+			// Update replication status based on action
+			if (action.includes('SCHEDULED') && action.includes('RETRY')) {
+				replicationProgress.status = 'retrying';
+			} else if (action.includes('START') && !action.includes('PRUNE')) {
+				replicationProgress.status = 'running';
+			} else if (action === 'REPLICATION_COMPLETE') {
+				replicationProgress.status = 'completed';
+			} else if (action === 'REPLICATION_FAILED') {
+				replicationProgress.status = 'failed';
+				replicationProgress.error = error;
+			}
+
+			progress.lastUpdate = new Date().toISOString();
+			return progress;
+		});
+	}
+
+	/**
+	 * Update a specific replication's restic progress data
+	 */
+	async updateReplicationResticProgress(
+		planId: string,
+		backupId: string,
+		replicationId: string,
+		resticChunk: string
+	): Promise<void> {
+		const lines = resticChunk.split('\n').filter(line => line.trim() !== '');
+		if (lines.length === 0) return;
+
+		await this.synchronizedUpdate(backupId, progress => {
+			if (!progress.mirrors?.[replicationId]) return progress;
+
+			const replicationProgress = progress.mirrors[replicationId];
+			for (const line of lines) {
+				try {
+					const resticData: ResticProgress = JSON.parse(line);
+					if (resticData.message_type === 'status' || resticData.message_type === 'summary') {
+						replicationProgress.resticData = resticData;
+					}
+				} catch (e) {
+					// Ignore parse errors
+				}
+			}
+			progress.lastUpdate = new Date().toISOString();
 			return progress;
 		});
 	}

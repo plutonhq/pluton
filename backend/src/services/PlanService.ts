@@ -90,7 +90,16 @@ export class PlanService {
 			throw new NotFoundError('Storage not found.');
 		}
 
-		const theStoragePath = sanitizeStoragePath(storagePath, planStorage.type);
+		// Fetch the device early so we can use its OS for cross-platform path sanitization.
+		// Without this, a Windows server would mangle Linux paths (e.g., /var/home → F:/var/home).
+		const device = await this.deviceStore.getById(sourceId);
+		if (!device) {
+			throw new NotFoundError('Source device not found');
+		}
+		const isRemote = sourceId !== 'main';
+		const targetOS = isRemote ? device.os ?? undefined : undefined;
+
+		const theStoragePath = sanitizeStoragePath(storagePath, planStorage.type, targetOS);
 		let newPlanData: NewPlan = {
 			id: planId,
 			title: title.trim(),
@@ -115,12 +124,6 @@ export class PlanService {
 		} catch (error) {
 			console.error('Error parsing plan data:', error);
 			throw error;
-		}
-
-		// Check if Device exists
-		const device = await this.deviceStore.getById(sourceId);
-		if (!device) {
-			throw new NotFoundError('Source device not found');
 		}
 
 		// Create Backup Schedule
@@ -225,12 +228,17 @@ export class PlanService {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError('Plan not found.');
 		const storageName = plan.storage?.name || '';
+
+		// Resolve replication storage names so removeBackup can purge them too
+		const replicationStorages = removeRemoteData ? await this.resolveReplicationStorages(plan) : [];
+
 		const options = {
 			storageName:
 				storageName === 'Local' || storageName === 'Local Storage' ? 'local' : storageName,
 			storagePath: plan.storagePath || '',
 			encryption: plan.settings.encryption || true,
 			removeRemoteData,
+			replicationStorages,
 		};
 
 		const strategy = this.getStrategy(plan) as BackupStrategy;
@@ -279,8 +287,9 @@ export class PlanService {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError(`Plan with ID ${planId} not found.`);
 
+		const replicationStorages = await this.resolveReplicationStorages(plan);
 		const strategy = this.getStrategy(plan) as BackupStrategy;
-		const pruneResult = await strategy.pruneBackups(planId);
+		const pruneResult = await strategy.pruneBackups(planId, replicationStorages);
 
 		if (!pruneResult.success) {
 			throw new AppError(
@@ -329,6 +338,96 @@ export class PlanService {
 	}
 
 	/**
+	 * Removes a replication storage from a plan's replication settings.
+	 * Optionally purges the replicated data from the remote storage.
+	 */
+	public async deleteReplicationStorage(
+		planId: string,
+		storageID: string,
+		storagePath: string,
+		removeData: boolean,
+		replicationId?: string
+	): Promise<{ success: boolean; message: string }> {
+		const plan = await this.planStore.getById(planId);
+		if (!plan) throw new NotFoundError('Plan not found.');
+
+		const replication = plan.settings?.replication;
+		if (!replication?.storages?.length) {
+			throw new AppError(400, 'Plan has no replication storages configured.');
+		}
+
+		const storageIndex = replicationId
+			? replication.storages.findIndex(s => s.replicationId === replicationId)
+			: replication.storages.findIndex(
+					s => s.storageId === storageID && s.storagePath === storagePath
+				);
+		if (storageIndex === -1) {
+			// If the storage to remove isn't found, we can consider it already "removed" for idempotency
+			return { success: true, message: `Replication storage removed successfully.` };
+		}
+
+		// Resolve storage name for logging and rclone purge
+		let storageName = 'Unknown';
+		const storageRecords = await this.storageStore.getByIds([storageID]);
+		if (storageRecords?.length) {
+			const name = storageRecords[0].name;
+			storageName = name === 'Local' || name === 'Local Storage' ? 'local' : name;
+		}
+
+		// If removeData is true, purge the replicated data from the remote storage
+		if (removeData) {
+			const strategy = this.getStrategy(plan) as BackupStrategy;
+			const purgeResult = await strategy.removeReplicationStorage(planId, {
+				storageName,
+				storagePath,
+				removeData,
+			});
+			if (!purgeResult.success) {
+				throw new AppError(500, `Failed to purge replication data: ${purgeResult.result}`);
+			}
+		}
+
+		// Update the plan's replication settings to remove the storage
+		const updatedStorages = replication.storages.filter((_, i) => i !== storageIndex);
+		const updatedReplication = {
+			...replication,
+			storages: updatedStorages,
+			// Disable replication if no storages remain
+			...(updatedStorages.length === 0 && { enabled: false }),
+		};
+		const updatedSettings = { ...plan.settings, replication: updatedReplication };
+		await this.planStore.update(planId, { settings: updatedSettings } as any);
+
+		// Sync the CronManager schedule so future backup runs use the updated replication settings
+		try {
+			const planStorage: BackupPlanArgs['storage'] = await this.getStorageDetails(
+				plan.storageId as string
+			);
+			const cronExpression = intervalToCron(updatedSettings.interval);
+			const updatedPlan = await this.planStore.getById(planId);
+			if (updatedPlan && planStorage.name) {
+				const backupScheduleOptions: BackupPlanArgs = {
+					...updatedPlan,
+					storage: planStorage,
+					cronExpression,
+				};
+				const strategy = this.getStrategy(updatedPlan) as BackupStrategy;
+				await strategy.updateBackup(planId, backupScheduleOptions);
+			}
+		} catch (error: any) {
+			planLogger('replication', planId).warn(
+				`Failed to sync CronManager schedule after removing replication storage: ${error?.message || 'Unknown error'}`
+			);
+		}
+
+		planLogger('replication', planId).info(
+			`Replication storage "${storageName}" (${storagePath}) removed from plan.${removeData ? ' Replicated data was purged.' : ''}`
+		);
+
+		return { success: true, message: `Replication storage "${storageName}" removed successfully.` };
+	}
+
+	/**
 	 * Unlocks a plan's repository by removing all stale locks.
 	 */
 	public async unlockRepo(planId: string): Promise<{ success: boolean; result: string }> {
@@ -340,6 +439,7 @@ export class PlanService {
 		// This action is immediate and not queued, so we don't check for active backups.
 		// It's a maintenance task that can be run even if a backup failed due to a lock.
 
+		const replicationStorages = await this.resolveReplicationStorages(plan);
 		const strategy = this.getStrategy(plan) as BackupStrategy;
 
 		// The strategy must have the new method.
@@ -347,7 +447,7 @@ export class PlanService {
 			throw new AppError(501, 'The "unlockRepo" feature is not implemented for this strategy.');
 		}
 
-		const unlockResult = await strategy.unlockRepo(planId);
+		const unlockResult = await strategy.unlockRepo(planId, replicationStorages);
 
 		if (unlockResult.success) {
 			planLogger('unlock', planId).info('Repository unlocked successfully by user request.');
@@ -448,5 +548,29 @@ export class PlanService {
 			credentials: storage.credentials as Record<string, string>,
 			defaultPath: storage.defaultPath as string,
 		};
+	}
+
+	/**
+	 * Resolves replication storage names from storageIds for a plan's replication settings.
+	 */
+	private async resolveReplicationStorages(
+		plan: Plan
+	): Promise<{ storageName: string; storagePath: string }[]> {
+		if (!plan.settings.replication?.enabled || !plan.settings.replication.storages?.length) {
+			return [];
+		}
+		const storageIds = plan.settings.replication.storages.map(s => s.storageId);
+		const storageRecords = await this.storageStore.getByIds(storageIds);
+		if (!storageRecords) return [];
+		return plan.settings.replication.storages
+			.map(rs => {
+				const record = storageRecords.find(s => s.id === rs.storageId);
+				const name = record?.name || '';
+				return {
+					storageName: name === 'Local' || name === 'Local Storage' ? 'local' : name,
+					storagePath: rs.storagePath,
+				};
+			})
+			.filter(s => s.storageName && s.storagePath);
 	}
 }

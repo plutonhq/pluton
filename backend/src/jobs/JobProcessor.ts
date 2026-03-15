@@ -8,7 +8,7 @@ import { BaseBackupManager } from '../managers/BaseBackupManager';
 import { configService } from '../services/ConfigService';
 import { BaseRestoreManager } from '../managers/BaseRestoreManager';
 import { RestoreTask } from './tasks/RestoreTask';
-
+import { ReplicationRetryTask } from './tasks/ReplicationRetryTask';
 interface TaskDependencies {
 	backupManager?: BaseBackupManager;
 	restoreManager?: BaseRestoreManager;
@@ -62,6 +62,7 @@ class JobProcessor extends EventEmitter {
 
 		if (dependencies.backupManager) {
 			tasksToRegister.push(new BackupTask(dependencies.backupManager));
+			tasksToRegister.push(new ReplicationRetryTask(dependencies.backupManager));
 		}
 
 		if (dependencies.restoreManager) {

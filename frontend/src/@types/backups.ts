@@ -34,6 +34,19 @@ export interface BackupTaskStats {
    dry_run: boolean;
 }
 
+export interface BackupMirror {
+   replicationId: string;
+   storageId: string;
+   storageName: string;
+   storagePath: string;
+   storageType: string;
+   status: 'pending' | 'started' | 'completed' | 'failed';
+   started?: number;
+   ended?: number;
+   error?: string;
+   size?: number;
+}
+
 export type Backup = {
    id: string;
    title?: string;
@@ -51,10 +64,14 @@ export type Backup = {
    errorMsg?: string;
    download?: {
       status: string;
+      storageId?: string;
+      storageName?: string;
+      storageType?: string;
       started?: number;
       ended?: number;
       error?: string;
    };
+   mirrors?: BackupMirror[];
 };
 
 export interface BackupProgressEvent {
@@ -66,6 +83,16 @@ export interface BackupProgressEvent {
    error?: string;
 }
 
+export interface ReplicationProgressData {
+   replicationId: string;
+   storageId: string;
+   storageName: string;
+   storageType: string;
+   status: 'pending' | 'running' | 'completed' | 'failed' | 'retrying';
+   error?: string;
+   events: BackupProgressEvent[];
+}
+
 export interface BackupProgressData {
    planId: string;
    backupId: string;
@@ -74,4 +101,5 @@ export interface BackupProgressData {
    lastUpdate: string;
    events: BackupProgressEvent[];
    duration?: number;
+   mirrors?: Record<string, ReplicationProgressData>;
 }

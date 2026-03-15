@@ -44,6 +44,7 @@ export class PlanStore {
 						completionStats: true,
 						taskStats: true,
 						inProgress: true,
+						mirrors: true,
 					},
 				},
 				restores: {
@@ -110,6 +111,7 @@ export class PlanStore {
 						inProgress: true,
 						completionStats: true,
 						taskStats: true,
+						mirrors: true,
 					},
 				},
 				restores: {
@@ -133,6 +135,11 @@ export class PlanStore {
 
 		if (thePlan && thePlan.backups) {
 			thePlan.backups = this.handleBackupStats(thePlan.method, thePlan.backups, thePlan.stats);
+		}
+		// clear out backup mirrors that are missing from the plan's replication settings
+		// e.g. if the storage was removed after the backup was taken
+		if (thePlan && thePlan.backups && thePlan.backups.length > 0 && thePlan.settings?.replication) {
+			thePlan.backups = this.handleBackupMirrors(thePlan, thePlan.backups);
 		}
 
 		return thePlan || null;
@@ -170,6 +177,21 @@ export class PlanStore {
 					removed: 0,
 				},
 			};
+		});
+	}
+
+	handleBackupMirrors(plan: PlanFull, backups: PlanFull['backups']) {
+		// remove backup mirrors that are missing from the plan's replication settings
+		// (e.g. if the storage was removed after the backup was taken)
+		const replicationSettings = plan.settings.replication as PlanBackupSettings['replication'];
+		const availableMirrorStorages = replicationSettings?.storages.map(s => s.storageId) || [];
+		return plan.backups.map(backup => {
+			if (backup.mirrors) {
+				backup.mirrors = backup.mirrors.filter(mirror =>
+					availableMirrorStorages.includes(mirror.storageId)
+				);
+			}
+			return backup;
 		});
 	}
 

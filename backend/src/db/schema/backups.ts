@@ -6,6 +6,7 @@ import { plans } from './plans';
 import {
 	BackupCompletionStats,
 	BackupDownload,
+	BackupMirror,
 	BackupProgressStats,
 	BackupTaskStats,
 } from '../../types/backups';
@@ -41,6 +42,7 @@ export const backups = sqliteTable('backups', {
 	taskStats: text('task_stats', { mode: 'json' }).$type<BackupTaskStats>(),
 	progressStats: text('progress_stats', { mode: 'json' }).$type<BackupProgressStats>(),
 	completionStats: text('completion_stats', { mode: 'json' }).$type<BackupCompletionStats>(),
+	mirrors: text('mirrors', { mode: 'json' }).$type<BackupMirror[]>(),
 });
 
 export type Backup = typeof backups.$inferSelect;

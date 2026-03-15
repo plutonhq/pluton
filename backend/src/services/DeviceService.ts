@@ -50,6 +50,7 @@ export class DeviceService {
 		device: (Device & { connected: boolean }) | null;
 		metrics: DeviceMetrics | null;
 		plans: Record<string, any>[];
+		storages: { id: string; name: string; type: string; storageTypeName: string }[];
 	}> {
 		const deviceRaw = await this.deviceStore.getById(id);
 		if (!deviceRaw) {
@@ -85,27 +86,10 @@ export class DeviceService {
 			[];
 
 		// Get Storage Details
-		const storageIds = devicePlans.map(p => p.storage.id).filter(i => i !== null);
-		if (storageIds.length > 0) {
-			const storages = await this.storageStore.getByIds(storageIds);
-			if (storages && storages.length > 0) {
-				devicePlans.forEach(p => {
-					const theStorage = storages.find(s => s.id === p.storage.id);
-					if (theStorage) {
-						p.storage.name = theStorage.name;
-						p.storage.type = theStorage.type || '';
-						p.storage.typeName = theStorage.type
-							? theStorage.type in providers
-								? providers[theStorage.type].name
-								: theStorage.type
-							: '';
-					}
-				});
-			}
-		}
+		const deviceStorages = (await this.deviceStore.getDeviceStorages(id)) || [];
 
 		if (!getMetrics) {
-			return { device, metrics: null, plans: devicePlans };
+			return { device, metrics: null, plans: devicePlans, storages: deviceStorages };
 		} else {
 			try {
 				const strategy = this.getSystemStrategy(id);
@@ -120,13 +104,14 @@ export class DeviceService {
 					device,
 					metrics: fetchedMetrics ? metricsResp.result : null,
 					plans: devicePlans,
+					storages: deviceStorages,
 				};
 			} catch (error: any) {
 				console.log('🎃Error fetching device metrics:', error);
 				DeviceLogger(id).error(
 					`Error fetching device data for #${id}. Reason : ${error?.message.toString() || 'Unknown Error'}`
 				);
-				return { device, metrics: null, plans: [] };
+				return { device, metrics: null, plans: [], storages: deviceStorages };
 			}
 		}
 	}

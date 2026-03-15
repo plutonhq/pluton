@@ -27,6 +27,8 @@ export interface RestoreConfig {
 	includes: string[];
 	excludes: string[];
 	delete: boolean;
+	storageId?: string;
+	replicationId?: string;
 }
 
 export interface RestoreStats {

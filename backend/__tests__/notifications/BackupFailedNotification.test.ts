@@ -31,6 +31,7 @@ describe('BackupFailedNotification', () => {
 				excludes: ['/path/to/exclude'],
 			},
 			storagePath: '/backup/path',
+			settings: {},
 		} as any;
 
 		mockEjsRender.mockReturnValue('<div>Failed content</div>');

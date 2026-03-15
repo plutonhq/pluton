@@ -34,6 +34,7 @@ import { StorageStore } from './stores/StorageStore';
 import { DeviceStore } from './stores/DeviceStore';
 import { BaseBackupManager } from './managers';
 import { BackupEventListener } from './services/listeners/BackupEventListener';
+import { ReplicationEventListener } from './services/listeners/ReplicationEventListener';
 import { BackupService } from './services/BackupServices';
 import { BaseSnapshotManager } from './managers/BaseSnapshotManager';
 import { RestoreService } from './services/RestoreService';
@@ -71,6 +72,7 @@ export async function createApp(): Promise<{ app: Express }> {
 
 	// Event Listeners
 	new BackupEventListener(localPlanAgent, planStore, backupStore);
+	new ReplicationEventListener(localPlanAgent, planStore, backupStore, storageStore);
 	new RestoreEventListener(localRestoreAgent, planStore, backupStore, restoreStore);
 	new DownloadEventListener(localBackupAgent, backupStore);
 

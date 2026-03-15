@@ -262,6 +262,42 @@ export class PlanController {
 		}
 	}
 
+	async deleteReplicationStorage(req: Request, res: Response): Promise<void> {
+		try {
+			if (!req.params.id) {
+				res.status(400).json({
+					success: false,
+					error: 'Plan ID is required',
+				});
+				return;
+			}
+
+			const { storageID, storagePath, removeData, replicationId } = req.body;
+			if (!storageID || !storagePath) {
+				res.status(400).json({
+					success: false,
+					error: 'storageID and storagePath are required',
+				});
+				return;
+			}
+
+			const result = await this.planService.deleteReplicationStorage(
+				req.params.id,
+				storageID,
+				storagePath,
+				removeData === true,
+				replicationId
+			);
+			res.status(200).json(result);
+		} catch (error: unknown) {
+			const appError = error as AppError;
+			res.status(appError.statusCode || 500).json({
+				success: false,
+				error: appError.message || 'Failed to remove replication storage',
+			});
+		}
+	}
+
 	async getLogs(req: Request, res: Response): Promise<void> {
 		try {
 			if (!req.params.id) {

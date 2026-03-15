@@ -125,7 +125,16 @@ const Icon = ({ type, color = 'currentColor', size = 16, title = '', classes = '
                </g>
             </IconWrapper>
          )}
-
+         {type === 'mirrors' && (
+            <IconWrapper size={size} viewBox="0 0 24 24">
+               <path
+                  fill={color}
+                  d="M21.53 5.15a.99.99 0 0 0-.97-.04l-10 5a1 1 0 0 0-.55.89v10a1 1 0 0 0 1 1c.15 0 .31-.04.45-.11l10-5a1 1 0 0 0 .55-.89V6c0-.35-.18-.67-.47-.85ZM20 15.38l-8 4v-7.76l8-4z"
+               />
+               <path fill={color} d="m16.55 3.11l-10 5A1 1 0 0 0 6 9v10h2V9.62l9.45-4.72l-.89-1.79Z" />
+               <path fill={color} d="m12.55 1.11l-10 5A1 1 0 0 0 2 7v10h2V7.62l9.45-4.73l-.89-1.79Z" />
+            </IconWrapper>
+         )}
          {type === 'devices' && (
             <IconWrapper size={size} viewBox="0 0 24 24">
                <path

@@ -117,7 +117,10 @@ describe('BackupController', () => {
 				mockResponse as Response
 			);
 
-			expect(mockBackupService.generateBackupDownload).toHaveBeenCalledWith('backup-123');
+			expect(mockBackupService.generateBackupDownload).toHaveBeenCalledWith(
+				'backup-123',
+				undefined
+			);
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: true,
@@ -162,7 +165,7 @@ describe('BackupController', () => {
 
 			await backupController.getSnapshotFiles(mockRequest as Request, mockResponse as Response);
 
-			expect(mockBackupService.getSnapshotFiles).toHaveBeenCalledWith('backup-123');
+			expect(mockBackupService.getSnapshotFiles).toHaveBeenCalledWith('backup-123', undefined);
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: true,

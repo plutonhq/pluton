@@ -195,3 +195,68 @@
       }
    }
 }
+
+.mirrorsEventsSection {
+   margin-top: 20px;
+}
+
+.mirrorEventsGroup {
+   margin-bottom: 16px;
+}
+
+.mirrorEventsHeader {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 8px 0;
+   font-weight: 600;
+   font-size: 0.95em;
+}
+
+.mirrorProviderIcon {
+   width: 20px;
+   height: 20px;
+   object-fit: contain;
+}
+
+.mirrorEventsName {
+   color: var(--content-text-color);
+}
+
+.mirrorEventsStatus {
+   padding: 2px 10px;
+   font-size: 0.85em;
+   border-radius: 12px;
+   text-transform: capitalize;
+   font-weight: 500;
+
+   &.mirror_pending {
+      background-color: var(--primary-color-lighter);
+      color: var(--content-text-color-light);
+   }
+   &.mirror_running {
+      background-color: var(--primary-color-lighter);
+      color: var(--primary-color);
+   }
+   &.mirror_completed {
+      background-color: var(--success-bg-color);
+      color: var(--success-text-color);
+   }
+   &.mirror_failed {
+      background-color: var(--error-bg-color);
+      color: var(--error-button-color);
+   }
+}
+
+.noEvents {
+   padding: 12px;
+   color: var(--content-text-color-light);
+   font-style: italic;
+   font-size: 0.9em;
+}
+
+.errorDetails {
+   padding: 10px;
+   word-break: break-word;
+   color: var(--error-button-color);
+}

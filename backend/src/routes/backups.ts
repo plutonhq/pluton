@@ -14,6 +14,11 @@ export function createBackupRouter(
 	router.get('/:id/action/download', authM, controller.getBackupDownload.bind(controller));
 	router.post('/:id/action/download', authM, controller.generateBackupDownload.bind(controller));
 	router.delete('/:id/action/download', authM, controller.cancelBackupDownload.bind(controller));
+	router.post(
+		'/:id/action/replication-retry',
+		authM,
+		controller.retryFailedReplications.bind(controller)
+	);
 
 	return router;
 }

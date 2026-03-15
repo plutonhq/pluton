@@ -44,10 +44,15 @@
 					<td style="text-align: center; width: 4%">
 						<span class="backupSummary_arrow">➝</span>
 					</td>
-					<td style="text-align: right">
-						<span><strong><%= storageName %></strong></span>
-						<span><%= storageTypeName %></span>
-					</td>
+               <td style="text-align: right">
+                  <span><strong><%= storageName %></strong></span>
+                  <span>
+                     <% if (replicationStorages > 0) { %>
+                        + <%= replicationStorages %> More
+                     <% } else { %>
+                        <%= storageTypeName %><% } %>
+                  </span>
+               </td>
 				</tr>
 			</table>
 		</div>
@@ -152,6 +157,49 @@
 			</tr>
 		</table>
 	</div>
+	<!-- Replication Failures Warning -->
+	<% if (replicationFailures && replicationFailures.length > 0) { %>
+	<div class="backupDetails" style="margin-top: 16px;">
+		<table cellpadding="0" cellspacing="0" width="100%">
+			<tr>
+				<td align="center">
+					<table cellpadding="0" cellspacing="0" width="600" style="max-width: 600px" class="backupDetailsColumnsWrapper">
+						<tr>
+							<td valign="top" width="100%">
+								<table cellpadding="20" cellspacing="0" width="100%" class="backupDetailsCard" style="background-color: #fff8f0;">
+									<tr>
+										<td class="backupDetailsCardContent">
+											<h4 class="backupDetailsTitle" style="color: #d9534f;"><i class="icon">⚠</i> REPLICATION FAILURES</h4>
+											<p style="margin: 0 0 10px 0; font-size: 13px; color: #666;">
+												The backup completed successfully, but replication to the following storage(s) failed:
+											</p>
+											<table cellpadding="6" cellspacing="0" width="100%" style="font-size: 13px;">
+												<% replicationFailures.forEach(function(failure) { %>
+												<tr style="border-bottom: 1px solid #eee;">
+													<td style="padding: 6px 0;">
+														<strong><%= failure.storageName || failure.storageId %></strong>
+														<% if (failure.storageType) { %><span style="color: #999;"> (<%= failure.storageType %>)</span><% } %>
+													</td>
+													<td style="padding: 6px 0; color: #d9534f;">
+														<%= failure.error || 'Unknown error' %>
+													</td>
+												</tr>
+												<% }); %>
+											</table>
+											<p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">
+												You can retry failed replications from the backup details page.
+											</p>
+										</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<% } %>
 	<!-- Notification Settings Info -->
 	<div class="center notificationMsg">
 		<p>

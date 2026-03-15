@@ -1,41 +1,15 @@
-import { useMemo } from 'react';
 import { NavLink } from 'react-router';
-import { DevicePlan } from '../../../@types/devices';
+import { DevicePlan, DeviceStorage } from '../../../@types/devices';
 import Icon from '../../common/Icon/Icon';
 import classes from './DeviceBackups.module.scss';
 import { formatBytes } from '../../../utils/helpers';
 
 interface DeviceBackupsProps {
    plans: DevicePlan[];
+   storages: DeviceStorage[];
 }
 
-const DeviceBackups = ({ plans }: DeviceBackupsProps) => {
-   const plansStorages = useMemo(() => {
-      const storages: (DevicePlan['storage'] & { size: number })[] = [];
-
-      //first calculate each storage's size from the plan size.
-      const storageSizes: { [key: string]: number } = {};
-      plans.forEach((plan) => {
-         const planStorageId = plan.storage.id;
-         if (!storageSizes[planStorageId]) {
-            storageSizes[planStorageId] = 0;
-         }
-         storageSizes[planStorageId] += plan.size;
-      });
-
-      plans.forEach((plan) => {
-         if (!storages.some((storage) => storage.id === plan.storage.id)) {
-            // if (plan.storage.id !== 'local') {
-            // TODO: implement this check
-            storages.push({ ...plan.storage, size: storageSizes[plan.storage.id] });
-            // }
-         }
-      });
-      return storages;
-   }, [plans]);
-
-   console.log('plansStorages :', plansStorages);
-
+const DeviceBackups = ({ plans, storages }: DeviceBackupsProps) => {
    return (
       <div className={classes.devicePlans}>
          {/* Backup Plans */}
@@ -46,7 +20,7 @@ const DeviceBackups = ({ plans }: DeviceBackupsProps) => {
             <div className={classes.widgetContent}>
                {plans.length === 0 && <div className={classes.noData}>No backup plans found for this device.</div>}
                {plans.length > 0 &&
-                  plans.map(({ id, title, sourceConfig, storage, isActive, method, size }) => (
+                  plans.map(({ id, title, sourceConfig, storage, isActive, method, size, replicatedStorages }) => (
                      <div key={id} className={classes.planItem}>
                         <div className={`${classes.status} ${!isActive ? classes.paused : ''}`}>
                            <div className={classes.iconBlock}>
@@ -63,7 +37,7 @@ const DeviceBackups = ({ plans }: DeviceBackupsProps) => {
                                  {sourceConfig.includes.length > 1 ? 'paths' : 'path'}
                               </div>
                               <div>
-                                 <Icon type="storages" size={12} /> {storage.name}
+                                 <Icon type="storages" size={12} /> {replicatedStorages > 0 ? `${replicatedStorages + 1} storages` : storage.name}
                               </div>
                               <div>
                                  <Icon type="disk" size={12} /> {formatBytes(size)}
@@ -109,12 +83,13 @@ const DeviceBackups = ({ plans }: DeviceBackupsProps) => {
                <Icon type="storages" size={12} /> Connected Storages
             </div>
             <div className={classes.widgetContent}>
-               {plans.length === 0 && <div className={classes.noData}>No Remote storages are being used by this device.</div>}
-               {plans.length > 0 &&
-                  plansStorages.map(({ id, name, size, type, typeName }) => (
+               {storages && storages.length === 0 && <div className={classes.noData}>No Remote storages are being used by this device.</div>}
+               {storages &&
+                  storages.length > 0 &&
+                  storages.map(({ id, name, type, storageTypeName }) => (
                      <div key={id} className={classes.planItem}>
                         <div className={`${classes.status}`}>
-                           <div className={classes.iconBlock} title={typeName}>
+                           <div className={classes.iconBlock}>
                               {type === 'local' ? <Icon type="storages" size={12} /> : <img src={`/providers/${type}.png`} />}
                            </div>
                         </div>
@@ -122,7 +97,7 @@ const DeviceBackups = ({ plans }: DeviceBackupsProps) => {
                            <h4>
                               <NavLink to={`/storage/${id}`}>{name}</NavLink>
                            </h4>
-                           <div className={classes.planStats}>{formatBytes(size)}</div>
+                           <div className={classes.planStats}>{storageTypeName}</div>
                         </div>
                      </div>
                   ))}

@@ -18,11 +18,23 @@ export interface BackupStrategy {
 			storagePath: string;
 			removeRemoteData: boolean;
 			encryption: boolean;
+			replicationStorages?: { storageName: string; storagePath: string }[];
+		}
+	): Promise<{ success: boolean; result: string }>;
+	removeReplicationStorage(
+		planId: string,
+		options: {
+			storageName: string;
+			storagePath: string;
+			removeData: boolean;
 		}
 	): Promise<{ success: boolean; result: string }>;
 	pauseBackup(planId: string): Promise<{ success: boolean; result: string }>;
 	resumeBackup(planId: string): Promise<{ success: boolean; result: string }>;
-	pruneBackups(planId: string): Promise<{
+	pruneBackups(
+		planId: string,
+		replicationStorages?: { storageName: string; storagePath: string }[]
+	): Promise<{
 		success: boolean;
 		result: string;
 	}>;
@@ -31,7 +43,10 @@ export interface BackupStrategy {
 		backupId: string
 	): Promise<{ success: boolean; result: string }>;
 	cancelBackup?(planId: string, backupId: string): Promise<{ success: boolean; result: string }>;
-	unlockRepo?(planId: string): Promise<{ success: boolean; result: string }>;
+	unlockRepo?(
+		planId: string,
+		replicationStorages?: { storageName: string; storagePath: string }[]
+	): Promise<{ success: boolean; result: string }>;
 
 	updatePlanStorageName?(
 		storageId: string,

@@ -15,6 +15,7 @@ import IntervalField from '../../common/form/IntervalField/IntervalField';
 import PlanFormNav from './PlanFormNav';
 import { useGetDevice } from '../../../services/devices';
 import PlanPruneSettings from '../PlanSettings/PlanPruneSettings';
+import PlanReplicationSettings from './PlanReplicationSettings';
 
 type PlanFormProps = {
    title: string;
@@ -26,9 +27,21 @@ type PlanFormProps = {
    close: () => void;
    storagePath?: string;
    storageId?: string;
+   planId?: string;
 };
 
-const PlanForm = ({ title, planSettings, type, onPlanSettingsChange, onSubmit, isSubmitting, close, storagePath, storageId }: PlanFormProps) => {
+const PlanForm = ({
+   title,
+   planSettings,
+   type,
+   onPlanSettingsChange,
+   onSubmit,
+   isSubmitting,
+   close,
+   storagePath,
+   storageId,
+   planId,
+}: PlanFormProps) => {
    const [step, setStep] = useState<number>(1);
 
    const { data: settingsData } = useGetSettings();
@@ -221,6 +234,20 @@ const PlanForm = ({ title, planSettings, type, onPlanSettingsChange, onSubmit, i
                         }
                      />
                   </div>
+                  <PlanReplicationSettings
+                     replication={planSettings.settings.replication}
+                     primaryStorageId={planSettings.storage.id}
+                     primaryStoragePath={planSettings.storagePath}
+                     deviceId={planSettings.sourceId || 'main'}
+                     isEditing={type === 'edit' ? true : false}
+                     planID={planId}
+                     onUpdate={(replication) =>
+                        onPlanSettingsChange({
+                           ...planSettings,
+                           settings: { ...planSettings.settings, replication: replication },
+                        })
+                     }
+                  />
                </div>
             )}
             {step === 3 && (

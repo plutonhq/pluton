@@ -51,7 +51,7 @@ const PlanRemoveModal = ({ planId, taskPending, actionInProgress, close }: PlanR
                <Toggle
                   fieldValue={removeRemoteData}
                   onUpdate={setRemoveRemoteData}
-                  description={`Remove remote backup data from the Remote Storage`}
+                  description={`Remove backup data from the Storage`}
                   customClasses={classes.removeRemoteToggle}
                />
             </div>

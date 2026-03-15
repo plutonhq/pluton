@@ -25,6 +25,7 @@ export function generateBackupProgressMessage(progressData: BackupProgressData |
       'pre-backup': 'Pre-Backup',
       backup: 'Backup',
       'post-backup': 'Post-Backup',
+      replicating: 'Replicating',
       finished: 'Complete',
    };
 
@@ -72,7 +73,7 @@ const handleScriptAction = (action: string): string | null => {
 };
 
 // Function to extract numbers from action strings and create meaningful messages
-export const getBackupEventActionMessage = (action: string): string => {
+export const getBackupEventActionMessage = (action: string, storageName?: string): string => {
    // Handle script actions first
    const scriptMessage = handleScriptAction(action);
    if (scriptMessage) {
@@ -91,6 +92,20 @@ export const getBackupEventActionMessage = (action: string): string => {
    if (backupRetryMatch) {
       const [, current, total] = backupRetryMatch;
       return `Scheduling Retry (${parseInt(current)}/${total})...`;
+   }
+
+   // Handle replication retry scheduling
+   const replicationRetryScheduledMatch = action.match(/REPLICATION_RETRY_(\d+)_OF_(\d+)_SCHEDULED/);
+   if (replicationRetryScheduledMatch) {
+      const [, current, total] = replicationRetryScheduledMatch;
+      return `Retrying (${current}/${total})...`;
+   }
+
+   // Handle replication retry start
+   const replicationRetryStartMatch = action.match(/REPLICATION_RETRY_(\d+)_OF_(\d+)_START/);
+   if (replicationRetryStartMatch) {
+      const [, current, total] = replicationRetryStartMatch;
+      return `Retrying (${current}/${total})...`;
    }
 
    // Static action mappings
@@ -134,7 +149,52 @@ export const getBackupEventActionMessage = (action: string): string => {
       ISO_UPLOAD_COMPLETE: 'ISO Upload Complete',
       ISO_UPLOAD_FAILED: 'ISO Upload Failed',
       BACKUP_WARNING: 'Hiccup Detected During Backup',
+      // Replication actions
+      REPLICATION_START: 'Replicating Snapshots...',
+      REPLICATION_INIT_START: 'Initializing Replication Repository...',
+      REPLICATION_INIT_COMPLETE: 'Replication Repository Initialized',
+      REPLICATION_INIT_FAILED: 'Replication Repository Init Failed',
+      REPLICATION_UNLOCK_START: 'Unlocking Replication Repository...',
+      REPLICATION_UNLOCK_COMPLETE: 'Replication Repository Unlocked',
+      REPLICATION_COPY_START: 'Copying Snapshot to Replication...',
+      REPLICATION_COPY_COMPLETE: 'Snapshot Copied to Replication',
+      REPLICATION_COPY_FAILED: 'Replication Copy Failed',
+      REPLICATION_PRUNE_START: 'Pruning Replication Repository...',
+      REPLICATION_PRUNE_COMPLETE: 'Replication Prune Complete',
+      REPLICATION_PRUNE_FAILED: 'Replication Prune Failed',
+      REPLICATION_STATS_START: 'Updating Replication Stats...',
+      REPLICATION_STATS_COMPLETE: 'Replication Stats Updated',
+      REPLICATION_COMPLETE: 'Replication Complete',
+      REPLICATION_FAILED: 'Replication Failed',
+      REPLICATION_PARTIAL_FAILURE: 'Some Replications Failed',
+      REPLICATION_MANUAL_RETRY_START: 'Retrying Failed Replications...',
+      REPLICATION_MANUAL_RETRY_COMPLETE: 'Replication Retry Complete',
+      REPLICATION_MANUAL_RETRY_PARTIAL_FAILURE: 'Some Replication Retries Still Failed',
    };
+
+   // Storage-name-aware replication action mappings
+   const replicationMessagesWithStorage: Record<string, (name: string) => string> = {
+      REPLICATION_START: (name) => `Replicating Snapshot to ${name}...`,
+      REPLICATION_INIT_START: (name) => `Initializing Replication Repository in ${name}...`,
+      REPLICATION_INIT_COMPLETE: (name) => `Replication Repository Initialized in ${name}`,
+      REPLICATION_INIT_FAILED: (name) => `Replication Repository Init Failed in ${name}`,
+      REPLICATION_UNLOCK_START: (name) => `Unlocking Replication Repository in ${name}...`,
+      REPLICATION_UNLOCK_COMPLETE: (name) => `Replication Repository Unlocked in ${name}`,
+      REPLICATION_COPY_START: (name) => `Copying Snapshot to ${name}...`,
+      REPLICATION_COPY_COMPLETE: (name) => `Snapshot Copied to ${name}`,
+      REPLICATION_COPY_FAILED: (name) => `Replication Copy Failed for ${name}`,
+      REPLICATION_PRUNE_START: (name) => `Pruning Replication Repository in ${name}...`,
+      REPLICATION_PRUNE_COMPLETE: (name) => `Replication Prune Complete for ${name}`,
+      REPLICATION_PRUNE_FAILED: (name) => `Replication Prune Failed for ${name}`,
+      REPLICATION_STATS_START: (name) => `Updating Replication Stats for ${name}...`,
+      REPLICATION_STATS_COMPLETE: (name) => `Replication Stats Updated for ${name}`,
+      REPLICATION_COMPLETE: (name) => `Replication Complete for ${name}`,
+      REPLICATION_FAILED: (name) => `Replication Failed for ${name}`,
+   };
+
+   if (storageName && replicationMessagesWithStorage[action]) {
+      return replicationMessagesWithStorage[action](storageName);
+   }
 
    return staticMessages[action] || action;
 };
@@ -241,4 +301,28 @@ export function extractResticData(progressData: BackupProgressData | null) {
       .find((event) => event.resticData);
 
    return eventWithResticData?.resticData || null;
+}
+
+/**
+ * Generates a human-readable progress message for a specific replication mirror.
+ * Uses the mirror's latest event action and includes the storage name.
+ */
+export function generateMirrorProgressMessage(mirror: { storageName: string; events?: { action: string; completed: boolean }[] }): string {
+   if (!mirror.events?.length) {
+      return 'Pending...';
+   }
+
+   // Find the last incomplete event or the most recent event
+   const lastIncompleteEvent = mirror.events
+      .slice()
+      .reverse()
+      .find((event) => !event.completed);
+
+   const currentEvent = lastIncompleteEvent || mirror.events[mirror.events.length - 1];
+
+   if (!currentEvent) {
+      return 'Pending...';
+   }
+
+   return getBackupEventActionMessage(currentEvent.action, mirror.storageName);
 }

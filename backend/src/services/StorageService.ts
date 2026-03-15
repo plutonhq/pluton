@@ -240,11 +240,21 @@ export class StorageService {
 			}
 
 			const storagePlans = await this.planStore.getStoragePlans(id);
+			const replicationPlans = await this.storageStore.getReplicationPlans(id);
 
 			if (storagePlans && storagePlans.length > 0) {
+				const planTitles = storagePlans.map(p => p.title).join(', ');
 				throw new AppError(
 					400,
-					'There are Backup Plans dependent on this Storage. Please remove them before deleting the Storage.'
+					`There are Backup Plans dependent on this Storage: ${planTitles}. Please remove them before deleting the Storage.`
+				);
+			}
+
+			if (replicationPlans.length > 0) {
+				const planTitles = replicationPlans.map(p => p.title).join(', ');
+				throw new AppError(
+					400,
+					`This Storage is used as a replication target by the following plans: ${planTitles}. Please remove it from their replication settings before deleting the storage.`
 				);
 			}
 
@@ -311,9 +321,12 @@ export class StorageService {
 				return tokenJson;
 			}
 
-			throw new Error(`Could not extract ${storageType} token from output`);
+			throw new AppError(500, `Could not extract ${storageType} token from output`);
 		} catch (error: any) {
-			throw new Error(`Failed to authorize ${storageType}: ${error.message}`);
+			if (error instanceof AppError) {
+				throw error;
+			}
+			throw new AppError(500, `Failed to authorize ${storageType}: ${error.message}`);
 		}
 	}
 }

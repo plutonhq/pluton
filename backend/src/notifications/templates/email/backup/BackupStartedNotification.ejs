@@ -40,10 +40,15 @@
 					<td style="text-align: center; width: 4%">
 						<span class="backupSummary_arrow">➝</span>
 					</td>
-					<td style="text-align: right">
-						<span><strong><%= storageName %></strong></span>
-						<span><%= storageTypeName %></span>
-					</td>
+               <td style="text-align: right">
+                  <span><strong><%= storageName %></strong></span>
+                  <span>
+                     <% if (replicationStorages > 0) { %>
+                        + <%= replicationStorages %> More
+                     <% } else { %>
+                        <%= storageTypeName %><% } %>
+                  </span>
+               </td>
 				</tr>
 			</table>
 		</div>

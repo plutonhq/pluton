@@ -138,6 +138,7 @@ export class BaseBackupManager extends EventEmitter {
 			storagePath: string;
 			removeRemoteData: boolean;
 			encryption: boolean;
+			replicationStorages?: { storageName: string; storagePath: string }[];
 		}
 	): Promise<{ success: boolean; result: string }> {
 		try {
@@ -145,7 +146,7 @@ export class BaseBackupManager extends EventEmitter {
 			await this.cronManager.removeSchedule(planId);
 			let removeResult = 'Successfully Removed';
 
-			// remove the remote storage data when necessary
+			// Remove the primary storage data when necessary
 			if (options.storagePath && options.removeRemoteData) {
 				const output = await runRcloneCommand([
 					'purge',
@@ -154,6 +155,27 @@ export class BaseBackupManager extends EventEmitter {
 				console.log('rclone removeResult :', output);
 				removeResult += output;
 			}
+
+			// Also remove data from replication storages
+			if (options.removeRemoteData && options.replicationStorages?.length) {
+				for (const replica of options.replicationStorages) {
+					try {
+						const output = await runRcloneCommand([
+							'purge',
+							`${replica.storageName}:${replica.storagePath}`,
+						]);
+						console.log(`rclone replication removeResult (${replica.storageName}):`, output);
+						removeResult += ` | Replication ${replica.storageName}: ${output}`;
+					} catch (error: any) {
+						// Log but don't fail the entire removal if a replication storage purge fails
+						console.warn(
+							`[removeBackup] Failed to purge replication storage ${replica.storageName}:${replica.storagePath}: ${error.message}`
+						);
+						removeResult += ` | Replication ${replica.storageName} purge failed: ${error.message}`;
+					}
+				}
+			}
+
 			return { success: true, result: removeResult };
 		} catch (error: any) {
 			return { success: false, result: error.message };
@@ -210,6 +232,91 @@ export class BaseBackupManager extends EventEmitter {
 		};
 	}
 
+	/**
+	 * Retries failed replication operations for a specific backup.
+	 * Directly calls BackupHandler to run replications synchronously (awaited).
+	 */
+	async retryFailedReplications(
+		planId: string,
+		backupId: string,
+		failedReplicationIds: string[]
+	): Promise<{ success: boolean; result: string }> {
+		try {
+			const schedules = await this.cronManager.getSchedule(planId);
+			const backupSchedule = schedules?.find(s => s.type === 'backup');
+
+			if (!backupSchedule || !backupSchedule.options) {
+				return { success: false, result: `No backup schedule options found for plan ${planId}.` };
+			}
+
+			const options = backupSchedule.options as BackupPlanArgs;
+			const replication = options.settings?.replication;
+
+			if (!replication?.enabled || !replication.storages?.length) {
+				return { success: false, result: 'Replication is not enabled for this plan.' };
+			}
+
+			// Filter to only the failed storages
+			const replicationStorages = replication.storages.filter(s =>
+				failedReplicationIds.includes(s.replicationId)
+			);
+
+			if (replicationStorages.length === 0) {
+				return { success: false, result: 'No matching replication storages found.' };
+			}
+
+			// Directly call BackupHandler to run replications synchronously
+			const results = await this.backupHandler.retryFailedReplications(
+				planId,
+				backupId,
+				options,
+				failedReplicationIds
+			);
+
+			const allSucceeded = results.every(m => m.status === 'completed');
+			return {
+				success: allSucceeded,
+				result: allSucceeded
+					? 'All replications succeeded.'
+					: `${results.filter(m => m.status === 'failed').length} replication(s) still failed.`,
+			};
+		} catch (error: any) {
+			return { success: false, result: error.message || 'Failed to retry replications.' };
+		}
+	}
+
+	/**
+	 * Removes a single replication storage's data from the remote storage via rclone purge.
+	 */
+	async removeReplicationStorage(
+		planId: string,
+		options: {
+			storageName: string;
+			storagePath: string;
+			removeData: boolean;
+		}
+	): Promise<{ success: boolean; result: string }> {
+		try {
+			let result = 'Replication storage removed from plan.';
+
+			if (options.removeData && options.storagePath) {
+				const output = await runRcloneCommand([
+					'purge',
+					`${options.storageName}:${options.storagePath}`,
+				]);
+				console.log(`rclone replication purge (${options.storageName}):`, output);
+				result += ` Data purged: ${output}`;
+			}
+
+			return { success: true, result };
+		} catch (error: any) {
+			return {
+				success: false,
+				result: error.message || 'Failed to remove replication storage data.',
+			};
+		}
+	}
+
 	async pauseBackup(planId: string): Promise<{ success: boolean; result: string }> {
 		const paused = await this.cronManager.pauseSchedule(planId);
 
@@ -227,7 +334,10 @@ export class BaseBackupManager extends EventEmitter {
 		};
 	}
 
-	async pruneBackups(planId: string): Promise<{
+	async pruneBackups(
+		planId: string,
+		replicationStorages?: { storageName: string; storagePath: string }[]
+	): Promise<{
 		success: boolean;
 		result: string;
 	}> {
@@ -237,6 +347,26 @@ export class BaseBackupManager extends EventEmitter {
 		if (backupSchedule) {
 			const pruneHandler = new PruneHandler(this);
 			const pruneResult = await pruneHandler.prune(planId, backupSchedule.options, true);
+
+			// Also prune replication storages
+			if (replicationStorages?.length) {
+				const options = backupSchedule.options as BackupPlanArgs;
+				for (const replica of replicationStorages) {
+					try {
+						const replicaOptions = {
+							...backupSchedule.options,
+							storage: { ...options.storage, name: replica.storageName },
+							storagePath: replica.storagePath,
+						};
+						await pruneHandler.prune(planId, replicaOptions, false);
+					} catch (error: any) {
+						console.warn(
+							`[pruneBackups] Failed to prune replication storage ${replica.storageName}: ${error.message}`
+						);
+					}
+				}
+			}
+
 			return pruneResult;
 		}
 		return { success: false, result: 'Backup Task Not Found' };
@@ -247,7 +377,10 @@ export class BaseBackupManager extends EventEmitter {
 	 * @param planId - The ID of the plan for which to unlock the repository.
 	 * @returns A promise that resolves to an object indicating success and the result message.
 	 */
-	async unlockRepo(planId: string): Promise<{ success: boolean; result: string }> {
+	async unlockRepo(
+		planId: string,
+		replicationStorages?: { storageName: string; storagePath: string }[]
+	): Promise<{ success: boolean; result: string }> {
 		const schedules = await this.cronManager.getSchedule(planId);
 		const backupSchedule = schedules?.find(s => s.type === 'backup');
 		const encKey = configService.config.ENCRYPTION_KEY;
@@ -270,14 +403,35 @@ export class BaseBackupManager extends EventEmitter {
 
 			const repoPath = generateResticRepoPath(options.storage.name, options.storagePath || '');
 			const repoPassword = options.settings.encryption ? encKey : '';
-			// Run the restic unlock command
+			// Run the restic unlock command on the primary repo
 			const resticArgs = ['unlock', '-r', repoPath, '--json'];
 			const output = await runResticCommand(resticArgs, { RESTIC_PASSWORD: repoPassword });
 
-			const successMessage =
+			let resultMessage =
 				output.trim() || 'Successfully removed all stale locks from the repository.';
 
-			return { success: true, result: successMessage };
+			// Also unlock replication storages
+			if (replicationStorages?.length) {
+				for (const replica of replicationStorages) {
+					try {
+						const replicaRepoPath = generateResticRepoPath(
+							replica.storageName,
+							replica.storagePath || ''
+						);
+						await runResticCommand(['unlock', '-r', replicaRepoPath, '--json'], {
+							RESTIC_PASSWORD: repoPassword,
+						});
+						resultMessage += ` | ${replica.storageName}: unlocked`;
+					} catch (error: any) {
+						console.warn(
+							`[unlockRepo] Failed to unlock replication storage ${replica.storageName}: ${error.message}`
+						);
+						resultMessage += ` | ${replica.storageName}: unlock failed - ${error.message}`;
+					}
+				}
+			}
+
+			return { success: true, result: resultMessage };
 		} catch (error: any) {
 			return {
 				success: false,

@@ -9,6 +9,8 @@ type RestorePayload = {
 	includes?: string[];
 	excludes?: string[];
 	delete?: boolean;
+	storageId?: string;
+	replicationId?: string;
 };
 
 export class RestoreController {
@@ -93,6 +95,8 @@ export class RestoreController {
 				includes: restorePayload.includes || [],
 				excludes: restorePayload.excludes || [],
 				delete: restorePayload.delete || false,
+				storageId: restorePayload.storageId || undefined,
+				replicationId: restorePayload.replicationId || undefined,
 			});
 			res.status(200).json({
 				success: true,
@@ -123,6 +127,8 @@ export class RestoreController {
 				includes: restorePayload.includes || [],
 				excludes: restorePayload.excludes || [],
 				delete: restorePayload.delete || false,
+				storageId: restorePayload.storageId || undefined,
+				replicationId: restorePayload.replicationId || undefined,
 			});
 
 			res.status(200).json({

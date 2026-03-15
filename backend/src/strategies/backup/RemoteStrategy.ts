@@ -20,11 +20,21 @@ export class RemoteStrategy implements BackupStrategy {
 		options: {
 			storageName: string;
 			storagePath: string;
-			removeRemoteData: boolean;
 			encryption: boolean;
 		}
 	) {
-		return { success: true, result: 'Backup removed successfully' };
+		return await this.publishCommand('REMOVE_SNAPSHOT', { planId, options });
+	}
+
+	async removeReplicationStorage(
+		planId: string,
+		options: {
+			storageName: string;
+			storagePath: string;
+			removeData: boolean;
+		}
+	) {
+		return await this.publishCommand('REMOVE_REPLICATION_STORAGE', { planId, options });
 	}
 
 	async performBackup(planId: string) {

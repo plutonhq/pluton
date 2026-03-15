@@ -11,7 +11,7 @@ export class LocalStrategy implements SnapshotStrategy {
 			storageName: string;
 			storagePath: string;
 			encryption: boolean;
-			planId: string;
+			mirrors?: { replicationId: string; storageName: string; storagePath: string }[];
 		}
 	) {
 		return await this.localAgent.removeSnapshot(planId, backupId, options);
@@ -40,5 +40,8 @@ export class LocalStrategy implements SnapshotStrategy {
 		options: { storagePath: string; storageName: string; encryption: boolean }
 	) {
 		return await this.localAgent.getSnapshotFiles(backupId, options);
+	}
+	async retryFailedReplication(planId: string, backupId: string, replicationIds: string[]) {
+		return await this.localAgent.retryFailedReplication(planId, backupId, replicationIds);
 	}
 }

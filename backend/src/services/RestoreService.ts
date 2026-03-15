@@ -67,23 +67,47 @@ export class RestoreService {
 			if (restorationInProcess) {
 				throw new Error('A Restoration is already in progress for this Plan');
 			}
+			const plan = await this.planStore.getById(backup.planId as string);
+			if (!plan) {
+				throw new Error('Plan not found');
+			}
 			const backupDevice = backup.sourceId ? backup.sourceId : 'main';
-			const strategy = this.getRestoreStrategy(backupDevice, backup.method);
-			const storageName = await this.getStorageName(backup.storageId as string);
+			const storageID = backup.storageId;
+			let storagePath = backup.storagePath;
+
+			let storageName = await this.getStorageName(storageID as string);
 			const targetPath = restoreConfig.target || '';
+
+			if (restoreConfig.replicationId) {
+				const replicationStorage = plan.settings?.replication?.storages.find(
+					m => m.replicationId === restoreConfig.replicationId
+				);
+				if (replicationStorage) {
+					storagePath = replicationStorage.storagePath || '';
+					storageName = replicationStorage.storageName;
+					if (!storageName) {
+						storageName = await this.getStorageName(replicationStorage.storageId);
+					}
+				} else {
+					throw new Error('Replication Storage not found');
+				}
+			}
+
+			const strategy = this.getRestoreStrategy(backupDevice, backup.method);
 			const restoreResult = await strategy.getRestoreSnapshotStats(
 				backup.planId as string,
 				backup.id,
 				{
 					storageName,
 					planId: backup.planId as string,
-					storagePath: backup.storagePath || '',
+					storagePath: storagePath || '',
 					encryption: backup.encryption || true,
 					overwrite: restoreConfig.overwrite,
 					target: targetPath,
 					delete: restoreConfig.delete,
 					includes: restoreConfig.includes,
 					excludes: restoreConfig.excludes,
+               replicationId: restoreConfig.replicationId,
 				}
 			);
 
@@ -113,14 +137,31 @@ export class RestoreService {
 			}
 
 			const backupDevice = backup.sourceId ? backup.sourceId : 'main';
-			const strategy = this.getRestoreStrategy(backupDevice, plan.method);
-			const storageName = await this.getStorageName(backup.storageId as string);
+			const storageID = backup.storageId;
+			let storagePath = backup.storagePath;
+			let storageName = await this.getStorageName(storageID as string);
 			const performanceSettings = plan.settings.performance;
 
+			if (restoreConfig.replicationId) {
+				const replicationStorage = plan.settings?.replication?.storages.find(
+					m => m.replicationId === restoreConfig.replicationId
+				);
+				if (replicationStorage) {
+					storagePath = replicationStorage.storagePath || '';
+					storageName = replicationStorage.storageName;
+					if (!storageName) {
+						storageName = await this.getStorageName(replicationStorage.storageId);
+					}
+				} else {
+					throw new Error('Replication Storage not found');
+				}
+			}
+
+			const strategy = this.getRestoreStrategy(backupDevice, plan.method);
 			const restoreResult = await strategy.restoreSnapshot(backup.planId as string, backup.id, {
 				planId: backup.planId as string,
 				storageName: storageName,
-				storagePath: backup.storagePath || '',
+				storagePath: storagePath || '',
 				encryption: backup.encryption || true,
 				overwrite: restoreConfig.overwrite || 'always',
 				target: restoreConfig.target || '',
@@ -137,7 +178,7 @@ export class RestoreService {
 
 			return restoreResult.result;
 		} catch (error: any) {
-			throw new Error(error?.message || 'Failed to Dry restore the backup plan');
+			throw new Error(error?.message || 'Failed to restore the backup plan');
 		}
 	}
 

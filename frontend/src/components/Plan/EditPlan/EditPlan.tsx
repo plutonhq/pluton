@@ -42,6 +42,7 @@ const EditPlan = ({ close, plan }: EditPlanProps) => {
       <PlanForm
          title="Edit Plan"
          type="edit"
+         planId={plan.id}
          planSettings={newPlan}
          isSubmitting={updatePlanMutation.isPending}
          storagePath={plan.storagePath}

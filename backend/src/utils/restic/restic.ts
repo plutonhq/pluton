@@ -63,16 +63,14 @@ export function runResticCommand(
 		let output = '';
 		let errorOutput = '';
 		let wasCancelled = false;
-		let hasExited = false;
 
 		// Handle User exit gracefully
 		resticProcess.on('exit', (code, signal) => {
 			if (signal === 'SIGTERM') {
 				wasCancelled = true;
-				resolve('Process terminated by user');
+				reject(new Error('Process terminated by user'));
 				return;
 			}
-			hasExited = true;
 		});
 
 		// Handle Restic Run Errors

@@ -6,11 +6,19 @@ export interface SnapshotStrategy {
 	removeSnapshot(
 		planId: string,
 		backupId: string,
-		options: { storagePath: string; storageName: string; encryption: boolean; planId: string }
+		options: {
+			storagePath: string;
+			storageName: string;
+			encryption: boolean;
+			mirrors?: { replicationId: string; storageName: string; storagePath: string }[];
+		}
 	): Promise<{
 		success: boolean;
 		result: any;
-		stats?: false | { total_size: number; snapshots: string[] };
+		stats?: {
+			primary: null | { total_size: number; snapshots: string[] };
+			mirrors?: { [key: string]: { total_size: number; snapshots: string[] } };
+		};
 	}>;
 	downloadSnapshot(
 		planId: string,
@@ -31,6 +39,11 @@ export interface SnapshotStrategy {
 		backupId: string,
 		options: { storagePath: string; storageName: string; encryption: boolean }
 	): Promise<{ success: boolean; result: SnapShotFile[] | string }>;
+	retryFailedReplication(
+		planId: string,
+		backupId: string,
+		replicationIds: string[]
+	): Promise<{ success: boolean; result: string }>;
 }
 
 export type SnapshotStrategyTypes = StrategyMethodTypes<SnapshotStrategy>;

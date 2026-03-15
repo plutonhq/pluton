@@ -107,31 +107,31 @@ describe('DeviceService', () => {
 			{ id: 'plan-2', storageId: 'storage-2' },
 		] as Partial<Plan>[];
 		const mockStorages = [
-			{ id: 'storage-1', name: 'B2 Storage', type: 'b2' },
-			{ id: 'storage-2', name: 'Local', type: 'local' },
-		] as Storage[];
+			{ id: 'storage-1', name: 'B2 Storage', type: 'b2', storageTypeName: 'Backblaze B2' },
+			{ id: 'storage-2', name: 'Local', type: 'local', storageTypeName: 'Local' },
+		];
 
 		it('should return device and plans without metrics if getMetrics is false', async () => {
 			mockDeviceStore.getById.mockResolvedValue(mockDevice);
 			mockPlanStore.getDevicePlans.mockResolvedValue(mockPlans as Plan[]);
-			mockStorageStore.getByIds.mockResolvedValue(mockStorages);
+			mockDeviceStore.getDeviceStorages = jest.fn().mockResolvedValue(mockStorages);
 
 			const result = await deviceService.getDevice(deviceId, false);
 
 			expect(mockDeviceStore.getById).toHaveBeenCalledWith(deviceId);
 			expect(mockPlanStore.getDevicePlans).toHaveBeenCalledWith(deviceId);
-			expect(mockStorageStore.getByIds).toHaveBeenCalledWith(['storage-1', 'storage-2']);
+			expect(mockDeviceStore.getDeviceStorages).toHaveBeenCalledWith(deviceId);
 			expect(result.device?.connected).toBe(true);
 			expect(result.metrics).toBeNull();
 			expect(result.plans).toHaveLength(2);
-			expect(result.plans[0].storage.name).toBe('B2 Storage');
+			expect(result.storages).toEqual(mockStorages);
 		});
 
 		it('should return device, plans, and metrics if getMetrics is true', async () => {
 			const mockMetrics = { system: { manufacturer: 'Dell' } } as DeviceMetrics;
 			mockDeviceStore.getById.mockResolvedValue(mockDevice);
 			mockPlanStore.getDevicePlans.mockResolvedValue(mockPlans as Plan[]);
-			mockStorageStore.getByIds.mockResolvedValue(mockStorages);
+			mockDeviceStore.getDeviceStorages = jest.fn().mockResolvedValue(mockStorages);
 			mockLocalStrategy.getMetrics.mockResolvedValue({ success: true, result: mockMetrics as any });
 
 			const result = await deviceService.getDevice(deviceId, true);
@@ -149,6 +149,7 @@ describe('DeviceService', () => {
 		it('should return null for metrics if the strategy fails', async () => {
 			mockDeviceStore.getById.mockResolvedValue(mockDevice);
 			mockPlanStore.getDevicePlans.mockResolvedValue([]);
+			mockDeviceStore.getDeviceStorages = jest.fn().mockResolvedValue([]);
 			mockLocalStrategy.getMetrics.mockResolvedValue({ success: false, result: 'Failed' as any });
 
 			const result = await deviceService.getDevice(deviceId, true);

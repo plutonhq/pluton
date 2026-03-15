@@ -1,0 +1,97 @@
+.mirrorSelector {
+   .selectorContent {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+   }
+
+   .storageOption {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line-color);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.12s linear;
+      &:hover {
+         background-color: var(--primary-color-light);
+      }
+   }
+
+   .storageDisabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      &:hover {
+         border-color: var(--line-color);
+         background-color: transparent;
+      }
+   }
+
+   .radio {
+      color: var(--icon-color);
+      &.radioSelected {
+         color: var(--primary-color);
+      }
+   }
+
+   .storageName {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      img {
+         max-width: 20px;
+         vertical-align: middle;
+      }
+      .storageLabel {
+         font-size: 0.65rem;
+         border-radius: 12px;
+         padding: 1px 10px;
+         background-color: var(--background-color);
+      }
+   }
+
+   .statusLabel {
+      margin-left: auto;
+      font-size: 0.6875rem;
+      padding: 1px 8px;
+      border-radius: 12px;
+      text-transform: capitalize;
+      background-color: var(--line-color);
+      color: var(--content-text-color-light);
+   }
+
+   .noMirrors {
+      padding: 15px;
+      text-align: center;
+      color: var(--content-text-color-light);
+      font-size: 0.8125rem;
+   }
+
+   &.dropdown {
+      position: relative;
+      .dropdownLabel {
+         padding: 6px 10px;
+         border: 1px solid var(--line-color);
+         border-radius: 6px;
+         cursor: pointer;
+         min-width: 160px;
+      }
+      .selectorContent {
+         display: none;
+         position: absolute;
+         margin-top: 0px;
+         right: 0;
+         min-width: 260px;
+         z-index: 99;
+         padding: 10px;
+         background-color: var(--content-background-color);
+         border: 1px solid var(--line-color);
+         border-radius: 6px;
+         &.showOptions {
+            display: block;
+         }
+      }
+   }
+}

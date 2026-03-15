@@ -101,7 +101,7 @@ export type SyncVerifiedResult = {
 
 export type PlanVerification = {
 	status: string;
-	result?: BackupVerifiedResult | SyncVerifiedResult;
+	result?: Record<string, BackupVerifiedResult> | SyncVerifiedResult;
 	hasError: boolean;
 	errorMsg?: string;
 	startedAt: number;
@@ -157,6 +157,21 @@ export interface PlanSourceRescueConfig extends PlanSource {
 	}>;
 }
 
+export interface PlanReplicationStorage {
+	replicationId: string;
+	storageId: string;
+	storagePath: string;
+	storageType: string;
+	addedAt: number;
+	storageName: string;
+}
+
+export interface PlanReplicationSettings {
+	enabled: boolean;
+	concurrent: boolean;
+	storages: PlanReplicationStorage[];
+}
+
 export interface PlanBackupSettings {
 	interval: PlanInterval;
 	prune: PlanPrune;
@@ -169,6 +184,7 @@ export interface PlanBackupSettings {
 	retryDelay: number; // in seconds
 	scripts?: PlanScripts;
 	rescue?: PlanRescueSettings;
+	replication?: PlanReplicationSettings;
 }
 
 export type PlanError = {
@@ -180,6 +196,13 @@ export type PlanError = {
 export type PlanStats = {
 	size: number;
 	snapshots: string[];
+	mirrors?: {
+		replicationId: string;
+		storageId: string;
+		storagePath: string;
+		size: number;
+		snapshots: string[];
+	}[];
 };
 
 export interface NewPlanReq {
@@ -228,6 +251,7 @@ export type PlanBackupItem = Pick<
 	| 'ended'
 	| 'completionStats'
 	| 'taskStats'
+	| 'mirrors'
 > & { active?: boolean };
 export type PlanRestoreItem = Pick<
 	Restore,

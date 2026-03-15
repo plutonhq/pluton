@@ -8,6 +8,7 @@ import classes from './PlanItem.module.scss';
 import { useDeletePlan, usePausePlan, usePerformBackup, useResumePlan } from '../../../services/plans';
 import { planIntervalName } from '../../../utils/plans';
 import PlanHistory from '../PlanHistory/PlanHistory';
+import PlanStorageInfo from '../PlanStorageInfo/PlanStorageInfo';
 
 interface PlanItemProps {
    plan: Plan;
@@ -156,9 +157,8 @@ const PlanItem = ({ plan, layout = 'list' }: PlanItemProps) => {
                         )}
                         <span className={classes.sourceCount}>{sourceConfig.includes.length}</span>
                      </span>{' '}
-                     {'-->'} {storage.type && <img src={`/providers/${storage.type}.png`} />}
-                     {storage.name}
-                     {/* {storagePath && storagePath !== '/' && '/' + storagePath} */}
+                     {'-->'}
+                     <PlanStorageInfo replicationSettings={plan.settings.replication} storage={storage} storagePath={plan.storagePath} />
                   </div>
                </NavLink>
             </div>

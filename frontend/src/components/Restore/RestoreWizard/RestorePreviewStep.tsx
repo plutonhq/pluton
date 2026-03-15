@@ -57,6 +57,8 @@ const RestorePreviewStep = ({ backupId, planId, settings, preview, nextLabel, go
             includes: settings.includes,
             excludes: settings.excludes,
             deleteOption: settings.delete,
+            storageId: settings.storageId,
+            replicationId: settings.replicationId,
          },
          {
             onSuccess: (data) => {

@@ -84,6 +84,7 @@ describe('BackupService', () => {
 			storagePath: '/backups/test',
 			encryption: true,
 			method: 'backup',
+			mirrors: [],
 		} as any;
 		const mockStorage = { id: 'storage-abc', name: 'Test Storage' } as any;
 
@@ -94,7 +95,7 @@ describe('BackupService', () => {
 			mockSnapshotStrategy.removeSnapshot.mockResolvedValue({
 				success: true,
 				result: 'Snapshot removed',
-				stats: { total_size: 1024, snapshots: ['snap1'] },
+				stats: { primary: { total_size: 1024, snapshots: ['snap1'] }, mirrors: {} },
 			});
 			mockPlanStore.update.mockResolvedValue({} as any);
 			mockBackupStore.delete.mockResolvedValue(true);
@@ -112,7 +113,7 @@ describe('BackupService', () => {
 					storageName: mockStorage.name,
 					storagePath: mockBackup.storagePath,
 					encryption: mockBackup.encryption,
-					planId: mockBackup.planId,
+					mirrors: mockBackup.mirrors,
 				}
 			);
 			expect(mockPlanStore.update).toHaveBeenCalledWith(mockBackup.planId, {
@@ -122,7 +123,7 @@ describe('BackupService', () => {
 			expect(result).toEqual({
 				success: true,
 				result: 'Snapshot removed',
-				stats: { total_size: 1024, snapshots: ['snap1'] },
+				stats: { primary: { total_size: 1024, snapshots: ['snap1'] }, mirrors: {} },
 			});
 		});
 

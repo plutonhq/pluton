@@ -89,6 +89,8 @@ export async function restoreBackup({
    includes,
    excludes,
    deleteOption,
+   storageId,
+   replicationId,
 }: {
    backupId: string;
    planId: string;
@@ -97,13 +99,15 @@ export async function restoreBackup({
    includes?: string[];
    excludes?: string[];
    deleteOption: boolean;
+   storageId?: string;
+   replicationId?: string;
 }) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
    const res = await fetch(`${API_URL}/restores/action/restore`, {
       method: 'POST',
       credentials: 'include',
       headers: header,
-      body: JSON.stringify({ backupId, planId, target, overwrite, includes, excludes, delete: deleteOption }),
+      body: JSON.stringify({ backupId, planId, target, overwrite, includes, excludes, delete: deleteOption, storageId, replicationId }),
    });
    const data = await res.json();
    if (!data.success) {
@@ -132,6 +136,8 @@ export async function getDryRestoreStats({
    includes,
    excludes,
    deleteOption,
+   storageId,
+   replicationId,
 }: {
    backupId: string;
    planId: string;
@@ -140,13 +146,15 @@ export async function getDryRestoreStats({
    includes?: string[];
    excludes?: string[];
    deleteOption?: boolean;
+   storageId?: string;
+   replicationId?: string;
 }) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
    const res = await fetch(`${API_URL}/restores/action/dryrestore`, {
       method: 'POST',
       credentials: 'include',
       headers: header,
-      body: JSON.stringify({ backupId, planId, target, overwrite, includes, excludes, delete: deleteOption }),
+      body: JSON.stringify({ backupId, planId, target, overwrite, includes, excludes, delete: deleteOption, storageId, replicationId }),
    });
    const data = await res.json();
    if (!data.success) {

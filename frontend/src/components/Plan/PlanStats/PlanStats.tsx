@@ -3,6 +3,7 @@ import { Plan } from '../../../@types/plans';
 import { formatBytes, formatNumberToK } from '../../../utils/helpers';
 import PlanHistory from '../PlanHistory/PlanHistory';
 import classes from './PlanStats.module.scss';
+import PlanStorageInfo from '../PlanStorageInfo/PlanStorageInfo';
 
 interface PlanStatsProps {
    plan: Plan;
@@ -55,14 +56,13 @@ const PlanStats = ({ plan, isSync, lastBackupItem }: PlanStatsProps) => {
                   <Icon type={isActive ? (isSync ? 'reload' : 'copy') : 'pause'} size={16} />
                   <div className={classes.sourceArrow}>→</div>
                </div>
-               <div
-                  data-tooltip-id="htmlToolTip"
-                  data-tooltip-place="top"
-                  data-tooltip-html={`<div><strong>Storage:</strong> ${storage?.name}</div><div><strong>Path:</strong> ${storagePath || '/'}</div>`}
-               >
-                  {storage?.type && <img src={`/providers/${storage?.type}.png`} />}
-                  {storage?.name}
-               </div>
+               <PlanStorageInfo
+                  disableTooltip={false}
+                  inline={false}
+                  replicationSettings={plan.settings.replication}
+                  storage={storage}
+                  storagePath={storagePath}
+               />
             </div>
          </div>
          <div className={classes.snapshots}>

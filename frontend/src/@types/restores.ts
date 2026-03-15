@@ -112,4 +112,6 @@ export interface RestoreSettings {
    includes: string[];
    excludes: string[];
    delete: boolean;
+   replicationId?: string;
+   storageId?: string;
 }

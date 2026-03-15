@@ -8,14 +8,18 @@ import RestoreConfirmStep from './RestoreConfirmStep';
 import { RestoredFileItem, RestoredItemsStats, RestoreFileItem, RestoreSettings } from '../../../@types/restores';
 import { useGetSnapshotFiles } from '../../../services/backups';
 import RestoreFileSelectorStep from './RestoreFileSelectorStep';
+import { Backup, Plan } from '../../..';
 
 interface RestoreWizardProps {
    backupId: string;
    planId: string;
+   deviceId: string;
+   planStorage: Plan['storage'];
+   mirrors?: Backup['mirrors'];
    close: () => void;
 }
 
-const RestoreWizard = ({ backupId, planId, close }: RestoreWizardProps) => {
+const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close }: RestoreWizardProps) => {
    const [step, setStep] = useState(1);
    const [restoreSettings, setRestoreSettings] = useState<RestoreSettings>({
       type: 'original',
@@ -24,6 +28,7 @@ const RestoreWizard = ({ backupId, planId, close }: RestoreWizardProps) => {
       includes: [],
       excludes: [],
       delete: false,
+      storageId: undefined,
    });
    const [restorePreview, setRestorePreview] = useState<{ stats: RestoredItemsStats | null; files: RestoredFileItem[] }>({ stats: null, files: [] });
    const isFetching = useIsFetching();
@@ -82,7 +87,10 @@ const RestoreWizard = ({ backupId, planId, close }: RestoreWizardProps) => {
             {step === 1 && (
                <RestoreSettingsStep
                   backupId={backupId}
+                  deviceId={deviceId}
                   settings={restoreSettings}
+                  primaryStorage={planStorage}
+                  mirrors={mirrors}
                   updateSettings={(settings) => setRestoreSettings(settings)}
                   goNext={() => setStep(2)}
                   close={close}

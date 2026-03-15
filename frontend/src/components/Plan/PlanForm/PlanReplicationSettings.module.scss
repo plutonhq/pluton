@@ -1,0 +1,105 @@
+.mirrorSection {
+   margin-top: 10px;
+   padding: 15px 0;
+   border-top: 1px solid var(--line-color);
+}
+
+.mirrorSettings {
+   margin-top: 15px;
+   display: flex;
+   flex-direction: column;
+   gap: 15px;
+}
+
+.mirrorDestination {
+   padding: 15px;
+   border: 1px solid var(--field-line-color);
+   border-radius: 6px;
+}
+
+.mirrorHeader {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   margin-bottom: 10px;
+
+   label {
+      margin-bottom: 0 !important;
+   }
+}
+
+.mirrorHeaderRight {
+   display: flex;
+   gap: 6px;
+   .confirmBtn {
+      color: var(--primary-color);
+      background-color: var(--primary-color-light);
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.12s linear;
+      &:hover:not(:disabled) {
+         background-color: var(--primary-color);
+         color: var(--primary-color-light);
+      }
+      &:disabled {
+         opacity: 0.6;
+         cursor: not-allowed;
+      }
+   }
+   .removeBtn {
+      color: var(--error-button-color);
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.12s linear;
+      &:hover {
+         background-color: var(--error-bg-color);
+      }
+   }
+
+   .storagePositionControls {
+      button {
+         color: var(--icon-color);
+         &:hover {
+            color: var(--primary-color);
+         }
+         &:disabled {
+            opacity: 0.4;
+            color: var(--icon-color);
+            cursor: not-allowed;
+         }
+      }
+   }
+}
+
+.addMirrorBtn {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   padding: 10px 16px;
+   border: 1px dashed var(--field-line-color);
+   border-radius: 6px;
+   color: var(--content-text-color-light);
+   font-size: 0.75rem;
+   width: 100%;
+   justify-content: center;
+   transition: all 0.12s linear;
+   &:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      background-color: var(--primary-color-light);
+   }
+}
+
+.concurrentOption {
+   margin-top: 5px;
+   padding-top: 10px;
+   border-top: 1px solid var(--line-color);
+}

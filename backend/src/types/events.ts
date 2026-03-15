@@ -53,6 +53,35 @@ export interface BackupStatUpdateEvent {
 	error?: string;
 	total_size?: number;
 	snapshots?: string[];
+	mirrors?: {
+		replicationId: string;
+		storageId: string;
+		storagePath: string;
+		size: number;
+		snapshots: string[];
+	}[];
+}
+
+export interface BackupReplicationStatUpdateEvent {
+	planId: string;
+	backupId: string;
+	mirrors: {
+		replicationId: string;
+		storageId: string;
+		storagePath: string;
+		size: number;
+		snapshots: string[];
+	}[];
+}
+
+export interface BackupReplicationMirrorSizeUpdateEvent {
+	backupId: string;
+	mirrorSizes: {
+		replicationId: string;
+		storageId: string;
+		storagePath: string;
+		size: number;
+	}[];
 }
 
 export interface RestoreStartEvent {
@@ -99,4 +128,94 @@ export interface DownloadErrorEvent {
 	backupId: string;
 	planId: string;
 	error: string;
+}
+
+export interface ReplicationStartEvent {
+	planId: string;
+	backupId: string;
+	replicationId: string;
+	storageId: string;
+	storageName: string;
+	storagePath: string;
+	storageType: string;
+}
+
+export interface ReplicationCompleteEvent {
+	planId: string;
+	backupId: string;
+	replicationId: string;
+	storageId: string;
+	storageName: string;
+	storagePath: string;
+	storageType: string;
+	success: boolean;
+	error?: string;
+}
+
+export interface ReplicationProgressEvent {
+	planId: string;
+	backupId: string;
+	replicationId: string;
+	storageId: string;
+	storagePath: string;
+	data: Record<string, any>;
+}
+
+/**
+ * Emitted by BackupHandler to request replication initialization.
+ * ReplicationEventService resolves storage names, creates initial mirror entries,
+ * and emits `replication_init_complete` back.
+ */
+export interface ReplicationInitEvent {
+	planId: string;
+	backupId: string;
+	replicationStorages: {
+		replicationId: string;
+		storageId: string;
+		storagePath: string;
+		storageType: string;
+	}[];
+	/** When true, only resets the specified mirrors to 'pending' instead of replacing all mirrors. */
+	isRetry?: boolean;
+}
+
+/**
+ * Emitted by ReplicationEventService after resolving storage names and
+ * creating initial mirror entries on the backup record.
+ */
+export interface ReplicationInitCompleteEvent {
+	planId: string;
+	backupId: string;
+	resolvedStorages: ResolvedReplicationStorage[];
+}
+
+/**
+ * A replication storage with its name resolved from the StorageStore.
+ */
+export interface ResolvedReplicationStorage {
+	replicationId: string;
+	storageId: string;
+	storagePath: string;
+	storageName: string;
+	storageType: string;
+}
+
+/**
+ * Emitted by BaseBackupManager to retry failed replications.
+ * Handled by ReplicationEventListener to trigger the retry flow.
+ */
+export interface ReplicationRetryEvent {
+	planId: string;
+	backupId: string;
+	failedReplicationIds: string[];
+	sourceRepoPath: string;
+	encryption: boolean;
+	replicationStorages: {
+		replicationId: string;
+		storageId: string;
+		storagePath: string;
+		storageType: string;
+	}[];
+	pruneSettings: Record<string, any>;
+	concurrent: boolean;
 }

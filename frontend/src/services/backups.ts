@@ -5,14 +5,12 @@ import { API_URL } from '../utils/constants';
 const notifiedBackupProgress = new Set<string>();
 
 // Generate Download
-export async function generateBackupDownload({ backupId }: { backupId: string; planId: string }) {
-   // const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
-   const res = await fetch(`${API_URL}/backups/${backupId}/action/download`, {
+export async function generateBackupDownload({ backupId, replicationId }: { backupId: string; planId: string; replicationId?: string }) {
+   const url = `${API_URL}/backups/${backupId}/action/download?${replicationId ? `replicationId=${replicationId}` : ''}`;
+   const res = await fetch(url, {
       method: 'POST',
       credentials: 'include',
-      // headers: header,
    });
-   // Check if response is ok
    const data = await res.json();
    if (!data.success) {
       throw new Error(data.error);
@@ -241,13 +239,12 @@ export function useUpdateBackup() {
 }
 
 // Get Snapshot Files
-export async function getSnapshotFiles({ backupId }: { backupId: string }) {
-   const res = await fetch(`${API_URL}/backups/${backupId}/files`, {
+export async function getSnapshotFiles({ backupId, replicationId }: { backupId: string; replicationId?: string }) {
+   const url = replicationId ? `${API_URL}/backups/${backupId}/files?replicationId=${replicationId}` : `${API_URL}/backups/${backupId}/files`;
+   const res = await fetch(url, {
       method: 'GET',
       credentials: 'include',
-      // headers: header,
    });
-   // Check if response is ok
    const data = await res.json();
    if (!data.success) {
       throw new Error(data.error);
@@ -261,5 +258,31 @@ export function useGetSnapshotFiles(payload: { backupId: string }) {
       refetchOnMount: true,
       staleTime: 1000 * 60 * 60, // Cache the data for 60 minutes
       retry: false,
+   });
+}
+
+// Retry Failed Replications
+export async function retryFailedReplications({ backupId, replicationId }: { backupId: string; planId: string; replicationId: string }) {
+   const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/backups/${backupId}/action/replication-retry?replicationId=${replicationId}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: header,
+   });
+   const data = await res.json();
+   if (!data.success) {
+      throw new Error(data.error);
+   }
+   return data;
+}
+
+export function useRetryFailedReplications() {
+   const queryClient = useQueryClient();
+   return useMutation({
+      mutationFn: retryFailedReplications,
+      onSuccess: (res, payload) => {
+         console.log('res :', payload, res);
+         queryClient.invalidateQueries({ queryKey: ['plan', payload.planId] });
+      },
    });
 }

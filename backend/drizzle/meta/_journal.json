@@ -15,6 +15,13 @@
       "when": 1769101006255,
       "tag": "0001_whole_wraith",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1772630106968,
+      "tag": "0002_narrow_hairball",
+      "breakpoints": true
     }
   ]
 }

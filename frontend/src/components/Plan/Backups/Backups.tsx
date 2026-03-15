@@ -12,6 +12,8 @@ import RestoreWizard from '../../Restore/RestoreWizard/RestoreWizard';
 import StatusLabel from '../../common/StatusLabel/StatusLabel';
 import BackupEvents from '../BackupEvents/BackupEvents';
 import Input from '../../common/form/Input/Input';
+import MirrorStatusBadge from '../Mirrors/MirrorStatusBadge';
+import MirrorStorageSelectorModal from '../Mirrors/MirrorStorageSelectorModal';
 
 const DownloadLabel = ({ download, downloadBackup }: { download: Backup['download']; downloadBackup: () => void }) => {
    if (download?.status === 'started') {
@@ -67,6 +69,9 @@ const Backups = ({
    backups = [],
    sourceId,
    sourceType,
+   replicationSettings,
+   storage,
+   deviceId,
    // snapLimit,
 }: {
    planId: string;
@@ -75,12 +80,20 @@ const Backups = ({
    sourceId: string;
    sourceType: string;
    snapLimit: number;
+   deviceId: string;
+   storage: {
+      id: string;
+      type: string;
+      name: string;
+   };
+   replicationSettings: Plan['settings']['replication'];
 }) => {
    const [showSnapOptions, setShowSnapOptions] = useState<false | string>(false);
    const [showDeleteModal, setShowDeleteModal] = useState<Backup | false>(false);
    const [showRestoreModal, setShowRestoreModal] = useState<Backup | false>(false);
    const [showBackupEvents, setShowBackupEvents] = useState<false | string>(false);
    const [showEditModal, setShowEditModal] = useState<Backup | false>(false);
+   const [showStorageSelector, setShowStorageSelector] = useState<Backup | false>(false);
    const queryClient = useQueryClient();
    const deleteBackupMutation = useDeleteBackup();
    const updateBackupMutation = useUpdateBackup();
@@ -129,8 +142,16 @@ const Backups = ({
       );
    };
 
-   const downloadBackup = (backupId: string) => {
-      toast.promise(downloadBackupMutation.mutateAsync({ backupId, planId }), {
+   const handleDownloadClick = (backup: Backup) => {
+      if (replicationSettings?.enabled && backup.mirrors && backup.mirrors.some((m) => m.status === 'completed')) {
+         setShowStorageSelector(backup);
+      } else {
+         downloadBackup(backup.id);
+      }
+   };
+
+   const downloadBackup = (backupId: string, replicationId?: string) => {
+      toast.promise(downloadBackupMutation.mutateAsync({ backupId, planId, replicationId }), {
          pending: 'Sending Download Request...',
          success: 'Generating Download. This might take a while..',
          error: {
@@ -199,6 +220,9 @@ const Backups = ({
                                  <Icon type="bolt" size={14} />
                               </span>
                            )}
+                           {replicationSettings?.enabled && snapshot.mirrors && snapshot.mirrors.length > 0 && (
+                              <MirrorStatusBadge mirrors={snapshot.mirrors} planId={planId} backupId={id} replicationSettings={replicationSettings} />
+                           )}
                            {download && <DownloadLabel download={download} downloadBackup={() => getDownloadMutation.mutate(id)} />}
                         </div>
                         <div
@@ -257,7 +281,7 @@ const Backups = ({
                                        if (isDownloading) {
                                           cancelDownload(id);
                                        } else {
-                                          downloadBackup(id);
+                                          handleDownloadClick(snapshot);
                                        }
                                        setShowSnapOptions(false);
                                     }}
@@ -319,7 +343,20 @@ const Backups = ({
                }}
             />
          )}
-         {showRestoreModal && <RestoreWizard close={() => setShowRestoreModal(false)} planId={planId} backupId={showRestoreModal.id} />}
+         {showRestoreModal && (
+            <RestoreWizard
+               close={() => setShowRestoreModal(false)}
+               planId={planId}
+               backupId={showRestoreModal.id}
+               deviceId={deviceId}
+               planStorage={storage}
+               mirrors={
+                  replicationSettings?.enabled && showRestoreModal.mirrors && showRestoreModal.mirrors.some((m) => m.status === 'completed')
+                     ? showRestoreModal.mirrors
+                     : []
+               }
+            />
+         )}
          {showBackupEvents && (
             <BackupEvents
                id={showBackupEvents}
@@ -364,6 +401,17 @@ const Backups = ({
                   isPending: updateBackupMutation.isPending,
                   action: () => updateBackup(showEditModal),
                }}
+            />
+         )}
+         {showStorageSelector && (
+            <MirrorStorageSelectorModal
+               mirrors={showStorageSelector.mirrors || []}
+               primaryStorage={storage}
+               onSelect={(replicationId) => {
+                  downloadBackup(showStorageSelector.id, replicationId);
+                  setShowStorageSelector(false);
+               }}
+               onClose={() => setShowStorageSelector(false)}
             />
          )}
       </div>

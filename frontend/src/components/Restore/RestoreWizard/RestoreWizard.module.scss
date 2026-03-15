@@ -356,6 +356,7 @@
          padding: 12px;
          cursor: pointer;
          border-bottom: 1px solid var(--line-color);
+         transition: all 0.12s linear;
          h5 {
             font-size: 0.75rem;
             font-weight: 600;
@@ -371,6 +372,9 @@
             span {
                color: var(--primary-color);
             }
+         }
+         &:hover {
+            background-color: var(--primary-color-light);
          }
          &:last-child {
             border-bottom: none;
