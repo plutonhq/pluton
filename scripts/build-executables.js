@@ -32,7 +32,7 @@ console.log(`📛 Output name: ${OUTPUT_NAME}\n`);
 // Version configuration - Update these to use latest versions
 const BETTER_SQLITE3_VERSION = "12.4.4"; // Latest: Check https://github.com/WiseLibs/better-sqlite3/releases
 const RESTIC_VERSION = "0.18.1"; // Latest: Check https://github.com/restic/restic/releases
-const RCLONE_VERSION = "1.73.0"; // Latest: Check https://rclone.org/downloads/
+const RCLONE_VERSION = "1.73.2"; // Latest: Check https://rclone.org/downloads/
 const KEYRING_VERSION = "1.2.0"; // Latest: Check https://www.npmjs.com/package/@napi-rs/keyring
 
 // Target configurations
