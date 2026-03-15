@@ -15,7 +15,7 @@ import IntervalField from '../../common/form/IntervalField/IntervalField';
 import PlanFormNav from './PlanFormNav';
 import { useGetDevice } from '../../../services/devices';
 import PlanPruneSettings from '../PlanSettings/PlanPruneSettings';
-import PlanReplicationSettings from './PlanReplicationSettings';
+import PlanReplicationSettings from '../PlanSettings/PlanReplicationSettings';
 
 type PlanFormProps = {
    title: string;

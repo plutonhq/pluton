@@ -93,7 +93,7 @@ export { default as PlanUnlockModal } from './Plan/PlanUnlockModal/PlanUnlockMod
 export { default as MirrorStatusBadge } from './Plan/Mirrors/MirrorStatusBadge';
 export { default as MirrorStorageSelector } from './Plan/Mirrors/MirrorStorageSelector';
 export { default as MirrorStorageSelectorModal } from './Plan/Mirrors/MirrorStorageSelectorModal';
-export { default as PlanReplicationSettings } from './Plan/PlanForm/PlanReplicationSettings';
+export { default as PlanReplicationSettings } from './Plan/PlanSettings/PlanReplicationSettings';
 
 // Restore components
 export { default as PlanRestores } from './Plan/Restores/Restores';
