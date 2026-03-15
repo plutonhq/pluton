@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.6.0](https://github.com/plutonhq/pluton/compare/pluton-v0.5.4...pluton-v0.6.0) (2026-03-15)
+
+
+### Features
+
+* add backup replication feature ([95fe103](https://github.com/plutonhq/pluton/commit/95fe1030a3a5e6261af8db0b4a2bfc6532290803))
+
+
+### Bug Fixes
+
+* resolves app crash on backup progress parsing ([962d11b](https://github.com/plutonhq/pluton/commit/962d11bf48fe49fe5a476e1d278677d93b344421))
+* resolves auto logout issue ([a58f05c](https://github.com/plutonhq/pluton/commit/a58f05c9b70cd2e92b7aa18bad86d29fe5f4f13e))
+* resolves broken local storage path for remote machines ([221e571](https://github.com/plutonhq/pluton/commit/221e571cb88fcd1e70f2d7c4ec57c94098cd31c9))
+* resolves broken redirect on login page ([1ef076a](https://github.com/plutonhq/pluton/commit/1ef076a41d46ec00ddfe397e7ffc7b3c4399a7a0))
+* resolves broken smtp input fields ([b9c05ea](https://github.com/plutonhq/pluton/commit/b9c05ea4518478673a7f5d673086e1fb28011ab1))
+* resolves frontend rate-limit error due to frequent pending setup check ([6194d4e](https://github.com/plutonhq/pluton/commit/6194d4e2b5080936f669b79d5dd61aa184ec73eb))
+* resolves incorrect serving of cached frontend on new release ([61fc5f8](https://github.com/plutonhq/pluton/commit/61fc5f81bdac4ce6a8b72af84787ae41c1e07e81))
+* resolves missing empty storage warning on plan creation ([9a310fd](https://github.com/plutonhq/pluton/commit/9a310fde72d0e1f74aa2578b398273bab12dd944))
+* resolves sensitive data logging vulnerability ([30f5b54](https://github.com/plutonhq/pluton/commit/30f5b54b3a54e28ec364d079f04176af8eb4f0a8))
+
+
+### Dependencies
+
+* rclone version bump ([2dd3598](https://github.com/plutonhq/pluton/commit/2dd3598c98d1a417d57e6757f360f13c6c68d3b7))
+
 ## [0.5.4](https://github.com/plutonhq/pluton/compare/pluton-v0.5.3...pluton-v0.5.4) (2026-03-03)
 
 
