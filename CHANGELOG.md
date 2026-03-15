@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.4](https://github.com/plutonhq/pluton/compare/pluton-v0.5.3...pluton-v0.5.4) (2026-03-03)
+
+
+### Bug Fixes
+
+* resolves macOS restore/download issue ([6ba8083](https://github.com/plutonhq/pluton/commit/6ba808376d9f7c7da0903408621fd85154969162))
+* resolves minor UI issues ([28ae173](https://github.com/plutonhq/pluton/commit/28ae173a95e4970162c076b7eb780651316762e9))
+
 ## [0.5.3](https://github.com/plutonhq/pluton/compare/pluton-v0.5.2...pluton-v0.5.3) (2026-02-22)
 
 
