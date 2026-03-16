@@ -26,7 +26,10 @@ pnpm --filter @plutonhq/core-backend lint
 echo "[pre-push] Running tests..."
 pnpm --filter @plutonhq/core-backend test
 
-echo "[pre-push] Running build..."
+echo "[pre-push] Running backend build..."
 pnpm --filter @plutonhq/core-backend build
+
+echo "[pre-push] Running frontend build..."
+pnpm --filter @plutonhq/core-frontend build
 
 echo "[pre-push] All checks passed. Continuing push."
