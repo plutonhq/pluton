@@ -68,6 +68,10 @@ export class RemoteStrategy implements BackupStrategy {
 		return await this.publishCommand('UPDATE_PLAN_STORAGE_NAME', { storageId, newStorageName });
 	}
 
+	async checkIntegrity(planId: string): Promise<{ success: boolean; result: any }> {
+		return await this.publishCommand('CHECK_INTEGRITY', { planId });
+	}
+
 	publishCommand(action: string, payload: any): Promise<{ success: boolean; result: any }> {
 		return new Promise((resolve, reject) => {
 			resolve({ success: true, result: null });

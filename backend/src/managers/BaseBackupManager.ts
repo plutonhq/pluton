@@ -534,7 +534,86 @@ export class BaseBackupManager extends EventEmitter {
 		}
 	}
 
-	testFunc() {
-		console.log('BaseBackupManager testFunc called');
+	async checkIntegrity(
+		planId: string
+	): Promise<{ success: boolean; result: Record<string, string | null> }> {
+		const schedules = await this.cronManager.getSchedule(planId);
+		const backupSchedule = schedules?.find(s => s.type === 'backup');
+		if (backupSchedule) {
+			this.emit('integrity_start', { planId: planId });
+			const { storage, storagePath, settings } = backupSchedule?.options as Record<string, any>;
+			const repSettings = settings?.replication;
+			const hasMirrors =
+				repSettings?.enabled && repSettings.storages && repSettings.storages.length > 0;
+			const replicationStorages = hasMirrors ? repSettings.storages : [];
+			const allStorages =
+				replicationStorages.length > 0
+					? [
+							{ storageName: storage.name, storagePath, storageId: storage.id },
+							...replicationStorages,
+						]
+					: [{ storageName: storage.name, storagePath, storageId: storage.id }];
+
+			const errorMsg: Record<string, string | null> = { primary: null } as Record<
+				string,
+				string | null
+			>;
+			const resultObj: Record<string, string | null> = { primary: null } as Record<
+				string,
+				string | null
+			>;
+			for (const theStorage of allStorages) {
+				const index =
+					theStorage.storageId === storage.id ? 'primary' : 'mirror_' + theStorage.storageId;
+				errorMsg[index] = null;
+				resultObj[index] = null;
+
+				const resticArgs = ['check'];
+				const repoPassword = settings.encryption
+					? (configService.config.ENCRYPTION_KEY as string)
+					: '';
+
+				if (theStorage.storageName) {
+					const repoPath = generateResticRepoPath(
+						theStorage.storageName,
+						theStorage.storagePath || ''
+					);
+					resticArgs.push('-r', repoPath);
+				} else {
+					return { success: false, result: { [index]: 'No storage name found' } };
+				}
+
+				// Read Method
+				const method = settings.integrity?.method || '5%';
+				if (['5%', '10%', '25%', '50%'].includes(method)) {
+					resticArgs.push('--read-data-subset', method);
+				}
+				if (method === 'full') {
+					resticArgs.push('--read-data');
+				}
+
+				// resticArgs.push('--json');
+				try {
+					const checkRes = await runResticCommand(resticArgs, { RESTIC_PASSWORD: repoPassword });
+					resultObj[index] = checkRes;
+				} catch (error: any) {
+					const errMsg = (error instanceof Error && error.message) || 'Unknown Error';
+					errorMsg[index] = errMsg;
+					resultObj[index] = errMsg;
+				}
+			}
+
+			this.emit('integrity_end', { planId: planId, result: resultObj });
+			return {
+				success: true,
+				result: resultObj,
+			};
+		}
+
+		this.emit('integrity_failed', {
+			planId: planId,
+			result: { primary: 'No backup schedule found' },
+		});
+		return { success: false, result: { primary: 'No Backup schedule found' } };
 	}
 }

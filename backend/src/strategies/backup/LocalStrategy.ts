@@ -79,6 +79,10 @@ export class LocalStrategy implements BackupStrategy {
 		return await this.localAgent.updatePlanStorageName(storageId, newStorageName);
 	}
 
+	async checkIntegrity(planId: string): Promise<{ success: boolean; result: any }> {
+		return await this.localAgent.checkIntegrity(planId);
+	}
+
 	async getBackupProgress(planId: string, backupId: string) {
 		try {
 			const filename = `backup-${backupId}.json`;

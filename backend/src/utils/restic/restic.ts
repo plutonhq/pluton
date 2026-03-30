@@ -8,6 +8,7 @@ import { appPaths } from '../AppPaths';
 import { generateResticRepoPath } from './helpers';
 import { configService } from '../../services/ConfigService';
 import { buildResticEnvFromSettings, buildRcloneEnvFromSettings } from '../globalSettings';
+import { BackupVerifiedResult } from '../../types/plans';
 
 export function runResticCommand(
 	args: string[],
@@ -227,4 +228,55 @@ export async function getSnapshotByTag(
 			result: 'Snapshot Not Found. ' + error?.message,
 		};
 	}
+}
+
+export function handleResticCheckResult(
+	output: string,
+	{ repo, device }: { repo: string; device: string }
+): BackupVerifiedResult {
+	let message = '';
+	let hasError = true;
+	let fix = '';
+	const logs: string[] = [];
+
+	if (output.includes('The repository contains damaged pack files')) {
+		message = 'A Pack file of a snapshot was damaged.';
+		const packFileID = output.match(/pack ([a-f0-9]{64}):/)?.[1];
+		fix = `Login to your Machine ${device}.
+      Run this command to first to try and repair the pack file:
+      \`restic repair -r ${repo} packs ${packFileID}\`
+      Then run this command to fix the snapshots if they are still damaged:
+      \`restic repair -r ${repo} snapshots --forget \`
+      When asked for the password, use the Pluton Encryption key.
+      `;
+	}
+	if (output.includes('The repository index is damaged')) {
+		message = 'The repository index is damaged.';
+		fix = `Login to your Machine ${device}.
+      Run this command:
+      \`restic repair index -r ${repo}\`
+      When asked for the password, use the Pluton Encryption key.
+      `;
+	}
+	if (output.includes('ciphertext verification failed')) {
+		message = 'Ciphertext verification failed.';
+		fix =
+			'Ciphertext verification issue is hard to fix. Please ask for help in the Restic forum or their IRC channel. These errors are often caused by hardware problems which must be investigated and fixed. Otherwise, the backup will be damaged again and again.';
+	}
+	if (output.includes('failed to authorize account')) {
+		message = 'Storage Authorization failed.';
+		hasError = false;
+	}
+	if (output.includes('no errors were found')) {
+		message = 'No Issue Detected.';
+		hasError = false;
+	}
+
+	output.split('\n').forEach((line: string) => {
+		if (line.trim() !== '') {
+			logs.push(line);
+		}
+	});
+
+	return { message, logs, hasError, fix };
 }

@@ -88,6 +88,7 @@ export { default as PlanStrategySettings } from './Plan/PlanSettings/PlanStrateg
 export { default as PlanTypeSettings } from './Plan/PlanSettings/PlanTypeSettings';
 export { default as PlanStats } from './Plan/PlanStats/PlanStats';
 export { default as PlanUnlockModal } from './Plan/PlanUnlockModal/PlanUnlockModal';
+export { default as PlanIntegrity } from './Plan/PlanIntegrity/PlanIntegrity';
 
 // Mirror/Replication components
 export { default as MirrorStatusBadge } from './Plan/Mirrors/MirrorStatusBadge';

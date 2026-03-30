@@ -4,13 +4,13 @@ import { useCheckActiveBackupsOrRestore } from '../../../services/plans';
 import classes from './PlanPendingBackup.module.scss';
 import Icon from '../../common/Icon/Icon';
 
-interface PlanPendingBackup {
+interface PlanPendingBackupProps {
    planId: string;
    type?: 'backup' | 'restore';
    onPendingDetect: () => void;
 }
 
-const PlanPendingBackup = ({ planId, type = 'backup', onPendingDetect }: PlanPendingBackup) => {
+const PlanPendingBackup = ({ planId, type = 'backup', onPendingDetect }: PlanPendingBackupProps) => {
    const [, setSearchParams] = useSearchParams();
    const checkActivesMutation = useCheckActiveBackupsOrRestore();
 

@@ -437,3 +437,33 @@ export function useDeleteReplicationStorage() {
       },
    });
 }
+
+export async function checkPlanIntegrity({ planId }: { planId: string }) {
+   // const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/plans/${planId}/action/checkintegrity`, {
+      method: 'POST',
+      credentials: 'include',
+      // headers: header,
+   });
+   // Check if response is ok
+   const data = await res.json();
+   if (!data.success) {
+      throw new Error(data.error);
+   }
+   return data;
+}
+
+export function useCheckPlanIntegrity() {
+   const queryClient = useQueryClient();
+   return useMutation({
+      mutationFn: checkPlanIntegrity,
+      onSuccess: (res, payload) => {
+         queryClient.invalidateQueries({ queryKey: ['plan', payload.planId] });
+         console.log('res :', payload, res);
+      },
+      onError: (error, payload) => {
+         console.error('Error checking plan integrity for planId:', payload.planId, error);
+         toast.error(`Error checking plan integrity. ${error instanceof Error ? error.message : 'Unknown error'}`, { autoClose: false });
+      },
+   });
+}

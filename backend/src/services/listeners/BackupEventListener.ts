@@ -61,6 +61,18 @@ export class BackupEventListener {
 			(event: BackupReplicationMirrorSizeUpdateEvent) => this.onMirrorSizesUpdate(event)
 		);
 		this.localAgent.on('pruneEnd', (event: PruneEndEvent) => this.onPruneEnd(event));
+
+		this.localAgent.on('integrity_start', (event: { planId: string }) =>
+			this.onIntegrityStart(event)
+		);
+		this.localAgent.on(
+			'integrity_end',
+			(event: { planId: string; result: Record<string, string | null> }) =>
+				this.onIntegrityEnd(event)
+		);
+		jobProcessor.on('integrity_failed', (event: any) => {
+			this.onIntegrityCheckFailure(event);
+		});
 	}
 
 	protected async onBackupStart(data: BackupStartEvent): Promise<void> {
@@ -114,17 +126,18 @@ export class BackupEventListener {
 		await this.backupEventService.onPruneEnd(data);
 	}
 
-	/**
-	 * Called after a job has permanently failed. Implemented in the PRO version.
-	 * @param planId - The ID of the plan that failed.
-	 * @param backupId - The ID of the backup that failed.
-	 * @param error - The error that caused the failure.
+	async onIntegrityStart(data: { planId: string }) {
+		console.log('onIntegrityStart :', data);
+		await this.backupEventService.onIntegrityStart(data);
+	}
 
-	 * @protected
-	 */
-	protected async afterPermanentFailure(
-		planId: string,
-		backupId: string,
-		error: string
-	): Promise<void> {}
+	async onIntegrityEnd(data: { planId: string; result: Record<string, string | null> }) {
+		console.log('onIntegrityEnd :', data);
+		await this.backupEventService.onIntegrityEnd(data);
+	}
+
+	async onIntegrityCheckFailure(data: { planId: string; error: string }) {
+		console.log('onIntegrityCheckFailure :', data);
+		await this.backupEventService.onIntegrityFailed(data);
+	}
 }

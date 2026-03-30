@@ -52,6 +52,7 @@ export interface BackupStrategy {
 		storageId: string,
 		newStorageName: string
 	): Promise<{ success: boolean; result: string }>;
+	checkIntegrity(planId: string): Promise<{ success: boolean; result: any }>;
 }
 
 export type BackupStrategyTypes = StrategyMethodTypes<BackupStrategy>;

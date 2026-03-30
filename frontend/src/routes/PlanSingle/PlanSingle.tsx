@@ -14,9 +14,11 @@ import PlanUnlockModal from '../../components/Plan/PlanUnlockModal/PlanUnlockMod
 import PlanRemoveModal from '../../components/Plan/PlanRemoveModal/PlanRemoveModal';
 import PlanProgress from '../../components/Plan/PlanProgress/PlanProgress';
 import PlanBackups from '../../components/Plan/PlanBackups/PlanBackups';
+import PlanIntegrity from '../../components/Plan/PlanIntegrity/PlanIntegrity';
 
 const PlanSingle = () => {
    const [showMoreOptions, setShowMoreOptions] = useState(false);
+   const [showIntegrityModal, setShowIntegrityModal] = useState(false);
    const { id } = useParams();
 
    const EditPlanModal = useComponentOverride('EditPlan', EditPlan);
@@ -129,6 +131,15 @@ const PlanSingle = () => {
                               <li
                                  className={classes.actionBtn}
                                  onClick={() => {
+                                    setShowIntegrityModal(true);
+                                    setShowMoreOptions(false);
+                                 }}
+                              >
+                                 <Icon size={14} type="integrity" /> Check Integrity
+                              </li>
+                              <li
+                                 className={classes.actionBtn}
+                                 onClick={() => {
                                     setShowLogsModal(true);
                                     setShowMoreOptions(false);
                                  }}
@@ -172,6 +183,16 @@ const PlanSingle = () => {
                   snapshotsCount={snapshotsCount}
                   taskPending={taskPending}
                   close={() => setShowPruneModal(false)}
+               />
+            )}
+            {showIntegrityModal && !isSync && (
+               <PlanIntegrity
+                  planId={plan.id}
+                  taskPending={taskPending}
+                  verificationData={plan.verified}
+                  storage={plan.storage}
+                  replicationStorages={plan.settings.replication?.enabled ? plan.settings.replication.storages : []}
+                  onClose={() => setShowIntegrityModal(false)}
                />
             )}
             {showDeleteModal && (

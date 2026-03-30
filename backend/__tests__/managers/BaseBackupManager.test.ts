@@ -68,7 +68,7 @@ jest.mock('../../src/managers/handlers/PruneHandler', () => {
 });
 
 jest.mock('../../src/utils/restic/helpers', () => ({
-	generateResticRepoPath: (name: string, p: string) => `rclone:${name}:${p}`,
+	generateResticRepoPath: jest.fn((name: string, p: string) => `rclone:${name}:${p}`),
 }));
 
 jest.mock('../../src/jobs/JobQueue', () => ({
@@ -93,9 +93,11 @@ jest.mock('../../src/services/ConfigService', () => ({
 import { BaseBackupManager } from '../../src/managers/BaseBackupManager';
 import { BackupPlanArgs } from '../../src/types/plans';
 import { EventEmitter } from 'events';
+import { generateResticRepoPath } from '#core-backend/utils/restic/helpers';
 
 describe('BaseBackupManager', () => {
 	let mgr: BaseBackupManager;
+	let mockGenerateResticRepoPath: jest.Mock;
 
 	const baseOptions: any = {
 		id: 'plan-xyz',
@@ -135,6 +137,8 @@ describe('BaseBackupManager', () => {
 			integrity: {} as any,
 		},
 	};
+
+	const planId = baseOptions.id;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -180,6 +184,8 @@ describe('BaseBackupManager', () => {
 				},
 			],
 		});
+
+		mockGenerateResticRepoPath = generateResticRepoPath as jest.Mock;
 
 		backupHandlerExecuteMock.mockResolvedValue('EXECUTED');
 		backupHandlerCancelMock.mockResolvedValue(true);
@@ -860,6 +866,449 @@ describe('BaseBackupManager', () => {
 			capturedCallback('plan-callback', mockOpts);
 
 			expect(mockJobQueue.add).toHaveBeenCalled();
+		});
+	});
+
+	// -------------------------
+	// Tests for checkIntegrity
+	// -------------------------
+	describe('checkIntegrity', () => {
+		const mockSchedule = {
+			type: 'backup',
+			options: {
+				storage: { name: 'local-storage' },
+				storagePath: '/storage/backups',
+				settings: {
+					encryption: true,
+					integrity: {
+						method: '10%',
+					},
+				},
+			},
+		};
+
+		it('should successfully check integrity with percentage method', async () => {
+			// Arrange
+			mockGetSchedule.mockResolvedValue([mockSchedule]);
+			mockRunResticCommand.mockResolvedValue('no errors found');
+
+			const emitSpy = jest.spyOn(mgr, 'emit');
+
+			// Act
+			const result = await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(mockGetSchedule).toHaveBeenCalledWith(planId);
+			expect(mockGenerateResticRepoPath).toHaveBeenCalledWith('local-storage', '/storage/backups');
+			expect(mockRunResticCommand).toHaveBeenCalledWith(
+				['check', '-r', 'rclone:local-storage:/storage/backups', '--read-data-subset', '10%'],
+				{ RESTIC_PASSWORD: 'secret-key' }
+			);
+			expect(emitSpy).toHaveBeenCalledWith('integrity_start', { planId });
+			expect(emitSpy).toHaveBeenCalledWith('integrity_end', {
+				planId,
+				result: { primary: 'no errors found' },
+			});
+			expect(result).toEqual({
+				success: true,
+				result: { primary: 'no errors found' },
+			});
+		});
+
+		it('should check integrity with full method', async () => {
+			// Arrange
+			const scheduleWithFullMethod = {
+				...mockSchedule,
+				options: {
+					...mockSchedule.options,
+					settings: {
+						...mockSchedule.options.settings,
+						integrity: { method: 'full' },
+					},
+				},
+			};
+
+			mockGetSchedule.mockResolvedValue([scheduleWithFullMethod]);
+			mockRunResticCommand.mockResolvedValue('integrity check passed');
+
+			// Act
+			const result = await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(mockRunResticCommand).toHaveBeenCalledWith(
+				['check', '-r', 'rclone:local-storage:/storage/backups', '--read-data'],
+				{ RESTIC_PASSWORD: 'secret-key' }
+			);
+			expect(result.success).toBe(true);
+		});
+
+		it('should check integrity with 5% method', async () => {
+			// Arrange
+			const scheduleWith5Percent = {
+				...mockSchedule,
+				options: {
+					...mockSchedule.options,
+					settings: {
+						...mockSchedule.options.settings,
+						integrity: { method: '5%' },
+					},
+				},
+			};
+
+			mockGetSchedule.mockResolvedValue([scheduleWith5Percent]);
+			mockRunResticCommand.mockResolvedValue('check complete');
+
+			// Act
+			await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(mockRunResticCommand).toHaveBeenCalledWith(
+				['check', '-r', 'rclone:local-storage:/storage/backups', '--read-data-subset', '5%'],
+				{ RESTIC_PASSWORD: 'secret-key' }
+			);
+		});
+
+		it('should check integrity with 25% method', async () => {
+			// Arrange
+			const scheduleWith25Percent = {
+				...mockSchedule,
+				options: {
+					...mockSchedule.options,
+					settings: {
+						...mockSchedule.options.settings,
+						integrity: { method: '25%' },
+					},
+				},
+			};
+
+			mockGetSchedule.mockResolvedValue([scheduleWith25Percent]);
+			mockRunResticCommand.mockResolvedValue('check complete');
+
+			// Act
+			await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(mockRunResticCommand).toHaveBeenCalledWith(
+				['check', '-r', 'rclone:local-storage:/storage/backups', '--read-data-subset', '25%'],
+				{ RESTIC_PASSWORD: 'secret-key' }
+			);
+		});
+
+		it('should check integrity with 50% method', async () => {
+			// Arrange
+			const scheduleWith50Percent = {
+				...mockSchedule,
+				options: {
+					...mockSchedule.options,
+					settings: {
+						...mockSchedule.options.settings,
+						integrity: { method: '50%' },
+					},
+				},
+			};
+
+			mockGetSchedule.mockResolvedValue([scheduleWith50Percent]);
+			mockRunResticCommand.mockResolvedValue('check complete');
+
+			// Act
+			await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(mockRunResticCommand).toHaveBeenCalledWith(
+				['check', '-r', 'rclone:local-storage:/storage/backups', '--read-data-subset', '50%'],
+				{ RESTIC_PASSWORD: 'secret-key' }
+			);
+		});
+
+		it('should check integrity without method specified', async () => {
+			// Arrange
+			const scheduleWithoutMethod = {
+				...mockSchedule,
+				options: {
+					...mockSchedule.options,
+					settings: {
+						encryption: true,
+					},
+				},
+			};
+
+			mockGetSchedule.mockResolvedValue([scheduleWithoutMethod]);
+			mockRunResticCommand.mockResolvedValue('check complete');
+
+			// Act
+			await mgr.checkIntegrity(planId);
+
+			// Assert - default method is '5%'
+			expect(mockRunResticCommand).toHaveBeenCalledWith(
+				['check', '-r', 'rclone:local-storage:/storage/backups', '--read-data-subset', '5%'],
+				{ RESTIC_PASSWORD: 'secret-key' }
+			);
+		});
+
+		it('should use empty password when encryption is false', async () => {
+			// Arrange
+			const scheduleNoEncryption = {
+				...mockSchedule,
+				options: {
+					...mockSchedule.options,
+					settings: {
+						encryption: false,
+					},
+				},
+			};
+
+			mockGetSchedule.mockResolvedValue([scheduleNoEncryption]);
+			mockRunResticCommand.mockResolvedValue('check complete');
+
+			// Act
+			await mgr.checkIntegrity(planId);
+
+			// Assert - default method is '5%'
+			expect(mockRunResticCommand).toHaveBeenCalledWith(
+				['check', '-r', 'rclone:local-storage:/storage/backups', '--read-data-subset', '5%'],
+				{ RESTIC_PASSWORD: '' }
+			);
+		});
+
+		it('should return failure when no storage name is provided', async () => {
+			// Arrange
+			const scheduleNoStorage = {
+				...mockSchedule,
+				options: {
+					...mockSchedule.options,
+					storage: {},
+				},
+			};
+
+			mockGetSchedule.mockResolvedValue([scheduleNoStorage]);
+
+			// Act
+			const result = await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(result).toEqual({
+				success: false,
+				result: { primary: 'No storage name found' },
+			});
+			expect(mockRunResticCommand).not.toHaveBeenCalled();
+		});
+
+		it('should return failure when no backup schedule is found', async () => {
+			// Arrange
+			mockGetSchedule.mockResolvedValue([]);
+
+			// Act
+			const result = await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(result).toEqual({
+				success: false,
+				result: { primary: 'No Backup schedule found' },
+			});
+			expect(mockRunResticCommand).not.toHaveBeenCalled();
+		});
+
+		it('should return failure when schedules is null', async () => {
+			// Arrange
+			mockGetSchedule.mockResolvedValue(null);
+
+			// Act
+			const result = await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(result).toEqual({
+				success: false,
+				result: { primary: 'No Backup schedule found' },
+			});
+		});
+
+		it('should handle errors during integrity check and emit event', async () => {
+			// Arrange
+			const errorMessage = 'Repository corrupted';
+			mockGetSchedule.mockResolvedValue([mockSchedule]);
+			mockRunResticCommand.mockRejectedValue(new Error(errorMessage));
+
+			const emitSpy = jest.spyOn(mgr, 'emit');
+
+			// Act
+			const result = await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(emitSpy).toHaveBeenCalledWith('integrity_start', { planId });
+			expect(emitSpy).toHaveBeenCalledWith('integrity_end', {
+				planId,
+				result: { primary: errorMessage },
+			});
+			expect(result).toEqual({
+				success: true,
+				result: { primary: errorMessage },
+			});
+		});
+
+		it('should handle non-Error exceptions during integrity check', async () => {
+			// Arrange
+			mockGetSchedule.mockResolvedValue([mockSchedule]);
+			mockRunResticCommand.mockRejectedValue('String error');
+
+			const emitSpy = jest.spyOn(mgr, 'emit');
+
+			// Act
+			const result = await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(emitSpy).toHaveBeenCalledWith('integrity_end', {
+				planId,
+				result: { primary: 'Unknown Error' },
+			});
+			expect(result).toEqual({
+				success: true,
+				result: { primary: 'Unknown Error' },
+			});
+		});
+
+		it('should check integrity for primary and replication mirror storages', async () => {
+			// Arrange
+			const scheduleWithMirrors = {
+				...mockSchedule,
+				options: {
+					...mockSchedule.options,
+					settings: {
+						...mockSchedule.options.settings,
+						replication: {
+							enabled: true,
+							storages: [
+								{
+									replicationId: 'rep-001',
+									storageId: 'mirror-storage-1',
+									storageName: 'Mirror S3',
+									storagePath: '/mirror/path',
+								},
+							],
+						},
+					},
+				},
+			};
+
+			mockGetSchedule.mockResolvedValue([scheduleWithMirrors]);
+			mockGenerateResticRepoPath
+				.mockReturnValueOnce('/storage/local-storage') // primary
+				.mockReturnValueOnce('Mirror S3:/mirror/path'); // mirror
+			mockRunResticCommand
+				.mockResolvedValueOnce('no errors found') // primary check
+				.mockResolvedValueOnce('no errors found'); // mirror check
+
+			const emitSpy = jest.spyOn(mgr, 'emit');
+
+			// Act
+			const result = await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(mockRunResticCommand).toHaveBeenCalledTimes(2);
+			expect(mockGenerateResticRepoPath).toHaveBeenCalledTimes(2);
+			expect(emitSpy).toHaveBeenCalledWith('integrity_end', {
+				planId,
+				result: {
+					'primary': 'no errors found',
+					'mirror_mirror-storage-1': 'no errors found',
+				},
+			});
+			expect(result).toEqual({
+				success: true,
+				result: {
+					'primary': 'no errors found',
+					'mirror_mirror-storage-1': 'no errors found',
+				},
+			});
+		});
+
+		it('should handle mirror storage failure while primary succeeds', async () => {
+			// Arrange
+			const scheduleWithMirrors = {
+				...mockSchedule,
+				options: {
+					...mockSchedule.options,
+					settings: {
+						...mockSchedule.options.settings,
+						replication: {
+							enabled: true,
+							storages: [
+								{
+									replicationId: 'rep-001',
+									storageId: 'mirror-storage-1',
+									storageName: 'Mirror S3',
+									storagePath: '/mirror/path',
+								},
+							],
+						},
+					},
+				},
+			};
+
+			mockGetSchedule.mockResolvedValue([scheduleWithMirrors]);
+			mockGenerateResticRepoPath
+				.mockReturnValueOnce('/storage/local-storage')
+				.mockReturnValueOnce('Mirror S3:/mirror/path');
+			mockRunResticCommand
+				.mockResolvedValueOnce('no errors found')
+				.mockRejectedValueOnce(new Error('Mirror repository corrupted'));
+
+			const emitSpy = jest.spyOn(mgr, 'emit');
+
+			// Act
+			const result = await mgr.checkIntegrity(planId);
+
+			// Assert
+			expect(result).toEqual({
+				success: true,
+				result: {
+					'primary': 'no errors found',
+					'mirror_mirror-storage-1': 'Mirror repository corrupted',
+				},
+			});
+			expect(emitSpy).toHaveBeenCalledWith('integrity_end', {
+				planId,
+				result: {
+					'primary': 'no errors found',
+					'mirror_mirror-storage-1': 'Mirror repository corrupted',
+				},
+			});
+		});
+
+		it('should return failure when mirror storage has no storage name', async () => {
+			// Arrange
+			const scheduleWithBadMirror = {
+				...mockSchedule,
+				options: {
+					...mockSchedule.options,
+					settings: {
+						...mockSchedule.options.settings,
+						replication: {
+							enabled: true,
+							storages: [
+								{
+									replicationId: 'rep-001',
+									storageId: 'mirror-storage-1',
+									storageName: '',
+									storagePath: '/mirror/path',
+								},
+							],
+						},
+					},
+				},
+			};
+
+			mockGetSchedule.mockResolvedValue([scheduleWithBadMirror]);
+			mockRunResticCommand.mockResolvedValue('no errors found');
+
+			// Act
+			const result = await mgr.checkIntegrity(planId);
+
+			// Assert - primary succeeds, but mirror has no storage name. The code checks primary first.
+			// Since primary has a storage name, it runs. Then the mirror has no storageName → returns failure.
+			expect(result).toEqual({
+				success: false,
+				result: { 'mirror_mirror-storage-1': 'No storage name found' },
+			});
 		});
 	});
 });

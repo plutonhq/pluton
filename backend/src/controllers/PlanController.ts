@@ -342,4 +342,26 @@ export class PlanController {
 			});
 		}
 	}
+
+	async checkIntegrity(req: Request, res: Response): Promise<void> {
+		if (!req.params.id) {
+			res.status(400).json({
+				success: false,
+				error: 'Plan ID is required',
+			});
+			return;
+		}
+
+		try {
+			const result = await this.planService.checkIntegrity(req.params.id);
+			res.status(result.success ? 200 : 500).json(result);
+		} catch (error) {
+			console.log('[checkIntegrity] error :', error);
+			res.status(500).json({
+				success: false,
+				error: 'Internal Server Error',
+			});
+			return;
+		}
+	}
 }

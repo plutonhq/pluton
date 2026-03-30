@@ -18,6 +18,9 @@ import {
 	// BackupProgressEvent,
 	BackupStatUpdateEvent,
 } from '../../types/events';
+import { generateResticRepoPath } from '../../utils/restic/helpers';
+import { BackupVerifiedResult, PlanReplicationStorage, PlanStorageItem } from '../../types/plans';
+import { handleResticCheckResult } from '../../utils/restic/restic';
 
 export class BackupEventService {
 	protected backupNotification: BackupNotification;
@@ -405,6 +408,97 @@ export class BackupEventService {
 			planLogger('update', planId, backupId).error(
 				`Error updating plan mirror stats: ${error?.message || 'Unknown Error'}`
 			);
+		}
+	}
+
+	async onIntegrityStart(data: { planId: string }) {
+		console.log('onIntegrityStart :', data);
+		const startedAt = new Date().getTime();
+		try {
+			await this.planStore.update(data.planId, {
+				verified: {
+					status: 'running',
+					startedAt,
+					endedAt: null,
+					hasError: false,
+				},
+			});
+			planLogger('integrity_check', data.planId).info(`Started Integrity Check for Backup Plan.`);
+		} catch (error: any) {
+			planLogger('integrity_check', data.planId).error(
+				`Error starting Integrity Check for Backup Plan. Reason : ${
+					error?.message.toString() || 'Unknown Error'
+				}`
+			);
+		}
+	}
+
+	async onIntegrityEnd(data: { planId: string; result: Record<string, string | null> }) {
+		console.log('onIntegrityEnd :', data);
+		const endedAt = new Date().getTime();
+		try {
+			const thePlan = await this.planStore.getById(data.planId);
+			if (thePlan && thePlan.storage?.name && thePlan.device?.id) {
+				const parsedResult: Record<string, BackupVerifiedResult> = {};
+				let hasIntegrityIssue = false;
+
+				Object.keys(data.result).forEach(async key => {
+					const theStorage =
+						key === 'primary'
+							? thePlan.storage
+							: thePlan.settings.replication?.storages?.find(
+									m => m.storageId === key.replace('mirror_', '')
+								);
+					const storageName =
+						key === 'primary'
+							? (theStorage as PlanStorageItem)?.name
+							: (theStorage as PlanReplicationStorage)?.storageName || key;
+					const storagePath =
+						key === 'primary'
+							? thePlan.storagePath
+							: (theStorage as PlanReplicationStorage)?.storagePath || '';
+					const repoPath = generateResticRepoPath(storageName, storagePath || '');
+					const checkResult = handleResticCheckResult(data.result[key] || '', {
+						repo: repoPath,
+						device: `${thePlan.device?.name}${thePlan.device?.id !== 'main' && thePlan.device?.hostname ? ` (${thePlan.device.hostname})` : ''}`,
+					});
+					parsedResult[key] = checkResult;
+					if (checkResult.hasError) {
+						hasIntegrityIssue = true;
+					}
+				});
+
+				await this.planStore.update(data.planId, {
+					verified: {
+						status: 'completed',
+						startedAt: thePlan.verified?.startedAt || endedAt,
+						result: parsedResult as any,
+						hasError: hasIntegrityIssue,
+						endedAt,
+					},
+				});
+				planLogger('integrity_check', data.planId).info(
+					`Completed Integrity Check for Backup Plan.`
+				);
+			} else {
+				planLogger('integrity_check', data.planId).error(`Backup Plan not found.`);
+			}
+		} catch (error: any) {
+			planLogger('integrity_check', data.planId).error(
+				`Error completing Integrity Check for Backup Plan. Reason : ${
+					error?.message || 'Unknown Error'
+				}`
+			);
+		}
+	}
+
+	async onIntegrityFailed(data: { planId: string; error: string }) {
+		console.log('onIntegrityFailed :', data);
+		const thePlan = await this.planStore.getById(data.planId);
+		if (thePlan && thePlan.storage?.name && thePlan.device?.id) {
+			planLogger('integrity_check', data.planId).error(`Failed Integrity Check for Backup Plan.`);
+		} else {
+			planLogger('integrity_check', data.planId).error(`Backup Plan not found.`);
 		}
 	}
 }

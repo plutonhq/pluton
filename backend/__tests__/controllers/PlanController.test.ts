@@ -422,4 +422,64 @@ describe('PlanController', () => {
 			expect(mockPipe).toHaveBeenCalledWith(mockResponse);
 		});
 	});
+
+	describe('checkIntegrity', () => {
+		it('should return 400 if plan ID is missing', async () => {
+			mockRequest.params = {};
+
+			await planController.checkIntegrity(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(400);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				error: 'Plan ID is required',
+			});
+		});
+
+		it('should return 200 when integrity check succeeds', async () => {
+			mockRequest.params = { id: 'plan-1' };
+			mockPlanService.checkIntegrity.mockResolvedValue({
+				success: true,
+				result: { primary: 'no errors found' },
+			});
+
+			await planController.checkIntegrity(mockRequest as Request, mockResponse as Response);
+
+			expect(mockPlanService.checkIntegrity).toHaveBeenCalledWith('plan-1');
+			expect(mockStatus).toHaveBeenCalledWith(200);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: true,
+				result: { primary: 'no errors found' },
+			});
+		});
+
+		it('should return 500 when integrity check result is not successful', async () => {
+			mockRequest.params = { id: 'plan-1' };
+			mockPlanService.checkIntegrity.mockResolvedValue({
+				success: false,
+				result: { primary: 'No Backup schedule found' },
+			});
+
+			await planController.checkIntegrity(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(500);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				result: { primary: 'No Backup schedule found' },
+			});
+		});
+
+		it('should return 500 if service throws an error', async () => {
+			mockRequest.params = { id: 'plan-1' };
+			mockPlanService.checkIntegrity.mockRejectedValue(new Error('Internal error'));
+
+			await planController.checkIntegrity(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(500);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				error: 'Internal Server Error',
+			});
+		});
+	});
 });

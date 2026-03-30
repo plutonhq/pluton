@@ -853,4 +853,64 @@ describe('PlanService', () => {
 			await expect(privateMethodCall()).rejects.toHaveProperty('statusCode', 404);
 		});
 	});
+
+	// --------------------------------
+	// Tests for checking integrity
+	// --------------------------------
+
+	describe('checkIntegrity', () => {
+		const planId = 'plan-to-check';
+		const mockPlan = { id: planId, sourceId: 'main' } as any;
+
+		it('should successfully call checkIntegrity on the strategy', async () => {
+			// Arrange
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockStrategy.checkIntegrity = jest
+				.fn()
+				.mockResolvedValue({ success: true, result: { primary: 'no errors found' } });
+
+			// Act
+			const result = await planService.checkIntegrity(planId);
+
+			// Assert
+			expect(mockPlanStore.getById).toHaveBeenCalledWith(planId);
+			expect(mockStrategy.checkIntegrity).toHaveBeenCalledWith(planId);
+			expect(result).toEqual({ success: true, result: { primary: 'no errors found' } });
+		});
+
+		it('should throw an error if the plan does not exist', async () => {
+			// Arrange
+			mockPlanStore.getById.mockResolvedValue(null);
+
+			// Act & Assert
+			await expect(planService.checkIntegrity(planId)).rejects.toThrow();
+		});
+
+		it('should throw an AppError if the strategy throws', async () => {
+			// Arrange
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockStrategy.checkIntegrity = jest.fn().mockRejectedValue(new Error('Strategy check failed'));
+
+			// Act & Assert
+			await expect(planService.checkIntegrity(planId)).rejects.toThrow();
+		});
+
+		it('should propagate the result when strategy returns failure', async () => {
+			// Arrange
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockStrategy.checkIntegrity = jest.fn().mockResolvedValue({
+				success: false,
+				result: { primary: 'No Backup schedule found' },
+			});
+
+			// Act
+			const result = await planService.checkIntegrity(planId);
+
+			// Assert
+			expect(result).toEqual({
+				success: false,
+				result: { primary: 'No Backup schedule found' },
+			});
+		});
+	});
 });

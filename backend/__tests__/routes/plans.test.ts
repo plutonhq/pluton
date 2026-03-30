@@ -60,6 +60,8 @@ describe('Plan Routes', () => {
 			pauseBackup: jest.fn(),
 			pruneBackups: jest.fn(),
 			unlockRepo: jest.fn(),
+			checkIntegrity: jest.fn(),
+			deleteReplicationStorage: jest.fn(),
 		} as any;
 
 		planController = new PlanController(mockPlanService);
@@ -291,6 +293,39 @@ describe('Plan Routes', () => {
 
 			expect(response.status).toBe(200);
 			expect(mockPlanService.unlockRepo).toHaveBeenCalledWith('plan-1');
+		});
+	});
+
+	describe('POST /api/plans/:id/action/checkintegrity', () => {
+		it('should return 401 if not authenticated', async () => {
+			setupAuthMock(false);
+
+			const response = await request(app).post('/api/plans/plan-1/action/checkintegrity');
+
+			expect(response.status).toBe(401);
+		});
+
+		it('should check integrity for a plan when authenticated', async () => {
+			mockPlanService.checkIntegrity.mockResolvedValue({
+				success: true,
+				result: { primary: 'no errors found' },
+			});
+
+			const response = await request(app).post('/api/plans/plan-1/action/checkintegrity');
+
+			expect(response.status).toBe(200);
+			expect(mockPlanService.checkIntegrity).toHaveBeenCalledWith('plan-1');
+		});
+
+		it('should return 500 when integrity check fails', async () => {
+			mockPlanService.checkIntegrity.mockResolvedValue({
+				success: false,
+				result: { primary: 'No Backup schedule found' },
+			});
+
+			const response = await request(app).post('/api/plans/plan-1/action/checkintegrity');
+
+			expect(response.status).toBe(500);
 		});
 	});
 });

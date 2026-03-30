@@ -97,7 +97,7 @@ export class PlanService {
 			throw new NotFoundError('Source device not found');
 		}
 		const isRemote = sourceId !== 'main';
-		const targetOS = isRemote ? device.os ?? undefined : undefined;
+		const targetOS = isRemote ? (device.os ?? undefined) : undefined;
 
 		const theStoragePath = sanitizeStoragePath(storagePath, planStorage.type, targetOS);
 		let newPlanData: NewPlan = {
@@ -335,6 +335,32 @@ export class PlanService {
 
 		await this.planStore.setActive(planId, true);
 		planLogger('update', planId).info('Plan resumed.');
+	}
+
+	/**
+	 * Checks the integrity of a backup plan's repository.
+	 * This can be a long-running operation, so it's designed to be called asynchronously and returns progress updates via events.
+	 */
+
+	async checkIntegrity(planId: string): Promise<{ success: boolean; result: Record<string, any> }> {
+		try {
+			const plan = await this.planStore.getById(planId);
+			if (!plan) {
+				throw new NotFoundError('Plan not found');
+			}
+			try {
+				const planID = plan.id;
+				const strategy = this.getStrategy(plan);
+				const result = await strategy.checkIntegrity(planID);
+				return result;
+			} catch (error: any) {
+				console.log('[checkIntegrity] error :', error);
+				throw new AppError(500, error?.message || 'Internal Server Error');
+			}
+		} catch (error: any) {
+			console.log('[checkIntegrity] error :', error);
+			throw new AppError(500, error?.message || 'Internal Server Error');
+		}
 	}
 
 	/**
