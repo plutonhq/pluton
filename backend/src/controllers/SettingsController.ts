@@ -157,4 +157,54 @@ export class SettingsController {
 			return;
 		}
 	}
+
+	async setupTwoFactorAuth(req: Request, res: Response): Promise<void> {
+		try {
+			// This service method generates the QR code and the temporary secret
+			const { qrCodeDataUrl, setupKey, tempSecret } =
+				await this.settingsService.setupTwoFactorAuth();
+
+			// SECURELY store the secret on the server in the user's session.
+			req.session.totpSecret = tempSecret;
+
+			// Send only the visual parts to the client.
+			res.status(200).json({ success: true, result: { qrCodeDataUrl, setupKey } });
+		} catch (error: any) {
+			res.status(error.statusCode || 500).json({ success: false, error: error.message });
+		}
+	}
+
+	async finalizeTwoFactorSetup(req: Request, res: Response): Promise<void> {
+		const { code } = req.body;
+		const settingsId = parseInt(req.params.id, 10);
+
+		// 1. Retrieve the secret from the server-side session.
+		const tempSecret = req.session.totpSecret;
+
+		if (!tempSecret) {
+			res.status(400).json({
+				success: false,
+				error: 'Your session has expired. Please start the setup process again.',
+			});
+			return;
+		}
+
+		try {
+			// The service method validates the code against the temporary secret
+			const { recoveryCodes } = await this.settingsService.finalizeTwoFactorSetup(
+				tempSecret,
+				code,
+				settingsId
+			);
+
+			// 2. Clean up the temporary secret from the session.
+			delete req.session.totpSecret; // or req.session.destroy();
+
+			// 3. Send back the one-time recovery codes.
+			res.status(200).json({ success: true, result: { recoveryCodes } });
+		} catch (error: any) {
+			// If the code was invalid, the service will throw an error.
+			res.status(error.statusCode || 500).json({ success: false, error: error.message });
+		}
+	}
 }

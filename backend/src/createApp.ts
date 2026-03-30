@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import express, { type Express } from 'express';
 import { IncomingMessage, ServerResponse } from 'http';
 import cors from 'cors';
+import session from 'express-session';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { db } from './db';
@@ -116,22 +117,34 @@ export async function createApp(): Promise<{ app: Express }> {
 	const deviceController = new DeviceController(deviceService);
 	const storageController = new StorageController(storageService);
 	const settingsController = new SettingsController(settingsService);
-	const userController = new UserController();
+	const userController = new UserController(settingsService);
 	const setupController = new SetupController();
 
-	console.log('process.env.APP_URL :', process.env.APP_URL);
-	console.log(' configService.config.APP_URL:', configService.config.APP_URL);
 	// Express App
 	const app = express();
 	app.use(
 		cors({
 			origin: [
 				process.env.APP_URL as string, // Vite core frontend dev server
-				configService.config.APP_URL || 'http://mypluton.com', // Production domain
+				configService.config.APP_URL, // Production domain
 			],
 			credentials: true,
 			methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 			exposedHeaders: ['X-App-Version', 'X-Server-OS', 'X-Install-Type', 'X-Setup-Pending'],
+		})
+	);
+
+	// Session Middleware for 2FA Setup Process
+	app.use(
+		session({
+			secret: configService.config.SECRET,
+			resave: false,
+			saveUninitialized: false,
+			cookie: {
+				secure: configService.config.NODE_ENV === 'production',
+				httpOnly: true,
+				maxAge: 1000 * 60 * 15, // 15 minutes
+			},
 		})
 	);
 	app.use(versionMiddleware);

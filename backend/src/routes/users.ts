@@ -11,6 +11,7 @@ export function createUserRouter(
 	router.post('/login', ...loginMiddlewares, controller.loginUser.bind(controller));
 	router.get('/validate', authM, controller.validateUser.bind(controller));
 	router.post('/logout', authM, controller.logoutUser.bind(controller));
+	router.post('/verify-otp', ...loginMiddlewares, controller.verifyTotp.bind(controller));
 
 	return router;
 }

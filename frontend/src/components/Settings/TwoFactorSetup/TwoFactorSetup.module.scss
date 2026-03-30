@@ -1,0 +1,62 @@
+.setupContainer {
+   .errorMsg {
+      background-color: var(--error-bg-color);
+      color: var(--error-text-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+   }
+   .instructions {
+      ol {
+         margin: 0;
+         padding: 12px 20px;
+         padding-top: 0;
+      }
+   }
+   .qrSection {
+      .qrCode {
+         background-color: var(--background-color);
+         padding: 12px;
+         text-align: center;
+         border-radius: 6px 6px 0 0;
+      }
+      .setupKey {
+         padding: 6px;
+         margin-bottom: 12px;
+         background: var(--primary-color-light);
+         text-align: center;
+         border-radius: 0 0 6px 6px;
+      }
+      .verifySection {
+         display: flex;
+         & > div:nth-child(1) {
+            width: calc(100% - 140px);
+         }
+         & > button {
+            margin-left: 12px;
+         }
+      }
+   }
+}
+
+.successMessage {
+   .successMsg {
+      background-color: var(--success-bg-color);
+      color: var(--success-text-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+   }
+   strong {
+      font-weight: 600;
+   }
+   code {
+      background-color: var(--line-color);
+      width: 100%;
+      display: block;
+      padding: 12px;
+      box-sizing: border-box;
+      border-radius: 6px;
+      white-space: pre;
+      font-size: 14px;
+   }
+}

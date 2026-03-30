@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_URL } from '../utils/constants';
+import { useNavigate } from 'react-router';
 
 // ============== Settings API ==============
 
@@ -209,5 +210,94 @@ export async function completeSetup(credentials: SetupCredentials): Promise<{ su
 export function useCompleteSetup() {
    return useMutation({
       mutationFn: completeSetup,
+   });
+}
+
+// Two-Factor Authentication (2FA) Setup and Verification
+
+export async function setupTwoFactorAuth(id: number) {
+   const headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/settings/${id}/2fa/setup`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+   });
+   // Check if response is ok
+   if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+   }
+   const data = await res.json();
+   return data;
+}
+
+export function useSetupTwoFactorAuth() {
+   return useMutation({
+      mutationFn: setupTwoFactorAuth,
+      onSuccess: (res) => {
+         console.log('# 2FA setup data fetched successfully! :', res);
+      },
+      onError: (res) => {
+         console.log('# 2FA setup data fetch failed! :', res);
+      },
+   });
+}
+export async function verifyTwoFactorAuth({ code, id }: { code: string; id: number }) {
+   const headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/settings/${id}/2fa/finalize`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({ code }),
+   });
+   // Check if response is ok
+   if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+   }
+   const data = await res.json();
+   return data;
+}
+
+export function useVerifyTwoFactorAuth() {
+   return useMutation({
+      mutationFn: verifyTwoFactorAuth,
+      onSuccess: (res) => {
+         console.log('# 2FA verification successful! :', res);
+      },
+      onError: (res) => {
+         console.log('# 2FA verification failed! :', res);
+      },
+   });
+}
+
+export async function verifyTwoFactorOTP({ code }: { code: string }) {
+   const headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/user/verify-otp`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({ code }),
+   });
+   // Check if response is ok
+   if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+   }
+   const data = await res.json();
+   return data;
+}
+
+export function useVerifyTwoFactorOTP() {
+   const navigate = useNavigate();
+   return useMutation({
+      mutationFn: verifyTwoFactorOTP,
+      onSuccess: (res) => {
+         console.log('# 2FA verification successful! :', res);
+         navigate('/');
+      },
+      onError: (res) => {
+         console.log('# 2FA verification failed! :', res);
+      },
    });
 }
