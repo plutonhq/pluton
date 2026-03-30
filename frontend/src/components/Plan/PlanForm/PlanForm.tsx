@@ -190,20 +190,20 @@ const PlanForm = ({
                               label: 'Incremental Backup',
                               description: 'Periodically create Incremental backup snapshots of source',
                            },
-                           {
-                              value: 'sync',
-                              icon: 'reload',
-                              label: 'Real-time Sync',
-                              description: 'Maintain identical source (with revisions)',
-                              disabled: true,
-                           },
-                           {
-                              value: 'rescue',
-                              icon: 'rescue',
-                              label: 'Linux Server Backup',
-                              description: 'Full Linux system backups with bootable ISO image',
-                              disabled: true,
-                           },
+                           // {
+                           //    value: 'sync',
+                           //    icon: 'reload',
+                           //    label: 'Real-time Sync',
+                           //    description: 'Maintain identical source (with revisions)',
+                           //    disabled: true,
+                           // },
+                           // {
+                           //    value: 'rescue',
+                           //    icon: 'rescue',
+                           //    label: 'Linux Server Backup',
+                           //    description: 'Full Linux system backups with bootable ISO image',
+                           //    disabled: true,
+                           // },
                         ]}
                      />
                   )}
