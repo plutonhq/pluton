@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.7.0](https://github.com/plutonhq/pluton/compare/pluton-v0.6.0...pluton-v0.7.0) (2026-03-31)
+
+
+### Features
+
+* adds the ability to check Backup Integrity ([165999b](https://github.com/plutonhq/pluton/commit/165999b1bd3f840ae91aa09c9e43e967148111d2))
+* adds Two Factor Authentication ([ef9aaf6](https://github.com/plutonhq/pluton/commit/ef9aaf6f643933d9778c0d3cdcc82c7627077f88))
+* adds version update notice in footer ([6c0b5ad](https://github.com/plutonhq/pluton/commit/6c0b5ad6cbead2dc40186f35760da4bfb1d521e0))
+
+
+### Bug Fixes
+
+* library build issue ([216db73](https://github.com/plutonhq/pluton/commit/216db73188baaa9de43275407eea808812d9a2b7))
+* remove confusing non-existent sync and rescue feature from the ui ([a1115e6](https://github.com/plutonhq/pluton/commit/a1115e622259265f88a269383f4746d4a051fe6c))
+
 ## [0.6.0](https://github.com/plutonhq/pluton/compare/pluton-v0.5.4...pluton-v0.6.0) (2026-03-15)
 
 
