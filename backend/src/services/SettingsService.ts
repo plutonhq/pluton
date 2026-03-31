@@ -247,4 +247,19 @@ export class SettingsService {
 		// 4. Return the plain-text recovery codes to be shown to the user ONCE
 		return { recoveryCodes };
 	}
+
+	async checkLatestVersion() {
+		try {
+			const response = await fetch('https://api.github.com/repos/plutonhq/pluton/releases/latest');
+			if (!response.ok) {
+				throw new AppError(500, 'Failed to fetch latest version info');
+			}
+			const data = await response.json();
+			const latestVersion = data.tag_name ? data.tag_name.replace(/^pluton-v/, '') : 'Unknown';
+
+			return latestVersion;
+		} catch (error: any) {
+			throw new AppError(500, error?.message || 'Failed to check latest version');
+		}
+	}
 }

@@ -207,4 +207,13 @@ export class SettingsController {
 			res.status(error.statusCode || 500).json({ success: false, error: error.message });
 		}
 	}
+
+	async checkLatestVersion(req: Request, res: Response): Promise<void> {
+		try {
+			const latestVersion = await this.settingsService.checkLatestVersion();
+			res.status(200).json({ success: true, result: { latestVersion } });
+		} catch (error: any) {
+			res.status(error.statusCode || 500).json({ success: false, error: error.message });
+		}
+	}
 }

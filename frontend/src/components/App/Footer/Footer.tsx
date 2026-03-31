@@ -1,16 +1,31 @@
+import { getUpdateDocLink } from '../../../utils';
+import Icon from '../../common/Icon/Icon';
 import classes from './Footer.module.scss';
 
 interface FooterProps {
    version: string;
+   latestVersion?: string;
    hideUpgradeLink?: boolean;
    changeLogUrl?: string;
 }
 
-const Footer = ({ version = '1.0.0', hideUpgradeLink = false, changeLogUrl }: FooterProps) => {
+const Footer = ({ version = '1.0.0', latestVersion, hideUpgradeLink = false, changeLogUrl }: FooterProps) => {
+   const updateDocLink = getUpdateDocLink(hideUpgradeLink);
    return (
       <>
          <div className={classes.footer}>
-            <span>Pluton v{version}</span> <i className="pipe">|</i>
+            <span>
+               Pluton v{version}{' '}
+               {latestVersion && (
+                  <span className={classes.newVersion} title={`Latest version: ${latestVersion}`}>
+                     <Icon type="arrow-up" size={12} />{' '}
+                     <a href={updateDocLink} target="_blank">
+                        (Update Available)
+                     </a>
+                  </span>
+               )}
+            </span>{' '}
+            <i className="pipe">|</i>
             {!hideUpgradeLink && (
                <>
                   <a href="https://usepluton.com/pluton-pro/" target="_blank">

@@ -12,6 +12,8 @@ import DeviceSingle from './routes/DeviceSingle/DeviceSingle';
 import Footer from './components/App/Footer/Footer';
 import NotFoundRoute from './routes/NotFoundRoute/NotFoundRoute';
 import Icon from './components/common/Icon/Icon';
+import { useCheckLatestVersion } from './services';
+import { compareVersions } from './utils';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
    const { data: authData, isLoading: authLoading } = useAuth();
@@ -33,6 +35,9 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function ProtectedLayout() {
    const { data: authData, isError: authError, isLoading: authLoading } = useAuth();
+   const { data } = useCheckLatestVersion();
+   const version = (window as any).plutonVersion || 'unknown';
+   const hasNewVersion = data?.result?.latestVersion && version !== 'dev' && compareVersions(version, data.result.latestVersion);
 
    if (authLoading) {
       return (
@@ -59,7 +64,7 @@ function ProtectedLayout() {
    return (
       <>
          <App />
-         <Footer version={authData?.appVersion || ''} />
+         <Footer version={authData?.appVersion || ''} latestVersion={hasNewVersion ? data?.result?.latestVersion : undefined} />
       </>
    );
 }

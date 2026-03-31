@@ -1,6 +1,7 @@
 import {
 	isBinaryMode,
 	isDockerMode,
+	isServerMode,
 	getInstallType,
 	isLinuxDesktop,
 	isKeyringPlatform,
@@ -66,6 +67,43 @@ describe('installHelpers', () => {
 		});
 	});
 
+	describe('isServerMode', () => {
+		beforeEach(() => {
+			delete process.env.PLUTON_LINUX_DESKTOP;
+			delete process.env.DISPLAY;
+			delete process.env.WAYLAND_DISPLAY;
+			delete process.env.XDG_CURRENT_DESKTOP;
+			delete process.env.DESKTOP_SESSION;
+			delete process.env.GNOME_DESKTOP_SESSION_ID;
+			delete process.env.KDE_FULL_SESSION;
+		});
+
+		it('should return true when binary mode on headless linux', () => {
+			Object.defineProperty(process, 'platform', { value: 'linux' });
+			(process as any).pkg = { entrypoint: '/snapshot/app/index.js' };
+			expect(isServerMode()).toBe(true);
+		});
+
+		it('should return false when binary mode on linux desktop', () => {
+			Object.defineProperty(process, 'platform', { value: 'linux' });
+			(process as any).pkg = { entrypoint: '/snapshot/app/index.js' };
+			process.env.DISPLAY = ':0';
+			expect(isServerMode()).toBe(false);
+		});
+
+		it('should return false when binary mode on non-linux platform', () => {
+			Object.defineProperty(process, 'platform', { value: 'win32' });
+			(process as any).pkg = { entrypoint: '/snapshot/app/index.js' };
+			expect(isServerMode()).toBe(false);
+		});
+
+		it('should return false when not in binary mode', () => {
+			Object.defineProperty(process, 'platform', { value: 'linux' });
+			delete (process as any).pkg;
+			expect(isServerMode()).toBe(false);
+		});
+	});
+
 	describe('getInstallType', () => {
 		it('should return "docker" when in docker mode', () => {
 			process.env.IS_DOCKER = 'true';
@@ -73,10 +111,33 @@ describe('installHelpers', () => {
 			expect(getInstallType()).toBe('docker');
 		});
 
-		it('should return "binary" when in binary mode but not docker', () => {
+		it('should return "binary" when in binary mode on non-linux platform', () => {
 			delete process.env.IS_DOCKER;
+			Object.defineProperty(process, 'platform', { value: 'win32' });
 			(process as any).pkg = { entrypoint: '/snapshot/app/index.js' };
 			expect(getInstallType()).toBe('binary');
+		});
+
+		it('should return "binary" when in binary mode on linux desktop', () => {
+			delete process.env.IS_DOCKER;
+			Object.defineProperty(process, 'platform', { value: 'linux' });
+			process.env.DISPLAY = ':0';
+			(process as any).pkg = { entrypoint: '/snapshot/app/index.js' };
+			expect(getInstallType()).toBe('binary');
+		});
+
+		it('should return "server" when in binary mode on headless linux', () => {
+			delete process.env.IS_DOCKER;
+			delete process.env.DISPLAY;
+			delete process.env.WAYLAND_DISPLAY;
+			delete process.env.XDG_CURRENT_DESKTOP;
+			delete process.env.DESKTOP_SESSION;
+			delete process.env.GNOME_DESKTOP_SESSION_ID;
+			delete process.env.KDE_FULL_SESSION;
+			delete process.env.PLUTON_LINUX_DESKTOP;
+			Object.defineProperty(process, 'platform', { value: 'linux' });
+			(process as any).pkg = { entrypoint: '/snapshot/app/index.js' };
+			expect(getInstallType()).toBe('server');
 		});
 
 		it('should return "dev" when neither docker nor binary', () => {

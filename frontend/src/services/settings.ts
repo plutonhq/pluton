@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { experimental_createQueryPersister } from '@tanstack/react-query-persist-client';
 import { API_URL } from '../utils/constants';
 import { useNavigate } from 'react-router';
 
@@ -299,5 +300,40 @@ export function useVerifyTwoFactorOTP() {
       onError: (res) => {
          console.log('# 2FA verification failed! :', res);
       },
+   });
+}
+
+// check latest version
+export async function checkLatestVersion() {
+   const res = await fetch(`${API_URL}/settings/version/latest`, {
+      method: 'GET',
+      credentials: 'include',
+   });
+   if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+   }
+   const data = await res.json();
+   return data;
+}
+
+const SIX_HOURS = 1000 * 60 * 60 * 6;
+
+const { persisterFn: latestVersionPersister } = experimental_createQueryPersister({
+   storage: window.localStorage,
+   maxAge: SIX_HOURS,
+});
+
+export function useCheckLatestVersion() {
+   return useQuery({
+      queryKey: ['latestVersion'],
+      queryFn: () => checkLatestVersion(),
+      persister: latestVersionPersister,
+      retry: false,
+      staleTime: SIX_HOURS,
+      gcTime: SIX_HOURS,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
    });
 }

@@ -5,7 +5,7 @@
  * and environment configuration for the Pluton application.
  */
 
-export type InstallType = 'docker' | 'binary' | 'dev';
+export type InstallType = 'docker' | 'binary' | 'server' | 'dev';
 
 /**
  * Check if running as a pkg-packaged binary
@@ -22,15 +22,22 @@ export function isDockerMode(): boolean {
 }
 
 /**
+ * Check if running as a binary on a headless Linux server (no desktop environment)
+ */
+export function isServerMode(): boolean {
+	return isBinaryMode() && process.platform === 'linux' && !isLinuxDesktop();
+}
+
+/**
  * Determines the installation type of the application
- * @returns 'docker' | 'binary' | 'dev'
+ * @returns 'docker' | 'binary' | 'server' | 'dev'
  */
 export function getInstallType(): InstallType {
 	if (isDockerMode()) {
 		return 'docker';
 	}
 	if (isBinaryMode()) {
-		return 'binary';
+		return isServerMode() ? 'server' : 'binary';
 	}
 	return 'dev';
 }

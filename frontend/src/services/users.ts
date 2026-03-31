@@ -7,7 +7,7 @@ interface LoginCredentials {
    password: string;
 }
 
-export type InstallType = 'docker' | 'binary' | 'dev';
+export type InstallType = 'docker' | 'binary' | 'server' | 'dev';
 
 //VALIDATE USER
 export async function validateAuth() {
