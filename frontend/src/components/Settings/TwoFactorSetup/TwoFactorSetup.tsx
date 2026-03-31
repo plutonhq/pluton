@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Modal, Icon, Input, Button } from '@plutonhq/core-frontend/components';
-import classes from './TwoFactorSetup.module.scss';
 import { useSetupTwoFactorAuth, useVerifyTwoFactorAuth } from '../../../services';
+import Icon from '../../common/Icon/Icon';
+import Modal from '../../common/Modal/Modal';
+import Input from '../../common/form/Input/Input';
+import Button from '../../common/Button/Button';
+import classes from './TwoFactorSetup.module.scss';
 
 interface TwoFactorSetupProps {
    id: number;

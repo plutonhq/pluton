@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ActionModal, Icon } from '@plutonhq/core-frontend/components';
 import classes from './PlanIntegrity.module.scss';
-import { PlanVerifiedResult, Plan, PlanReplicationStorage } from '@plutonhq/core-frontend/@types/plans';
-import { formatDateTime, timeAgo } from '@plutonhq/core-frontend/utils';
 import { useCheckPlanIntegrity } from '../../../services';
+import { Plan, PlanReplicationStorage, PlanVerifiedResult } from '../../../@types';
+import { formatDateTime, timeAgo } from '../../../utils';
+import Icon from '../../common/Icon/Icon';
+import ActionModal from '../../common/ActionModal/ActionModal';
 
 interface PlanIntegrityProps {
    planId: string;
