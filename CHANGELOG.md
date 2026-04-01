@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.1](https://github.com/plutonhq/pluton/compare/pluton-v0.7.0...pluton-v0.7.1) (2026-04-01)
+
+
+### Bug Fixes
+
+* resolves blank screens issue when a docker instance is accessed with non-https url ([a395f2d](https://github.com/plutonhq/pluton/commit/a395f2d29e4e18fc4bdab27c640771cc54a1971f))
+* various storage integration issues ([044a0d0](https://github.com/plutonhq/pluton/commit/044a0d0074967f515fc628af3b875acd42a1c1e6))
+
+
+### Dependencies
+
+* rclone version bump ([f947d6e](https://github.com/plutonhq/pluton/commit/f947d6e529c2986c3ab78049f86d9cca513a95ac))
+
 ## [0.7.0](https://github.com/plutonhq/pluton/compare/pluton-v0.6.0...pluton-v0.7.0) (2026-03-31)
 
 
