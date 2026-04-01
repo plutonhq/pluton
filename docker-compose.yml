@@ -27,6 +27,10 @@ services:
       # - /var/lib/docker/volumes/wp-data/_data:/mnt/wordpress:ro #linux
       # - C:/ProgramData/docker/volumes/wp-data/_data:/mnt/wordpress:ro  # Windows
 
+      # Example: Make the whole Docker volume data Accessible to Pluton
+      # - /var/lib/docker/volumes:/mnt/docker-volumes:ro #linux
+      # - C:/ProgramData/docker/volumes:/mnt/docker-volumes:ro  # Windows
+
     environment:
       # ===== REQUIRED: Security & Authentication =====
       # Generate secure random strings (min 12 characters for the first three)
