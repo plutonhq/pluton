@@ -4,6 +4,7 @@ const webdavSettings = [
 		value: 'url',
 		fieldType: 'string',
 		required: true,
+		authFieldType: 'password',
 		default: '',
 		description: 'URL of http host to connect to. E.g. https://example.com.',
 		command: '--webdav-url',
@@ -40,7 +41,7 @@ const webdavSettings = [
 	{
 		label: 'Password',
 		value: 'pass',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: 'Password.',
@@ -49,7 +50,7 @@ const webdavSettings = [
 	{
 		label: 'Bearer Token',
 		value: 'bearer_token',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: 'Bearer token instead of user/pass (e.g. a Macaroon).',
