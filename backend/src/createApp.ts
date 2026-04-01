@@ -141,7 +141,7 @@ export async function createApp(): Promise<{ app: Express }> {
 			resave: false,
 			saveUninitialized: false,
 			cookie: {
-				secure: configService.config.NODE_ENV === 'production',
+				secure: configService.config.APP_URL?.startsWith('https'),
 				httpOnly: true,
 				maxAge: 1000 * 60 * 15, // 15 minutes
 			},
@@ -187,7 +187,6 @@ export async function createApp(): Promise<{ app: Express }> {
 					frameAncestors: ["'none'"],
 					baseUri: ["'self'"],
 					formAction: ["'self'"],
-					upgradeInsecureRequests: isDev ? null : [],
 				},
 			},
 			hsts: false, // Don't force HTTPS — users may run over HTTP on LAN
