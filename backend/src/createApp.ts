@@ -187,6 +187,7 @@ export async function createApp(): Promise<{ app: Express }> {
 					frameAncestors: ["'none'"],
 					baseUri: ["'self'"],
 					formAction: ["'self'"],
+					upgradeInsecureRequests: null,
 				},
 			},
 			hsts: false, // Don't force HTTPS — users may run over HTTP on LAN
