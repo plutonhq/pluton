@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.2](https://github.com/plutonhq/pluton/compare/pluton-v0.7.1...pluton-v0.7.2) (2026-04-01)
+
+
+### Bug Fixes
+
+* resolves incorrect password field types in Storage Auth settings ([d2ac938](https://github.com/plutonhq/pluton/commit/d2ac93802f873adc203dd63e72ece373ffd2b34d))
+* resolves missing WebDav Server URL field ([1e231ec](https://github.com/plutonhq/pluton/commit/1e231ec713bcbeb2bcdb8c7242540dc46f990fe1))
+
 ## [0.7.1](https://github.com/plutonhq/pluton/compare/pluton-v0.7.0...pluton-v0.7.1) (2026-04-01)
 
 
