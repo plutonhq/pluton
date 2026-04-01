@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.3](https://github.com/plutonhq/pluton/compare/pluton-v0.7.2...pluton-v0.7.3) (2026-04-01)
+
+
+### Bug Fixes
+
+* resolves blank screens issue when a docker instance is accessed with non-https url ([063a898](https://github.com/plutonhq/pluton/commit/063a8987e408be8596b55c08ed8071d46bc555fe))
+
 ## [0.7.2](https://github.com/plutonhq/pluton/compare/pluton-v0.7.1...pluton-v0.7.2) (2026-04-01)
 
 
