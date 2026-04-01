@@ -57,17 +57,6 @@ const jottacloudSettings = [
 		command: '--jottacloud-token-url',
 	},
 	{
-		label: 'Client Credentials',
-		value: 'client_credentials',
-		fieldType: 'bool',
-		authFieldType: 'client',
-		required: false,
-		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
-		command: '--jottacloud-client-credentials',
-	},
-	{
 		label: 'MD5 Memory Limit',
 		value: 'md5_memory_limit',
 		fieldType: 'sizesuffix',

@@ -42,8 +42,7 @@ const onedriveSettings = [
 		authFieldType: 'client',
 		required: false,
 		default: '',
-		description:
-			"ID of the service principal's tenant (also called Directory ID).",
+		description: "ID of the service principal's tenant (also called Directory ID).",
 		command: '--onedrive-tenant',
 	},
 	{
@@ -73,15 +72,6 @@ const onedriveSettings = [
 		default: '',
 		description: 'Token server url. Leave blank to use the provider defaults.',
 		command: '--onedrive-token-url',
-	},
-	{
-		label: 'Client Credentials',
-		value: 'client_credentials',
-		fieldType: 'bool',
-		required: false,
-		default: false,
-		description: 'Use client credentials OAuth flow instead of interactive login.',
-		command: '--onedrive-client-credentials',
 	},
 	{
 		label: 'Chunk Size',
@@ -277,8 +267,7 @@ const onedriveSettings = [
 		fieldType: 'bits',
 		required: false,
 		default: 'off',
-		description:
-			'Control whether file permissions should be read or written in metadata.',
+		description: 'Control whether file permissions should be read or written in metadata.',
 		command: '--onedrive-metadata-permissions',
 	},
 	{

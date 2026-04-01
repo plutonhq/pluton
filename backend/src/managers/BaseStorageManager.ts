@@ -28,7 +28,12 @@ export class BaseStorageManager {
 		}
 
 		const args = ['config', 'create', name, type];
-		args.push(...provider.setup(credentials, authType));
+		const setupArgs = provider.setup(credentials, authType);
+		if (setupArgs === false) {
+			throw new Error(`Missing Required credentials.`);
+		}
+
+		args.push(...setupArgs);
 
 		// Add any additional settings
 		if (settings) {

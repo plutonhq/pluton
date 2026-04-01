@@ -108,6 +108,9 @@ const StorageAuthSettings = ({
                            <p>
                               <strong>Step 4:</strong> Paste the copied content in the <strong>OAuth Access Token</strong> field above.
                            </p>
+                           <p>
+                              <strong>Step 5:</strong> If you no longer need Rclone, you can safely remove it from your system.
+                           </p>
                         </>
                      )}
                   </div>

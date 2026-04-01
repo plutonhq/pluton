@@ -219,17 +219,6 @@ const gcsSettings = [
 		command: '--gcs-token-url',
 	},
 	{
-		label: 'Client Credentials',
-		value: 'client_credentials',
-		fieldType: 'bool',
-		authFieldType: 'client',
-		required: false,
-		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
-		command: '--gcs-client-credentials',
-	},
-	{
 		label: 'Access Token',
 		value: 'access_token',
 		fieldType: 'string',
@@ -265,8 +254,7 @@ const gcsSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'If set, gzip-encoded objects will be decompressed on download.',
+		description: 'If set, gzip-encoded objects will be decompressed on download.',
 		command: '--gcs-decompress',
 	},
 	{
@@ -284,8 +272,7 @@ const gcsSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,crlf,invalidutf8,dot',
-		description:
-			'The encoding for the backend.',
+		description: 'The encoding for the backend.',
 		command: '--gcs-encoding',
 	},
 	{

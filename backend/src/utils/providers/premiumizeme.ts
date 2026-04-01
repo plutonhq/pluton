@@ -6,7 +6,7 @@ const premiumizemeSettings = [
 		authFieldType: 'client',
 		required: true,
 		default: '',
-		description: 'OAuth Client Id. Leave blank normally.',
+		description: 'OAuth Client Id',
 		command: '--premiumizeme-client-id',
 	},
 	{
@@ -16,7 +16,7 @@ const premiumizemeSettings = [
 		authFieldType: 'client',
 		required: true,
 		default: '',
-		description: 'OAuth Client Secret. Leave blank normally.',
+		description: 'OAuth Client Secret',
 		command: '--premiumizeme-client-secret',
 	},
 	{
@@ -26,7 +26,7 @@ const premiumizemeSettings = [
 		authFieldType: 'client',
 		required: true,
 		default: '',
-		description: 'API Key. This is not normally used - use oauth instead.',
+		description: 'API Key for Premiumize.me. Generate here: https://www.premiumize.me/apikeys',
 		command: '--premiumizeme-api-key',
 	},
 	{
@@ -56,17 +56,6 @@ const premiumizemeSettings = [
 		default: '',
 		description: 'Token server url. Leave blank to use the provider defaults.',
 		command: '--premiumizeme-token-url',
-	},
-	{
-		label: 'Client Credentials',
-		value: 'client_credentials',
-		fieldType: 'bool',
-		authFieldType: 'client',
-		required: false,
-		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
-		command: '--premiumizeme-client-credentials',
 	},
 	{
 		label: 'Encoding',

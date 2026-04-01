@@ -48,17 +48,6 @@ const yandexSettings = [
 		command: '--yandex-token-url',
 	},
 	{
-		label: 'Client Credentials',
-		value: 'client_credentials',
-		fieldType: 'bool',
-		authFieldType: 'client',
-		required: false,
-		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
-		command: '--yandex-client-credentials',
-	},
-	{
 		label: 'Hard Delete',
 		value: 'hard_delete',
 		fieldType: 'bool',

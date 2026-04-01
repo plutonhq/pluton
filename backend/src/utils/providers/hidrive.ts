@@ -25,8 +25,7 @@ const hidriveSettings = [
 		fieldType: 'select',
 		required: false,
 		default: 'rw',
-		description:
-			'Access permissions to use when requesting access from HiDrive.',
+		description: 'Access permissions to use when requesting access from HiDrive.',
 		command: '--hidrive-scope-access',
 		options: [
 			{ label: 'Read and Write', value: 'rw' },
@@ -60,17 +59,6 @@ const hidriveSettings = [
 		default: '',
 		description: 'Token server url. Leave blank to use the provider defaults.',
 		command: '--hidrive-token-url',
-	},
-	{
-		label: 'Client Credentials',
-		value: 'client_credentials',
-		fieldType: 'bool',
-		authFieldType: 'client',
-		required: false,
-		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
-		command: '--hidrive-client-credentials',
 	},
 	{
 		label: 'Role Scope',

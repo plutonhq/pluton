@@ -85,16 +85,6 @@ const googleDriveSettings = [
 		command: '--drive-token-url',
 	},
 	{
-		label: 'Client Credentials',
-		value: 'client_credentials',
-		fieldType: 'bool',
-		authFieldType: 'client',
-		required: false,
-		default: false,
-		description: 'Use client credentials OAuth flow instead of interactive login.',
-		command: '--drive-client-credentials',
-	},
-	{
 		label: 'Root Folder ID',
 		value: 'root_folder_id',
 		fieldType: 'string',
@@ -147,8 +137,7 @@ const googleDriveSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'Copy the actual file contents of shortcuts instead of the shortcut itself.',
+		description: 'Copy the actual file contents of shortcuts instead of the shortcut itself.',
 		command: '--drive-copy-shortcut-content',
 	},
 	{
@@ -306,8 +295,7 @@ const googleDriveSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'Allow downloading files that Google has flagged as potential malware or spam.',
+		description: 'Allow downloading files that Google has flagged as potential malware or spam.',
 		command: '--drive-acknowledge-abuse',
 	},
 	{
@@ -403,8 +391,7 @@ const googleDriveSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'Skip shortcut files instead of following them to the original file.',
+		description: 'Skip shortcut files instead of following them to the original file.',
 		command: '--drive-skip-shortcuts',
 	},
 	{
@@ -413,8 +400,7 @@ const googleDriveSettings = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'Skip shortcut files that point to deleted or inaccessible files.',
+		description: 'Skip shortcut files that point to deleted or inaccessible files.',
 		command: '--drive-skip-dangling-shortcuts',
 	},
 	{
@@ -452,8 +438,7 @@ const googleDriveSettings = [
 		fieldType: 'bits',
 		required: false,
 		default: 'off',
-		description:
-			'Control whether file permissions should be read or written in metadata.',
+		description: 'Control whether file permissions should be read or written in metadata.',
 		command: '--drive-metadata-permissions',
 	},
 	{

@@ -25,7 +25,6 @@ export function runRcloneCommand(args: string[], env?: Record<string, string>): 
 		const rcProcess = spawn(rcloneBinary, args, { env: envVars });
 		let output = '';
 		let errorOutput = '';
-		// console.log('runRcloneCommand :', ['rclone', ...args].join(' '), envVars);
 
 		rcProcess.stdout?.on('data', (data: Buffer) => {
 			// console.log('[rclone] Data :', data.toString());
@@ -38,7 +37,6 @@ export function runRcloneCommand(args: string[], env?: Record<string, string>): 
 		});
 
 		rcProcess.on('close', (code: number) => {
-			console.log('[rclone] Close Fired!! Code :', code);
 			if (code === 0) {
 				const outputRes = output.trim();
 				const errorOutputRes = errorOutput.trim();

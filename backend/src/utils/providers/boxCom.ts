@@ -78,17 +78,6 @@ const boxSettings = [
 		command: '--box-token-url',
 	},
 	{
-		label: 'Client Credentials',
-		value: 'client_credentials',
-		authFieldType: 'client',
-		fieldType: 'bool',
-		required: false,
-		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
-		command: '--box-client-credentials',
-	},
-	{
 		label: 'Root Folder ID',
 		value: 'root_folder_id',
 		fieldType: 'string',
@@ -149,8 +138,7 @@ const boxSettings = [
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,backslash,del,ctl,rightspace,invalidutf8,dot',
-		description:
-			'The encoding for the backend.',
+		description: 'The encoding for the backend.',
 		command: '--box-encoding',
 	},
 	{

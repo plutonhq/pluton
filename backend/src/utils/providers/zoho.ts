@@ -67,17 +67,6 @@ const zohoSettings = [
 		command: '--zoho-token-url',
 	},
 	{
-		label: 'Client Credentials',
-		value: 'client_credentials',
-		fieldType: 'bool',
-		authFieldType: 'client',
-		required: false,
-		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
-		command: '--zoho-client-credentials',
-	},
-	{
 		label: 'Upload Cutoff',
 		value: 'upload_cutoff',
 		fieldType: 'sizesuffix',

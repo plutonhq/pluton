@@ -48,16 +48,6 @@ const dropboxSettings = [
 		command: '--dropbox-token-url',
 	},
 	{
-		label: 'Client Credentials',
-		value: 'client_credentials',
-		fieldType: 'bool',
-		authFieldType: 'client',
-		required: false,
-		default: false,
-		description: 'Use client credentials OAuth flow instead of interactive login.',
-		command: '--dropbox-client-credentials',
-	},
-	{
 		label: 'Chunk Size',
 		value: 'chunk_size',
 		fieldType: 'sizesuffix',

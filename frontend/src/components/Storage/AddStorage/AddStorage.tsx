@@ -221,6 +221,7 @@ const AddStorage = ({ close }: AddStorageProps) => {
                      fieldValue={storageType}
                      full={true}
                      onUpdate={(val: string) => {
+                        setCurrentAuthType('');
                         setStorageCredentials({});
                         setStorageSettings({});
                         setStorageType(val);

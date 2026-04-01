@@ -3,7 +3,7 @@ const mailruSettings = [
 		label: 'User Name',
 		value: 'user',
 		fieldType: 'string',
-		authFieldType: 'client',
+		authFieldType: 'password',
 		required: true,
 		default: '',
 		description: 'User name (usually email).',
@@ -13,7 +13,7 @@ const mailruSettings = [
 		label: 'App Password',
 		value: 'pass',
 		fieldType: 'string',
-		authFieldType: 'client',
+		authFieldType: 'password',
 		required: true,
 		default: '',
 		description:

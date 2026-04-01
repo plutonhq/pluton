@@ -48,24 +48,12 @@ const pcloudSettings = [
 		command: '--pcloud-token-url',
 	},
 	{
-		label: 'Use client credentials OAuth',
-		value: 'client_credentials',
-		fieldType: 'bool',
-		authFieldType: 'client',
-		required: false,
-		default: false,
-		description:
-			'Use client credentials OAuth flow. This will use the OAUTH2 client Credentials Flow as described in RFC 6749.',
-		command: '--pcloud-client-credentials',
-	},
-	{
 		label: 'Encoding',
 		value: 'encoding',
 		fieldType: 'encoding',
 		required: false,
 		default: 'slash,backslash,del,ctl,invalidutf8,dot',
-		description:
-			'The encoding for the backend.',
+		description: 'The encoding for the backend.',
 		command: '--pcloud-encoding',
 	},
 	{
@@ -98,8 +86,7 @@ const pcloudSettings = [
 		authFieldType: 'password',
 		required: false,
 		default: '',
-		description:
-			'Your pcloud username. Only required if you want to use the cleanup command.',
+		description: 'Your pcloud username. Only required if you want to use the cleanup command.',
 		command: '--pcloud-username',
 	},
 	{
