@@ -32,7 +32,7 @@ const sftpSettings = [
 	{
 		label: 'SSH Password',
 		command: '--sftp-pass',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: false,
 		value: 'pass',
@@ -62,7 +62,7 @@ const sftpSettings = [
 	{
 		label: 'Private Key Passphrase',
 		command: '--sftp-key-file-pass',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		value: 'key_file_pass',
 		default: '',

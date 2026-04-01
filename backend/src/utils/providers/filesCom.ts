@@ -13,7 +13,7 @@ const filesSettings = [
 	{
 		label: 'API Key',
 		value: 'api_key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',
@@ -33,7 +33,7 @@ const filesSettings = [
 	{
 		label: 'Password',
 		value: 'password',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: false,
 		default: '',

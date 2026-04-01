@@ -12,7 +12,7 @@ const filenSettings = [
 	{
 		label: 'Password',
 		value: 'password',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: true,
 		default: '',
@@ -22,7 +22,7 @@ const filenSettings = [
 	{
 		label: 'API Key',
 		value: 'api_key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: true,
 		default: '',

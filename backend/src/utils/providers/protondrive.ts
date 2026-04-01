@@ -12,7 +12,7 @@ const protondriveSettings = [
 	{
 		label: 'Password',
 		value: 'password',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: true,
 		default: '',
@@ -31,7 +31,7 @@ const protondriveSettings = [
 	{
 		label: 'Mailbox Password',
 		value: 'mailbox_password',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description:

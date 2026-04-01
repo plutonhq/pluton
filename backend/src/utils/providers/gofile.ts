@@ -2,7 +2,7 @@ const gofileSettings = [
 	{
 		label: 'API Access Token',
 		value: 'access_token',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

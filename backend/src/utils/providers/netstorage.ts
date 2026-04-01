@@ -23,7 +23,7 @@ const netstorageSettings = [
 	{
 		label: 'Account Secret',
 		value: 'secret',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

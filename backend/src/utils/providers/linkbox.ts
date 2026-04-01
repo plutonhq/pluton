@@ -3,7 +3,7 @@ const linkboxSettings = [
 		label: 'Token',
 		value: 'token',
 		command: '--linkbox-token',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

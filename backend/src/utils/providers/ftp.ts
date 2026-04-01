@@ -34,7 +34,7 @@ const ftpSettings: ProviderSetting[] = [
 	{
 		label: 'FTP Password',
 		command: '--ftp-pass',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: false,
 		value: 'pass',

@@ -13,7 +13,7 @@ const internetarchiveSettings = [
 	{
 		label: 'IAS3 Secret Key',
 		value: 'secret_access_key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

@@ -12,7 +12,7 @@ const mailruSettings = [
 	{
 		label: 'App Password',
 		value: 'pass',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: true,
 		default: '',
@@ -32,7 +32,7 @@ const mailruSettings = [
 	{
 		label: 'OAuth Client Secret',
 		value: 'client_secret',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: 'OAuth Client Secret. Leave blank normally.',
@@ -51,7 +51,7 @@ const mailruSettings = [
 	{
 		label: 'OAuth Access Token',
 		value: 'token',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		authFieldType: 'oauth',
 		default: '',

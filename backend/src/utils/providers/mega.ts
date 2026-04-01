@@ -12,7 +12,7 @@ const megaSettings = [
 	{
 		label: 'Password',
 		value: 'pass',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: true,
 		default: '',

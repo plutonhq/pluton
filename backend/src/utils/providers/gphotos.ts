@@ -13,7 +13,7 @@ const gphotosSettings = [
 		label: 'Client Secret',
 		value: 'client_secret',
 		authFieldType: 'client',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: true,
 		default: '',
 		description: 'OAuth Client Secret. Leave blank normally.',
@@ -32,7 +32,7 @@ const gphotosSettings = [
 	{
 		label: 'OAuth Access Token',
 		value: 'token',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'oauth',
 		required: false,
 		default: '',

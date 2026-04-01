@@ -12,7 +12,7 @@ const swiftSettings = [
 	{
 		label: 'Password / API Key',
 		value: 'key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: true,
 		default: '',
@@ -120,7 +120,7 @@ const swiftSettings = [
 	{
 		label: 'Auth Token',
 		value: 'auth_token',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: 'Auth token from alternate authentication (optional).',

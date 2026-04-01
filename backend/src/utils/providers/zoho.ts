@@ -12,7 +12,7 @@ const zohoSettings = [
 	{
 		label: 'Client Secret',
 		value: 'client_secret',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',
@@ -41,7 +41,7 @@ const zohoSettings = [
 	{
 		label: 'OAuth Access Token',
 		value: 'token',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'oauth',
 		required: true,
 		default: '',

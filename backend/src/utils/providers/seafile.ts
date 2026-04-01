@@ -22,7 +22,7 @@ const seafileSettings = [
 	{
 		label: 'Password',
 		value: 'pass',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: false,
 		default: '',
@@ -61,7 +61,7 @@ const seafileSettings = [
 	{
 		label: 'Auth Token',
 		value: 'auth_token',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: 'Authentication token.',

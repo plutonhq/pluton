@@ -11,7 +11,7 @@ const azureblobSettings = [
 	{
 		label: 'Storage Account Key',
 		value: 'key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',
@@ -62,7 +62,7 @@ const azureblobSettings = [
 	{
 		label: 'Client Secret',
 		value: 'client_secret',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: "One of the service principal's client secrets.",
@@ -81,7 +81,7 @@ const azureblobSettings = [
 	{
 		label: 'Client Certificate Password',
 		value: 'client_certificate_password',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: 'Password for the certificate file (optional).',
@@ -110,7 +110,7 @@ const azureblobSettings = [
 	{
 		label: 'Password',
 		value: 'password',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: false,
 		default: '',

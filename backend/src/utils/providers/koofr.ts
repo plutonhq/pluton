@@ -36,7 +36,7 @@ const koofrSettings = [
 	{
 		label: 'App Password',
 		value: 'password',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

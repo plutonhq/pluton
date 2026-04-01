@@ -20,7 +20,7 @@ const azurefilesSettings = [
 	{
 		label: 'Storage Account Key',
 		value: 'key',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: true,
 		default: '',
 		description: 'Storage Account Shared Key. Leave blank to use SAS URL or connection string.',
@@ -76,7 +76,7 @@ const azurefilesSettings = [
 	{
 		label: 'Client Secret',
 		value: 'client_secret',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: "One of the service principal's client secrets.",
@@ -95,7 +95,7 @@ const azurefilesSettings = [
 	{
 		label: 'Client Certificate Password',
 		value: 'client_certificate_password',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: 'Password for the certificate file (optional).',
@@ -123,7 +123,7 @@ const azurefilesSettings = [
 	{
 		label: 'Password',
 		value: 'password',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: "The user's password.",

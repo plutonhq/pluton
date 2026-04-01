@@ -13,7 +13,7 @@ const googleDriveSettings = [
 	{
 		label: 'Client Secret',
 		value: 'client_secret',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',
@@ -59,7 +59,7 @@ const googleDriveSettings = [
 	{
 		label: 'OAuth Access Token',
 		value: 'token',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'oauth',
 		required: false,
 		default: '',
@@ -97,7 +97,7 @@ const googleDriveSettings = [
 	{
 		label: 'Service Account Credentials',
 		value: 'service_account_credentials',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description:

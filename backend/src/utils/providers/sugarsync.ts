@@ -11,7 +11,7 @@ const sugarsyncSettings = [
 	},
 	{
 		label: 'Passowrd',
-		fieldType: 'string',
+		fieldType: 'password',
 		value: 'password',
 		authFieldType: 'client',
 		required: true,
@@ -42,7 +42,7 @@ const sugarsyncSettings = [
 	{
 		label: 'Private Access Key',
 		value: 'private_access_key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: false,
 		default: '',

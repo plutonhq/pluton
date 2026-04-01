@@ -2,7 +2,7 @@ const storjSettings = [
 	{
 		label: 'Access Grant',
 		value: 'access_grant',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: true,
 		default: '',
@@ -28,7 +28,7 @@ const storjSettings = [
 	{
 		label: 'API Key',
 		value: 'api_key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',
@@ -38,7 +38,7 @@ const storjSettings = [
 	{
 		label: 'Encryption Passphrase',
 		value: 'passphrase',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

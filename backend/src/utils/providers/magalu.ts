@@ -14,7 +14,7 @@ const magaluSettings = [
 	{
 		label: 'Secret Access Key',
 		value: 'secret_access_key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

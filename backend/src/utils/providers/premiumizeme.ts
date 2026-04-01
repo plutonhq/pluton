@@ -12,7 +12,7 @@ const premiumizemeSettings = [
 	{
 		label: 'Client Secret',
 		value: 'client_secret',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',
@@ -22,7 +22,7 @@ const premiumizemeSettings = [
 	{
 		label: 'API Key',
 		value: 'api_key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',
@@ -32,7 +32,7 @@ const premiumizemeSettings = [
 	{
 		label: 'OAuth Access Token',
 		value: 'token',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'oauth',
 		required: true,
 		default: '',

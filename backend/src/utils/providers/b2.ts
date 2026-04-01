@@ -12,7 +12,7 @@ const b2Settings = [
 	{
 		label: 'Application Key',
 		value: 'key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

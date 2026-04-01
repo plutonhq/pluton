@@ -13,7 +13,7 @@ const boxSettings = [
 		label: 'Client Secret',
 		value: 'client_secret',
 		authFieldType: 'client',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: true,
 		default: '',
 		description: 'OAuth Client Secret',
@@ -31,7 +31,7 @@ const boxSettings = [
 	// {
 	// 	label: 'Access Token',
 	// 	value: 'access_token',
-	// 	fieldType: 'string',
+	// 	fieldType: 'password',
 	// 	authFieldType: 'oauth',
 	// 	required: false,
 	// 	default: '',
@@ -52,7 +52,7 @@ const boxSettings = [
 	{
 		label: 'OAuth Access Token',
 		value: 'token',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'oauth',
 		required: false,
 		default: '',

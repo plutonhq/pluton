@@ -12,7 +12,7 @@ const shadeSettings = [
 	{
 		label: 'API Key',
 		value: 'api_key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

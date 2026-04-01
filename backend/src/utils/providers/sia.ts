@@ -13,7 +13,7 @@ const siaSettings = [
 	{
 		label: 'API Password',
 		value: 'api_password',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

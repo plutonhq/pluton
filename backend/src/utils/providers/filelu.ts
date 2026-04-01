@@ -2,7 +2,7 @@ const fileluSettings = [
 	{
 		label: 'Rclone Key',
 		value: 'key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

@@ -2,7 +2,7 @@ const jottacloudSettings = [
 	{
 		label: 'Login Token',
 		value: 'login_token',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'password',
 		required: true,
 		default: '',
@@ -22,7 +22,7 @@ const jottacloudSettings = [
 	{
 		label: 'Client Secret',
 		value: 'client_secret',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: false,
 		default: '',
@@ -32,7 +32,7 @@ const jottacloudSettings = [
 	{
 		label: 'OAuth Token',
 		value: 'token',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: 'OAuth Access Token as a JSON blob.',

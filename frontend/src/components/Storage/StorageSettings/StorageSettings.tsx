@@ -56,7 +56,7 @@ const StorageSettings = ({ fields, onUpdate, settings, errors = {} }: StorageSet
                   </div>
                );
             }
-            if (field.authFieldType && ['input', 'string'].includes(field.fieldType)) {
+            if (field.fieldType === 'password') {
                return (
                   <div key={field.value} className={classes.field}>
                      <PasswordField
