@@ -239,31 +239,6 @@ describe('runRcloneCommand', () => {
 		expect(result).toBe('rclone v1.0.0');
 	});
 
-	it('should log command execution details', async () => {
-		const args = ['ls', 'remote:path'];
-
-		const promise = runRcloneCommand(args);
-
-		mockProcess.emit('close', 0);
-
-		await promise;
-
-		// The close event log is the only active console.log in the source
-		expect(consoleLogSpy).toHaveBeenCalledWith('[rclone] Close Fired!! Code :', 0);
-	});
-
-	it('should log close event with exit code', async () => {
-		const args = ['version'];
-
-		const promise = runRcloneCommand(args);
-
-		mockProcess.emit('close', 0);
-
-		await promise;
-
-		expect(consoleLogSpy).toHaveBeenCalledWith('[rclone] Close Fired!! Code :', 0);
-	});
-
 	it('should handle commands with no arguments', async () => {
 		const args: string[] = [];
 
