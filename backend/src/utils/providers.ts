@@ -95,6 +95,7 @@ export interface ProviderConfig {
 		About: boolean;
 		EmptyDir: boolean;
 	};
+	s3Adapter?: boolean;
 	settings?: ProviderSetting[];
 	doc?: string;
 	setup: (credentials: Record<string, string>, type?: string) => string[] | false;
@@ -122,14 +123,29 @@ export const providers: Record<string, ProviderConfig> = {
 		settings: s3Settings,
 		authTypes: ['client'],
 		features: providerFeatures['s3'],
-		setup: creds => [
-			'access_key_id',
-			creds.access_key_id,
-			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
-			'region',
-			creds.region,
-		],
+		s3Adapter: true,
+		setup: creds => {
+			const args = [
+				'provider',
+				'AWS',
+				'access_key_id',
+				creds.access_key_id,
+				'secret_access_key',
+				creds.secret_access_key,
+				'region',
+				creds.region,
+				'acl',
+				creds.acl || 'private',
+			];
+			if (creds.location_constraint && creds.location_constraint !== 'us-east-1') {
+				args.push('location_constraint', creds.location_constraint);
+			}
+			if (creds.endpoint) {
+				args.push('endpoint', creds.endpoint);
+			}
+
+			return args;
+		},
 	},
 	drive: {
 		name: 'Google Drive',
@@ -151,7 +167,7 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'scope',
 					creds.scope || 'drive',
 					'--drive-client-credentials',
@@ -179,7 +195,7 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'--onedrive-client-credentials',
 				];
 			}
@@ -205,7 +221,7 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'--dropbox-client-credentials',
 				];
 			}
@@ -231,7 +247,7 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'--box-client-credentials',
 				];
 			}
@@ -242,7 +258,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-azure-blob-storage',
 		settings: azureblobSettings,
 		authTypes: ['client', 'password'],
-		setup: creds => ['account', creds.account, 'key', `$(rclone obscure ${creds.key})`],
+		setup: creds => ['account', creds.account, 'key', creds.key],
 		features: providerFeatures['azureBlob'],
 	},
 	gcs: {
@@ -275,7 +291,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-mega',
 		authTypes: ['password'],
 		settings: megaSettings,
-		setup: creds => ['user', creds.user, 'pass', `$(rclone obscure ${creds.password})`],
+		setup: creds => ['user', creds.user, 'pass', creds.pass],
 		features: providerFeatures['mega'],
 	},
 	pcloud: {
@@ -297,7 +313,7 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'--pcloud-client-credentials',
 				];
 			}
@@ -314,7 +330,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'user',
 			creds.user,
 			'key',
-			`$(rclone obscure ${creds.key})`,
+			creds.key,
 			'auth',
 			creds.authUrl,
 			'tenant',
@@ -341,7 +357,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'user',
 			creds.user,
 			'pass',
-			`$(rclone obscure ${creds.password})`,
+			creds.pass,
 			'library',
 			creds.library,
 		],
@@ -355,7 +371,7 @@ export const providers: Record<string, ProviderConfig> = {
 		features: providerFeatures['jottacloud'],
 		setup: (creds, type) => {
 			if (type === 'password') {
-				return ['user', creds.user, 'pass', `$(rclone obscure ${creds.password})`];
+				return ['user', creds.user, 'pass', creds.pass];
 			} else {
 				if (!creds.client_id || !creds.client_secret) {
 					return false;
@@ -364,7 +380,7 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'--jottacloud-client-credentials',
 				];
 			}
@@ -389,7 +405,7 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'--yandex-client-credentials',
 				];
 			}
@@ -415,7 +431,7 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'region',
 					creds.region,
 					'--zoho-client-credentials',
@@ -443,7 +459,7 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'scope',
 					creds.scope,
 					'--hidrive-client-credentials',
@@ -457,14 +473,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-koofr',
 		settings: koofrSettings,
 		authTypes: ['client'],
-		setup: creds => [
-			'endpoint',
-			creds.endpoint,
-			'user',
-			creds.email,
-			'password',
-			`$(rclone obscure ${creds.password})`,
-		],
+		setup: creds => ['endpoint', creds.endpoint, 'user', creds.email, 'password', creds.password],
 		features: providerFeatures['koofr'],
 	},
 	mailru: {
@@ -482,7 +491,7 @@ export const providers: Record<string, ProviderConfig> = {
 				if (!creds.user || !creds.password) {
 					return false;
 				}
-				return ['user', creds.user, 'password', `$(rclone obscure ${creds.password})`];
+				return ['user', creds.user, 'password', creds.password];
 			}
 		},
 		features: providerFeatures['mailru'],
@@ -492,7 +501,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-opendrive',
 		authTypes: ['password'],
 		settings: opendriveSettings,
-		setup: creds => ['username', creds.username, 'password', `$(rclone obscure ${creds.password})`],
+		setup: creds => ['username', creds.username, 'password', creds.password],
 		features: providerFeatures['opendrive'],
 	},
 	qingstor: {
@@ -502,9 +511,9 @@ export const providers: Record<string, ProviderConfig> = {
 		settings: qingstorSettings,
 		setup: creds => [
 			'access_key_id',
-			creds.accessKeyId,
+			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secretKey})`,
+			creds.secret_access_key,
 			'zone',
 			creds.zone,
 		],
@@ -529,9 +538,9 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'api_key',
-					`$(rclone obscure ${creds.api_key})`,
+					creds.api_key,
 					'--premiumizeme-client-credentials',
 				];
 			}
@@ -553,7 +562,7 @@ export const providers: Record<string, ProviderConfig> = {
 				if (!creds.token) {
 					return false;
 				}
-				return ['token', `$(rclone obscure ${creds.token})`];
+				return ['token', creds.token];
 			}
 		},
 		features: providerFeatures['putio'],
@@ -579,7 +588,7 @@ export const providers: Record<string, ProviderConfig> = {
 					'client_id',
 					creds.client_id,
 					'client_secret',
-					`$(rclone obscure ${creds.client_secret})`,
+					creds.client_secret,
 					'--sharefile-client-credentials',
 				];
 			}
@@ -595,25 +604,12 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'private_access_key',
-			`$(rclone obscure ${creds.private_access_key})`,
+			creds.private_access_key,
 			'refresh_token',
 			creds.refresh_token,
 		],
 		features: providerFeatures['sugarsync'],
 	},
-	// 'nextcloud': {
-	// 	name: 'NextCloud',
-	// 	setup: creds => [
-	// 		'url',
-	// 		creds.url,
-	// 		'user',
-	// 		creds.user,
-	// 		'pass',
-	// 		`$(rclone obscure ${creds.password})`,
-	// 		'vendor',
-	// 		'nextcloud',
-	// 	],
-	// },
 
 	fichier: {
 		name: '1Fichier',
@@ -621,7 +617,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: fichierSettings,
 		setup: creds => {
-			return ['api_key', `$(rclone obscure ${creds.api_key})`];
+			return ['api_key', creds.api_key];
 		},
 		features: providerFeatures['1fichier'],
 	},
@@ -636,7 +632,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'account_name',
 			creds.account_name,
 			'key',
-			`$(rclone obscure ${creds.key})`,
+			creds.key,
 		],
 		features: providerFeatures['netstorage'],
 	},
@@ -645,7 +641,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-files-com',
 		authTypes: ['client', 'password'],
 		settings: filesComSettings,
-		setup: creds => ['api_key', `$(rclone obscure ${creds.api_key})`],
+		setup: creds => ['api_key', creds.api_key],
 		features: providerFeatures['files'],
 	},
 	gofile: {
@@ -653,7 +649,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-gofile',
 		authTypes: ['client'],
 		settings: gofileSettings,
-		setup: creds => ['token', `$(rclone obscure ${creds.token})`],
+		setup: creds => ['token', creds.token],
 		features: providerFeatures['gofile'],
 	},
 	gphotos: {
@@ -661,12 +657,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-google-photos',
 		authTypes: ['client', 'password'],
 		settings: gphotosSettings,
-		setup: creds => [
-			'client_id',
-			creds.client_id,
-			'client_secret',
-			`$(rclone obscure ${creds.client_secret})`,
-		],
+		setup: creds => ['client_id', creds.client_id, 'client_secret', creds.client_secret],
 		features: providerFeatures['gphotos'],
 	},
 	internetarchive: {
@@ -678,7 +669,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 		],
 		features: providerFeatures['internetarchive'],
 	},
@@ -687,7 +678,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-linkbox',
 		authTypes: ['client'],
 		settings: linkboxSettings,
-		setup: creds => ['api_key', `$(rclone obscure ${creds.api_key})`],
+		setup: creds => ['api_key', creds.api_key],
 		features: providerFeatures['linkbox'],
 	},
 	oracle: {
@@ -705,7 +696,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key',
 			creds.access_key,
 			'secret_key',
-			`$(rclone obscure ${creds.secret_key})`,
+			creds.secret_key,
 		],
 		features: providerFeatures['oracle'],
 	},
@@ -714,7 +705,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-pikpak',
 		authTypes: ['password'],
 		settings: pikpakSettings,
-		setup: creds => ['username', creds.username, 'password', `$(rclone obscure ${creds.password})`],
+		setup: creds => ['username', creds.username, 'password', creds.password],
 		features: providerFeatures['pikpak'],
 	},
 	pixeldrain: {
@@ -722,7 +713,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-pixeldrain',
 		authTypes: ['client'],
 		settings: pixeldrainSettings,
-		setup: creds => ['api_key', `$(rclone obscure ${creds.api_key})`],
+		setup: creds => ['api_key', creds.api_key],
 		features: providerFeatures['pixeldrain'],
 	},
 	proton: {
@@ -730,7 +721,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-proton-drive',
 		authTypes: ['password'],
 		settings: protondriveSettings,
-		setup: creds => ['username', creds.username, 'password', `$(rclone obscure ${creds.password})`],
+		setup: creds => ['username', creds.username, 'password', creds.password],
 		features: providerFeatures['proton'],
 	},
 	quatrix: {
@@ -738,14 +729,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-quatrix',
 		authTypes: ['client'],
 		settings: quatrixSettings,
-		setup: creds => [
-			'api_key',
-			`$(rclone obscure ${creds.api_key})`,
-			'user',
-			creds.user,
-			'host',
-			creds.host,
-		],
+		setup: creds => ['api_key', creds.api_key, 'user', creds.user, 'host', creds.host],
 		features: providerFeatures['quatrix'],
 	},
 	sia: {
@@ -753,7 +737,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-sia',
 		authTypes: ['client'],
 		settings: siaSettings,
-		setup: creds => ['api_url', creds.api_url, 'password', `$(rclone obscure ${creds.password})`],
+		setup: creds => ['api_url', creds.api_url, 'password', creds.password],
 		features: providerFeatures['sia'],
 	},
 	ulozto: {
@@ -761,7 +745,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-uloz-to',
 		authTypes: ['password'],
 		settings: uloztoSettings,
-		setup: creds => ['username', creds.username, 'password', `$(rclone obscure ${creds.password})`],
+		setup: creds => ['username', creds.username, 'password', creds.password],
 		features: providerFeatures['ulozto'],
 	},
 	hdfs: {
@@ -777,14 +761,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-smb',
 		authTypes: ['password'],
 		settings: smbSettings,
-		setup: creds => [
-			'host',
-			creds.host,
-			'username',
-			creds.username,
-			'password',
-			`$(rclone obscure ${creds.password})`,
-		],
+		setup: creds => ['host', creds.host, 'username', creds.username, 'password', creds.password],
 		features: providerFeatures['smb'],
 	},
 	sftp: {
@@ -792,14 +769,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-sftp',
 		authTypes: ['password'],
 		settings: sftpSettings,
-		setup: creds => [
-			'host',
-			creds.host,
-			'user',
-			creds.user,
-			'pass',
-			`$(rclone obscure ${creds.password})`,
-		],
+		setup: creds => ['host', creds.host, 'user', creds.user, 'pass', creds.pass],
 		features: providerFeatures['sftp'],
 	},
 	ftp: {
@@ -807,14 +777,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-ftp',
 		authTypes: ['password'],
 		settings: ftpSettings,
-		setup: creds => [
-			'host',
-			creds.host,
-			'user',
-			creds.user,
-			'pass',
-			`$(rclone obscure ${creds.password})`,
-		],
+		setup: creds => ['host', creds.host, 'user', creds.user, 'pass', creds.pass],
 		features: providerFeatures['ftp'],
 	},
 	webdav: {
@@ -822,14 +785,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-webdav',
 		authTypes: ['password'],
 		settings: webdavSettings,
-		setup: creds => [
-			'url',
-			creds.url,
-			'user',
-			creds.user,
-			'pass',
-			`$(rclone obscure ${creds.password})`,
-		],
+		setup: creds => ['url', creds.url, 'user', creds.user, 'pass', creds.pass],
 		features: providerFeatures['webdav'],
 	},
 	http: {
@@ -840,24 +796,68 @@ export const providers: Record<string, ProviderConfig> = {
 		setup: creds => ['url', creds.url],
 		features: providerFeatures['http'],
 	},
-	// S3 Compatible API
+	drime: {
+		name: 'Drime',
+		doc: '/storages/connecting-drime',
+		authTypes: ['client'],
+		settings: drimeSettings,
+		setup: creds => ['access_token', creds.access_token],
+		features: providerFeatures['drime'],
+	},
+	filelu: {
+		name: 'FileLu',
+		doc: '/storages/connecting-filelu',
+		authTypes: ['client'],
+		settings: fileluSettings,
+		setup: creds => ['key', creds.key],
+		features: providerFeatures['filelu'],
+	},
+	filen: {
+		name: 'Filen',
+		doc: '/storages/connecting-filen',
+		authTypes: ['password'],
+		settings: filenSettings,
+		setup: creds => ['email', creds.email, 'password', creds.password, 'api_key', creds.api_key],
+		features: providerFeatures['filen'],
+	},
+	internxt: {
+		name: 'Internxt Drive',
+		doc: '/storages/connecting-internxt',
+		authTypes: ['password'],
+		settings: internxtSettings,
+		setup: creds => ['email', creds.email, 'pass', creds.pass],
+		features: providerFeatures['internxt'],
+	},
+	shade: {
+		name: 'Shade',
+		doc: '/storages/connecting-shade',
+		authTypes: ['client'],
+		settings: shadeSettings,
+		setup: creds => ['drive_id', creds.drive_id, 'api_key', creds.api_key],
+		features: providerFeatures['shade'],
+	},
+
+	/* ===================== S3 Compatible Storages ========================== */
 	r2: {
 		name: 'Cloudflare R2',
 		doc: '/storages/connecting-cloudflare-r2',
 		authTypes: ['client'],
 		settings: r2Settings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Cloudflare',
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
-			`${creds.endpoint}.r2.cloudflarestorage.com`,
-			'acl',
-			'private',
+			`https://${creds.endpoint}.r2.cloudflarestorage.com`,
+			'region',
+			'auto',
+			'no_check_bucket',
+			'true',
 		],
 	},
 	oss: {
@@ -866,17 +866,16 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: ossSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Alibaba',
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
-			'acl',
-			'private',
 			'storage_class',
 			creds.storage_class,
 		],
@@ -887,13 +886,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: cephSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Ceph', //TODO: No region field
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			`${creds.endpoint}`,
 			'acl',
@@ -906,13 +906,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: dreamobjectsSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'DreamHost', //TODO: No region field
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 			'acl',
@@ -925,13 +926,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: spacesSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'DigitalOcean', //TODO: No region field
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 		],
@@ -942,13 +944,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: obsSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'HuaweiOBS',
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'region',
 			creds.region,
 			'endpoint',
@@ -963,13 +966,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: ibmcosSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'IBMCOS',
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'region',
 			creds.region,
 			'endpoint',
@@ -986,13 +990,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: idriveSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'IDrive',
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 		],
@@ -1003,13 +1008,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: ionosSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'IONOS', //TODO: No region field
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 		],
@@ -1020,13 +1026,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: minioSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Minio',
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 			'region',
@@ -1039,13 +1046,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: outscaleSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Outscale',
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			`oos.${creds.region}.outscale.com`,
 			'region',
@@ -1057,6 +1065,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: qiniuSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-qiniu-kodo',
 		setup: creds => [
 			'provider',
@@ -1064,7 +1073,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			`s3.${creds.region}.qiniucs.com	`,
 			'region',
@@ -1082,6 +1091,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: rackcorpSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-rackcorp',
 		setup: creds => [
 			'provider',
@@ -1089,7 +1099,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			`${creds.region}.s3.rackcorp.com`,
 			'region',
@@ -1103,13 +1113,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: rcloneSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Rclone',
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 			'use_multipart_uploads',
@@ -1122,6 +1133,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: scalewaySettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-scaleway',
 		setup: creds => [
 			'provider',
@@ -1129,7 +1141,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 			'region',
@@ -1153,6 +1165,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: lyvecloudSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-seagate-lyve-cloud',
 		setup: creds => [
 			'provider',
@@ -1160,7 +1173,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 		],
@@ -1170,6 +1183,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: seaweedfsSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-seaweedfs',
 		setup: creds => [
 			'provider',
@@ -1177,7 +1191,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 		],
@@ -1187,6 +1201,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: selectelSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-selectel',
 		setup: creds => [
 			'provider',
@@ -1194,7 +1209,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			's3.ru-1.storage.selcloud.ru',
 			'region',
@@ -1208,6 +1223,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: wasabiSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-wasabi',
 		setup: creds => [
 			'provider',
@@ -1215,9 +1231,9 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
-			`s3.${creds.region === 'us-east-1' ? '' : creds.region}.wasabisys.com`,
+			`s3.${creds.region === 'us-east-1' ? '' : '.' + creds.region}wasabisys.com`,
 			'region',
 			creds.region,
 		],
@@ -1228,13 +1244,14 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: leviiaSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Leviia',
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 			'acl',
@@ -1246,6 +1263,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: liaraSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-liara',
 		setup: creds => [
 			'provider',
@@ -1253,7 +1271,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			'storage.iran.liara.space',
 		],
@@ -1263,6 +1281,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: linodeSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-linode',
 		setup: creds => [
 			'provider',
@@ -1270,7 +1289,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 		],
@@ -1280,6 +1299,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: magaluSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-magalu',
 		setup: creds => [
 			'provider',
@@ -1287,7 +1307,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 		],
@@ -1297,6 +1317,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: arvanSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-arvan-cloud',
 		setup: creds => [
 			'provider',
@@ -1304,7 +1325,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'region',
 			creds.region,
 			'endpoint',
@@ -1316,6 +1337,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: tencentSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-tencent-cos',
 		setup: creds => [
 			'provider',
@@ -1323,7 +1345,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			creds.endpoint,
 		],
@@ -1333,6 +1355,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: petaboxSettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-petabox',
 		setup: creds => [
 			'provider',
@@ -1340,11 +1363,11 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'endpoint',
 			's3.petabox.io',
 			'region',
-			'eu-east-1', //Avaialble in One location only: https://docs.petabox.io/http-api-compatible-with-amazon-s3/api-reference/bucket/getbucketlocation
+			'eu-east-1', //Available in One location only: https://docs.petabox.io/http-api-compatible-with-amazon-s3/api-reference/bucket/getbucketlocation
 		],
 	},
 	synologyc2: {
@@ -1352,6 +1375,7 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		settings: synologySettings,
 		features: providerFeatures['s3'],
+		s3Adapter: true,
 		doc: '/storages/connecting-synology',
 		setup: creds => [
 			'provider',
@@ -1359,7 +1383,7 @@ export const providers: Record<string, ProviderConfig> = {
 			'access_key_id',
 			creds.access_key_id,
 			'secret_access_key',
-			`$(rclone obscure ${creds.secret_access_key})`,
+			creds.secret_access_key,
 			'region',
 			creds.region,
 			'endpoint',
@@ -1367,52 +1391,5 @@ export const providers: Record<string, ProviderConfig> = {
 			'no_check_bucket',
 			'true',
 		],
-	},
-	drime: {
-		name: 'Drime',
-		doc: '/storages/connecting-drime',
-		authTypes: ['client'],
-		settings: drimeSettings,
-		setup: creds => ['access_token', creds.access_token],
-		features: providerFeatures['drime'],
-	},
-	filelu: {
-		name: 'FileLu',
-		doc: '/storages/connecting-filelu',
-		authTypes: ['client'],
-		settings: fileluSettings,
-		setup: creds => ['key', creds.key],
-		features: providerFeatures['filelu'],
-	},
-	filen: {
-		name: 'Filen',
-		doc: '/storages/connecting-filen',
-		authTypes: ['password'],
-		settings: filenSettings,
-		setup: creds => [
-			'email',
-			creds.email,
-			'password',
-			`$(rclone obscure ${creds.password})`,
-			'api_key',
-			`$(rclone obscure ${creds.apiKey})`,
-		],
-		features: providerFeatures['filen'],
-	},
-	internxt: {
-		name: 'Internxt Drive',
-		doc: '/storages/connecting-internxt',
-		authTypes: ['password'],
-		settings: internxtSettings,
-		setup: creds => ['email', creds.email, 'pass', `$(rclone obscure ${creds.password})`],
-		features: providerFeatures['internxt'],
-	},
-	shade: {
-		name: 'Shade',
-		doc: '/storages/connecting-shade',
-		authTypes: ['client'],
-		settings: shadeSettings,
-		setup: creds => ['drive_id', creds.drive_id, 'api_key', creds.api_key],
-		features: providerFeatures['shade'],
 	},
 };

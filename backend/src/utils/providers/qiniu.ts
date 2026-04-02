@@ -38,12 +38,22 @@ const qiniuSettings = [
 			{ label: 'Asia Pacific-Singapore (formerly Southeast Asia)', value: 'ap-southeast-1' },
 			{ label: 'Asia Pacific-Hanoi', value: 'ap-southeast-2' },
 			{ label: 'Asia Pacific-Ho Chi Minh', value: 'ap-southeast-3' },
-			{ label: 'Insert Custon Region', value: 'custom' },
+			{ label: 'Insert Custom Region', value: 'custom' },
 		],
 		required: true,
 		default: '',
 		description: "Select a Region to connect to that region's API Endpoint.",
 		command: '--s3-region',
+	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your Qiniu Bucket Name. eg: pluton-backup',
+		command: '',
 	},
 	{
 		label: 'Storage Type/Class',
@@ -75,8 +85,7 @@ const qiniuSettings = [
 		],
 		required: false,
 		default: '',
-		description:
-			'Access control permissions applied when creating buckets and storing objects.',
+		description: 'Access control permissions applied when creating buckets and storing objects.',
 		command: '--s3-acl',
 	},
 

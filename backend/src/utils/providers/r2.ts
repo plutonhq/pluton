@@ -31,17 +31,16 @@ const r2Settings = [
 		description: 'Your R2 Account ID, which will be used to generate the Endpoint.',
 		command: '--s3-endpoint',
 	},
-	// {
-	// 	label: 'ACL',
-	// 	value: 'acl',
-	// 	fieldType: 'string',
-	// 	authFieldType: 'client',
-	// 	required: false,
-	// 	default: '',
-	// 	description:
-	// 		"Canned ACL used when creating buckets and storing or copying objects. This ACL is used for creating objects and if bucket_acl isn't set, for creating buckets too.",
-	// 	command: '--s3-acl',
-	// },
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your R2 Bucket Name. eg: pluton-backup',
+		command: '',
+	},
 	...s3Options,
 ];
 

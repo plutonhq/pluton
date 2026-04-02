@@ -54,6 +54,16 @@ const rackcorpSettings = [
 		command: '--s3-region',
 	},
 	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your Rackcorp Bucket Name. eg: pluton-backup',
+		command: '',
+	},
+	{
 		label: 'ACL',
 		value: 'acl',
 		fieldType: 'select',
@@ -64,8 +74,7 @@ const rackcorpSettings = [
 		],
 		required: false,
 		default: '',
-		description:
-			'Access control permissions applied when creating buckets and storing objects.',
+		description: 'Access control permissions applied when creating buckets and storing objects.',
 		command: '--s3-acl',
 	},
 

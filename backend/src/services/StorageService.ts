@@ -98,10 +98,11 @@ export class StorageService {
 			}
 
 			const { type, name, authType, credentials, settings, tags } = parsedStorageData;
+			const storageName = (name || '').trim();
 			// Create the remote storage with rclone
 			const remoteResult = await this.storageManager.createRemote(
 				type as string,
-				name as string,
+				storageName,
 				authType as string,
 				credentials as Record<string, string>,
 				settings as Record<string, string>
@@ -122,10 +123,11 @@ export class StorageService {
 			const storageId = generateUID();
 			const newStorage = await this.storageStore.create({
 				id: storageId,
-				name: name as string,
+				name: storageName,
 				type: type as string,
 				settings: settings as Record<string, string>,
 				credentials: encryptedCreds,
+				defaultPath: credsObj?.bucket || '/',
 				authType: authType as string,
 				tags: tags as string[],
 			});
@@ -280,8 +282,26 @@ export class StorageService {
 			if (!storage) {
 				throw new NotFoundError('Storage not found');
 			}
+			const decryptedCreds: Record<string, string> = {};
+			try {
+				const cryptr = new Cryptr(configService.config.SECRET as string);
+				const credsObj = storage.credentials;
 
-			const verifyResult = await this.storageManager.verifyRemote(storage.name);
+				if (credsObj) {
+					Object.keys(credsObj).forEach((k: string) => {
+						if (typeof credsObj[k] === 'string') {
+							decryptedCreds[k] = cryptr.decrypt(credsObj[k]);
+						}
+					});
+				}
+			} catch (error: any) {
+				throw new AppError(
+					500,
+					'Could not decrypt your Storage Credentials Settings. Your Pluton Secret key may have changed or missing.'
+				);
+			}
+			const bucketName = decryptedCreds?.bucket as string;
+			const verifyResult = await this.storageManager.verifyRemote(storage.name, bucketName);
 			if (!verifyResult.success) {
 				throw new AppError(500, verifyResult.result || 'Failed to verify storage');
 			}

@@ -12,16 +12,6 @@ const ftpSettings: ProviderSetting[] = [
 		description: 'FTP host to connect to. E.g. "ftp.example.com".',
 	},
 	{
-		label: 'FTP Username',
-		command: '--ftp-user',
-		fieldType: 'string',
-		authFieldType: 'password',
-		required: false,
-		value: 'user',
-		default: '$user',
-		description: 'FTP username.',
-	},
-	{
 		label: 'FTP Port',
 		command: '--ftp-port',
 		fieldType: 'int',
@@ -30,6 +20,16 @@ const ftpSettings: ProviderSetting[] = [
 		value: 'port',
 		default: '21',
 		description: 'FTP port number.',
+	},
+	{
+		label: 'FTP Username',
+		command: '--ftp-user',
+		fieldType: 'string',
+		authFieldType: 'password',
+		required: false,
+		value: 'user',
+		default: '$user',
+		description: 'FTP username.',
 	},
 	{
 		label: 'FTP Password',

@@ -31,6 +31,16 @@ const cephSettings = [
 		description: 'API Endpoint to connect to. Example: https://ceph.endpoint.example.com',
 		command: '--s3-endpoint',
 	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your Ceph Bucket Name. eg: pluton-backup',
+		command: '',
+	},
 	...s3Options,
 ];
 

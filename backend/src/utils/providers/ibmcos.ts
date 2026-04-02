@@ -153,9 +153,18 @@ const ibmcosSettings = [
 		],
 		required: false,
 		default: '',
-		description:
-			'Access control permissions applied when creating buckets and storing objects.',
+		description: 'Access control permissions applied when creating buckets and storing objects.',
 		command: '--s3-acl',
+	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your IBM Cloud Object Storage Bucket Name. eg: pluton-backup',
+		command: '',
 	},
 	...s3Options,
 ];

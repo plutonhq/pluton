@@ -31,6 +31,16 @@ const seaweedfsSettings = [
 		description: 'Your SeaweedFS Server Endpoint.',
 		command: '--s3-endpoint',
 	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your SeaweedFS Bucket Name. eg: pluton-backup',
+		command: '',
+	},
 	...s3Options,
 ];
 

@@ -24,6 +24,9 @@
          width: calc(65% - 10px);
          margin-left: 10px;
          position: relative;
+         display: flex;
+         flex-direction: row;
+         align-items: center;
          .fileManagerBtn {
             position: absolute;
             right: 1px;
@@ -35,8 +38,32 @@
                color: var(--primary-color);
             }
          }
+         .defaultPath {
+            display: block;
+            min-width: fit-content;
+            background: var(--background-color);
+            color: var(--content-text-color-light);
+            cursor: default;
+            padding: 8px;
+            padding-top: 9px;
+            border-radius: 6px 0 0 6px;
+            border: 1px solid var(--field-line-color);
+            border-right: 0;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+         }
+         div[class*='_inputField_'] {
+            display: inline-block;
+         }
          div[class*='_inputField_'] input {
             padding: 10px 12px;
+         }
+         &.withBucket {
+            div[class*='_inputField_'] input {
+               border-radius: 0 6px 6px 0;
+            }
          }
       }
       & > div {

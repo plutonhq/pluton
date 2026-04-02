@@ -1,5 +1,16 @@
 const s3Options = [
 	{
+		label: 'Environment Auth',
+		value: 'env_auth',
+		fieldType: 'bool',
+		authFieldType: 'client',
+		required: false,
+		default: false,
+		description:
+			'Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).',
+		command: '--s3-env-auth',
+	},
+	{
 		label: 'Server-side Encryption',
 		value: 'server_side_encryption',
 		fieldType: 'select',
@@ -174,8 +185,7 @@ const s3Options = [
 		fieldType: 'string',
 		required: false,
 		default: '',
-		description:
-			'Path to the shared credentials file. Only used when Environment Auth is enabled.',
+		description: 'Path to the shared credentials file. Only used when Environment Auth is enabled.',
 		command: '--s3-shared-credentials-file',
 		condition: [{ env_auth: true }],
 	},
@@ -226,8 +236,7 @@ const s3Options = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'If enabled, use v2 authentication instead of the default v4 authentication.',
+		description: 'If enabled, use v2 authentication instead of the default v4 authentication.',
 		command: '--s3-v2-auth',
 	},
 	{
@@ -509,8 +518,7 @@ const s3Options = [
 		fieldType: 'bool',
 		required: false,
 		default: false,
-		description:
-			'Enable this if you are using an AWS Directory Bucket.',
+		description: 'Enable this if you are using an AWS Directory Bucket.',
 		command: '--s3-directory-bucket',
 	},
 	{

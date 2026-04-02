@@ -75,19 +75,12 @@ export class BaseBackupManager extends EventEmitter {
 			if (!encryption) {
 				repoCommand.push('--insecure-no-password');
 			}
-			const repoResult = await runResticCommand(
-				repoCommand,
-				{
-					RESTIC_PASSWORD: repoPassword,
-					RCLONE_CONFIG_PASS: repoPassword,
-				},
-				(data: Buffer) => {
-					console.log('[restic] Progress Data :', data.toString());
-				}
-			);
-			console.log('[BaseBackupManager] 🤍 repo Creation Result :', repoResult);
+			const repoResult = await runResticCommand(repoCommand, {
+				RESTIC_PASSWORD: repoPassword,
+				RCLONE_CONFIG_PASS: repoPassword,
+			});
 		} catch (error: any) {
-			// logger.error('[BaseBackup] repo Creation Error :', error);
+			// console.log('[BaseBackupManager] repo Creation Error :', error);
 			return { success: false, result: 'Could Not Create Restic Repo. Details: ' + error.message };
 		}
 

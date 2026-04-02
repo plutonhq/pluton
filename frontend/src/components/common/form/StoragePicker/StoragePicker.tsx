@@ -7,7 +7,7 @@ import FolderPicker from '../../FolderPicker/FolderPicker';
 import Icon from '../../Icon/Icon';
 import AddStorage from '../../../Storage/AddStorage/AddStorage';
 
-type storageItem = { name: string; id: string; type: string };
+type storageItem = { name: string; id: string; type: string; defaultPath?: string };
 
 interface StoragePickerProps {
    storagePath?: string;
@@ -23,10 +23,15 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
    const [showAddStorageModal, setShowAddStorageModal] = useState(false);
    const [path, setPath] = useState(() => storagePath);
    const isLocalStorage = selectedStorage?.type === 'local';
+   const hasBucketName = selectedStorage?.defaultPath && selectedStorage?.defaultPath !== '/';
+   const fullPath = hasBucketName ? `${selectedStorage.defaultPath}${path ? `/${path}` : ''}` : path;
 
    const { data: allStorageData } = useGetStorages();
    const allUserStorages = (allStorageData?.result as storageItem[]) || [];
    const allStorages = [...allUserStorages];
+
+   console.log('allStorages :', allStorages);
+   console.log('selectedStorage :', selectedStorage);
 
    const storageOptions = useMemo(() => {
       const storageOpts = allStorages.map(({ name, id, type }) => ({
@@ -52,12 +57,16 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
       if (allStorages.length > 0 && storageId) {
          const currentStorage = allStorages.find((s) => s.id === storageId);
          setSelectedStorage(currentStorage);
+         if (currentStorage?.defaultPath && currentStorage.defaultPath !== '/') {
+            const prefix = currentStorage.defaultPath + '/';
+            setPath((prev) => (prev.startsWith(prefix) ? prev.slice(prefix.length) : prev));
+         }
       }
    }, [allStorageData]);
 
    useEffect(() => {
       if (selectedStorage) {
-         onUpdate({ storage: selectedStorage, path });
+         onUpdate({ storage: selectedStorage, path: fullPath });
       }
    }, [selectedStorage, path]);
 
@@ -80,12 +89,17 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
                      disabled={disabled}
                   />
                </div>
-               <div className={classes.path}>
+               <div className={`${classes.path} ${hasBucketName ? classes.withBucket : ''}`}>
+                  {hasBucketName && (
+                     <span className={classes.defaultPath} title={`Bucket: ${selectedStorage.defaultPath}`}>
+                        {selectedStorage.defaultPath + '/'}
+                     </span>
+                  )}
                   <Input
                      disabled={disabled}
                      fieldValue={path}
-                     onUpdate={(val) => setPath(val)}
-                     placeholder={isLocalStorage ? 'Select a folder' : `folder-or-bucket/subfolder`}
+                     onUpdate={(val) => setPath(val.startsWith('/') ? val.slice(1) : val)} //if the val starts with a slash remove it
+                     placeholder={isLocalStorage ? 'Select a folder' : hasBucketName ? 'subfolder' : `folder-or-bucket/subfolder`}
                      full={true}
                      required={!disabled && isLocalStorage}
                      error={(!disabled && isLocalStorage && !path ? 'Required' : '') as string}

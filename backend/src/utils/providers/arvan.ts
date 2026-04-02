@@ -42,6 +42,16 @@ const arvanSettings = [
 			'Your Arvan Cloud Endpoint. eg: s3.ir-thr-at1.arvanstorage.ir or BUCKETNAME.ir-thr-at1.arvanstorage.ir',
 		command: '--s3-endpoint',
 	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your Arvan Cloud Bucket Name. eg: pluton-backup',
+		command: '',
+	},
 	...s3Options,
 ];
 

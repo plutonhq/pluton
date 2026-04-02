@@ -10,16 +10,6 @@ const sftpSettings = [
 		description: 'SSH host to connect to. E.g. "example.com".',
 	},
 	{
-		label: 'SSH Username',
-		command: '--sftp-user',
-		fieldType: 'string',
-		authFieldType: 'password',
-		required: false,
-		value: 'user',
-		default: '$user',
-		description: 'SSH username.',
-	},
-	{
 		label: 'SSH Port',
 		command: '--sftp-port',
 		fieldType: 'int',
@@ -28,6 +18,16 @@ const sftpSettings = [
 		value: 'port',
 		default: '22',
 		description: 'SSH port number.',
+	},
+	{
+		label: 'SSH Username',
+		command: '--sftp-user',
+		fieldType: 'string',
+		authFieldType: 'password',
+		required: false,
+		value: 'user',
+		default: '$user',
+		description: 'SSH username.',
 	},
 	{
 		label: 'SSH Password',

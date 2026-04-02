@@ -32,6 +32,16 @@ const leviiaSettings = [
 			'Your Leviia Endpoint. Can be found in your Leviia dashboard. example: s3.eu-west.leviia.com',
 		command: '--s3-endpoint',
 	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your Leviia Bucket Name. eg: pluton-backup',
+		command: '',
+	},
 	...s3Options,
 ];
 

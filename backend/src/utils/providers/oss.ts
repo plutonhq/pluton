@@ -59,9 +59,18 @@ const ossSettings = [
 		],
 		required: true,
 		default: '',
-		description:
-			"Select a Region to connect to that region's API Endpoint.",
+		description: "Select a Region to connect to that region's API Endpoint.",
 		command: '--s3-region',
+	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your OSS Bucket Name. eg: pluton-backup',
+		command: '',
 	},
 	{
 		label: 'Access Control List (ACL)',
@@ -79,8 +88,7 @@ const ossSettings = [
 		],
 		required: false,
 		default: '',
-		description:
-			'Access control permissions applied when creating buckets and storing objects.',
+		description: 'Access control permissions applied when creating buckets and storing objects.',
 		command: '--s3-acl',
 	},
 	{

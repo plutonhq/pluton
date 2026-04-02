@@ -8,7 +8,7 @@ const rcloneSettings = [
 		authFieldType: 'client',
 		required: true,
 		default: '',
-		description: 'R2 Access Key ID.',
+		description: 'Rclone Serve S3 Access Key ID.',
 		command: '--s3-access-key-id',
 	},
 	{
@@ -18,7 +18,7 @@ const rcloneSettings = [
 		authFieldType: 'client',
 		required: true,
 		default: '',
-		description: 'R2 Secret Access Key (password).',
+		description: 'Rclone Serve S3 Secret Access Key (password).',
 		command: '--s3-secret-access-key',
 	},
 	{
@@ -28,8 +28,18 @@ const rcloneSettings = [
 		authFieldType: 'client',
 		required: true,
 		default: '',
-		description: 'Your Rclone Server Endpoint.',
+		description: 'Your Rclone Serve S3 Server Endpoint.',
 		command: '--s3-endpoint',
+	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your Rclone Serve S3 Bucket Name. eg: pluton-backup',
+		command: '',
 	},
 	...s3Options,
 ];

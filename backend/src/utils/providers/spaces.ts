@@ -49,6 +49,16 @@ const spacesSettings = [
 			"Select a Region to connect to that region's API Endpoint. Custom Endpoint Example: xxxx.digitaloceanspaces.com",
 		command: '--s3-endpoint',
 	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your Spaces Bucket Name. eg: pluton-backup',
+		command: '',
+	},
 	...s3Options,
 ];
 

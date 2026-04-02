@@ -32,6 +32,16 @@ const tencentSettings = [
 			'Your Tencent COS Endpoint. Example: examplebucket-1250000000.cos.ap-guangzhou.myqcloud.com',
 		command: '--s3-endpoint',
 	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your Tencent COS Bucket Name. eg: pluton-backup',
+		command: '',
+	},
 	...s3Options,
 ];
 

@@ -2,19 +2,6 @@ import { providers } from '../utils/providers';
 import { runRcloneCommand } from '../utils/rclone/rclone';
 
 export class BaseStorageManager {
-	async setupRclone() {
-		// Encrypt Rclone Config file.
-		// set the password in RCLONE_CONFIG_PASS env then run:
-		// rclone config encryption set --config=rclone.conf --encrypted-config=rclone.conf.enc --ask-password=false
-
-		// Remove the rclone.conf file
-		if (process.platform === 'win32') {
-			// use rm to remove rclone.conf file
-		} else {
-			// If linux, use shred to remove the file
-		}
-	}
-
 	async createRemote(
 		type: string,
 		name: string,
@@ -23,11 +10,25 @@ export class BaseStorageManager {
 		settings?: Record<string, string>
 	): Promise<any> {
 		const provider = providers[type];
+		const bucketName = credentials?.bucket ? credentials.bucket.trim() : '';
 		if (!provider && type !== 'local') {
 			throw new Error(`Unsupported storage type: ${type}`);
 		}
 
-		const args = ['config', 'create', name, type];
+		let rcloneStorageType = type;
+		if (provider) {
+			if (provider.s3Adapter) {
+				rcloneStorageType = 's3';
+				if (!bucketName) {
+					return {
+						success: false,
+						result: 'Bucket Name is required.',
+					};
+				}
+			}
+		}
+
+		const args = ['config', 'create', name, rcloneStorageType];
 		const setupArgs = provider.setup(credentials, authType);
 		if (setupArgs === false) {
 			throw new Error(`Missing Required credentials.`);
@@ -58,14 +59,16 @@ export class BaseStorageManager {
 				})
 					.then(response => response.json())
 					.then((result: any) => {
-						console.log('result.id :', result.id);
-						console.log('result.driveType :', result.driveType);
 						if (result && result.id && result.driveType) {
 							args.push('drive_id', result.id, 'drive_type', result.driveType);
 						}
 					});
 			} catch (error: any) {
-				console.log('error :', error);
+				return {
+					success: false,
+					result:
+						'Failed to fetch OneDrive drive information. Please verify your credentials and try again.',
+				};
 			}
 		}
 
@@ -78,36 +81,41 @@ export class BaseStorageManager {
 			const output = await runRcloneCommand(args);
 
 			try {
-				const lsdOutput = await runRcloneCommand(['lsd', name + ':']);
+				const lsdOutput = await runRcloneCommand(['lsd', name + ':' + (bucketName ?? '')]);
 				// console.log('lsd Success :', lsdOutput);
 				return {
 					success: true,
 					result: output,
 				};
 			} catch (error: any) {
-				console.log('lsd error:', error);
+				const storageListingError = (error?.message || '').split('\n')[0];
 				await runRcloneCommand(['config', 'delete', name]);
 				return {
 					success: false,
-					result: error?.message || '',
+					result: storageListingError,
 				};
 			}
 		} catch (error: any) {
+			// split the first line and return only the error message
+			const storageCreateError = (error?.message || '').split('\n')[0];
+
 			return {
 				success: false,
-				result: error?.message || '',
+				result: storageCreateError,
 			};
 		}
 	}
 
 	async updateRemote(
 		name: string,
-		newSettings: Record<string, string | number | boolean>,
-		oldSettings: Record<string, string | number | boolean>
+		newSettings: Record<string, any>,
+		oldSettings: Record<string, any>
 	): Promise<any> {
 		// Filter out settings that need to be updated vs removed
 		// When a setting is in the config file and it is not provided on subsequent updates,
 		// its reset to default by rclone
+		const availableCreds = newSettings.credentials || oldSettings.credentials;
+		const bucketName = availableCreds?.bucket ? availableCreds?.bucket.trim() : '';
 		const updateArgs = ['config', 'update', name];
 		Object.entries(newSettings).forEach(([key, value]) => {
 			updateArgs.push(key, value.toString());
@@ -119,7 +127,7 @@ export class BaseStorageManager {
 
 			// Verify the remote still works after update
 			try {
-				const lsdOutput = await runRcloneCommand(['lsd', name + ':']);
+				const lsdOutput = await runRcloneCommand(['lsd', name + ':' + (bucketName ?? '')]);
 
 				return {
 					success: true,
@@ -227,9 +235,9 @@ export class BaseStorageManager {
 		}
 	}
 
-	async verifyRemote(name: string): Promise<{ success: boolean; result: string }> {
+	async verifyRemote(name: string, bucket?: string): Promise<{ success: boolean; result: string }> {
 		try {
-			const lsdOutput = await runRcloneCommand(['lsd', name + ':']);
+			const lsdOutput = await runRcloneCommand(['lsd', name + ':' + (bucket ?? '')]);
 			return {
 				success: true,
 				result: lsdOutput,

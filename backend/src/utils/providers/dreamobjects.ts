@@ -39,6 +39,16 @@ const dreamobjectsSettings = [
 			"Select a Region to connect to that region's API Endpoint. Find out which endpoint you should connect to here: https://help.dreamhost.com/hc/en-us/articles/32254965300372-DreamObjects-cluster-differences",
 		command: '--s3-endpoint',
 	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your DreamObjects Bucket Name. eg: pluton-backup',
+		command: '',
+	},
 	...s3Options,
 ];
 

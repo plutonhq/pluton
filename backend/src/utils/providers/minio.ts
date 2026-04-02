@@ -28,7 +28,8 @@ const minioSettings = [
 		authFieldType: 'client',
 		required: true,
 		default: '',
-		description: 'Your Minio Endpoint to connect to.',
+		description:
+			'Your Minio Endpoint to connect to. example: http://192.168.1.106:9000 or https://play.min.io',
 		command: '--s3-endpoint',
 	},
 	{
@@ -41,17 +42,16 @@ const minioSettings = [
 		description: 'Your Minio Region',
 		command: '--s3-region',
 	},
-	// {
-	// 	label: 'ACL',
-	// 	value: 'acl',
-	// 	fieldType: 'string',
-	// 	authFieldType: 'client',
-	// 	required: false,
-	// 	default: '',
-	// 	description:
-	// 		"Canned ACL used when creating buckets and storing or copying objects. This ACL is used for creating objects and if bucket_acl isn't set, for creating buckets too.",
-	// 	command: '--s3-acl',
-	// },
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your Minio Bucket Name. eg: pluton-backup',
+		command: '',
+	},
 	...s3Options,
 ];
 

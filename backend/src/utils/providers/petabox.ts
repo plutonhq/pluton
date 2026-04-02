@@ -21,6 +21,16 @@ const petaboxSettings = [
 		description: 'Secret Access Key (password).',
 		command: '--s3-secret-access-key',
 	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your Petabox Bucket Name. eg: pluton-backup',
+		command: '',
+	},
 	...s3Options,
 ];
 

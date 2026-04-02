@@ -2,17 +2,6 @@ import s3Options from './_s3Options';
 
 const s3Settings = [
 	{
-		label: 'Environment Auth',
-		value: 'env_auth',
-		fieldType: 'bool',
-		authFieldType: 'client',
-		required: false,
-		default: false,
-		description:
-			'Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).',
-		command: '--s3-env-auth',
-	},
-	{
 		label: 'Access Key ID',
 		value: 'access_key_id',
 		fieldType: 'string',
@@ -46,17 +35,6 @@ const s3Settings = [
 		command: '--s3-region',
 	},
 	{
-		label: 'Endpoint',
-		value: 'endpoint',
-		fieldType: 'string',
-		authFieldType: 'client',
-		required: true,
-		default: '',
-		description:
-			'Endpoint for S3 API. Leave blank if using AWS to use the default endpoint for the region.',
-		command: '--s3-endpoint',
-	},
-	{
 		label: 'Location Constraint',
 		value: 'location_constraint',
 		fieldType: 'string',
@@ -66,6 +44,27 @@ const s3Settings = [
 		description:
 			'Location constraint - must be set to match the Region. Used when creating buckets only.',
 		command: '--s3-location-constraint',
+	},
+	{
+		label: 'Bucket Name',
+		value: 'bucket',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: true,
+		default: '',
+		description: 'Your S3 Bucket Name. eg: pluton-backup',
+		command: '',
+	},
+	{
+		label: 'Endpoint',
+		value: 'endpoint',
+		fieldType: 'string',
+		authFieldType: 'client',
+		required: false,
+		default: '',
+		description:
+			'Endpoint for S3 API. Leave blank if using AWS to use the default endpoint for the region.',
+		command: '--s3-endpoint',
 	},
 	{
 		label: 'ACL',
