@@ -34,7 +34,6 @@ const StorageItem = ({ storage, layout }: StorageItemProps) => {
          onSuccess: (data: any) => {
             console.log('Success :', data);
             toast.success(`Removed Storage Successfully!`, { autoClose: 5000 });
-            close();
          },
       });
    };
