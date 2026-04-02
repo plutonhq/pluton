@@ -296,7 +296,7 @@ describe('StorageService', () => {
 
 			const result = await storageService.verifyStorage(storageId);
 
-			expect(mockStorageManager.verifyRemote).toHaveBeenCalledWith('VerifyMe');
+			expect(mockStorageManager.verifyRemote).toHaveBeenCalledWith('VerifyMe', undefined);
 			expect(result).toBe('Connection OK');
 		});
 

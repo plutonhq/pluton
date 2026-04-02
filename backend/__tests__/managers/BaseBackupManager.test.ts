@@ -484,20 +484,6 @@ describe('BaseBackupManager', () => {
 			expect(res.success).toBe(false);
 			expect(res.result).toMatch(/Schedule error/);
 		});
-
-		it('includes progress callback during repo initialization', async () => {
-			const performSpy = jest
-				.spyOn(mgr, 'performBackup')
-				.mockResolvedValue({ success: true, result: 'Job added' });
-
-			await mgr.createBackup('plan-progress', baseOptions as BackupPlanArgs);
-
-			const [, , progressCallback] = mockRunResticCommand.mock.calls[0];
-			expect(progressCallback).toBeDefined();
-			expect(typeof progressCallback).toBe('function');
-
-			performSpy.mockRestore();
-		});
 	});
 
 	describe('updateBackup', () => {

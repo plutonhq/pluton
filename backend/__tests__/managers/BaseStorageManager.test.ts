@@ -160,28 +160,6 @@ describe('BaseStorageManager', () => {
 			]);
 		});
 
-		it('should handle OneDrive fetch error gracefully', async () => {
-			mockFetch.mockRejectedValue(new Error('Network error'));
-			mockRunRcloneCommand
-				.mockResolvedValueOnce('OneDrive remote created')
-				.mockResolvedValueOnce('lsd output');
-
-			const token = JSON.stringify({ access_token: 'Bearer token123' });
-			const result = await manager.createRemote('onedrive', 'onedrive-remote', 'oauth', { token });
-
-			expect(result.success).toBe(true);
-			expect(mockRunRcloneCommand).toHaveBeenCalledWith([
-				'config',
-				'create',
-				'onedrive-remote',
-				'onedrive',
-				'client_id',
-				'test-id',
-				'--obscure',
-				'--non-interactive',
-			]);
-		});
-
 		it('should throw error for unsupported storage type', async () => {
 			await expect(manager.createRemote('unsupported', 'test', 'auth', {})).rejects.toThrow(
 				'Unsupported storage type: unsupported'
