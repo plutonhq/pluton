@@ -331,11 +331,11 @@ describe('StorageController', () => {
 		});
 	});
 
-	describe('authorizeStorage', () => {
+	describe('startAuthorize', () => {
 		it('should return 400 if storage type is missing', async () => {
-			mockRequest.query = {};
+			mockRequest.body = {};
 
-			await storageController.authorizeStorage(mockRequest as Request, mockResponse as Response);
+			await storageController.startAuthorize(mockRequest as Request, mockResponse as Response);
 
 			expect(mockStatus).toHaveBeenCalledWith(400);
 			expect(mockJson).toHaveBeenCalledWith({
@@ -344,31 +344,134 @@ describe('StorageController', () => {
 			});
 		});
 
-		it('should successfully authorize storage', async () => {
-			const authResult = { authUrl: 'https://auth.example.com', token: 'auth-token' };
-			mockRequest.query = { type: 'gdrive' };
-			mockStorageService.authorizeStorage.mockResolvedValue(authResult as any);
+		it('should return 400 if storage type is not a string', async () => {
+			mockRequest.body = { type: 123 };
 
-			await storageController.authorizeStorage(mockRequest as Request, mockResponse as Response);
+			await storageController.startAuthorize(mockRequest as Request, mockResponse as Response);
 
-			expect(mockStorageService.authorizeStorage).toHaveBeenCalledWith('gdrive');
-			expect(mockStatus).toHaveBeenCalledWith(200);
+			expect(mockStatus).toHaveBeenCalledWith(400);
 			expect(mockJson).toHaveBeenCalledWith({
-				success: true,
-				result: authResult,
+				success: false,
+				error: 'Storage type is required',
 			});
 		});
 
-		it('should return 500 if service throws an error', async () => {
-			mockRequest.query = { type: 'gdrive' };
-			mockStorageService.authorizeStorage.mockRejectedValue(new Error('Authorization failed'));
+		it('should successfully start authorization', async () => {
+			mockRequest.body = { type: 'drive' };
+			mockStorageService.startAuthorize.mockReturnValue('session-abc');
 
-			await storageController.authorizeStorage(mockRequest as Request, mockResponse as Response);
+			await storageController.startAuthorize(mockRequest as Request, mockResponse as Response);
 
-			expect(mockStatus).toHaveBeenCalledWith(500);
+			expect(mockStorageService.startAuthorize).toHaveBeenCalledWith('drive');
+			expect(mockStatus).toHaveBeenCalledWith(200);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: true,
+				result: { sessionId: 'session-abc' },
+			});
+		});
+
+		it('should forward service errors with statusCode', async () => {
+			mockRequest.body = { type: 'drive' };
+			const error = { statusCode: 409, message: 'Already in progress' };
+			mockStorageService.startAuthorize.mockImplementation(() => {
+				throw error;
+			});
+
+			await storageController.startAuthorize(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(409);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: false,
-				error: 'Failed to authorize storage',
+				error: 'Already in progress',
+			});
+		});
+	});
+
+	describe('getAuthorizeStatus', () => {
+		it('should return 400 if sessionId is missing', async () => {
+			mockRequest.query = {};
+
+			await storageController.getAuthorizeStatus(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(400);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				error: 'Session ID is required',
+			});
+		});
+
+		it('should successfully return authorize status', async () => {
+			mockRequest.query = { sessionId: 'session-abc' };
+			const statusResult = {
+				status: 'success',
+				token: '{"access_token":"xyz"}',
+			};
+			mockStorageService.getAuthorizeStatus.mockReturnValue(statusResult as any);
+
+			await storageController.getAuthorizeStatus(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStorageService.getAuthorizeStatus).toHaveBeenCalledWith('session-abc');
+			expect(mockStatus).toHaveBeenCalledWith(200);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: true,
+				result: statusResult,
+			});
+		});
+
+		it('should forward 404 for unknown session', async () => {
+			mockRequest.query = { sessionId: 'nonexistent' };
+			const error = { statusCode: 404, message: 'Authorization session not found' };
+			mockStorageService.getAuthorizeStatus.mockImplementation(() => {
+				throw error;
+			});
+
+			await storageController.getAuthorizeStatus(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(404);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				error: 'Authorization session not found',
+			});
+		});
+	});
+
+	describe('cancelAuthorize', () => {
+		it('should return 400 if sessionId is missing', async () => {
+			mockRequest.body = {};
+
+			await storageController.cancelAuthorize(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(400);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				error: 'Session ID is required',
+			});
+		});
+
+		it('should successfully cancel authorization', async () => {
+			mockRequest.body = { sessionId: 'session-abc' };
+			mockStorageService.cancelAuthorize.mockReturnValue(undefined);
+
+			await storageController.cancelAuthorize(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStorageService.cancelAuthorize).toHaveBeenCalledWith('session-abc');
+			expect(mockStatus).toHaveBeenCalledWith(200);
+			expect(mockJson).toHaveBeenCalledWith({ success: true });
+		});
+
+		it('should forward 404 for unknown session', async () => {
+			mockRequest.body = { sessionId: 'nonexistent' };
+			const error = { statusCode: 404, message: 'Authorization session not found' };
+			mockStorageService.cancelAuthorize.mockImplementation(() => {
+				throw error;
+			});
+
+			await storageController.cancelAuthorize(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(404);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				error: 'Authorization session not found',
 			});
 		});
 	});

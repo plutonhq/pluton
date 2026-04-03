@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { storageOptionField } from '../../../@types/storages';
 import Tristate from '../../common/form/Tristate/Tristate';
 import Icon from '../../common/Icon/Icon';
 import classes from '../AddStorage/AddStorage.module.scss';
 import StorageSettings from '../StorageSettings/StorageSettings';
+import { startStorageAuthorize, getStorageAuthorizeStatus, cancelStorageAuthorize } from '../../../services/storage';
 
 interface StorageAuthSettingsProps {
    storageType: string;
@@ -15,6 +16,8 @@ interface StorageAuthSettingsProps {
    onUpdate: (newSettings: StorageAuthSettingsProps['settings']) => void;
    onAuthTypeChange: (authType: string) => void;
 }
+
+type OAuthStatus = 'idle' | 'authorizing' | 'success' | 'error';
 
 const StorageAuthSettings = ({
    storageType,
@@ -29,6 +32,16 @@ const StorageAuthSettings = ({
    const [showAdvanced, setShowAdvanced] = useState(true);
    const [showOAuthDoc, setShowOAuthDoc] = useState(false);
 
+   // OAuth auto-authorize state
+   const [oauthStatus, setOauthStatus] = useState<OAuthStatus>('idle');
+   const [authSessionId, setAuthSessionId] = useState<string | null>(null);
+   const [authUrl, setAuthUrl] = useState<string | null>(null);
+   const [authError, setAuthError] = useState<string | null>(null);
+   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+   const installType = (window as any).plutonInstallType;
+   const isDesktop = installType === 'binary' || installType === 'dev';
+
    console.log('availableAuthTypes :', fields, authTypes, currentAuthType);
 
    useEffect(() => {
@@ -36,6 +49,76 @@ const StorageAuthSettings = ({
          onAuthTypeChange(authTypes[0]);
       }
    }, [authTypes, currentAuthType, onAuthTypeChange]);
+
+   // Cleanup polling on unmount
+   useEffect(() => {
+      return () => {
+         if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+         }
+      };
+   }, []);
+
+   const stopPolling = useCallback(() => {
+      if (pollingRef.current) {
+         clearInterval(pollingRef.current);
+         pollingRef.current = null;
+      }
+   }, []);
+
+   const startOAuthAuthorize = useCallback(async () => {
+      setOauthStatus('authorizing');
+      setAuthUrl(null);
+      setAuthError(null);
+
+      try {
+         const { sessionId } = await startStorageAuthorize(storageType);
+         setAuthSessionId(sessionId);
+
+         // Start polling every 2 seconds
+         pollingRef.current = setInterval(async () => {
+            try {
+               const result = await getStorageAuthorizeStatus(sessionId);
+
+               if (result.authUrl) {
+                  setAuthUrl(result.authUrl);
+               }
+
+               if (result.status === 'success' && result.token) {
+                  stopPolling();
+                  setOauthStatus('success');
+                  onUpdate({ ...settings, token: result.token });
+               } else if (result.status === 'error') {
+                  stopPolling();
+                  setOauthStatus('error');
+                  setAuthError(result.error || 'Authorization failed');
+               }
+            } catch (err: any) {
+               stopPolling();
+               setOauthStatus('error');
+               setAuthError(err?.message || 'Failed to check authorization status');
+            }
+         }, 2000);
+      } catch (err: any) {
+         setOauthStatus('error');
+         setAuthError(err?.message || 'Failed to start authorization');
+      }
+   }, [storageType, settings, onUpdate, stopPolling]);
+
+   const handleCancelAuthorize = useCallback(async () => {
+      stopPolling();
+      if (authSessionId) {
+         try {
+            await cancelStorageAuthorize(authSessionId);
+         } catch {
+            // Ignore cancel errors
+         }
+      }
+      setOauthStatus('idle');
+      setAuthSessionId(null);
+      setAuthUrl(null);
+      setAuthError(null);
+   }, [authSessionId, stopPolling]);
 
    return (
       <div className={classes.authSettings}>
@@ -67,14 +150,64 @@ const StorageAuthSettings = ({
                      />
                   </div>
                )}
-
                <StorageSettings
                   fields={fields.filter((f) => f.authFieldType === currentAuthType)}
                   settings={settings}
                   onUpdate={(newSettings) => onUpdate(newSettings)}
                   errors={errors}
                />
-               {currentAuthType === 'oauth' && (
+
+               {currentAuthType === 'oauth' && isDesktop && oauthStatus === 'idle' && (
+                  <div className={classes.oauthButton}>
+                     <button className={classes.oauthAuthorizeBtn} onClick={startOAuthAuthorize}>
+                        <Icon type={'key'} size={14} /> Authorize & Get Access Token
+                     </button>
+                  </div>
+               )}
+
+               {currentAuthType === 'oauth' && isDesktop && oauthStatus !== 'idle' && (
+                  <div className={`${classes.oauthContainer} ${classes[oauthStatus]}`}>
+                     {oauthStatus === 'authorizing' && (
+                        <div className={classes.oauthProgress}>
+                           <p>
+                              <strong>Waiting for authorization...</strong>
+                              <br />A browser window should have opened. Please authorize the connection in your browser.
+                           </p>
+                           {authUrl && (
+                              <p>
+                                 If the browser didn't open automatically,{' '}
+                                 <a href={authUrl} target="_blank" rel="noopener noreferrer">
+                                    click here to authorize
+                                 </a>
+                                 .
+                              </p>
+                           )}
+                           <button className={classes.oauthInnerBtn} onClick={handleCancelAuthorize}>
+                              Cancel
+                           </button>
+                        </div>
+                     )}
+                     {oauthStatus === 'success' && (
+                        <div className={classes.oauthProgress}>
+                           <p>
+                              <Icon type={'check'} size={14} /> <strong>Authorization successful!</strong> Token has been automatically filled in.
+                           </p>
+                        </div>
+                     )}
+                     {oauthStatus === 'error' && (
+                        <div className={classes.oauthProgress}>
+                           <p>
+                              <strong>Authorization failed:</strong> {authError}
+                           </p>
+                           <button className={classes.oauthInnerBtn} onClick={startOAuthAuthorize}>
+                              <Icon type={'key'} size={14} /> Try Again
+                           </button>
+                        </div>
+                     )}
+                  </div>
+               )}
+
+               {currentAuthType === 'oauth' && !isDesktop && (
                   <div className={classes.oauthDoc}>
                      <h4 onClick={() => setShowOAuthDoc(!showOAuthDoc)}>
                         <Icon type={'key'} size={14} /> Acquiring the OAuth Access Token

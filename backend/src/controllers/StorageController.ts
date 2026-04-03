@@ -90,12 +90,10 @@ export class StorageController {
 			StorageLogger.error(
 				`Error deleting storage #${req.params.id}. Reason : ${error?.message.toString() || 'Unknown Error'}`
 			);
-			res
-				.status(500)
-				.json({
-					success: false,
-					error: `Failed to delete storage. Reason : ${error?.message.toString() || 'Unknown Error'}`,
-				});
+			res.status(500).json({
+				success: false,
+				error: `Failed to delete storage. Reason : ${error?.message.toString() || 'Unknown Error'}`,
+			});
 		}
 	}
 
@@ -113,16 +111,57 @@ export class StorageController {
 		}
 	}
 
-	async authorizeStorage(req: Request, res: Response): Promise<void> {
+	async startAuthorize(req: Request, res: Response): Promise<void> {
 		try {
-			if (!req.query.type) {
+			const storageType = req.body?.type;
+			if (!storageType || typeof storageType !== 'string') {
 				res.status(400).json({ success: false, error: 'Storage type is required' });
 				return;
 			}
-			const rcloneAuthResp = await this.storageService.authorizeStorage(req.query.type as string);
-			res.status(200).json({ success: true, result: rcloneAuthResp });
+			const sessionId = this.storageService.startAuthorize(storageType);
+			res.status(200).json({ success: true, result: { sessionId } });
 		} catch (error: any) {
-			res.status(500).json({ success: false, error: 'Failed to authorize storage' });
+			const status = error?.statusCode || 500;
+			res.status(status).json({
+				success: false,
+				error: error?.message || 'Failed to start authorization',
+			});
+		}
+	}
+
+	async getAuthorizeStatus(req: Request, res: Response): Promise<void> {
+		try {
+			const sessionId = req.query.sessionId as string;
+			if (!sessionId) {
+				res.status(400).json({ success: false, error: 'Session ID is required' });
+				return;
+			}
+			const status = this.storageService.getAuthorizeStatus(sessionId);
+			res.status(200).json({ success: true, result: status });
+		} catch (error: any) {
+			const httpStatus = error?.statusCode || 500;
+			res.status(httpStatus).json({
+				success: false,
+				error: error?.message || 'Failed to get authorization status',
+			});
+		}
+	}
+
+	async cancelAuthorize(req: Request, res: Response): Promise<void> {
+		try {
+			const sessionId = req.body?.sessionId;
+			if (!sessionId) {
+				res.status(400).json({ success: false, error: 'Session ID is required' });
+				return;
+			}
+			this.storageService.cancelAuthorize(sessionId);
+			res.status(200).json({ success: true });
+		} catch (error: any) {
+			const status = error?.statusCode || 500;
+			res.status(status).json({
+				success: false,
+				error: error?.message || 'Failed to cancel authorization',
+			});
 		}
 	}
 }

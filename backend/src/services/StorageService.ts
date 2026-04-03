@@ -10,10 +10,14 @@ import {
 	SystemStrategy,
 } from '../strategies/system';
 import { generateUID } from '../utils/helpers';
-import { runCommand } from '../utils/runCommand';
 import { BaseSystemManager } from '../managers/BaseSystemManager';
 import { configService } from './ConfigService';
 import { AppError, NotFoundError } from '../utils/AppError';
+import {
+	spawnRcloneAuthorize,
+	RcloneAuthSession,
+	RcloneAuthSessionStatus,
+} from '../utils/rclone/helpers';
 
 /**
  * A class for managing storage operations.
@@ -314,39 +318,75 @@ export class StorageService {
 		}
 	}
 
-	async authorizeStorage(type: string): Promise<string> {
-		try {
-			const rcloneAuthResp = await this.getRcloneStorageToken(type);
-			return rcloneAuthResp;
-		} catch (error: any) {
-			if (error instanceof AppError) {
-				throw error;
-			}
-			throw new AppError(500, error?.message || 'Failed to authorize storage');
+	// ── OAuth Authorization Session Management ──────────────────────────
+
+	private authSessions = new Map<string, RcloneAuthSession>();
+	private readonly AUTH_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+	startAuthorize(storageType: string): string {
+		// Validate storage type
+		if (!providers[storageType]) {
+			throw new AppError(400, `Unknown storage type: ${storageType}`);
 		}
+		const provider = providers[storageType];
+		if (!provider.authTypes?.includes('oauth')) {
+			throw new AppError(400, `Storage type "${storageType}" does not support OAuth`);
+		}
+
+		// Allow only one concurrent auth session
+		for (const [id, session] of this.authSessions) {
+			if (session.status === 'pending') {
+				throw new AppError(
+					409,
+					'An authorization session is already in progress. Cancel it first or wait for it to complete.'
+				);
+			}
+		}
+
+		const sessionId = generateUID();
+		const session: RcloneAuthSession = {
+			id: sessionId,
+			storageType,
+			status: 'pending',
+			startedAt: Date.now(),
+		};
+		this.authSessions.set(sessionId, session);
+
+		// Spawn rclone authorize in background
+		spawnRcloneAuthorize(session, this.AUTH_TIMEOUT_MS);
+
+		return sessionId;
 	}
 
-	private async getRcloneStorageToken(storageType: string): Promise<string> {
-		try {
-			const output = await runCommand(
-				['rclone', 'authorize', storageType, '--auth-no-open-browser'],
-				undefined,
-				log => console.log('[auth] ', log)
-			);
-
-			// Extract the JSON string between the markers
-			const tokenMatch = output.match(/--->\n\n(.*?)\n\n<---/s);
-			if (tokenMatch && tokenMatch[1]) {
-				const tokenJson = JSON.parse(tokenMatch[1]);
-				return tokenJson;
-			}
-
-			throw new AppError(500, `Could not extract ${storageType} token from output`);
-		} catch (error: any) {
-			if (error instanceof AppError) {
-				throw error;
-			}
-			throw new AppError(500, `Failed to authorize ${storageType}: ${error.message}`);
+	getAuthorizeStatus(sessionId: string): RcloneAuthSessionStatus {
+		const session = this.authSessions.get(sessionId);
+		if (!session) {
+			throw new AppError(404, 'Authorization session not found');
 		}
+
+		const result: RcloneAuthSessionStatus = {
+			status: session.status,
+		};
+		if (session.authUrl) result.authUrl = session.authUrl;
+		if (session.token) result.token = session.token;
+		if (session.error) result.error = session.error;
+
+		// Clean up completed/errored sessions after they've been read
+		if (session.status === 'success' || session.status === 'error') {
+			this.authSessions.delete(sessionId);
+		}
+
+		return result;
+	}
+
+	cancelAuthorize(sessionId: string): void {
+		const session = this.authSessions.get(sessionId);
+		if (!session) {
+			throw new AppError(404, 'Authorization session not found');
+		}
+		if (session.process && !session.process.killed) {
+			session.process.kill();
+		}
+		this.authSessions.delete(sessionId);
 	}
 }

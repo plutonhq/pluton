@@ -8,9 +8,9 @@ import { LocalStrategy, RemoteStrategy } from '../../src/strategies/system';
 import { AppError } from '../../src/utils/AppError';
 import { NewStorage, Storage } from '../../src/db/schema/storages';
 import { generateUID } from '../../src/utils/helpers';
-import { runCommand } from '../../src/utils/runCommand';
+import { spawnRcloneAuthorize } from '../../src/utils/rclone/helpers';
 
-jest.mock('../../src/utils/runCommand');
+jest.mock('../../src/utils/rclone/helpers');
 
 // Mock dependencies
 jest.mock('../../src/stores/StorageStore');
@@ -31,7 +31,7 @@ jest.mock('../../src/services/ConfigService', () => ({
 	},
 }));
 
-const mockRunCommand = runCommand as jest.Mock;
+const mockSpawnRcloneAuthorize = spawnRcloneAuthorize as jest.Mock;
 
 describe('StorageService', () => {
 	let storageService: StorageService;
@@ -322,39 +322,130 @@ describe('StorageService', () => {
 	});
 
 	// ----------------------------------------
-	// authorizeStorage
+	// startAuthorize
 	// ----------------------------------------
-	describe('authorizeStorage', () => {
-		it('should call rclone authorize and return the token', async () => {
-			const mockToken = { access_token: 'xyz', expiry: '2025-10-26T10:00:00Z' };
-			const rcloneOutput = `--->\n\n${JSON.stringify(mockToken)}\n\n<---`;
-			mockRunCommand.mockResolvedValue(rcloneOutput);
+	describe('startAuthorize', () => {
+		it('should return a session ID for a valid OAuth storage type', () => {
+			const sessionId = storageService.startAuthorize('drive');
 
-			const result = await storageService.authorizeStorage('drive');
-
-			expect(mockRunCommand).toHaveBeenCalledWith(
-				['rclone', 'authorize', 'drive', '--auth-no-open-browser'],
-				undefined,
-				expect.any(Function)
-			);
-			expect(result).toEqual(mockToken);
-		});
-
-		it('should throw an AppError if rclone command fails', async () => {
-			mockRunCommand.mockRejectedValue(new Error('Command failed'));
-
-			await expect(storageService.authorizeStorage('drive')).rejects.toThrow(AppError);
-			await expect(storageService.authorizeStorage('drive')).rejects.toThrow(
-				'Failed to authorize drive: Command failed'
+			expect(sessionId).toBe('mock-uid-123');
+			expect(mockSpawnRcloneAuthorize).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 'mock-uid-123',
+					storageType: 'drive',
+					status: 'pending',
+				}),
+				expect.any(Number)
 			);
 		});
 
-		it('should throw an AppError if token cannot be extracted', async () => {
-			mockRunCommand.mockResolvedValue('Some unexpected output');
-
-			await expect(storageService.authorizeStorage('drive')).rejects.toThrow(
-				'Could not extract drive token from output'
+		it('should throw 400 for unknown storage type', () => {
+			expect(() => storageService.startAuthorize('nonexistent')).toThrow(AppError);
+			expect(() => storageService.startAuthorize('nonexistent')).toThrow(
+				'Unknown storage type: nonexistent'
 			);
+		});
+
+		it('should throw 400 for storage type that does not support OAuth', () => {
+			// 'local' does not have oauth in authTypes
+			expect(() => storageService.startAuthorize('local')).toThrow(AppError);
+			expect(() => storageService.startAuthorize('local')).toThrow('does not support OAuth');
+		});
+
+		it('should throw 409 if a session is already pending', () => {
+			storageService.startAuthorize('drive');
+			(generateUID as jest.Mock).mockReturnValue('mock-uid-456');
+
+			expect(() => storageService.startAuthorize('drive')).toThrow(AppError);
+			expect(() => storageService.startAuthorize('drive')).toThrow('already in progress');
+		});
+	});
+
+	// ----------------------------------------
+	// getAuthorizeStatus
+	// ----------------------------------------
+	describe('getAuthorizeStatus', () => {
+		it('should return pending status for an active session', () => {
+			const sessionId = storageService.startAuthorize('drive');
+			const status = storageService.getAuthorizeStatus(sessionId);
+
+			expect(status).toEqual({ status: 'pending' });
+		});
+
+		it('should throw 404 for unknown session ID', () => {
+			expect(() => storageService.getAuthorizeStatus('nonexistent')).toThrow(AppError);
+			expect(() => storageService.getAuthorizeStatus('nonexistent')).toThrow('session not found');
+		});
+
+		it('should clean up completed sessions after reading', () => {
+			// Manipulate session via spawnRcloneAuthorize mock
+			mockSpawnRcloneAuthorize.mockImplementation(session => {
+				session.status = 'success';
+				session.token = '{"access_token":"xyz"}';
+			});
+
+			const sessionId = storageService.startAuthorize('drive');
+			const status = storageService.getAuthorizeStatus(sessionId);
+
+			expect(status.status).toBe('success');
+			expect(status.token).toBe('{"access_token":"xyz"}');
+
+			// Second read should throw 404
+			expect(() => storageService.getAuthorizeStatus(sessionId)).toThrow('session not found');
+		});
+
+		it('should include authUrl when available', () => {
+			mockSpawnRcloneAuthorize.mockImplementation(session => {
+				session.authUrl = 'http://127.0.0.1:53682/auth';
+			});
+
+			const sessionId = storageService.startAuthorize('drive');
+			const status = storageService.getAuthorizeStatus(sessionId);
+
+			expect(status.authUrl).toBe('http://127.0.0.1:53682/auth');
+		});
+
+		it('should include error when available', () => {
+			mockSpawnRcloneAuthorize.mockImplementation(session => {
+				session.status = 'error';
+				session.error = 'Authorization timed out';
+			});
+
+			const sessionId = storageService.startAuthorize('drive');
+			const status = storageService.getAuthorizeStatus(sessionId);
+
+			expect(status.status).toBe('error');
+			expect(status.error).toBe('Authorization timed out');
+		});
+	});
+
+	// ----------------------------------------
+	// cancelAuthorize
+	// ----------------------------------------
+	describe('cancelAuthorize', () => {
+		it('should kill the process and remove the session', () => {
+			const mockKill = jest.fn();
+			mockSpawnRcloneAuthorize.mockImplementation(session => {
+				session.process = { killed: false, kill: mockKill } as any;
+			});
+
+			const sessionId = storageService.startAuthorize('drive');
+			storageService.cancelAuthorize(sessionId);
+
+			expect(mockKill).toHaveBeenCalled();
+			// Session should be gone
+			expect(() => storageService.getAuthorizeStatus(sessionId)).toThrow('session not found');
+		});
+
+		it('should throw 404 for unknown session ID', () => {
+			expect(() => storageService.cancelAuthorize('nonexistent')).toThrow(AppError);
+			expect(() => storageService.cancelAuthorize('nonexistent')).toThrow('session not found');
+		});
+
+		it('should handle session without a process reference', () => {
+			// Don't set process in mock
+			const sessionId = storageService.startAuthorize('drive');
+			expect(() => storageService.cancelAuthorize(sessionId)).not.toThrow();
 		});
 	});
 });

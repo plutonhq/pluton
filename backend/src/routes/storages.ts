@@ -13,7 +13,9 @@ export function createStorageRouter(
 	router.put('/:id', authM, controller.updateStorage.bind(controller));
 	router.delete('/:id', authM, controller.deleteStorage.bind(controller));
 	router.post('/verify/:id', authM, controller.verifyStorage.bind(controller));
-	// router.post('/auth', controller.authorizeStorage.bind(controller));
+	router.post('/authorize', authM, controller.startAuthorize.bind(controller));
+	router.get('/authorize/status', authM, controller.getAuthorizeStatus.bind(controller));
+	router.post('/authorize/cancel', authM, controller.cancelAuthorize.bind(controller));
 
 	return router;
 }

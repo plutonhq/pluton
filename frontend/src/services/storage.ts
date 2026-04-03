@@ -198,3 +198,52 @@ export function useVerifyStorage() {
       },
    });
 }
+
+// ── OAuth Authorization ─────────────────────────────────────────────
+export async function startStorageAuthorize(type: string): Promise<{ sessionId: string }> {
+   const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/storages/authorize`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: header,
+      body: JSON.stringify({ type }),
+   });
+   const data = await res.json();
+   if (!data.success) {
+      throw new Error(data.error);
+   }
+   return data.result;
+}
+
+export async function getStorageAuthorizeStatus(sessionId: string): Promise<{
+   status: 'pending' | 'success' | 'error';
+   token?: string;
+   error?: string;
+   authUrl?: string;
+}> {
+   const url = new URL(`${API_URL}/storages/authorize/status`);
+   url.searchParams.set('sessionId', sessionId);
+   const res = await fetch(url.toString(), {
+      method: 'GET',
+      credentials: 'include',
+   });
+   const data = await res.json();
+   if (!data.success) {
+      throw new Error(data.error);
+   }
+   return data.result;
+}
+
+export async function cancelStorageAuthorize(sessionId: string): Promise<void> {
+   const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/storages/authorize/cancel`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: header,
+      body: JSON.stringify({ sessionId }),
+   });
+   const data = await res.json();
+   if (!data.success) {
+      throw new Error(data.error);
+   }
+}

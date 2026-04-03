@@ -61,7 +61,7 @@ const googleDriveSettings = [
 		value: 'token',
 		fieldType: 'password',
 		authFieldType: 'oauth',
-		required: false,
+		required: true,
 		default: '',
 		description: 'OAuth Access Token as a JSON blob.',
 		command: '--drive-token',
