@@ -84,7 +84,7 @@ const PlanPruneSettings = ({ plan, onUpdate }: PlanPruneSettingsProps) => {
                         fieldValue={pruneSettings.keepWeeklySnaps || ''}
                         onUpdate={(val) => onUpdate({ ...pruneSettings, keepWeeklySnaps: val })}
                      />
-                     <span>Days</span>
+                     <span>Weeks</span>
                   </div>
                   <div className={classes.customPolicyOption}>
                      <span>Keep Monthly Backups for </span>
@@ -92,7 +92,7 @@ const PlanPruneSettings = ({ plan, onUpdate }: PlanPruneSettingsProps) => {
                         fieldValue={pruneSettings.keepMonthlySnaps || ''}
                         onUpdate={(val) => onUpdate({ ...pruneSettings, keepMonthlySnaps: val })}
                      />
-                     <span>Days</span>
+                     <span>Months</span>
                   </div>
                </div>
             </>
