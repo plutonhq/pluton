@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.0](https://github.com/plutonhq/pluton/compare/pluton-v0.7.4...pluton-v0.8.0) (2026-04-03)
+
+
+### Features
+
+* adds the ability to connect various drives directly without external rclone ([253c659](https://github.com/plutonhq/pluton/commit/253c659af549048f229834dbfdeb4bddbd565ed9))
+
+
+### Bug Fixes
+
+* resolves Koofr storage connectivity issue ([9991568](https://github.com/plutonhq/pluton/commit/99915683097111de91a8cd16489ee9936c1158fa))
+* resolves server installation issue ([15c10b9](https://github.com/plutonhq/pluton/commit/15c10b95fd59344ea1f60de83f24faf21c939be9)), closes [#37](https://github.com/plutonhq/pluton/issues/37)
+
 ## [0.7.4](https://github.com/plutonhq/pluton/compare/pluton-v0.7.3...pluton-v0.7.4) (2026-04-02)
 
 
