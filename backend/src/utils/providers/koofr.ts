@@ -5,23 +5,14 @@ const koofrSettings = [
 		fieldType: 'select',
 		authFieldType: 'client',
 		required: true,
-		default: 'https://app.koofr.net/',
+		default: 'koofr',
 		options: [
-			{ label: 'Koofr', value: 'https://app.koofr.net/' },
-			{ label: 'Digi Storage', value: 'https://storage.rcs-rds.ro/' },
-			{ label: 'Custom', value: 'custom' },
+			{ label: 'Koofr', value: 'koofr' },
+			{ label: 'Digi Storage', value: 'digistorage' },
+			{ label: 'Other', value: 'other' },
 		],
 		description: 'Choose your storage provider.',
 		command: '--koofr-provider',
-	},
-	{
-		label: 'API Endpoint',
-		value: 'endpoint',
-		fieldType: 'string',
-		required: false,
-		default: '',
-		description: 'The Koofr API endpoint to use.',
-		command: '--koofr-endpoint',
 	},
 	{
 		label: 'Username',
@@ -43,6 +34,15 @@ const koofrSettings = [
 		description:
 			'Your app password. Generate one at https://app.koofr.net/app/admin/preferences/password.',
 		command: '--koofr-password',
+	},
+	{
+		label: 'API Endpoint',
+		value: 'endpoint',
+		fieldType: 'string',
+		required: false,
+		default: '',
+		description: 'The Koofr API endpoint to use.',
+		command: '--koofr-endpoint',
 	},
 	{
 		label: 'Mount ID',

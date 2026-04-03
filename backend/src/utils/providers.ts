@@ -473,7 +473,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-koofr',
 		settings: koofrSettings,
 		authTypes: ['client'],
-		setup: creds => ['endpoint', creds.endpoint, 'user', creds.email, 'password', creds.password],
+		setup: creds => ['provider', creds.provider, 'user', creds.user, 'password', creds.password],
 		features: providerFeatures['koofr'],
 	},
 	mailru: {
