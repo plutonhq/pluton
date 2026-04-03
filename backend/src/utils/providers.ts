@@ -371,7 +371,10 @@ export const providers: Record<string, ProviderConfig> = {
 		features: providerFeatures['jottacloud'],
 		setup: (creds, type) => {
 			if (type === 'password') {
-				return ['user', creds.user, 'pass', creds.pass];
+				if (!creds.login_token) {
+					return false;
+				}
+				return ['config_login_token', creds.login_token, 'config_type', 'standard'];
 			} else {
 				if (!creds.client_id || !creds.client_secret) {
 					return false;
