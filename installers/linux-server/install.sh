@@ -214,7 +214,7 @@ load_config_file() {
     [ -n "${PLUTON_USER_NAME:-}" ] && CLI_USER_NAME="$PLUTON_USER_NAME"
     [ -n "${PLUTON_USER_PASSWORD:-}" ] && CLI_USER_PASSWORD="$PLUTON_USER_PASSWORD"
     [ -n "${SERVER_PORT:-}" ] && CLI_PORT="$SERVER_PORT"
-    [ -n "${MAX_CONCURRENT_BACKUPS:-}" ] && CLI_MAX_CONCURRENT="$MAX_CONCURRENT_BACKUPS"
+    [ -n "${MAX_CONCURRENT_BACKUPS:-}" ] && CLI_MAX_CONCURRENT="$MAX_CONCURRENT_BACKUPS" || true
 }
 
 # Load existing credentials (for upgrade)
@@ -235,7 +235,7 @@ load_existing_credentials() {
         local max_concurrent=$(grep -o '"MAX_CONCURRENT_BACKUPS"[[:space:]]*:[[:space:]]*[0-9]*' "${DATA_DIR}/config/config.json" 2>/dev/null | grep -o '[0-9]*' || echo "")
         
         [ -n "$port" ] && CLI_PORT="$port"
-        [ -n "$max_concurrent" ] && CLI_MAX_CONCURRENT="$max_concurrent"
+        [ -n "$max_concurrent" ] && CLI_MAX_CONCURRENT="$max_concurrent" || true
     fi
 }
 
@@ -472,8 +472,8 @@ install_files() {
     fi
     
     # Copy documentation
-    [ -f "${source_dir}/LICENSE" ] && cp "${source_dir}/LICENSE" "${INSTALL_DIR}/"
-    [ -f "${source_dir}/README.md" ] && cp "${source_dir}/README.md" "${INSTALL_DIR}/"
+    [ -f "${source_dir}/LICENSE" ] && cp "${source_dir}/LICENSE" "${INSTALL_DIR}/" || true
+    [ -f "${source_dir}/README.md" ] && cp "${source_dir}/README.md" "${INSTALL_DIR}/" || true
 }
 
 # Write configuration files
