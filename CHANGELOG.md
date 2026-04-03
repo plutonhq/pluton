@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.4](https://github.com/plutonhq/pluton/compare/pluton-v0.7.3...pluton-v0.7.4) (2026-04-02)
+
+
+### Bug Fixes
+
+* resolves various storage connectivity issue ([4eedb11](https://github.com/plutonhq/pluton/commit/4eedb11f79970b07d7191c280e47131a8bac9dc8))
+* resolves window close issue on removing a storage ([d2fb005](https://github.com/plutonhq/pluton/commit/d2fb0056dc2ddaf6fca974f22c223a7b3a9ebfbe))
+
 ## [0.7.3](https://github.com/plutonhq/pluton/compare/pluton-v0.7.2...pluton-v0.7.3) (2026-04-01)
 
 
