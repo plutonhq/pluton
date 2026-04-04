@@ -42,6 +42,16 @@ export const DEFAULT_PLAN_SETTINGS: NewPlanSettings = {
             authToken: '',
             tags: '',
          },
+         slack: {
+            enabled: false,
+            case: 'failure',
+            url: '',
+         },
+         discord: {
+            enabled: false,
+            case: 'failure',
+            url: '',
+         },
       },
       prune: {
          snapCount: 5,
@@ -61,12 +71,14 @@ export const DEFAULT_PLAN_SETTINGS: NewPlanSettings = {
                enabled: false,
                type: 'smtp',
                emails: '',
+               case: 'failure',
             },
             webhook: {
                enabled: false,
                method: 'POST',
                contentType: 'application/json',
                url: '',
+               case: 'failure',
             },
             push: {
                enabled: false,
@@ -74,6 +86,17 @@ export const DEFAULT_PLAN_SETTINGS: NewPlanSettings = {
                authType: 'none',
                authToken: '',
                tags: '',
+               case: 'failure',
+            },
+            slack: {
+               enabled: false,
+               case: 'failure',
+               url: '',
+            },
+            discord: {
+               enabled: false,
+               case: 'failure',
+               url: '',
             },
          },
       },

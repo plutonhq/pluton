@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { API_URL } from '../utils/constants';
-import { NewPlanSettings, Plan } from '../@types/plans';
+import { NewPlanSettings, Plan, PlanNotification } from '../@types/plans';
 
 // Get All Plans
 export async function getAllPlans() {
@@ -464,6 +464,43 @@ export function useCheckPlanIntegrity() {
       onError: (error, payload) => {
          console.error('Error checking plan integrity for planId:', payload.planId, error);
          toast.error(`Error checking plan integrity. ${error instanceof Error ? error.message : 'Unknown error'}`, { autoClose: false });
+      },
+   });
+}
+
+export async function sendTestNotificationRequest(payload: {
+   planId: string;
+   notificationCase: string;
+   notificationChannel: 'webhook' | 'slack' | 'discord';
+   channelSettings: PlanNotification['webhook'] | PlanNotification['slack'] | PlanNotification['discord'];
+}) {
+   console.log('payload :', payload);
+   const headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/plans/${payload.planId}/action/test-notification`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify(payload),
+   });
+
+   // Check if response is ok
+   if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+   }
+
+   const data = await res.json();
+   return data;
+}
+
+export function useTestNotification() {
+   return useMutation({
+      mutationFn: sendTestNotificationRequest,
+      onSuccess: (res) => {
+         console.log('# Test notification request sent successfully! :', res);
+      },
+      onError: (res) => {
+         console.log('# Test notification request failed! :', res);
       },
    });
 }

@@ -36,6 +36,16 @@ export type PlanNotification = {
       authToken: string;
       tags: string;
    };
+   slack: {
+      enabled: boolean;
+      case: PlanNotificationCase;
+      url: string;
+   };
+   discord: {
+      enabled: boolean;
+      case: PlanNotificationCase;
+      url: string;
+   };
 };
 
 export type PlanInterval = {
@@ -96,26 +106,7 @@ export type PlanIntegritySettings = {
    enabled: boolean;
    interval: PlanInterval; // in days
    method: string; //full, no-read, read-10%,
-   notification: {
-      email: {
-         enabled: boolean;
-         type: string;
-         emails: string;
-      };
-      webhook: {
-         enabled: boolean;
-         method: 'GET' | 'POST';
-         contentType: 'application/json' | 'application/x-www-form-urlencoded' | 'text/plain';
-         url: string;
-      };
-      push: {
-         enabled: boolean;
-         url: string;
-         authType: string;
-         authToken: string;
-         tags: string;
-      };
-   };
+   notification: PlanNotification;
 };
 
 export type PlanScript = {

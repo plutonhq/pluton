@@ -6,7 +6,13 @@ import { BackupStore } from '../stores/BackupStore';
 import { StorageStore } from '../stores/StorageStore';
 import { RestoreStore } from '../stores/RestoreStore';
 import { Plan, NewPlan, planInsertSchema, planUpdateSchema } from '../db/schema/plans';
-import { BackupPlanArgs, NewPlanReq, PlanLogItem } from '../types/plans';
+import {
+	BackupPlanArgs,
+	NewPlanReq,
+	PlanLogItem,
+	PlanNotification,
+	PlanNotificationType,
+} from '../types/plans';
 import { planLogger } from '../utils/logger';
 import { generateUID } from '../utils/helpers';
 import { intervalToCron } from '../utils/intervalToCron';
@@ -18,6 +24,7 @@ import { appPaths } from '../utils/AppPaths';
 import { AppError, NotFoundError } from '../utils/AppError';
 import { SourceTypes } from '../types/source';
 import { sanitizeStoragePath } from '../utils/sanitizeStoragePath';
+import { BackupNotification } from '../notifications/BackupNotification';
 
 /**
  * PlanService is the central orchestrator for all business logic related to backup plans.
@@ -558,6 +565,71 @@ export class PlanService {
 			}
 
 			throw new AppError(403, error?.message || 'Failed to access the log file');
+		}
+	}
+
+	async sendTestNotification(
+		planId: string,
+		notificationChannel: 'slack' | 'discord' | 'webhook',
+		notificationCase: PlanNotificationType,
+		channelSettings:
+			| PlanNotification['webhook']
+			| PlanNotification['slack']
+			| PlanNotification['discord']
+	): Promise<void> {
+		try {
+			const theCase = notificationCase;
+			const plan = await this.planStore.getById(planId);
+			if (!plan) throw new NotFoundError(`Plan with ID ${planId} not found.`);
+
+			// TODO: for sync backup type this should be different.
+			const dummyStats = {
+				message_type: 'summary',
+				files_new: 2,
+				files_changed: 3,
+				files_unmodified: 273,
+				dirs_new: 0,
+				dirs_changed: 0,
+				dirs_unmodified: 24,
+				data_blobs: 0,
+				tree_blobs: 0,
+				data_added: 0,
+				data_added_packed: 0,
+				total_files_processed: 273,
+				total_bytes_processed: 2896809876,
+				total_duration: 200,
+				snapshot_id: '86dajhg985edioguo23782x',
+				dry_run: false,
+			};
+
+			const payload: Record<string, any> = {
+				id: 'edioguo23782y',
+				startTime: new Date(),
+				stats: dummyStats,
+			};
+			if (theCase === 'end' || theCase === 'success' || theCase === 'failure') {
+				payload.endTime = new Date();
+			}
+			if (theCase === 'failure') {
+				payload.error = 'An Unknown error caused the backup to fail.';
+			}
+
+			const planNotifications: PlanNotification | Record<string, any> =
+				plan?.settings?.notification || {};
+			if (notificationChannel === 'slack') {
+				planNotifications.slack = channelSettings as PlanNotification['slack'];
+				await new BackupNotification().sendSlack(plan, theCase, payload, theCase);
+			} else if (notificationChannel === 'discord') {
+				planNotifications.discord = channelSettings as PlanNotification['discord'];
+				await new BackupNotification().sendDiscord(plan, theCase, payload, theCase);
+			} else {
+				throw new AppError(400, 'Invalid notification channel specified.');
+			}
+		} catch (error) {
+			throw new AppError(
+				401,
+				`Test webhook request failed. Reason: ${error instanceof Error ? error.message : 'Unknown'}`
+			);
 		}
 	}
 

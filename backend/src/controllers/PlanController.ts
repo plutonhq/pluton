@@ -364,4 +364,37 @@ export class PlanController {
 			return;
 		}
 	}
+
+	async sendTestBackupNotification(req: Request, res: Response): Promise<void> {
+		if (
+			!req.body.planId ||
+			!req.body.notificationCase ||
+			!req.body.channelSettings ||
+			!req.body.notificationChannel
+		) {
+			console.log('req.body :', req.body);
+			res.status(400).json({
+				success: false,
+				error: 'Payload Missing.',
+			});
+			return;
+		}
+
+		try {
+			const notificationChannel = req.body.notificationChannel as 'slack' | 'discord' | 'webhook';
+			await this.planService.sendTestNotification(
+				req.body.planId,
+				notificationChannel,
+				req.body.notificationCase,
+				req.body.channelSettings
+			);
+			res.status(200).json({ success: true, message: 'Test notification sent successfully' });
+		} catch (error: unknown) {
+			const appError = error as AppError;
+			res.status(appError.statusCode || 500).json({
+				success: false,
+				error: appError?.message || 'Failed to send test notification',
+			});
+		}
+	}
 }

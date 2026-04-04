@@ -21,7 +21,7 @@ export interface BackupSuccessNotificationPayload {
 	endTime: Date;
 	stats?: BackupCompletionStats;
 	replicationFailures?: ReplicationFailureInfo[];
-	output?: 'html' | 'json' | 'push';
+	output?: 'html' | 'json' | 'push' | 'slack' | 'discord';
 }
 
 export class BackupSuccessNotification extends BaseNotification {
@@ -35,6 +35,12 @@ export class BackupSuccessNotification extends BaseNotification {
 	protected buildContent(data: BackupSuccessNotificationPayload): string {
 		if (this.contentType === 'json') {
 			return this.buildJSONContent(data);
+		}
+		if (this.contentType === 'slack') {
+			return this.buildSlackContent(data);
+		}
+		if (this.contentType === 'discord') {
+			return this.buildDiscordContent(data);
 		}
 		return this.buildHTMLContent(data);
 	}
@@ -117,5 +123,153 @@ export class BackupSuccessNotification extends BaseNotification {
 			appTitle: configService.config.APP_TITLE || 'Pluton',
 			preHeader: `Backup Success: ${data.plan.title}`,
 		});
+	}
+
+	protected buildSlackContent(data: BackupSuccessNotificationPayload): string {
+		const {
+			appTitle,
+			deviceName,
+			storageName,
+			storageType,
+			plan,
+			stats,
+			startTime,
+			endTime,
+			replicationFailures,
+		} = data;
+		const storageTypeName = storageType ? providers[storageType]?.name || storageType : '';
+		const appUrl = configService.config.APP_URL || '';
+
+		const fields: { type: string; text: string }[] = [
+			{ type: 'mrkdwn', text: `*Plan:* ${plan.title}` },
+			{ type: 'mrkdwn', text: `*Method:* ${plan.method}` },
+			{ type: 'mrkdwn', text: `*Device:* ${deviceName}` },
+			{ type: 'mrkdwn', text: `*Storage:* ${storageName} (${storageTypeName})` },
+		];
+
+		if (stats) {
+			if (stats.total_files_processed)
+				fields.push({
+					type: 'mrkdwn',
+					text: `*Files:* ${formatNumberToK(stats.total_files_processed)}`,
+				});
+			if (stats.total_bytes_processed)
+				fields.push({
+					type: 'mrkdwn',
+					text: `*Size:* ${formatBytes(stats.total_bytes_processed)}`,
+				});
+			if (stats.total_duration)
+				fields.push({
+					type: 'mrkdwn',
+					text: `*Duration:* ${formatDuration(stats.total_duration)}`,
+				});
+		}
+
+		const blocks: Record<string, any>[] = [
+			{
+				type: 'header',
+				text: { type: 'plain_text', text: `✅ Backup Complete: ${plan.title}`, emoji: true },
+			},
+			{
+				type: 'section',
+				fields,
+			},
+		];
+
+		if (replicationFailures && replicationFailures.length > 0) {
+			blocks.push({
+				type: 'section',
+				text: {
+					type: 'mrkdwn',
+					text: `⚠️ *Replication Failures:* ${replicationFailures.map(f => f.storageName || f.storageId).join(', ')}`,
+				},
+			});
+		}
+
+		if (appUrl) {
+			blocks.push({
+				type: 'actions',
+				elements: [
+					{
+						type: 'button',
+						text: { type: 'plain_text', text: 'View Plan', emoji: true },
+						url: `${appUrl}/plan/${plan.id}`,
+					},
+				],
+			});
+		}
+
+		blocks.push({
+			type: 'context',
+			elements: [{ type: 'mrkdwn', text: `${appTitle} • ${new Date(startTime).toLocaleString()}` }],
+		});
+
+		return JSON.stringify({ blocks });
+	}
+
+	protected buildDiscordContent(data: BackupSuccessNotificationPayload): string {
+		const {
+			appTitle,
+			deviceName,
+			storageName,
+			storageType,
+			plan,
+			stats,
+			startTime,
+			endTime,
+			replicationFailures,
+		} = data;
+		const storageTypeName = storageType ? providers[storageType]?.name || storageType : '';
+		const appUrl = configService.config.APP_URL || '';
+
+		const fields: { name: string; value: string; inline: boolean }[] = [
+			{ name: 'Plan', value: plan.title, inline: true },
+			{ name: 'Method', value: plan.method, inline: true },
+			{ name: 'Device', value: deviceName, inline: true },
+			{ name: 'Storage', value: `${storageName} (${storageTypeName})`, inline: true },
+		];
+
+		if (stats) {
+			if (stats.total_files_processed)
+				fields.push({
+					name: 'Files',
+					value: formatNumberToK(stats.total_files_processed).toString(),
+					inline: true,
+				});
+			if (stats.total_bytes_processed)
+				fields.push({
+					name: 'Size',
+					value: formatBytes(stats.total_bytes_processed),
+					inline: true,
+				});
+			if (stats.total_duration)
+				fields.push({
+					name: 'Duration',
+					value: formatDuration(stats.total_duration),
+					inline: true,
+				});
+		}
+
+		if (replicationFailures && replicationFailures.length > 0) {
+			fields.push({
+				name: '⚠️ Replication Failures',
+				value: replicationFailures.map(f => f.storageName || f.storageId).join(', '),
+				inline: false,
+			});
+		}
+
+		const embed: Record<string, any> = {
+			title: `✅ Backup Complete: ${plan.title}`,
+			color: 0x22c55e, // green
+			fields,
+			timestamp: new Date(startTime).toISOString(),
+			footer: { text: appTitle },
+		};
+
+		if (appUrl) {
+			embed.url = `${appUrl}/plan/${plan.id}`;
+		}
+
+		return JSON.stringify({ embeds: [embed] });
 	}
 }

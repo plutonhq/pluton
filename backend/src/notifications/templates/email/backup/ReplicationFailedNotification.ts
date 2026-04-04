@@ -16,7 +16,7 @@ export interface ReplicationFailedNotificationPayload {
 	endTime: Date;
 	error: string;
 	failedMirrors?: { storageName: string; error?: string }[];
-	output?: 'html' | 'json' | 'push';
+	output?: 'html' | 'json' | 'push' | 'slack' | 'discord';
 }
 
 export class ReplicationFailedNotification extends BaseNotification {
@@ -30,6 +30,12 @@ export class ReplicationFailedNotification extends BaseNotification {
 	protected buildContent(data: ReplicationFailedNotificationPayload): string {
 		if (this.contentType === 'json') {
 			return this.buildJSONContent(data);
+		}
+		if (this.contentType === 'slack') {
+			return this.buildSlackContent(data);
+		}
+		if (this.contentType === 'discord') {
+			return this.buildDiscordContent(data);
 		}
 		return this.buildHTMLContent(data);
 	}
@@ -100,5 +106,117 @@ export class ReplicationFailedNotification extends BaseNotification {
 			preHeader: `Replication Failed: ${data.plan.title}`,
 			className: 'content--error',
 		});
+	}
+
+	protected buildSlackContent(data: ReplicationFailedNotificationPayload): string {
+		const {
+			appTitle,
+			deviceName,
+			storageName,
+			storageType,
+			plan,
+			error,
+			failedMirrors,
+			startTime,
+		} = data;
+		const storageTypeName = storageType ? providers[storageType]?.name || storageType : '';
+		const appUrl = configService.config.APP_URL || '';
+
+		const fields: { type: string; text: string }[] = [
+			{ type: 'mrkdwn', text: `*Plan:* ${plan.title}` },
+			{ type: 'mrkdwn', text: `*Device:* ${deviceName}` },
+			{ type: 'mrkdwn', text: `*Storage:* ${storageName} (${storageTypeName})` },
+		];
+
+		const blocks: Record<string, any>[] = [
+			{
+				type: 'header',
+				text: { type: 'plain_text', text: `⚠️ Replication Failed: ${plan.title}`, emoji: true },
+			},
+			{
+				type: 'section',
+				fields,
+			},
+			{
+				type: 'section',
+				text: { type: 'mrkdwn', text: `*Error:*\n\`\`\`${error}\`\`\`` },
+			},
+		];
+
+		if (failedMirrors && failedMirrors.length > 0) {
+			const mirrorText = failedMirrors
+				.map(m => `• ${m.storageName}${m.error ? `: ${m.error}` : ''}`)
+				.join('\n');
+			blocks.push({
+				type: 'section',
+				text: { type: 'mrkdwn', text: `*Failed Mirrors:*\n${mirrorText}` },
+			});
+		}
+
+		if (appUrl) {
+			blocks.push({
+				type: 'actions',
+				elements: [
+					{
+						type: 'button',
+						text: { type: 'plain_text', text: 'View Plan', emoji: true },
+						url: `${appUrl}/plan/${plan.id}`,
+					},
+				],
+			});
+		}
+
+		blocks.push({
+			type: 'context',
+			elements: [{ type: 'mrkdwn', text: `${appTitle} • ${new Date(startTime).toLocaleString()}` }],
+		});
+
+		return JSON.stringify({ blocks });
+	}
+
+	protected buildDiscordContent(data: ReplicationFailedNotificationPayload): string {
+		const {
+			appTitle,
+			deviceName,
+			storageName,
+			storageType,
+			plan,
+			error,
+			failedMirrors,
+			startTime,
+		} = data;
+		const storageTypeName = storageType ? providers[storageType]?.name || storageType : '';
+		const appUrl = configService.config.APP_URL || '';
+
+		const fields: { name: string; value: string; inline: boolean }[] = [
+			{ name: 'Plan', value: plan.title, inline: true },
+			{ name: 'Device', value: deviceName, inline: true },
+			{ name: 'Storage', value: `${storageName} (${storageTypeName})`, inline: true },
+			{ name: 'Error', value: `\`\`\`${error}\`\`\``, inline: false },
+		];
+
+		if (failedMirrors && failedMirrors.length > 0) {
+			fields.push({
+				name: 'Failed Mirrors',
+				value: failedMirrors
+					.map(m => `• ${m.storageName}${m.error ? `: ${m.error}` : ''}`)
+					.join('\n'),
+				inline: false,
+			});
+		}
+
+		const embed: Record<string, any> = {
+			title: `⚠️ Replication Failed: ${plan.title}`,
+			color: 0xf59e0b, // amber
+			fields,
+			timestamp: new Date(startTime).toISOString(),
+			footer: { text: appTitle },
+		};
+
+		if (appUrl) {
+			embed.url = `${appUrl}/plan/${plan.id}`;
+		}
+
+		return JSON.stringify({ embeds: [embed] });
 	}
 }

@@ -17,7 +17,7 @@ export interface BackupFailedNotificationPayload {
 	endTime: Date;
 	error: string;
 	stats?: BackupTaskStats;
-	output?: 'html' | 'json' | 'push';
+	output?: 'html' | 'json' | 'push' | 'slack' | 'discord';
 }
 
 export class BackupFailedNotification extends BaseNotification {
@@ -31,6 +31,12 @@ export class BackupFailedNotification extends BaseNotification {
 	protected buildContent(data: BackupFailedNotificationPayload): string {
 		if (this.contentType === 'json') {
 			return this.buildJSONContent(data);
+		}
+		if (this.contentType === 'slack') {
+			return this.buildSlackContent(data);
+		}
+		if (this.contentType === 'discord') {
+			return this.buildDiscordContent(data);
 		}
 		return this.buildHTMLContent(data);
 	}
@@ -114,5 +120,83 @@ export class BackupFailedNotification extends BaseNotification {
 			preHeader: `Backup Failed: ${data.plan.title}`,
 			className: 'content--error',
 		});
+	}
+
+	protected buildSlackContent(data: BackupFailedNotificationPayload): string {
+		const { appTitle, deviceName, storageName, storageType, plan, error, startTime, endTime } =
+			data;
+		const storageTypeName = storageType ? providers[storageType]?.name || storageType : '';
+		const appUrl = configService.config.APP_URL || '';
+
+		const fields: { type: string; text: string }[] = [
+			{ type: 'mrkdwn', text: `*Plan:* ${plan.title}` },
+			{ type: 'mrkdwn', text: `*Method:* ${plan.method}` },
+			{ type: 'mrkdwn', text: `*Device:* ${deviceName}` },
+			{ type: 'mrkdwn', text: `*Storage:* ${storageName} (${storageTypeName})` },
+		];
+
+		const blocks: Record<string, any>[] = [
+			{
+				type: 'header',
+				text: { type: 'plain_text', text: `❌ Backup Failed: ${plan.title}`, emoji: true },
+			},
+			{
+				type: 'section',
+				fields,
+			},
+			{
+				type: 'section',
+				text: { type: 'mrkdwn', text: `*Error:*\n\`\`\`${error}\`\`\`` },
+			},
+		];
+
+		if (appUrl) {
+			blocks.push({
+				type: 'actions',
+				elements: [
+					{
+						type: 'button',
+						text: { type: 'plain_text', text: 'View Plan', emoji: true },
+						url: `${appUrl}/plan/${plan.id}`,
+					},
+				],
+			});
+		}
+
+		blocks.push({
+			type: 'context',
+			elements: [{ type: 'mrkdwn', text: `${appTitle} • ${new Date(startTime).toLocaleString()}` }],
+		});
+
+		return JSON.stringify({ blocks });
+	}
+
+	protected buildDiscordContent(data: BackupFailedNotificationPayload): string {
+		const { appTitle, deviceName, storageName, storageType, plan, error, startTime, endTime } =
+			data;
+		const storageTypeName = storageType ? providers[storageType]?.name || storageType : '';
+		const appUrl = configService.config.APP_URL || '';
+
+		const fields: { name: string; value: string; inline: boolean }[] = [
+			{ name: 'Plan', value: plan.title, inline: true },
+			{ name: 'Method', value: plan.method, inline: true },
+			{ name: 'Device', value: deviceName, inline: true },
+			{ name: 'Storage', value: `${storageName} (${storageTypeName})`, inline: true },
+			{ name: 'Error', value: `\`\`\`${error}\`\`\``, inline: false },
+		];
+
+		const embed: Record<string, any> = {
+			title: `❌ Backup Failed: ${plan.title}`,
+			color: 0xef4444, // red
+			fields,
+			timestamp: new Date(startTime).toISOString(),
+			footer: { text: appTitle },
+		};
+
+		if (appUrl) {
+			embed.url = `${appUrl}/plan/${plan.id}`;
+		}
+
+		return JSON.stringify({ embeds: [embed] });
 	}
 }

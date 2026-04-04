@@ -348,4 +348,180 @@ describe('BackupStartedNotification', () => {
 			expect(content.storagePath).toBe('');
 		});
 	});
+
+	describe('buildSlackContent', () => {
+		it('should build valid Slack Block Kit payload', () => {
+			const notification = new BackupStartedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				output: 'slack',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			expect(content.blocks).toBeDefined();
+			expect(Array.isArray(content.blocks)).toBe(true);
+		});
+
+		it('should include header block with started emoji', () => {
+			const notification = new BackupStartedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				output: 'slack',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			const header = content.blocks.find((b: any) => b.type === 'header');
+			expect(header).toBeDefined();
+			expect(header.text.text).toContain('Backup Started');
+			expect(header.text.text).toContain(mockPlan.title);
+		});
+
+		it('should include plan details in section fields', () => {
+			const notification = new BackupStartedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				output: 'slack',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			const section = content.blocks.find((b: any) => b.type === 'section' && b.fields);
+			expect(section).toBeDefined();
+			const fieldTexts = section.fields.map((f: any) => f.text);
+			expect(fieldTexts).toEqual(
+				expect.arrayContaining([
+					expect.stringContaining('Test Backup Plan'),
+					expect.stringContaining('Test Device'),
+					expect.stringContaining('Test Storage'),
+				])
+			);
+		});
+
+		it('should include View Plan button when APP_URL is set', () => {
+			const notification = new BackupStartedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				output: 'slack',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			const actions = content.blocks.find((b: any) => b.type === 'actions');
+			expect(actions).toBeDefined();
+			expect(actions.elements[0].url).toContain(mockPlan.id);
+		});
+
+		it('should include context with app title', () => {
+			const notification = new BackupStartedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				output: 'slack',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			const context = content.blocks.find((b: any) => b.type === 'context');
+			expect(context).toBeDefined();
+			expect(context.elements[0].text).toContain('Test App');
+		});
+	});
+
+	describe('buildDiscordContent', () => {
+		it('should build valid Discord embed payload', () => {
+			const notification = new BackupStartedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				output: 'discord',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			expect(content.embeds).toBeDefined();
+			expect(content.embeds).toHaveLength(1);
+		});
+
+		it('should use blue color for started', () => {
+			const notification = new BackupStartedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				output: 'discord',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			expect(content.embeds[0].color).toBe(0x3b82f6);
+		});
+
+		it('should include plan details as embed fields', () => {
+			const notification = new BackupStartedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				output: 'discord',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			const fieldNames = content.embeds[0].fields.map((f: any) => f.name);
+			expect(fieldNames).toContain('Plan');
+			expect(fieldNames).toContain('Method');
+			expect(fieldNames).toContain('Device');
+			expect(fieldNames).toContain('Storage');
+		});
+
+		it('should include plan URL when APP_URL is set', () => {
+			const notification = new BackupStartedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				output: 'discord',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			expect(content.embeds[0].url).toContain(mockPlan.id);
+		});
+
+		it('should include footer with app title', () => {
+			const notification = new BackupStartedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				output: 'discord',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			expect(content.embeds[0].footer.text).toBe('Test App');
+		});
+	});
 });

@@ -22,6 +22,11 @@ export function createPlanRouter(controller: PlanController, router: Router = Ro
 		authM,
 		controller.deleteReplicationStorage.bind(controller)
 	);
+	router.post(
+		'/:id/action/test-notification',
+		authM,
+		controller.sendTestBackupNotification.bind(controller)
+	);
 
 	return router;
 }

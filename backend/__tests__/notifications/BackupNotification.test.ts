@@ -1,5 +1,7 @@
 import { BackupNotification } from '../../src/notifications/BackupNotification';
 import { NotificationChannelResolver } from '../../src/notifications/channels/NotificationChannelResolver';
+import { SlackChannel } from '../../src/notifications/channels/SlackChannel';
+import { DiscordChannel } from '../../src/notifications/channels/DiscordChannel';
 import { BackupStartedNotification } from '../../src/notifications/templates/email/backup/BackupStartedNotification';
 import { BackupSuccessNotification } from '../../src/notifications/templates/email/backup/BackupSuccessNotification';
 import { BackupFailedNotification } from '../../src/notifications/templates/email/backup/BackupFailedNotification';
@@ -9,6 +11,8 @@ import { configService } from '../../src/services/ConfigService';
 
 // Mock dependencies
 jest.mock('../../src/notifications/channels/NotificationChannelResolver');
+jest.mock('../../src/notifications/channels/SlackChannel');
+jest.mock('../../src/notifications/channels/DiscordChannel');
 jest.mock('../../src/notifications/templates/email/backup/BackupStartedNotification');
 jest.mock('../../src/notifications/templates/email/backup/BackupSuccessNotification');
 jest.mock('../../src/notifications/templates/email/backup/BackupFailedNotification');
@@ -137,6 +141,86 @@ describe('BackupNotification', () => {
 			await backupNotification.send(mockPlan, 'failure');
 			expect(sendEmailSpy).toHaveBeenCalledWith(mockPlan, 'failure', undefined);
 		});
+
+		it('should send slack when slack notification is enabled', async () => {
+			const sendEmailSpy = jest.spyOn(backupNotification, 'sendEmail').mockResolvedValue();
+			const sendSlackSpy = jest.spyOn(backupNotification, 'sendSlack').mockResolvedValue();
+			mockPlan.settings.notification!.slack = {
+				enabled: true,
+				case: 'both',
+				url: 'https://hooks.slack.com/services/T00/B00/xxxx',
+			};
+
+			await backupNotification.send(mockPlan, 'start', { id: 'backup-1' });
+
+			expect(sendEmailSpy).toHaveBeenCalled();
+			expect(sendSlackSpy).toHaveBeenCalledWith(mockPlan, 'start', { id: 'backup-1' });
+		});
+
+		it('should send discord when discord notification is enabled', async () => {
+			const sendEmailSpy = jest.spyOn(backupNotification, 'sendEmail').mockResolvedValue();
+			const sendDiscordSpy = jest.spyOn(backupNotification, 'sendDiscord').mockResolvedValue();
+			mockPlan.settings.notification!.discord = {
+				enabled: true,
+				case: 'both',
+				url: 'https://discord.com/api/webhooks/1234/abcd',
+			};
+
+			await backupNotification.send(mockPlan, 'success', { id: 'backup-1' });
+
+			expect(sendEmailSpy).toHaveBeenCalled();
+			expect(sendDiscordSpy).toHaveBeenCalledWith(mockPlan, 'success', { id: 'backup-1' });
+		});
+
+		it('should not send slack when slack notification is disabled', async () => {
+			jest.spyOn(backupNotification, 'sendEmail').mockResolvedValue();
+			const sendSlackSpy = jest.spyOn(backupNotification, 'sendSlack');
+			mockPlan.settings.notification!.slack = {
+				enabled: false,
+				case: 'both',
+				url: 'https://hooks.slack.com/services/T00/B00/xxxx',
+			};
+
+			await backupNotification.send(mockPlan, 'start');
+
+			expect(sendSlackSpy).not.toHaveBeenCalled();
+		});
+
+		it('should not send discord when discord notification is disabled', async () => {
+			jest.spyOn(backupNotification, 'sendEmail').mockResolvedValue();
+			const sendDiscordSpy = jest.spyOn(backupNotification, 'sendDiscord');
+			mockPlan.settings.notification!.discord = {
+				enabled: false,
+				case: 'both',
+				url: 'https://discord.com/api/webhooks/1234/abcd',
+			};
+
+			await backupNotification.send(mockPlan, 'start');
+
+			expect(sendDiscordSpy).not.toHaveBeenCalled();
+		});
+
+		it('should send all channels when all are enabled', async () => {
+			const sendEmailSpy = jest.spyOn(backupNotification, 'sendEmail').mockResolvedValue();
+			const sendSlackSpy = jest.spyOn(backupNotification, 'sendSlack').mockResolvedValue();
+			const sendDiscordSpy = jest.spyOn(backupNotification, 'sendDiscord').mockResolvedValue();
+			mockPlan.settings.notification!.slack = {
+				enabled: true,
+				case: 'both',
+				url: 'https://hooks.slack.com/services/T00/B00/xxxx',
+			};
+			mockPlan.settings.notification!.discord = {
+				enabled: true,
+				case: 'both',
+				url: 'https://discord.com/api/webhooks/1234/abcd',
+			};
+
+			await backupNotification.send(mockPlan, 'start');
+
+			expect(sendEmailSpy).toHaveBeenCalled();
+			expect(sendSlackSpy).toHaveBeenCalled();
+			expect(sendDiscordSpy).toHaveBeenCalled();
+		});
 	});
 
 	describe('sendEmail', () => {
@@ -201,6 +285,176 @@ describe('BackupNotification', () => {
 			);
 		});
 	});
+	describe('sendSlack', () => {
+		let mockSlackChannel: any;
+
+		beforeEach(() => {
+			mockSlackChannel = {
+				send: jest.fn().mockResolvedValue({ success: true, result: 'Sent' }),
+			};
+			(SlackChannel as jest.MockedClass<typeof SlackChannel>).mockImplementation(
+				() => mockSlackChannel
+			);
+			mockPlan.settings.notification!.slack = {
+				enabled: true,
+				case: 'both',
+				url: 'https://hooks.slack.com/services/T00/B00/xxxx',
+			};
+		});
+
+		it('should send slack notification successfully', async () => {
+			await backupNotification.sendSlack(mockPlan, 'success', { id: 'backup-1' });
+
+			expect(SlackChannel).toHaveBeenCalledWith('https://hooks.slack.com/services/T00/B00/xxxx');
+			expect(mockSlackChannel.send).toHaveBeenCalled();
+			expect(mockLogger.info).toHaveBeenCalledWith(
+				expect.stringContaining('Slack Notification Sent Successfully')
+			);
+		});
+
+		it('should not send when notification case does not match', async () => {
+			mockPlan.settings.notification!.slack!.case = 'end';
+
+			await backupNotification.sendSlack(mockPlan, 'start', { id: 'backup-1' });
+
+			expect(mockSlackChannel.send).not.toHaveBeenCalled();
+			expect(mockLogger.error).toHaveBeenCalledWith(
+				expect.stringContaining('Does not match Plan Notification Case')
+			);
+		});
+
+		it('should throw error when webhook URL is missing', async () => {
+			mockPlan.settings.notification!.slack!.url = '' as any;
+
+			await backupNotification.sendSlack(mockPlan, 'success', { id: 'backup-1' });
+
+			expect(mockSlackChannel.send).not.toHaveBeenCalled();
+			expect(mockLogger.error).toHaveBeenCalledWith(
+				expect.stringContaining('Slack Webhook URL Missing')
+			);
+		});
+
+		it('should log error when channel send fails', async () => {
+			mockSlackChannel.send.mockResolvedValue({ success: false, result: 'Send failed' });
+
+			await backupNotification.sendSlack(mockPlan, 'success', { id: 'backup-1' });
+
+			expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Send failed'));
+		});
+
+		it('should handle channel errors gracefully', async () => {
+			mockSlackChannel.send.mockRejectedValue(new Error('Network error'));
+
+			await backupNotification.sendSlack(mockPlan, 'success', { id: 'backup-1' });
+
+			expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Network error'));
+		});
+
+		it('should bypass case check when notificationCase is provided', async () => {
+			mockPlan.settings.notification!.slack!.case = 'end';
+
+			await backupNotification.sendSlack(mockPlan, 'start', { id: 'backup-1' }, 'start');
+
+			expect(mockSlackChannel.send).toHaveBeenCalled();
+			expect(mockLogger.info).toHaveBeenCalledWith(
+				expect.stringContaining('Slack Notification Sent Successfully')
+			);
+		});
+
+		it('should pass slack as output format to getNotificationClass', async () => {
+			await backupNotification.sendSlack(mockPlan, 'start', { startTime: new Date() });
+
+			expect(BackupStartedNotification).toHaveBeenCalledWith(
+				expect.objectContaining({ output: 'slack' })
+			);
+		});
+	});
+
+	describe('sendDiscord', () => {
+		let mockDiscordChannel: any;
+
+		beforeEach(() => {
+			mockDiscordChannel = {
+				send: jest.fn().mockResolvedValue({ success: true, result: 'Sent' }),
+			};
+			(DiscordChannel as jest.MockedClass<typeof DiscordChannel>).mockImplementation(
+				() => mockDiscordChannel
+			);
+			mockPlan.settings.notification!.discord = {
+				enabled: true,
+				case: 'both',
+				url: 'https://discord.com/api/webhooks/1234/abcd',
+			};
+		});
+
+		it('should send discord notification successfully', async () => {
+			await backupNotification.sendDiscord(mockPlan, 'success', { id: 'backup-1' });
+
+			expect(DiscordChannel).toHaveBeenCalledWith('https://discord.com/api/webhooks/1234/abcd');
+			expect(mockDiscordChannel.send).toHaveBeenCalled();
+			expect(mockLogger.info).toHaveBeenCalledWith(
+				expect.stringContaining('Discord Notification Sent Successfully')
+			);
+		});
+
+		it('should not send when notification case does not match', async () => {
+			mockPlan.settings.notification!.discord!.case = 'end';
+
+			await backupNotification.sendDiscord(mockPlan, 'start', { id: 'backup-1' });
+
+			expect(mockDiscordChannel.send).not.toHaveBeenCalled();
+			expect(mockLogger.error).toHaveBeenCalledWith(
+				expect.stringContaining('Does not match Plan Notification Case')
+			);
+		});
+
+		it('should throw error when webhook URL is missing', async () => {
+			mockPlan.settings.notification!.discord!.url = '' as any;
+
+			await backupNotification.sendDiscord(mockPlan, 'success', { id: 'backup-1' });
+
+			expect(mockDiscordChannel.send).not.toHaveBeenCalled();
+			expect(mockLogger.error).toHaveBeenCalledWith(
+				expect.stringContaining('Discord Webhook URL Missing')
+			);
+		});
+
+		it('should log error when channel send fails', async () => {
+			mockDiscordChannel.send.mockResolvedValue({ success: false, result: 'Send failed' });
+
+			await backupNotification.sendDiscord(mockPlan, 'success', { id: 'backup-1' });
+
+			expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Send failed'));
+		});
+
+		it('should handle channel errors gracefully', async () => {
+			mockDiscordChannel.send.mockRejectedValue(new Error('Network error'));
+
+			await backupNotification.sendDiscord(mockPlan, 'success', { id: 'backup-1' });
+
+			expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Network error'));
+		});
+
+		it('should bypass case check when notificationCase is provided', async () => {
+			mockPlan.settings.notification!.discord!.case = 'end';
+
+			await backupNotification.sendDiscord(mockPlan, 'start', { id: 'backup-1' }, 'start');
+
+			expect(mockDiscordChannel.send).toHaveBeenCalled();
+			expect(mockLogger.info).toHaveBeenCalledWith(
+				expect.stringContaining('Discord Notification Sent Successfully')
+			);
+		});
+
+		it('should pass discord as output format to getNotificationClass', async () => {
+			await backupNotification.sendDiscord(mockPlan, 'start', { startTime: new Date() });
+
+			expect(BackupStartedNotification).toHaveBeenCalledWith(
+				expect.objectContaining({ output: 'discord' })
+			);
+		});
+	});
+
 	describe('getNotificationClass', () => {
 		it('should return BackupStartedNotification for start type', async () => {
 			const result = await backupNotification.getNotificationClass(mockPlan, 'start', {

@@ -343,6 +343,15 @@ export const isValidEmail = (email: string): boolean => {
    return true;
 };
 
+export const isValidURL = (url: string): boolean => {
+   try {
+      new URL(url);
+      return true;
+   } catch {
+      return false;
+   }
+};
+
 export const shouldDisplayStorageField = (field: storageOptionField, settings: Record<string, any>, allFields: storageOptionField[]): boolean => {
    // If no conditions, always display the field
    if (!field.condition || field.condition.length === 0) {

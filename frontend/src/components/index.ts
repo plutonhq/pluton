@@ -80,6 +80,7 @@ export { default as PlanRemoveModal } from './Plan/PlanRemoveModal/PlanRemoveMod
 export { default as PlanAdvancedSettings } from './Plan/PlanSettings/PlanAdvancedSettings';
 export { default as PlanGeneralSettings } from './Plan/PlanSettings/PlanGeneralSettings';
 export { default as PlanNotificationSettings } from './Plan/PlanSettings/PlanNotificationSettings';
+export { default as PlanNotificationSettingsTester } from './Plan/PlanSettings/PlanNotificationSettingsTester';
 export { default as PlanPerformanceSettings } from './Plan/PlanSettings/PlanPerformanceSettings';
 export { default as PlanPruneSettings } from './Plan/PlanSettings/PlanPruneSettings';
 export { default as PlanScriptsSettings } from './Plan/PlanSettings/PlanScriptsSettings';

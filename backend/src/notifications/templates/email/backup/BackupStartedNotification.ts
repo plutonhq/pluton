@@ -30,6 +30,12 @@ export class BackupStartedNotification extends BaseNotification {
 		if (this.contentType === 'json') {
 			return this.buildJSONContent(data);
 		}
+		if (this.contentType === 'slack') {
+			return this.buildSlackContent(data);
+		}
+		if (this.contentType === 'discord') {
+			return this.buildDiscordContent(data);
+		}
 		return this.buildHTMLContent(data);
 	}
 
@@ -91,5 +97,76 @@ export class BackupStartedNotification extends BaseNotification {
 			appTitle: configService.config.APP_TITLE || 'Pluton',
 			preHeader: `Backup Started: ${data.plan.title}`,
 		});
+	}
+
+	protected buildSlackContent(data: BackupStartedPayload): string {
+		const { appTitle, deviceName, storageName, storageType, plan, startTime } = data;
+		const storageTypeName = storageType ? providers[storageType]?.name || storageType : '';
+		const appUrl = configService.config.APP_URL || '';
+
+		const fields: { type: string; text: string }[] = [
+			{ type: 'mrkdwn', text: `*Plan:* ${plan.title}` },
+			{ type: 'mrkdwn', text: `*Method:* ${plan.method}` },
+			{ type: 'mrkdwn', text: `*Device:* ${deviceName}` },
+			{ type: 'mrkdwn', text: `*Storage:* ${storageName} (${storageTypeName})` },
+		];
+
+		const blocks: Record<string, any>[] = [
+			{
+				type: 'header',
+				text: { type: 'plain_text', text: `🚀 Backup Started: ${plan.title}`, emoji: true },
+			},
+			{
+				type: 'section',
+				fields,
+			},
+		];
+
+		if (appUrl) {
+			blocks.push({
+				type: 'actions',
+				elements: [
+					{
+						type: 'button',
+						text: { type: 'plain_text', text: 'View Plan', emoji: true },
+						url: `${appUrl}/plan/${plan.id}`,
+					},
+				],
+			});
+		}
+
+		blocks.push({
+			type: 'context',
+			elements: [{ type: 'mrkdwn', text: `${appTitle} • ${new Date(startTime).toLocaleString()}` }],
+		});
+
+		return JSON.stringify({ blocks });
+	}
+
+	protected buildDiscordContent(data: BackupStartedPayload): string {
+		const { appTitle, deviceName, storageName, storageType, plan, startTime } = data;
+		const storageTypeName = storageType ? providers[storageType]?.name || storageType : '';
+		const appUrl = configService.config.APP_URL || '';
+
+		const fields: { name: string; value: string; inline: boolean }[] = [
+			{ name: 'Plan', value: plan.title, inline: true },
+			{ name: 'Method', value: plan.method, inline: true },
+			{ name: 'Device', value: deviceName, inline: true },
+			{ name: 'Storage', value: `${storageName} (${storageTypeName})`, inline: true },
+		];
+
+		const embed: Record<string, any> = {
+			title: `🚀 Backup Started: ${plan.title}`,
+			color: 0x3b82f6, // blue
+			fields,
+			timestamp: new Date(startTime).toISOString(),
+			footer: { text: appTitle },
+		};
+
+		if (appUrl) {
+			embed.url = `${appUrl}/plan/${plan.id}`;
+		}
+
+		return JSON.stringify({ embeds: [embed] });
 	}
 }

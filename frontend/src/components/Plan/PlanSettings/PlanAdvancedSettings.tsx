@@ -80,11 +80,11 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate }: PlanAdvan
             {advancedTab === 'Notification' && (
                <PlanNotificationSettings
                   types={integrationTypes}
-                  plan={plan}
+                  planID={plan.id}
+                  isSync={plan.method === 'sync'}
                   admin_email={appSettings?.admin_email}
-                  onUpdate={(notification: NewPlanSettings['settings']['notification']) =>
-                     onUpdate({ ...plan, settings: { ...settings, notification } })
-                  }
+                  notificationSettings={plan.settings?.notification || {}}
+                  onUpdate={(notification) => onUpdate({ ...plan, settings: { ...settings, notification } })}
                />
             )}
             {/* {advancedTab === 'Prune' && (

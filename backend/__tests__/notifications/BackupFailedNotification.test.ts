@@ -313,4 +313,200 @@ describe('BackupFailedNotification', () => {
 			expect(content.stats).toBeUndefined();
 		});
 	});
+
+	describe('buildSlackContent', () => {
+		it('should build valid Slack Block Kit payload', () => {
+			const notification = new BackupFailedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				endTime: new Date(),
+				error: 'Connection timeout',
+				output: 'slack',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			expect(content.blocks).toBeDefined();
+			expect(Array.isArray(content.blocks)).toBe(true);
+		});
+
+		it('should include header block with failure emoji', () => {
+			const notification = new BackupFailedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				endTime: new Date(),
+				error: 'Connection timeout',
+				output: 'slack',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			const header = content.blocks.find((b: any) => b.type === 'header');
+			expect(header).toBeDefined();
+			expect(header.text.text).toContain('Backup Failed');
+			expect(header.text.text).toContain(mockPlan.title);
+		});
+
+		it('should include error message in code block', () => {
+			const notification = new BackupFailedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				endTime: new Date(),
+				error: 'Connection timeout',
+				output: 'slack',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			const errorBlock = content.blocks.find(
+				(b: any) => b.type === 'section' && b.text?.text?.includes('Error')
+			);
+			expect(errorBlock).toBeDefined();
+			expect(errorBlock.text.text).toContain('Connection timeout');
+		});
+
+		it('should include plan details in section fields', () => {
+			const notification = new BackupFailedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				endTime: new Date(),
+				error: 'Error',
+				output: 'slack',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			const section = content.blocks.find((b: any) => b.type === 'section' && b.fields);
+			expect(section).toBeDefined();
+			const fieldTexts = section.fields.map((f: any) => f.text);
+			expect(fieldTexts).toEqual(
+				expect.arrayContaining([
+					expect.stringContaining('Test Backup Plan'),
+					expect.stringContaining('Test Device'),
+				])
+			);
+		});
+
+		it('should include View Plan button when APP_URL is set', () => {
+			const notification = new BackupFailedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				endTime: new Date(),
+				error: 'Error',
+				output: 'slack',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			const actions = content.blocks.find((b: any) => b.type === 'actions');
+			expect(actions).toBeDefined();
+			expect(actions.elements[0].url).toContain(mockPlan.id);
+		});
+	});
+
+	describe('buildDiscordContent', () => {
+		it('should build valid Discord embed payload', () => {
+			const notification = new BackupFailedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				endTime: new Date(),
+				error: 'Connection timeout',
+				output: 'discord',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			expect(content.embeds).toBeDefined();
+			expect(content.embeds).toHaveLength(1);
+		});
+
+		it('should use red color for failure', () => {
+			const notification = new BackupFailedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				endTime: new Date(),
+				error: 'Error',
+				output: 'discord',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			expect(content.embeds[0].color).toBe(0xef4444);
+		});
+
+		it('should include error in embed fields', () => {
+			const notification = new BackupFailedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				endTime: new Date(),
+				error: 'Connection timeout',
+				output: 'discord',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			const errorField = content.embeds[0].fields.find((f: any) => f.name === 'Error');
+			expect(errorField).toBeDefined();
+			expect(errorField.value).toContain('Connection timeout');
+		});
+
+		it('should include plan title in embed title', () => {
+			const notification = new BackupFailedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				endTime: new Date(),
+				error: 'Error',
+				output: 'discord',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			expect(content.embeds[0].title).toContain('Backup Failed');
+			expect(content.embeds[0].title).toContain(mockPlan.title);
+		});
+
+		it('should include footer with app title', () => {
+			const notification = new BackupFailedNotification({
+				appTitle: 'Test App',
+				deviceName: 'Test Device',
+				storageName: 'Test Storage',
+				storageType: 's3',
+				plan: mockPlan,
+				startTime: new Date(),
+				endTime: new Date(),
+				error: 'Error',
+				output: 'discord',
+			});
+
+			const content = JSON.parse(notification.getContent());
+			expect(content.embeds[0].footer.text).toBe('Test App');
+		});
+	});
 });

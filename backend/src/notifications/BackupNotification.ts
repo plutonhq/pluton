@@ -7,6 +7,8 @@ import { BackupFailedNotification } from './templates/email/backup/BackupFailedN
 import { ReplicationFailedNotification } from './templates/email/backup/ReplicationFailedNotification';
 import { planLogger } from '../utils/logger';
 import { NotificationChannelResolver } from '../notifications/channels/NotificationChannelResolver';
+import { SlackChannel } from '../notifications/channels/SlackChannel';
+import { DiscordChannel } from '../notifications/channels/DiscordChannel';
 import { configService } from '../services/ConfigService';
 
 interface BackupDataType {
@@ -40,6 +42,12 @@ export class BackupNotification {
 
 		if (notification?.email?.enabled) {
 			await this.sendEmail(plan, notificationType, backupData);
+		}
+		if (notification?.slack?.enabled) {
+			await this.sendSlack(plan, notificationType, backupData);
+		}
+		if (notification?.discord?.enabled) {
+			await this.sendDiscord(plan, notificationType, backupData);
 		}
 	}
 
@@ -82,11 +90,88 @@ export class BackupNotification {
 		}
 	}
 
+	async sendSlack(
+		plan: PlanFull,
+		notificationType: NotificationType,
+		backupData?: BackupDataType,
+		notificationCase?: string
+	) {
+		try {
+			const notification = plan.settings.notification;
+			const theCase = notificationCase ? notificationCase : notification?.slack?.case || 'end';
+			const shouldSend = notificationCase ? true : this.shouldSend(theCase, notificationType);
+
+			if (!shouldSend) throw new Error('Does not match Plan Notification Case.');
+
+			const webhookUrl = notification?.slack?.url;
+			if (!webhookUrl) throw new Error('Slack Webhook URL Missing.');
+
+			const slackChannel = new SlackChannel(webhookUrl);
+			const notificationClass = await this.getNotificationClass(
+				plan,
+				notificationType,
+				backupData,
+				'slack'
+			);
+			const notificationResult = await slackChannel.send(notificationClass);
+
+			if (!notificationResult?.success)
+				throw new Error(notificationResult?.result || 'Unknown Error');
+
+			planLogger('notification', plan.id, backupData?.id).info(
+				`Backup ${notificationType} Slack Notification Sent Successfully.`
+			);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown Error.';
+			planLogger('notification', plan.id, backupData?.id).error(
+				`Error Sending Backup ${notificationType} Slack Notification. Reason: ${errorMessage}`
+			);
+		}
+	}
+
+	async sendDiscord(
+		plan: PlanFull,
+		notificationType: NotificationType,
+		backupData?: BackupDataType,
+		notificationCase?: string
+	) {
+		try {
+			const notification = plan.settings.notification;
+			const theCase = notificationCase ? notificationCase : notification?.discord?.case || 'end';
+			const shouldSend = notificationCase ? true : this.shouldSend(theCase, notificationType);
+			if (!shouldSend) throw new Error('Does not match Plan Notification Case.');
+
+			const webhookUrl = notification?.discord?.url;
+			if (!webhookUrl) throw new Error('Discord Webhook URL Missing.');
+
+			const discordChannel = new DiscordChannel(webhookUrl);
+			const notificationClass = await this.getNotificationClass(
+				plan,
+				notificationType,
+				backupData,
+				'discord'
+			);
+			const notificationResult = await discordChannel.send(notificationClass);
+
+			if (!notificationResult?.success)
+				throw new Error(notificationResult?.result || 'Unknown Error');
+
+			planLogger('notification', plan.id, backupData?.id).info(
+				`Backup ${notificationType} Discord Notification Sent Successfully.`
+			);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown Error.';
+			planLogger('notification', plan.id, backupData?.id).error(
+				`Error Sending Backup ${notificationType} Discord Notification. Reason: ${errorMessage}`
+			);
+		}
+	}
+
 	async getNotificationClass(
 		plan: PlanFull,
 		notificationType: NotificationType,
 		backupData?: BackupDataType,
-		output: 'html' | 'json' | 'push' = 'html'
+		output: 'html' | 'json' | 'push' | 'slack' | 'discord' = 'html'
 	) {
 		let notificationClass;
 		const deviceName = plan.device?.name || '';

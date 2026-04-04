@@ -462,3 +462,74 @@
       }
    }
 }
+
+.notificationTestField {
+   display: flex;
+   justify-content: right;
+   margin-bottom: 0;
+}
+
+.notificationSettingsSection {
+   border-radius: 6px;
+   border: 1px solid var(--line-color);
+   margin-bottom: 15px;
+   .notificationToggle {
+      margin-bottom: 0;
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      div[class*='_fieldInner'] {
+         justify-content: space-between;
+      }
+   }
+   .notificationSettings {
+      padding: 15px;
+      border-top: 1px solid var(--line-color);
+   }
+}
+
+.testNotificationContainer {
+   display: inline-block;
+   position: relative;
+   .testNotificationButton {
+      padding: 6px 12px;
+      background-color: var(--primary-color-light);
+      color: var(--primary-color);
+      font-weight: 600;
+      font-size: 0.9em;
+      border-radius: 4px;
+      cursor: pointer;
+      &.disabled {
+         cursor: not-allowed;
+         opacity: 0.6;
+      }
+   }
+
+   .testNotificationOptions {
+      position: absolute;
+      width: 140px;
+      background-color: var(--content-background-color);
+      border-radius: 6px;
+      border: 1px solid var(--primary-color-mid);
+      bottom: 30px;
+      right: 0px;
+      z-index: 9;
+      ul {
+         list-style-type: none;
+         margin: 0;
+         padding: 0;
+         li {
+            font-size: 0.9em;
+            cursor: pointer;
+            padding: 6px 12px;
+
+            &:hover {
+               background-color: var(--primary-color-light);
+               color: var(--primary-color);
+            }
+         }
+      }
+   }
+}
