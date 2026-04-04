@@ -77,7 +77,12 @@ const GeneralSettings = ({ settings, settingsID, onUpdate }: GeneralSettingsProp
             />
          </div>
          <div className={classes.field}>
-            <Toggle label="Enable 2FA" fieldValue={settings?.totp?.enabled || false} onUpdate={(val) => update2FASetting(val)} inline={true} />
+            <Toggle
+               label="Enable Two-Factor Authentication (2FA)"
+               fieldValue={settings?.totp?.enabled || false}
+               onUpdate={(val) => update2FASetting(val)}
+               inline={false}
+            />
          </div>
          {show2FASetupConfirm && (
             <ActionModal
