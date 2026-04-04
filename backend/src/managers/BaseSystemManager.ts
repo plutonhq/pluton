@@ -267,22 +267,50 @@ export class BaseSystemManager {
 		const platform = os.platform();
 
 		if (platform === 'win32') {
-			const { stdout } = await execAsync('wmic logicaldisk get name,volumename');
-			const result = stdout
-				.trim()
-				.split('\n')
-				.slice(1)
-				.map(line => {
-					const [name] = line.trim().split(/\s+/);
-					return {
-						name,
-						path: name,
-						type: 'drive',
-						isDirectory: true,
-					};
-				});
+			try {
+				// Get-Volume is part of the modern Storage module and provides cleaner data than Win32_LogicalDisk
+				const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Volume | Where-Object DriveLetter -ne $null | Select-Object @{Name='DeviceID';Expression={($_.DriveLetter + ':')}}, @{Name='VolumeName';Expression={$_.FileSystemLabel}}, DriveType | ConvertTo-Json"`;
 
-			return { success: true, result };
+				const { stdout } = await execAsync(command);
+
+				if (!stdout.trim()) {
+					return { success: true, result: [] };
+				}
+
+				const data = JSON.parse(stdout);
+				const drives = Array.isArray(data) ? data : [data];
+
+				const result = drives
+					.sort((a, b) => a.DeviceID.localeCompare(b.DeviceID))
+					.map(drive => {
+						const deviceId = drive.DeviceID;
+						let label = drive.VolumeName;
+
+						// Handle Windows UI Fallbacks (mimicking File Explorer)
+						if (!label) {
+							if (deviceId === 'C:') {
+								label = 'Local Disk';
+							} else if (drive.DriveType === 'Removable') {
+								label = 'USB Drive';
+							} else {
+								label = 'Local Disk';
+							}
+						}
+
+						return {
+							name: `${label} (${deviceId})`,
+							path: deviceId,
+							label: label,
+							type: 'drive',
+							isDirectory: true,
+						};
+					});
+
+				return { success: true, result };
+			} catch (error: any) {
+				console.error('Error fetching drives via CIM:', error);
+				return { success: false, result: error.message };
+			}
 		}
 
 		if (platform === 'darwin') {
