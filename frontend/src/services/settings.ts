@@ -50,7 +50,6 @@ export function useUpdateSettings() {
    return useMutation({
       mutationFn: updateSettings,
       onSuccess: (res) => {
-         // TODO: Should Display a Notification Bubble.
          console.log('# Settings Updated! :', res);
          queryClient.invalidateQueries({ queryKey: ['settings'] });
       },
@@ -157,10 +156,11 @@ export async function validateIntegration(updatePayload: {
 }
 
 export function useValidateIntegration() {
+   const queryClient = useQueryClient();
    return useMutation({
       mutationFn: validateIntegration,
       onSuccess: (res) => {
-         // TODO: Should Display a Notification Bubble.
+         queryClient.invalidateQueries({ queryKey: ['settings'] });
          console.log('# Settings Updated! :', res);
       },
    });
