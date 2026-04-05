@@ -171,10 +171,10 @@ build_appimage() {
 
     # Build AppImage
     echo "  Building AppImage..."
-    local OUTPUT_FILE="${OUTPUT_DIR}/${DISPLAY_NAME}-${VERSION}-${ARCH}.AppImage"
+    local OUTPUT_FILE="${OUTPUT_DIR}/${DISPLAY_NAME}-${ARCH}.AppImage"
 
     # Build with update information for delta updates
-    local UPDATE_INFO="gh-releases-zsync|plutonhq|pluton|latest|${DISPLAY_NAME}-*-${ARCH}.AppImage.zsync"
+    local UPDATE_INFO="gh-releases-zsync|plutonhq|pluton|latest|${DISPLAY_NAME}-${ARCH}.AppImage.zsync"
 
     # Set ARCH environment variable for the target architecture
     ARCH="$ARCH" VERSION="$VERSION" "$APPIMAGETOOL" \
@@ -244,7 +244,7 @@ echo ""
 if [ ${#BUILT_ARCHS[@]} -gt 0 ]; then
     echo -e "  ${GREEN}Successfully built:${NC}"
     for arch in "${BUILT_ARCHS[@]}"; do
-        echo "    ✓ ${DISPLAY_NAME}-${VERSION}-${arch}.AppImage"
+        echo "    ✓ ${DISPLAY_NAME}-${arch}.AppImage"
     done
 fi
 
