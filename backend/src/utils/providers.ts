@@ -77,6 +77,7 @@ import fileluSettings from './providers/filelu';
 import filenSettings from './providers/filen';
 import internxtSettings from './providers/internxt';
 import shadeSettings from './providers/shade';
+import s3CompatibleSettings from './providers/s3compatible';
 import type { ProviderSetting } from './providers/types';
 
 export interface ProviderConfig {
@@ -1394,5 +1395,36 @@ export const providers: Record<string, ProviderConfig> = {
 			'no_check_bucket',
 			'true',
 		],
+	},
+	s3compatible: {
+		name: 'S3 Compatible Storage',
+		authTypes: ['client'],
+		settings: s3CompatibleSettings,
+		features: providerFeatures['s3'],
+		s3Adapter: true,
+		setup: creds => {
+			const args = [
+				'provider',
+				'Other',
+				'access_key_id',
+				creds.access_key_id,
+				'secret_access_key',
+				creds.secret_access_key,
+			];
+			if (creds.acl) {
+				args.push('acl', creds.acl);
+			}
+			if (creds.region) {
+				args.push('region', creds.region);
+			}
+			if (creds.location_constraint) {
+				args.push('location_constraint', creds.location_constraint);
+			}
+			if (creds.endpoint) {
+				args.push('endpoint', creds.endpoint);
+			}
+
+			return args;
+		},
 	},
 };
