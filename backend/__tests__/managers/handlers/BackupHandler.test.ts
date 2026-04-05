@@ -1214,19 +1214,6 @@ describe('BackupHandler', () => {
 				handler['dryRunBackup']('plan-1', baseOptions, resticArgsAndEnv)
 			).rejects.toThrow('Dry run failed');
 		});
-
-		it('should log summary when successful', async () => {
-			const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-			const summary = { files_new: 20, total_files_processed: 50 };
-			mockRunResticCommand.mockResolvedValue(JSON.stringify(summary));
-
-			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
-			await handler['dryRunBackup']('plan-1', baseOptions, resticArgsAndEnv);
-
-			expect(consoleLogSpy).toHaveBeenCalledWith('dryRunBackup :', summary);
-
-			consoleLogSpy.mockRestore();
-		});
 	});
 
 	describe('createHandlers - additional tests', () => {

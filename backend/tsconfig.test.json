@@ -17,7 +17,8 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"noErrorTruncation": true
+		"noErrorTruncation": true,
+		"ignoreDeprecations": "6.0"
 	},
 	"include": ["__tests__/**/*", "src/**/*"]
 }
