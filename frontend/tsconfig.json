@@ -1,17 +1,8 @@
 {
    "files": [],
    "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
-   "module": "esnext",
-   "moduleResolution": "node",
-
-   "resolveJsonModule": true,
    "exclude": ["node_modules"],
    "compilerOptions": {
-      "baseUrl": ".",
-      "paths": {
-         "@/*": ["./src/*"]
-      },
-      "target": "esnext",
-      "ignoreDeprecations": "6.0"
+      "target": "esnext"
    }
 }

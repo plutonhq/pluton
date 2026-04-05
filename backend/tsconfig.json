@@ -2,8 +2,7 @@
 	"compilerOptions": {
 		"target": "ES2022",
 		"module": "ESNext",
-		"moduleResolution": "node",
-		"baseUrl": ".",
+		"moduleResolution": "bundler",
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"strict": true,
@@ -15,8 +14,7 @@
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,
-		"typeRoots": ["./node_modules/@types", "./src/types"],
-		"ignoreDeprecations": "6.0"
+		"typeRoots": ["./node_modules/@types", "./src/types"]
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist", "__tests__", "**/*.test.ts"]

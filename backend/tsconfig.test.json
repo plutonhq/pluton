@@ -5,20 +5,13 @@
 		"moduleResolution": "bundler",
 		"noEmit": true,
 		"types": ["node", "jest"],
-		"baseUrl": ".",
-		"paths": {
-			"pluton-core-backend/notifications/channels/NotificationChannelResolver": [
-				"./src/notifications/channels/NotificationChannelResolver.ts"
-			]
-		},
 		"esModuleInterop": true,
 		"allowImportingTsExtensions": true,
 		"allowSyntheticDefaultImports": true,
 		"strict": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"noErrorTruncation": true,
-		"ignoreDeprecations": "6.0"
+		"noErrorTruncation": true
 	},
 	"include": ["__tests__/**/*", "src/**/*"]
 }
