@@ -6,6 +6,10 @@ const config: Config = {
 	verbose: true,
 	clearMocks: true,
 
+	// Limit workers to prevent OOM and recycle workers that accumulate memory
+	maxWorkers: '50%',
+	workerIdleMemoryLimit: '512MB',
+
 	// Explicitly define the transform using ts-jest
 	transform: {
 		// This regex now tells Jest to use ts-jest for .ts, .tsx, .js, and .jsx files

@@ -119,7 +119,7 @@
 		"lint": "eslint src/**/*.ts",
 		"migrate-db": "tsx -r dotenv/config src/db/migrate.ts",
 		"start": "node dist/index.js",
-		"test": "jest --config jest.config.ts",
+		"test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' jest --config jest.config.ts",
 		"build:pkg": "node ./scripts/build-pkg.js",
 		"clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true});require('fs').rmSync('public',{recursive:true,force:true})\"",
 		"copy:frontend": "node -e \"const fs=require('fs');const path=require('path');const src='../frontend/dist';if(!fs.existsSync(src)){console.log('Skipping copy:frontend - frontend dist not found');process.exit(0)};function copyDir(s,d){fs.mkdirSync(d,{recursive:true});fs.readdirSync(s,{withFileTypes:true}).forEach(e=>{const sp=path.join(s,e.name),dp=path.join(d,e.name);e.isDirectory()?copyDir(sp,dp):fs.copyFileSync(sp,dp)})};copyDir(src,'public')\"",
