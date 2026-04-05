@@ -39,7 +39,7 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
       storage.storageFields.forEach((field: storageOptionField) => {
          if (field.required) {
             (groupedFields.required as storageOptionField[]).push(field);
-         } else {
+         } else if (!field.authFieldType) {
             (groupedFields.optional as storageOptionField[]).push(field);
          }
       });
