@@ -289,16 +289,6 @@ const s3Options = [
 		command: '--s3-list-version',
 	},
 	{
-		label: 'List URL Encode',
-		value: 'list_url_encode',
-		fieldType: 'tristate',
-		required: false,
-		default: 'unset',
-		description:
-			'Whether to URL-encode listings. Some providers support URL encoding which is more reliable with special characters in file names. Leave unset to use the provider default.',
-		command: '--s3-list-url-encode',
-	},
-	{
 		label: 'No Check Bucket',
 		value: 'no_check_bucket',
 		fieldType: 'bool',
@@ -462,6 +452,25 @@ const s3Options = [
 		description:
 			'Set this if the backend might gzip objects. Normally providers will not alter objects when they are downloaded.',
 		command: '--s3-might-gzip',
+	},
+	{
+		label: 'List URL Encode',
+		value: 'list_url_encode',
+		fieldType: 'tristate',
+		required: false,
+		default: 'unset',
+		description:
+			'Whether to URL-encode listings. Some providers support URL encoding which is more reliable with special characters in file names. Leave unset to use the provider default.',
+		command: '--s3-list-url-encode',
+	},
+	{
+		label: 'Sign Accept Encoding',
+		value: 'sign_accept_encoding',
+		fieldType: 'tristate',
+		required: false,
+		default: 'unset',
+		description: 'Set if Accept-Encoding should be included as part of the signature.',
+		command: '--s3-sign-accept-encoding',
 	},
 	{
 		label: 'Use Accept Encoding GZIP',
