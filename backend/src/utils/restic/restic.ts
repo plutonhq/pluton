@@ -183,7 +183,6 @@ export async function getBackupPlanStats(
 				snapshotBackupIds.push(backupIdTag.replace('backup-', ''));
 			}
 		});
-		console.log('snapshotBackupIds :', snapshotBackupIds);
 
 		return {
 			total_size: theStats.total_size,

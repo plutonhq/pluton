@@ -95,16 +95,7 @@ export class BackupEventListener {
 		await this.backupEventService.onBackupFailure(data);
 	}
 
-	// protected async onBackupProgress(data: BackupProgressEvent) {
-	// 	console.log('onBackupProgress :', data);
-	// 	try {
-	// 		const progressFile = `${this.progressDir}/backup-${data.backupId}-progress.json`;
-	// 		await writeFile(progressFile, JSON.stringify(data));
-	// 	} catch (error: any) {}
-	// }
-
 	protected async onBackupStatsUpdate(data: BackupStatUpdateEvent) {
-		console.log('[BackupEventListener] onBackupStatsUpdate :', data);
 		await this.backupEventService.onBackupStatsUpdate(data);
 	}
 
@@ -127,17 +118,14 @@ export class BackupEventListener {
 	}
 
 	async onIntegrityStart(data: { planId: string }) {
-		console.log('onIntegrityStart :', data);
 		await this.backupEventService.onIntegrityStart(data);
 	}
 
 	async onIntegrityEnd(data: { planId: string; result: Record<string, string | null> }) {
-		console.log('onIntegrityEnd :', data);
 		await this.backupEventService.onIntegrityEnd(data);
 	}
 
 	async onIntegrityCheckFailure(data: { planId: string; error: string }) {
-		console.log('onIntegrityCheckFailure :', data);
 		await this.backupEventService.onIntegrityFailed(data);
 	}
 }

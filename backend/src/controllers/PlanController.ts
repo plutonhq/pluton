@@ -68,7 +68,7 @@ export class PlanController {
 
 	async createPlan(req: Request, res: Response): Promise<void> {
 		const planPayload: undefined | NewPlanReq = req.body;
-		console.log('planPayload :', planPayload);
+
 		try {
 			if (
 				!planPayload ||

@@ -34,17 +34,6 @@ export class DownloadEventListener {
 		await this.downloadEventService.onDownloadStart(eventPayload);
 	}
 
-	// private async onDownloadProgress(eventPayload: DownloadProgressEvent) {
-	//    const { backupId, planId, error } = eventPayload;
-	// 	try {
-	// 		console.log('onDownloadProgress :', data);
-	// 		const progressFile = `${appPaths.getProgressDir()}/download-${data.backupId}-progress.json`;
-	// 		await writeFile(progressFile, JSON.stringify(data));
-	// 	} catch (error: any) {
-	// 		console.log('[onDownloadProgress] error :', error);
-	// 	}
-	// }
-
 	private async onDownloadError(eventPayload: DownloadErrorEvent) {
 		await this.downloadEventService.onDownloadError(eventPayload);
 	}

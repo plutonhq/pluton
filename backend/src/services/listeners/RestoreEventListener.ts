@@ -32,22 +32,18 @@ export class RestoreEventListener {
 	}
 
 	private async onRestoreStart(data: RestoreStartEvent) {
-		console.log('onRestoreStart :', data);
 		await this.restoreEventService.onRestoreStart(data);
 	}
 
 	private async onRestoreError(eventPayload: RestoreErrorEvent) {
-		console.log('onRestoreError :', eventPayload);
 		await this.restoreEventService.onRestoreError(eventPayload);
 	}
 
 	private async onRestoreFailed(eventPayload: RestoreErrorEvent) {
-		console.log('onRestoreFailed :', eventPayload);
 		await this.restoreEventService.onRestoreFailed(eventPayload);
 	}
 
 	private async onRestoreComplete(eventPayload: RestoreCompleteEvent) {
-		console.log('onRestoreComplete :', eventPayload);
 		await this.restoreEventService.onRestoreComplete(eventPayload);
 	}
 }

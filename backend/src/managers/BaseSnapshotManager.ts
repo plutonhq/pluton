@@ -132,7 +132,6 @@ export class BaseSnapshotManager extends EventEmitter {
 					RESTIC_PASSWORD: repoPassword,
 				});
 				removalOutput[repo.id] = output;
-				console.log('[removeSnapshot] restic output:', output);
 				const repoStats = await getBackupPlanStats(planId, repo.name, repo.path, encryption);
 				if (repo.id === 'primary') {
 					planStats.primary = repoStats || { total_size: 0, snapshots: [] };

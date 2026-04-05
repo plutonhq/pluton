@@ -119,12 +119,6 @@ class JobQueue {
 			(this.runningJob?.name === jobName &&
 				JSON.stringify(this.runningJob?.payload) === JSON.stringify(payload));
 
-		// === DEBUG LOGGING START ===
-		console.log(
-			`[DEBUG_QUEUE] Adding job '${jobName}'. Payload: ${JSON.stringify(payload)}. Is duplicate? ${isPresent}`
-		);
-		// === DEBUG LOGGING END ===
-
 		if (isPresent) {
 			return;
 		}

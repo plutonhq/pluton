@@ -62,10 +62,6 @@ export class BackupService {
 
 		// If snapshot removal fails, it should not throw an error
 		// Because the snapshot might have been removed already by prune process
-		console.log('Snapshot Remove Result :', removeResult?.result);
-		// if (!removeResult.success) {
-		// 	throw new Error(removeResult.result || 'Failed to remove Snapshot');
-		// }
 
 		if (removeResult.stats) {
 			const primaryStats = removeResult.stats.primary;
@@ -163,7 +159,6 @@ export class BackupService {
 	}
 
 	async cancelBackup(planId: string, backupId: string) {
-		console.log('cancelBackup :', planId, backupId);
 		const backup = await this.backupStore.getById(backupId);
 		if (!backup) {
 			throw new Error('Backup not found');
@@ -184,7 +179,6 @@ export class BackupService {
 			jobQueue.remove('RescueBackup', planId); // for Server Rescue jobs
 		}
 
-		console.log('#### Backup cancelled:', backupId);
 		await this.backupStore.update(backup.id, {
 			status: 'cancelled',
 			inProgress: false,

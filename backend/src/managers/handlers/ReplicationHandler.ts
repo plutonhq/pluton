@@ -319,8 +319,8 @@ export class ReplicationHandler {
 						.updateReplicationResticProgress(planId, backupId, replicationId, line)
 						.catch(() => {});
 				},
-				(data: Buffer) => {
-					console.log('### Restic Copy Error :', data.toString());
+				(_: Buffer) => {
+					// console.log('### Restic Copy Error :', data.toString());
 				},
 				undefined,
 				process => {

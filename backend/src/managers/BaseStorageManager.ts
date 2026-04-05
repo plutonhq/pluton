@@ -47,7 +47,6 @@ export class BaseStorageManager {
 			// Workaround for Rclone Onedrive Bug:
 			// https://forum.rclone.org/t/rclone-config-create-miss-some-info-and-doesnt-work-as-expect/21045
 			const oneDriveCreds = JSON.parse(credentials.token);
-			console.log('[rclone] fetch onedrive drive_id & drive_type');
 			const myHeaders = new Headers();
 			myHeaders.append('Authorization', oneDriveCreds.access_token);
 
@@ -64,6 +63,7 @@ export class BaseStorageManager {
 						}
 					});
 			} catch (error: any) {
+				console.warn('[error] fetch onedrive drive_id & drive_type', error?.message || error);
 				return {
 					success: false,
 					result:

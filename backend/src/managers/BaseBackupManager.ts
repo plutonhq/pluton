@@ -80,7 +80,7 @@ export class BaseBackupManager extends EventEmitter {
 				RCLONE_CONFIG_PASS: repoPassword,
 			});
 		} catch (error: any) {
-			// console.log('[BaseBackupManager] repo Creation Error :', error);
+			console.warn('[createBackup] repo Creation Error :', error);
 			return { success: false, result: 'Could Not Create Restic Repo. Details: ' + error.message };
 		}
 
@@ -115,7 +115,6 @@ export class BaseBackupManager extends EventEmitter {
 	}
 
 	async queueBackup(planId: string, options: Record<string, any>): Promise<any> {
-		// console.log('BaseBackupManager->queueBackup :', options);
 		if (options && !options.isActive) {
 			return; // Return to satisfy the Promise<any> signature
 		}
@@ -145,7 +144,6 @@ export class BaseBackupManager extends EventEmitter {
 					'purge',
 					`${options.storageName}:${options.storagePath}`,
 				]);
-				console.log('rclone removeResult :', output);
 				removeResult += output;
 			}
 
@@ -157,7 +155,6 @@ export class BaseBackupManager extends EventEmitter {
 							'purge',
 							`${replica.storageName}:${replica.storagePath}`,
 						]);
-						console.log(`rclone replication removeResult (${replica.storageName}):`, output);
 						removeResult += ` | Replication ${replica.storageName}: ${output}`;
 					} catch (error: any) {
 						// Log but don't fail the entire removal if a replication storage purge fails
@@ -200,7 +197,6 @@ export class BaseBackupManager extends EventEmitter {
 		backupId: string,
 		retryInfo: { attempts: number; maxAttempts: number }
 	): Promise<string> {
-		console.log('[BaseBackupManager] ❎ Performing backup execution:');
 		// Retrieve the schedule and its options from the CronManager
 		const schedules = await this.cronManager.getSchedule(planId);
 		const backupSchedule = schedules?.find(s => s.type === 'backup');
@@ -297,7 +293,6 @@ export class BaseBackupManager extends EventEmitter {
 					'purge',
 					`${options.storageName}:${options.storagePath}`,
 				]);
-				console.log(`rclone replication purge (${options.storageName}):`, output);
 				result += ` Data purged: ${output}`;
 			}
 
@@ -392,8 +387,6 @@ export class BaseBackupManager extends EventEmitter {
 		}
 
 		try {
-			console.log(`[BaseBackupManager]: Force-unlocking repository for plan: ${planId}`);
-
 			const repoPath = generateResticRepoPath(options.storage.name, options.storagePath || '');
 			const repoPassword = options.settings.encryption ? encKey : '';
 			// Run the restic unlock command on the primary repo
@@ -469,7 +462,7 @@ export class BaseBackupManager extends EventEmitter {
 				this.queueBackup(id, opts);
 			},
 		};
-		console.log('[CORE] action :', action);
+
 		if (action === 'create') {
 			await this.cronManager.scheduleTask(planId, cronExpression, backupOptions, 'backup');
 		} else {
@@ -485,20 +478,12 @@ export class BaseBackupManager extends EventEmitter {
 	}
 
 	async updatePlanStorageName(storageId: string, newStorageName: string) {
-		console.log('updatePlanStorageName :', storageId, newStorageName);
 		try {
-			// Load schedules.json content
-			// await this.cronManager.loadSchedules();
-
 			// Get all schedules and iterate through each plan
 			const schedules = await this.cronManager.getSchedules();
-			console.log('schedules :', schedules);
 			if (schedules) {
 				for (const [planId, scheduleEntries] of Object.entries(schedules)) {
 					const backupSchedule = scheduleEntries.find((s: any) => s.type === 'backup');
-
-					console.log('Found Schedule :', backupSchedule);
-
 					// Check if this backup schedule uses the storage we want to update
 					if (backupSchedule?.options.storageId === storageId) {
 						const updatedOptions = {

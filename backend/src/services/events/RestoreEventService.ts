@@ -19,7 +19,6 @@ export class RestoreEventService {
 	) {}
 
 	async onRestoreStart(data: RestoreStartEvent) {
-		console.log('onRestoreStart :', data);
 		try {
 			const { planId, backupId, restoreId, config, stats } = data;
 
@@ -94,7 +93,6 @@ export class RestoreEventService {
 	async onRestoreError(eventPayload: RestoreErrorEvent) {
 		const { backupId, restoreId, planId, error } = eventPayload;
 		if (!backupId || !planId || !error) {
-			console.log('[onRestoreError] Invalid restore error event data:', eventPayload);
 			return;
 		}
 		try {
@@ -120,7 +118,6 @@ export class RestoreEventService {
 	async onRestoreFailed(eventPayload: RestoreErrorEvent) {
 		const { backupId, restoreId, planId, error } = eventPayload;
 		if (!backupId || !planId || !restoreId || !error) {
-			console.log('[onRestoreFailed] Invalid restore complete event data:', eventPayload);
 			return;
 		}
 		try {
@@ -144,10 +141,8 @@ export class RestoreEventService {
 	}
 
 	async onRestoreComplete(eventPayload: RestoreCompleteEvent) {
-		console.log('onRestoreComplete :', eventPayload);
 		const { backupId, restoreId, planId, success } = eventPayload;
 		if (!backupId || !planId || !restoreId || success === undefined) {
-			console.log('[onRestoreComplete] Invalid restore complete event data:', eventPayload);
 			return;
 		}
 		try {
@@ -164,8 +159,6 @@ export class RestoreEventService {
 				ended: sql`(unixepoch())` as any,
 				completionStats: progressData?.data,
 			});
-
-			console.log('[onRestoreComplete] After Restore Db Write!');
 
 			// if (existsSync(progressFile)) {
 			// 	await unlink(progressFile);

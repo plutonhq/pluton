@@ -141,11 +141,10 @@ export class PlanService {
 			storage: planStorage,
 			cronExpression,
 		};
-		// console.log('backupScheduleOptions :', backupScheduleOptions);
+
 		try {
 			const strategy = this.getStrategy(newPlanData) as BackupStrategy;
 			const creationRes = await strategy.createBackup(planId, backupScheduleOptions);
-			console.log('creationRes :', creationRes);
 			if (!creationRes.success) {
 				throw new AppError(500, creationRes.result);
 			}
@@ -175,14 +174,12 @@ export class PlanService {
 			throw new NotFoundError('Plan not found.');
 		}
 		let parsedPlanData;
-		// console.log('[PlanService] planData :', planData);
 		try {
 			const parsedData = planUpdateSchema.parse(planData);
 			parsedPlanData = {
 				...parsedData,
 				sourceType: (parsedData.sourceType || currentPlan.sourceType) as SourceTypes,
 			};
-			// console.log('[PlanService] parsedPlanData :', parsedPlanData);
 		} catch (error) {
 			console.error('Error parsing plan data:', error);
 			throw error;

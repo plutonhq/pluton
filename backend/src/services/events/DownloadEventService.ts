@@ -12,7 +12,6 @@ export class DownloadEventService {
 	async onDownloadStart(eventPayload: DownloadStartEvent) {
 		const { backupId, planId } = eventPayload;
 		try {
-			console.log('onDownloadStart :', eventPayload);
 			const currentTime = Math.floor(new Date().getTime() / 1000);
 			await this.backupStore.update(backupId, {
 				download: {
@@ -34,7 +33,6 @@ export class DownloadEventService {
 	async onDownloadError(eventPayload: DownloadErrorEvent) {
 		const { backupId, planId, error } = eventPayload;
 		try {
-			console.log('onDownloadError :', eventPayload);
 			const backup = await this.backupStore.getById(backupId);
 			await this.backupStore.update(backupId, {
 				download: {
@@ -59,8 +57,6 @@ export class DownloadEventService {
 	async onDownloadComplete(eventPayload: DownloadCompleteEvent) {
 		const { backupId, planId, success } = eventPayload;
 		try {
-			console.log('onDownloadComplete :', eventPayload);
-
 			const backup = await this.backupStore.getById(backupId);
 			await this.backupStore.update(backupId, {
 				download: {

@@ -352,9 +352,9 @@ export class RestoreHandler {
 					const sourceItemInTempDir = path.join(winRestorePath, driveLetter, relativePath);
 					const destinationPath = sourcePath;
 
+					console.log('Copying files from', sourceItemInTempDir, 'to', destinationPath);
 					// Verify the item exists in the temp directory before trying to copy
 					await access(sourceItemInTempDir, constants.F_OK);
-					console.log('Copying files from', sourceItemInTempDir, 'to', destinationPath);
 					await copyFilesNatively(sourceItemInTempDir, destinationPath, overwrite);
 				} catch (error: any) {
 					console.log('Error occurred while copying files:', error);
@@ -649,7 +649,6 @@ export class RestoreHandler {
 		options: { storageName: string; storagePath: string; encryption: boolean }
 	): Promise<void> {
 		if (options.storageName && options.storagePath) {
-			console.log(`[RestoreHandler]: Unlocking stale locks for plan: ${planId}`);
 			try {
 				const repoPath = generateResticRepoPath(options.storageName, options.storagePath || '');
 				const repoPassword = options.encryption ? configService.config.ENCRYPTION_KEY : '';

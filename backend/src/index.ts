@@ -32,18 +32,18 @@ if (isMainModule || isDevelopment) {
 
 		// For binary installations on Windows/macOS, try to load credentials from keyring
 		if (requiresKeyringSetup() && configService.isSetupPending()) {
-			console.log('[CORE] Attempting to load credentials from system keyring...');
+			console.log('Attempting to load credentials from system keyring...');
 			const loaded = await ConfigService.reinitializeWithKeyringCredentials();
 			if (loaded) {
-				console.log('[CORE] Credentials loaded from keyring successfully.');
+				console.log('Credentials loaded from keyring successfully.');
 			} else {
-				console.log('[CORE] No credentials found in keyring. Waiting for initial setup...');
+				console.log('No credentials found in keyring. Waiting for initial setup...');
 			}
 		}
 
 		// Run database migrations first
 		if (process.env.NODE_ENV === 'production') {
-			console.log('[CORE] Running database migrations...');
+			console.log('Running database migrations...');
 			try {
 				const migrationsFolder =
 					process.env.IS_DOCKER === 'true'
@@ -53,10 +53,10 @@ if (isMainModule || isDevelopment) {
 				// Check if migrations exist
 				const journalPath = path.join(migrationsFolder, 'meta', '_journal.json');
 				if (!fs.existsSync(journalPath)) {
-					console.log('[CORE] No migrations found (meta/_journal.json missing), skipping...');
+					console.log('No migrations found (meta/_journal.json missing), skipping...');
 				} else {
 					migrate(db, { migrationsFolder });
-					console.log('[CORE] Database migrations completed successfully');
+					console.log('Database migrations completed successfully');
 				}
 			} catch (error: any) {
 				// If tables already exist or columns already exist (edition upgrade) - skip migration
@@ -65,9 +65,9 @@ if (isMainModule || isDevelopment) {
 					(error?.cause?.message?.includes('already exists') ||
 						error?.cause?.message?.includes('duplicate column'))
 				) {
-					console.log('[CORE] Database schema already up-to-date, skipping migrations');
+					console.log('Database schema already up-to-date, skipping migrations');
 				} else {
-					console.error('[CORE] Database migration error:', error);
+					console.error('Database migration error:', error);
 					process.exit(1);
 				}
 			}
@@ -77,38 +77,38 @@ if (isMainModule || isDevelopment) {
 		if (!configService.isSetupPending()) {
 			await initSetup(db as unknown as BetterSQLite3Database);
 		} else {
-			console.log('[CORE] Setup pending - skipping initSetup. Complete setup via web interface.');
+			console.log('Setup pending - skipping initSetup. Complete setup via web interface.');
 		}
 
 		const { app } = await createApp();
 
 		const server = app.listen(configService.config.SERVER_PORT || 5173, () => {
-			console.log(`[CORE] Server running on port ${configService.config.SERVER_PORT || 5173}`);
+			console.log(`Server running on port ${configService.config.SERVER_PORT || 5173}`);
 			if (configService.isSetupPending()) {
 				console.log(
-					`[CORE] ⚠️  Initial setup required. Visit http://localhost:${configService.config.SERVER_PORT || 5173} to complete setup.`
+					`⚠️  Initial setup required. Visit http://localhost:${configService.config.SERVER_PORT || 5173} to complete setup.`
 				);
 			}
 		});
 
 		// Graceful shutdown handling for Docker
 		process.on('SIGTERM', async () => {
-			console.log('[CORE] SIGTERM received, shutting down gracefully...');
+			console.log('SIGTERM received, shutting down gracefully...');
 			const forceExit = setTimeout(() => {
 				process.exit(1);
 			}, 30000); // 30 seconds timeout
 
 			server.close(() => {
 				clearTimeout(forceExit);
-				console.log('[CORE] Server closed');
+				console.log('Server closed');
 				process.exit(0);
 			});
 		});
 
 		process.on('SIGINT', async () => {
-			console.log('[CORE] SIGINT received, shutting down gracefully...');
+			console.log('SIGINT received, shutting down gracefully...');
 			server.close(() => {
-				console.log('[CORE] Server closed');
+				console.log('Server closed');
 				process.exit(0);
 			});
 		});

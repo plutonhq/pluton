@@ -107,7 +107,7 @@ export class RestoreService {
 					delete: restoreConfig.delete,
 					includes: restoreConfig.includes,
 					excludes: restoreConfig.excludes,
-               replicationId: restoreConfig.replicationId,
+					replicationId: restoreConfig.replicationId,
 				}
 			);
 
@@ -189,7 +189,6 @@ export class RestoreService {
 		}
 		const strategy = this.getRestoreStrategy(restore.sourceId as string, restore.method);
 		const cancelResult = await strategy.cancelSnapshotRestore(restore.planId as string, restoreId);
-		console.log('cancelResult :', cancelResult);
 		await this.restoreStore.update(restoreId, {
 			status: 'cancelled',
 			inProgress: false,

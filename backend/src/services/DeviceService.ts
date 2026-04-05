@@ -107,7 +107,7 @@ export class DeviceService {
 					storages: deviceStorages,
 				};
 			} catch (error: any) {
-				console.log('🎃Error fetching device metrics:', error);
+				console.log('Error fetching device metrics:', error?.message || error);
 				DeviceLogger(id).error(
 					`Error fetching device data for #${id}. Reason : ${error?.message.toString() || 'Unknown Error'}`
 				);

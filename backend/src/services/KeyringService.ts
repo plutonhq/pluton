@@ -220,7 +220,6 @@ class KeyringService {
 		try {
 			const entry = new this.Entry(SERVICE_NAME, key);
 			entry.deletePassword();
-			console.log(`[KeyringService] Credential '${key}' deleted successfully`);
 			return true;
 		} catch (error) {
 			console.error(`[KeyringService] Failed to delete credential '${key}':`, error);

@@ -12,7 +12,6 @@ export class LocalStrategy implements BackupStrategy {
 	}
 
 	async createBackup(backupId: string, options: BackupPlanArgs) {
-		console.log('[Local] createBackup:', backupId);
 		return await this.localAgent.createBackup(backupId, options);
 	}
 

@@ -37,7 +37,7 @@ export class SettingsService {
 				const parsedSettingsEntry = settingsUpdateSchema
 					.partial()
 					.parse({ settings: parsedSettings });
-				console.log('#### parsedSettingsEntry :', parsedSettingsEntry);
+
 				parsedSettings = parsedSettingsEntry.settings as AppSettings;
 			} catch (error) {
 				console.error('Error parsing settings data:', error);
@@ -88,8 +88,6 @@ export class SettingsService {
 			const sendRes = await senderChannel.send(notificationClass, {
 				emails: test.email,
 			});
-			// console.log('senderChannel :', senderChannel);
-			// console.log('sendRes :', integrationType, sendRes);
 
 			// Set the integration status to connected
 			if (sendRes.success) {

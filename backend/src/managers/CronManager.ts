@@ -98,8 +98,6 @@ export class CronManager<T extends ScheduleOptions> {
 		options: T,
 		scheduleType: string
 	): Promise<void> {
-		console.log('[scheduleTask] :', id, scheduleType, cronExpression);
-
 		const existingSchedules = this.schedules.get(id) || [];
 
 		// Check if a schedule with the same type already exists

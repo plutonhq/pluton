@@ -185,7 +185,6 @@ export class BackupHandler {
 
 			// Run post-failure scripts.
 			if (permanentlyFailed) {
-				console.log('### Final Attempt!!! Running Scripts...');
 				await this.afterBackupFailure(planId, backupId, options);
 				await this.afterBackup(planId, backupId, options);
 			} else {
@@ -647,7 +646,6 @@ export class BackupHandler {
 			const outputLines = dryRunOutput.split('\n');
 			const summaryLine = outputLines[outputLines.length - 1];
 			const dryRunSummary = JSON.parse(summaryLine);
-			console.log('dryRunBackup :', dryRunSummary);
 			return dryRunSummary;
 		} catch (error: any) {
 			console.error('[dryRunBackup]: Failed', error.message);

@@ -35,17 +35,12 @@ export class BackupEventService {
 	}
 
 	async onBackupStart(data: BackupStartEvent): Promise<void> {
-		console.log('onBackupStart: ', data);
 		const { planId, backupId, summary } = data;
 		if (!planId) {
 			return;
 		}
 
 		const existingBackup = await this.backupStore.getById(backupId);
-		console.log(
-			'existingBackup :',
-			existingBackup ? existingBackup.id : 'No existing backup found'
-		);
 		if (existingBackup && existingBackup.sourceId === 'main' && this.localAgent) {
 			// This is a RETRY. Re-initialize the state for the new attempt.
 			await this.backupStore.update(backupId, {
@@ -59,7 +54,6 @@ export class BackupEventService {
 		}
 
 		const activeBackups = await this.planStore.hasActiveBackups(planId);
-		console.log('activeBackups :', activeBackups);
 		if (activeBackups) {
 			planLogger('backup', planId).error(
 				`Failed to Start Backup as a backup is already running for this plan.`
@@ -151,7 +145,6 @@ export class BackupEventService {
 	}
 
 	async onBackupComplete(data: BackupCompleteEvent): Promise<void> {
-		console.log('onBackupComplete: ', data);
 		const { planId, success, backupId, summary } = data;
 		const progressFile = `${this.progressDir}/backup-${backupId}.json`;
 		let summaryData: any = null;
@@ -237,7 +230,6 @@ export class BackupEventService {
 	}
 
 	async onBackupError(data: BackupErrorEvent): Promise<void> {
-		console.log('onBackupError: ', data);
 		try {
 			// Update DB with Error
 			const backup = await this.backupStore.update(data.backupId, {
@@ -262,7 +254,6 @@ export class BackupEventService {
 	}
 
 	async onBackupFailure(data: { planId: string; backupId: string; error: string }): Promise<void> {
-		console.log('########## onBackupFailure: ', data);
 		const { planId, backupId, error } = data;
 		try {
 			// Update DB with Error
@@ -305,7 +296,6 @@ export class BackupEventService {
 	}
 
 	async onBackupStatsUpdate(data: BackupStatUpdateEvent) {
-		console.log('onBackupStatsUpdate :', data);
 		const { total_size, snapshots = [], backupId, planId, error = '', mirrors } = data;
 		if (planId && total_size && !Number.isNaN(total_size) && snapshots.length > 0) {
 			try {
@@ -337,7 +327,6 @@ export class BackupEventService {
 	}
 
 	async onPruneEnd(data: PruneEndEvent): Promise<void> {
-		console.log('onPruneEnd :', data);
 		if (data.success) {
 			planLogger('prune', data.planId).info(`Successfully pruned Backups.`);
 			const { planId, stats } = data;
@@ -412,7 +401,6 @@ export class BackupEventService {
 	}
 
 	async onIntegrityStart(data: { planId: string }) {
-		console.log('onIntegrityStart :', data);
 		const startedAt = new Date().getTime();
 		try {
 			await this.planStore.update(data.planId, {
@@ -434,7 +422,6 @@ export class BackupEventService {
 	}
 
 	async onIntegrityEnd(data: { planId: string; result: Record<string, string | null> }) {
-		console.log('onIntegrityEnd :', data);
 		const endedAt = new Date().getTime();
 		try {
 			const thePlan = await this.planStore.getById(data.planId);
@@ -493,7 +480,6 @@ export class BackupEventService {
 	}
 
 	async onIntegrityFailed(data: { planId: string; error: string }) {
-		console.log('onIntegrityFailed :', data);
 		const thePlan = await this.planStore.getById(data.planId);
 		if (thePlan && thePlan.storage?.name && thePlan.device?.id) {
 			planLogger('integrity_check', data.planId).error(`Failed Integrity Check for Backup Plan.`);
