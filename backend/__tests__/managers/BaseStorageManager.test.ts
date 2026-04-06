@@ -49,6 +49,7 @@ describe('BaseStorageManager', () => {
 			const result = await manager.createRemote('s3', 'test-remote', 'credentials', {
 				access_key: 'test-key',
 				secret_key: 'test-secret',
+				bucket: 'test-bucket',
 			});
 
 			expect(mockRunRcloneCommand).toHaveBeenCalledWith([
@@ -63,7 +64,7 @@ describe('BaseStorageManager', () => {
 				'--obscure',
 				'--non-interactive',
 			]);
-			expect(mockRunRcloneCommand).toHaveBeenCalledWith(['lsd', 'test-remote:']);
+			expect(mockRunRcloneCommand).toHaveBeenCalledWith(['lsd', 'test-remote:test-bucket']);
 			expect(result).toEqual({
 				success: true,
 				result: 'Remote created successfully',
@@ -99,6 +100,7 @@ describe('BaseStorageManager', () => {
 				'credentials',
 				{
 					access_key: 'test-key',
+					bucket: 'test-bucket',
 				},
 				{
 					region: 'us-east-1',
@@ -171,6 +173,7 @@ describe('BaseStorageManager', () => {
 
 			const result = await manager.createRemote('s3', 'test-remote', 'credentials', {
 				access_key: 'test-key',
+				bucket: 'test-bucket',
 			});
 
 			expect(result).toEqual({
@@ -187,6 +190,7 @@ describe('BaseStorageManager', () => {
 
 			const result = await manager.createRemote('s3', 'test-remote', 'credentials', {
 				access_key: 'test-key',
+				bucket: 'test-bucket',
 			});
 
 			expect(mockRunRcloneCommand).toHaveBeenNthCalledWith(1, [
@@ -201,7 +205,7 @@ describe('BaseStorageManager', () => {
 				'--obscure',
 				'--non-interactive',
 			]);
-			expect(mockRunRcloneCommand).toHaveBeenNthCalledWith(2, ['lsd', 'test-remote:']);
+			expect(mockRunRcloneCommand).toHaveBeenNthCalledWith(2, ['lsd', 'test-remote:test-bucket']);
 			expect(mockRunRcloneCommand).toHaveBeenNthCalledWith(3, ['config', 'delete', 'test-remote']);
 			expect(result).toEqual({
 				success: false,
