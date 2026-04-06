@@ -51,8 +51,10 @@ export function executeUserScript(script: PlanScript): Promise<{ stdout: string;
 		let stdout = '';
 		let stderr = '';
 
+		const timeoutMs = timeout ? timeout * 1000 : undefined;
+
 		const child: ChildProcess = spawn(executable, args, {
-			timeout: timeout || undefined,
+			timeout: timeoutMs,
 			shell: false,
 			cwd: path.dirname(scriptPath),
 		});
@@ -71,7 +73,7 @@ export function executeUserScript(script: PlanScript): Promise<{ stdout: string;
 
 		child.on('close', (code, signal) => {
 			if (signal === 'SIGTERM') {
-				reject(new Error(`Script timed out after ${timeout || 60000}ms.`));
+				reject(new Error(`Script timed out after ${timeout || 60}s.`));
 				return;
 			}
 			if (code === 0) {
