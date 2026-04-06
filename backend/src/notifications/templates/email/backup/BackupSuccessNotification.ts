@@ -36,6 +36,9 @@ export class BackupSuccessNotification extends BaseNotification {
 		if (this.contentType === 'json') {
 			return this.buildJSONContent(data);
 		}
+		if (this.contentType === 'push') {
+			return this.buildPushContent(data);
+		}
 		if (this.contentType === 'slack') {
 			return this.buildSlackContent(data);
 		}
@@ -139,6 +142,7 @@ export class BackupSuccessNotification extends BaseNotification {
 		} = data;
 		const storageTypeName = storageType ? providers[storageType]?.name || storageType : '';
 		const appUrl = configService.config.APP_URL || '';
+		const hasReplicationFailures = replicationFailures && replicationFailures.length > 0;
 
 		const fields: { type: string; text: string }[] = [
 			{ type: 'mrkdwn', text: `*Plan:* ${plan.title}` },
@@ -168,7 +172,11 @@ export class BackupSuccessNotification extends BaseNotification {
 		const blocks: Record<string, any>[] = [
 			{
 				type: 'header',
-				text: { type: 'plain_text', text: `✅ Backup Complete: ${plan.title}`, emoji: true },
+				text: {
+					type: 'plain_text',
+					text: `${hasReplicationFailures ? '⚠️' : '✅'} Backup Complete: ${plan.title}`,
+					emoji: true,
+				},
 			},
 			{
 				type: 'section',
@@ -176,7 +184,7 @@ export class BackupSuccessNotification extends BaseNotification {
 			},
 		];
 
-		if (replicationFailures && replicationFailures.length > 0) {
+		if (hasReplicationFailures) {
 			blocks.push({
 				type: 'section',
 				text: {
@@ -221,6 +229,7 @@ export class BackupSuccessNotification extends BaseNotification {
 		} = data;
 		const storageTypeName = storageType ? providers[storageType]?.name || storageType : '';
 		const appUrl = configService.config.APP_URL || '';
+		const hasReplicationFailures = replicationFailures && replicationFailures.length > 0;
 
 		const fields: { name: string; value: string; inline: boolean }[] = [
 			{ name: 'Plan', value: plan.title, inline: true },
@@ -259,8 +268,8 @@ export class BackupSuccessNotification extends BaseNotification {
 		}
 
 		const embed: Record<string, any> = {
-			title: `✅ Backup Complete: ${plan.title}`,
-			color: 0x22c55e, // green
+			title: `${hasReplicationFailures ? '⚠️' : '✅'} Backup Complete: ${plan.title}`,
+			color: hasReplicationFailures ? 0xf59e0b : 0x22c55e,
 			fields,
 			timestamp: new Date(startTime).toISOString(),
 			footer: { text: appTitle },
@@ -271,5 +280,38 @@ export class BackupSuccessNotification extends BaseNotification {
 		}
 
 		return JSON.stringify({ embeds: [embed] });
+	}
+
+	buildPushContent(data: BackupSuccessNotificationPayload) {
+		const { appTitle, deviceName, storageName, storageType, plan, stats, replicationFailures } =
+			data;
+		const hasReplicationFailures = replicationFailures && replicationFailures.length > 0;
+		const sourceCount = plan.sourceConfig.includes.length;
+		const backupChanges = () => {
+			const newCount = (stats?.files_new || 0) + (stats?.dirs_new || 0);
+			const modifiedCount = (stats?.files_changed || 0) + (stats?.dirs_changed || 0);
+			const removedCount = 0;
+			const parts = [];
+			if (newCount > 0) parts.push(`${newCount} New`);
+			if (modifiedCount > 0) parts.push(`${modifiedCount} Modified`);
+			if (removedCount > 0) parts.push(`${removedCount} Removed`);
+			return parts.length > 0 ? parts.join(' / ') : 'No Changes';
+		};
+		// const
+		const payload = {
+			title: `${appTitle}: Backup Successful for Plan "${plan.title}"`,
+			body: `Successfully Backed up ${sourceCount} sources from ${deviceName} to ${storageName}(${storageType}). 
+          
+         Changes: ${backupChanges()} 
+         Total Size: ${formatBytes(stats?.total_bytes_processed || 0)}
+         Total Files: ${formatNumberToK(stats?.total_files_processed || 0)}
+         Total Duration: ${formatDuration(stats?.total_duration || 0)}
+         ${hasReplicationFailures ? `⚠️ Replication Failures: ${replicationFailures.map(f => f.storageName || f.storageId).join(', ')}` : ''}`,
+			priority: 3,
+			emoji: hasReplicationFailures ? 'warning' : 'white_check_mark',
+			buttonUrl: `${configService.config.APP_URL}/plan/${data.plan.id}`,
+			buttonText: 'View Plan',
+		};
+		return JSON.stringify(payload);
 	}
 }

@@ -1,12 +1,12 @@
-import { createReadStream, constants, ReadStream } from 'fs';
-import path from 'path';
+import { createReadStream, constants } from 'fs';
 import { readFile, access } from 'fs/promises';
 import { SettingsService } from '../../src/services/SettingsService';
 import { SettingsStore } from '../../src/stores/SettingsStore';
 import { AppSettings } from '../../src/types/settings';
-import { AppError, NotFoundError } from '../../src/utils/AppError';
+import { AppError } from '../../src/utils/AppError';
 import { NotificationChannelResolver } from '../../src/notifications/channels/NotificationChannelResolver';
 import { SMTPChannel } from '../../src/notifications/channels/SMTPChannel';
+import { NtfyChannel } from '../../src/notifications/channels/NtfyChannel';
 import { Settings } from '../../src/db/schema/settings';
 
 // Mock all dependencies
@@ -22,7 +22,9 @@ jest.mock('../../src/db/index', () => ({
 jest.mock('../../src/stores/SettingsStore');
 jest.mock('../../src/notifications/channels/NotificationChannelResolver');
 jest.mock('../../src/notifications/templates/email/test-email/TestEmailNotification');
+jest.mock('../../src/notifications/templates/push/test-ntfy/TestNtfyNotification');
 jest.mock('../../src/notifications/channels/SMTPChannel');
+jest.mock('../../src/notifications/channels/NtfyChannel');
 jest.mock('fs/promises');
 jest.mock('fs');
 
@@ -138,7 +140,10 @@ describe('SettingsService', () => {
 	describe('validateIntegration', () => {
 		const settingsId = 1;
 		const testPayload = { email: 'test@example.com' };
-		const mockAppSettings = {
+		const mockIntegrationSettings = {
+			smtp: { server: 'smtp.example.com', connected: false },
+		} as AppSettings['integration'];
+		const mockReturnedAppSettings = {
 			title: 'Pluton',
 			integration: { smtp: { server: 'smtp.example.com', connected: false } },
 		} as AppSettings;
@@ -146,15 +151,15 @@ describe('SettingsService', () => {
 		it('should validate, send email, and update connection status to true', async () => {
 			// First update returns the settings, second one confirms connection status update
 			mockSettingsStore.update
-				.mockResolvedValueOnce({ id: 1, settings: mockAppSettings } as any)
-				.mockResolvedValueOnce({ id: 1, settings: mockAppSettings } as any);
+				.mockResolvedValueOnce({ id: 1, settings: mockReturnedAppSettings } as any)
+				.mockResolvedValueOnce({ id: 1, settings: mockReturnedAppSettings } as any);
 			mockSmtpChannel.send.mockResolvedValue({ success: true, result: 'Email sent' });
 
 			const result = await settingsService.validateIntegration(
 				settingsId,
 				'smtp',
 				testPayload,
-				mockAppSettings
+				mockIntegrationSettings
 			);
 
 			expect(MockedNotificationChannelResolver.encryptSecrets).toHaveBeenCalled();
@@ -173,19 +178,19 @@ describe('SettingsService', () => {
 		});
 
 		it('should throw an AppError if sending the email fails', async () => {
-			mockSettingsStore.update.mockResolvedValue({ id: 1, settings: mockAppSettings } as any);
+			mockSettingsStore.update.mockResolvedValue({
+				id: 1,
+				settings: mockReturnedAppSettings,
+			} as any);
 			mockSmtpChannel.send.mockResolvedValue({ success: false, result: 'Auth failed' });
 
-			const promise = settingsService.validateIntegration(
-				settingsId,
-				'smtp',
-				testPayload,
-				mockAppSettings
-			);
+			const promise = settingsService.validateIntegration(settingsId, 'smtp', testPayload, {
+				...mockIntegrationSettings,
+			});
 
 			await expect(promise).rejects.toThrow(AppError);
 			await expect(promise).rejects.toThrow(
-				'Failed to send test email using smtp. Reason: Auth failed'
+				'Failed to send test notification using smtp. Reason: Auth failed'
 			);
 
 			// Ensure the second update to set `connected: true` was NOT called
@@ -196,11 +201,100 @@ describe('SettingsService', () => {
 			mockSettingsStore.update.mockResolvedValue(null); // Simulate DB update failure
 
 			await expect(
-				settingsService.validateIntegration(settingsId, 'smtp', testPayload, mockAppSettings)
+				settingsService.validateIntegration(settingsId, 'smtp', testPayload, {
+					...mockIntegrationSettings,
+				})
 			).rejects.toThrow('Failed to update settings');
 
 			// Ensure no email was attempted
 			expect(mockSmtpChannel.send).not.toHaveBeenCalled();
+		});
+
+		// Ntfy integration validation tests
+		describe('ntfy', () => {
+			const ntfyTestPayload = { url: 'https://ntfy.sh/testtopic' };
+			const mockNtfyIntegrationSettings = {
+				ntfy: { authType: 'token', authToken: 'tk_test', connected: false },
+			} as AppSettings['integration'];
+			const mockNtfyReturnedAppSettings = {
+				title: 'Pluton',
+				integration: { ntfy: { authType: 'token', authToken: 'tk_test', connected: false } },
+			} as AppSettings;
+			let mockNtfyChannel: jest.Mocked<NtfyChannel>;
+
+			beforeEach(() => {
+				mockNtfyChannel = new NtfyChannel({} as any) as jest.Mocked<NtfyChannel>;
+				(MockedNotificationChannelResolver.getChannel as jest.Mock).mockResolvedValue(
+					mockNtfyChannel
+				);
+			});
+
+			it('should validate ntfy, send push notification, and update connection status', async () => {
+				mockSettingsStore.update
+					.mockResolvedValueOnce({ id: 1, settings: mockNtfyReturnedAppSettings } as any)
+					.mockResolvedValueOnce({ id: 1, settings: mockNtfyReturnedAppSettings } as any);
+				mockNtfyChannel.send.mockResolvedValue({
+					success: true,
+					result: 'Ntfy notification sent',
+				});
+
+				const result = await settingsService.validateIntegration(
+					settingsId,
+					'ntfy',
+					ntfyTestPayload,
+					{ ...mockNtfyIntegrationSettings }
+				);
+
+				expect(MockedNotificationChannelResolver.encryptSecrets).toHaveBeenCalled();
+				expect(mockSettingsStore.update).toHaveBeenCalledTimes(2);
+				expect(mockNtfyChannel.send).toHaveBeenCalledWith(
+					expect.anything(),
+					expect.objectContaining({ url: 'https://ntfy.sh/testtopic' })
+				);
+				expect(mockSettingsStore.update).toHaveBeenLastCalledWith(
+					settingsId,
+					expect.objectContaining({
+						integration: expect.objectContaining({
+							ntfy: expect.objectContaining({ connected: true }),
+						}),
+					})
+				);
+				expect(result).toBe(true);
+			});
+
+			it('should throw an AppError if sending the ntfy notification fails', async () => {
+				mockSettingsStore.update.mockResolvedValue({
+					id: 1,
+					settings: mockNtfyReturnedAppSettings,
+				} as any);
+				mockNtfyChannel.send.mockResolvedValue({
+					success: false,
+					result: 'Ntfy returned 401: unauthorized',
+				});
+
+				const promise = settingsService.validateIntegration(settingsId, 'ntfy', ntfyTestPayload, {
+					...mockNtfyIntegrationSettings,
+				});
+
+				await expect(promise).rejects.toThrow(AppError);
+				await expect(promise).rejects.toThrow(
+					'Failed to send test notification using ntfy. Reason: Ntfy returned 401: unauthorized'
+				);
+
+				expect(mockSettingsStore.update).toHaveBeenCalledTimes(1);
+			});
+
+			it('should throw an AppError if the initial ntfy settings update fails', async () => {
+				mockSettingsStore.update.mockResolvedValue(null);
+
+				await expect(
+					settingsService.validateIntegration(settingsId, 'ntfy', ntfyTestPayload, {
+						...mockNtfyIntegrationSettings,
+					})
+				).rejects.toThrow('Failed to update settings');
+
+				expect(mockNtfyChannel.send).not.toHaveBeenCalled();
+			});
 		});
 	});
 

@@ -1,6 +1,6 @@
 import { BackupCompletionStats, BackupTaskStats, ReplicationFailureInfo } from '../types/backups';
 import { PlanFull } from '../types/plans';
-import { INotificationChannelResolver } from '../types/notifications';
+import { INotificationChannelResolver, PushNotificationPayload } from '../types/notifications';
 import { BackupStartedNotification } from './templates/email/backup/BackupStartedNotification';
 import { BackupSuccessNotification } from './templates/email/backup/BackupSuccessNotification';
 import { BackupFailedNotification } from './templates/email/backup/BackupFailedNotification';
@@ -48,6 +48,9 @@ export class BackupNotification {
 		}
 		if (notification?.discord?.enabled) {
 			await this.sendDiscord(plan, notificationType, backupData);
+		}
+		if (notification?.push?.enabled) {
+			await this.sendPushNotification(plan, notificationType, backupData);
 		}
 	}
 
@@ -163,6 +166,61 @@ export class BackupNotification {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown Error.';
 			planLogger('notification', plan.id, backupData?.id).error(
 				`Error Sending Backup ${notificationType} Discord Notification. Reason: ${errorMessage}`
+			);
+		}
+	}
+
+	async sendPushNotification(
+		plan: PlanFull,
+		notificationType: NotificationType,
+		backupData?: BackupDataType,
+		notificationCase?: string
+	) {
+		try {
+			const { notification } = plan.settings;
+			const theCase = notificationCase ? notificationCase : notification?.push?.case || 'end';
+			const shouldSend = notificationCase ? true : this.shouldSend(theCase, notificationType);
+			if (!shouldSend) throw new Error('Does not match Plan Notification Case.');
+			if (!notification?.push?.url) throw new Error('Push Notification URL missing.');
+
+			const ntfyChannel = await this.notificationChannelResolver.getChannel('ntfy');
+
+			const notificationClass = await this.getNotificationClass(
+				plan,
+				notificationType,
+				backupData,
+				'push'
+			);
+			const body = notificationClass.getContent();
+			const pushContent: PushNotificationPayload = JSON.parse(body);
+			const pushTags = notification?.push?.tags || '';
+
+			const result = await ntfyChannel.send(notificationClass, {
+				url: notification.push.url,
+				title: pushContent.title,
+				body: pushContent.body,
+				priority: pushContent.priority,
+				tags: `${pushContent.emoji ? `${pushContent.emoji}, ` : ''}${pushTags}`,
+				icon: 'https://pluton.b-cdn.net/logo.png',
+				markdown: 'yes',
+				actions:
+					pushContent.buttonText && pushContent.buttonUrl
+						? `view, ${pushContent.buttonText}, ${pushContent.buttonUrl}`
+						: undefined,
+			});
+
+			if (!result.success) throw new Error(result.result);
+
+			// Log Success Notification Result
+			planLogger('notification', plan.id, backupData?.id).info(
+				`Backup ${notificationType} Notification Sent Successfully.`
+			);
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'Failed to Send Push Notification.';
+			console.log('[Push] errorMessage :', errorMessage);
+			planLogger('notification', plan.id, backupData?.id).error(
+				`Error Sending Backup ${notificationType} Webhook Notification. Reason: ${errorMessage}`
 			);
 		}
 	}

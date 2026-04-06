@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { experimental_createQueryPersister } from '@tanstack/react-query-persist-client';
 import { API_URL } from '../utils/constants';
 import { useNavigate } from 'react-router';
+import { IntegrationSettings } from '../@types';
 
 // ============== Settings API ==============
 
@@ -136,10 +137,9 @@ export function useGetDownloadAppLogs() {
 export async function validateIntegration(updatePayload: {
    settingsID: number;
    type: string;
-   settings: Record<string, string | boolean | number>;
+   settings: IntegrationSettings;
    test: Record<string, string | boolean | number>;
 }) {
-   console.log('updatePayload :', updatePayload);
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
    const res = await fetch(`${API_URL}/settings/integration/validate`, {
       method: 'POST',

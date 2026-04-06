@@ -4,6 +4,7 @@ import { createReadStream, constants, ReadStream } from 'fs';
 import { readFile, access } from 'fs/promises';
 import { Settings, settingsUpdateSchema } from '../db/schema/settings';
 import { TestEmailNotification } from '../notifications/templates/email/test-email/TestEmailNotification';
+import { TestNtfyNotification } from '../notifications/templates/push/test-ntfy/TestNtfyNotification';
 import { SettingsStore } from '../stores/SettingsStore';
 import { AppSettings, IntegrationTypes } from '../types/settings';
 import { INotificationChannelResolver } from '../types/notifications';
@@ -64,30 +65,49 @@ export class SettingsService {
 	async validateIntegration(
 		id: number,
 		type: IntegrationTypes,
-		test: { email: string },
-		settings: AppSettings
+		test: { email?: string; url?: string },
+		settings: AppSettings['integration']
 	): Promise<boolean> {
-		const appSettings = settings;
-
+		const integrationSettings = settings;
 		const integrationType = type;
-		appSettings.integration = this.notificationChannelResolver.encryptSecrets(
-			appSettings.integration as AppSettings['integration']
-		);
+
+		if (!integrationSettings[integrationType]) {
+			throw new AppError(400, `Integration settings for ${type} are missing.`);
+		}
+
+		const encryptedIntegration =
+			this.notificationChannelResolver.encryptSecrets(integrationSettings);
 		try {
 			// First Update the Integration Settings with the provided config
-			const updatedSettings = await this.settingsStore.update(id, appSettings);
+			const updatedSettings = await this.settingsStore.update(id, {
+				integration: {
+					...integrationSettings,
+					[integrationType]: encryptedIntegration[integrationType],
+				},
+			} as AppSettings);
 			if (!updatedSettings) {
 				throw new AppError(500, 'Failed to update settings');
 			}
 			const theAppSettings = updatedSettings.settings as AppSettings;
 			const appTitle = theAppSettings?.title || 'Pluton';
+			let sendRes = { success: false, result: '' };
 
-			// Send the test email
-			const notificationClass = new TestEmailNotification({ integrationType, appTitle });
-			const senderChannel = await this.notificationChannelResolver.getChannel(integrationType);
-			const sendRes = await senderChannel.send(notificationClass, {
-				emails: test.email,
-			});
+			// Send the test notification
+			if (type === 'ntfy') {
+				const notificationClass = new TestNtfyNotification({ integrationType, appTitle });
+				const senderChannel = await this.notificationChannelResolver.getChannel(integrationType);
+				sendRes = await senderChannel.send(notificationClass, {
+					url: test.url,
+					icon: 'https://pluton.b-cdn.net/logo.png',
+				});
+			} else {
+				const notificationClass = new TestEmailNotification({ integrationType, appTitle });
+				const senderChannel = await this.notificationChannelResolver.getChannel(integrationType);
+				console.log('senderChannel :', senderChannel);
+				sendRes = await senderChannel.send(notificationClass, {
+					emails: test.email,
+				});
+			}
 
 			// Set the integration status to connected
 			if (sendRes.success) {
@@ -100,7 +120,7 @@ export class SettingsService {
 			} else {
 				throw new AppError(
 					500,
-					`Failed to send test email using ${integrationType}. Reason: ${sendRes.result}`
+					`Failed to send test notification using ${integrationType}. Reason: ${sendRes.result}`
 				);
 			}
 		} catch (error: unknown) {
@@ -108,7 +128,7 @@ export class SettingsService {
 				500,
 				error instanceof Error
 					? error.message
-					: `Failed to send test email using ${integrationType}.`
+					: `Failed to send test notification using ${integrationType}.`
 			);
 		}
 	}

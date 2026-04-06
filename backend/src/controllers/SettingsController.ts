@@ -82,7 +82,7 @@ export class SettingsController {
 			});
 			return;
 		}
-		const appSettings = req.body.settings as AppSettings;
+		const appSettings = req.body.settings as AppSettings['integration'];
 		const integrationType = req.body.type as IntegrationTypes;
 
 		try {
@@ -92,7 +92,9 @@ export class SettingsController {
 				req.body.test,
 				appSettings
 			);
-			res.status(200).json({ success: true, result: 'Email Sent Successfully' });
+			res
+				.status(200)
+				.json({ success: true, result: 'Notification Sent Successfully. Integration Validated.' });
 			return;
 		} catch (error: unknown) {
 			res.status(500).json({
@@ -100,7 +102,7 @@ export class SettingsController {
 				error:
 					error instanceof Error
 						? error.message
-						: `Failed to send test email using ${integrationType}.`,
+						: `Failed to send test notification using ${integrationType}.`,
 			});
 			return;
 		}

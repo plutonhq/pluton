@@ -28,6 +28,7 @@ const PlanNotificationSettings = ({
 }: PlanNotificationSettingsProps) => {
    const hasConnectedIntegrations = types.length > 0;
    const defaultEmail = !hasConnectedIntegrations && admin_email ? admin_email : '';
+   const hasNtfyConnected = types.includes('ntfy');
 
    const updateNotificationEmails = (emails: string) => {
       onUpdate({ ...notificationSettings, email: { ...notificationSettings.email, emails } });
@@ -202,6 +203,70 @@ const PlanNotificationSettings = ({
                   </div>
                </div>
             )}
+         </div>
+
+         {/* Ntfy Push Notification */}
+         <div className={classes.notificationSettingsSection}>
+            <div className={`${classes.field} ${classes.notificationToggle}`}>
+               <Icon type="ntfy" size={14} />
+               <Toggle
+                  label="Enable Ntfy Push Notifications"
+                  fieldValue={notificationSettings?.push?.enabled || false}
+                  onUpdate={(val: boolean) => onUpdate({ ...notificationSettings, push: { ...notificationSettings.push, enabled: val } })}
+                  hint={`Send me Push Notifications on Backup failure or success.`}
+                  inline={true}
+               />
+            </div>
+            {notificationSettings.push?.enabled &&
+               (hasNtfyConnected ? (
+                  <div className={classes.notificationSettings}>
+                     {!isSync && (
+                        <div className={classes.field}>
+                           <Select
+                              label="Send Notification On"
+                              fieldValue={notificationSettings?.push?.case || 'failure'}
+                              options={caseOptions}
+                              onUpdate={(val: string) =>
+                                 onUpdate({
+                                    ...notificationSettings,
+                                    push: { ...notificationSettings.push, case: val as PlanNotification['push']['case'] },
+                                 })
+                              }
+                              inline={true}
+                           />
+                        </div>
+                     )}
+                     <div className={classes.field}>
+                        <Input
+                           label="Ntfy Push URL"
+                           fieldValue={notificationSettings?.push?.url || ''}
+                           onUpdate={(val) => onUpdate({ ...notificationSettings, push: { ...notificationSettings.push, url: val } })}
+                           placeholder="https://ntfy.sh/mytopic"
+                           inline={true}
+                           required={true}
+                           full={true}
+                           error={!notificationSettings?.push?.url ? 'Required' : undefined}
+                        />
+                     </div>
+                     <div className={classes.field}>
+                        <Input
+                           label="Tags"
+                           fieldValue={notificationSettings?.push?.tags || ''}
+                           onUpdate={(val) => onUpdate({ ...notificationSettings, push: { ...notificationSettings.push, tags: val } })}
+                           placeholder="warning, daily-backup"
+                           inline={true}
+                           full={true}
+                        />
+                     </div>
+                  </div>
+               ) : (
+                  <div className={classes.notificationSettings}>
+                     <div className={classes.fieldNotice}>
+                        ⚠️ Ntfy Auth Token is not configured. Set it up in <NavLink to={`/settings?t=integration`}>Settings</NavLink> to enable Ntfy
+                        Push Notifications.
+                     </div>
+                  </div>
+               ))}
          </div>
       </>
    );

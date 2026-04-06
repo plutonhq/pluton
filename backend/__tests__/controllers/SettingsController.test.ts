@@ -264,7 +264,7 @@ describe('SettingsController', () => {
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: true,
-				result: 'Email Sent Successfully',
+				result: 'Notification Sent Successfully. Integration Validated.',
 			});
 		});
 

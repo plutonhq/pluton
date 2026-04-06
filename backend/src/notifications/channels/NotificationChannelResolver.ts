@@ -1,6 +1,7 @@
 import Cryptr from 'cryptr';
-import { AppSettings, IntegrationTypes, SmtpSettings } from '../../types/settings';
+import { AppSettings, IntegrationTypes, NTFYSettings, SmtpSettings } from '../../types/settings';
 import { SMTPChannel } from './SMTPChannel';
+import { NtfyChannel } from './NtfyChannel';
 import { getNestedValue, setNestedValue } from '../../utils/helpers';
 import { db } from '../../db/index';
 import { SettingsStore } from '../../stores/SettingsStore';
@@ -8,7 +9,7 @@ import { configService } from '../../services/ConfigService';
 import { NotificationChannel } from '../NotificationChannel';
 
 export class NotificationChannelResolver {
-	static secretFields: string[] = ['smtp.password'];
+	static secretFields: string[] = ['smtp.password', 'ntfy.authToken'];
 
 	static async getChannel(channelType: IntegrationTypes = 'smtp'): Promise<NotificationChannel> {
 		const settingsStore = new SettingsStore(db);
@@ -21,6 +22,8 @@ export class NotificationChannelResolver {
 		switch (channelType) {
 			case 'smtp':
 				return new SMTPChannel(channelConfig as SmtpSettings);
+			case 'ntfy':
+				return new NtfyChannel(channelConfig as NTFYSettings);
 			default:
 				return new SMTPChannel(channelConfig as SmtpSettings);
 		}

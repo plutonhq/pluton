@@ -29,3 +29,12 @@ export interface BackupNotificationData {
 	compression: boolean;
 	taskStats?: BackupTaskStats;
 }
+
+export interface PushNotificationPayload {
+	title: string;
+	body: string;
+	priority: number;
+	emoji?: string;
+	buttonUrl?: string;
+	buttonText?: string;
+}

@@ -32,6 +32,9 @@ export class BackupFailedNotification extends BaseNotification {
 		if (this.contentType === 'json') {
 			return this.buildJSONContent(data);
 		}
+		if (this.contentType === 'push') {
+			return this.buildSlackContent(data);
+		}
 		if (this.contentType === 'slack') {
 			return this.buildSlackContent(data);
 		}
@@ -198,5 +201,19 @@ export class BackupFailedNotification extends BaseNotification {
 		}
 
 		return JSON.stringify({ embeds: [embed] });
+	}
+
+	buildPushContent(data: BackupFailedNotificationPayload) {
+		const { appTitle, deviceName, storageName, storageType, plan } = data;
+		const sourceCount = plan.sourceConfig.includes.length;
+		const payload = {
+			title: `${appTitle}: Backup Failed for Plan "${plan.title}"`,
+			body: `Failed to backup ${sourceCount} sources from ${deviceName} to ${storageName}(${storageType}).`,
+			priority: 4,
+			emoji: 'warning',
+			buttonUrl: `${configService.config.APP_URL}/plan/${data.plan.id}`,
+			buttonText: 'View Plan',
+		};
+		return JSON.stringify(payload);
 	}
 }

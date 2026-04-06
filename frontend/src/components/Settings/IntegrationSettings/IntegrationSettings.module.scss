@@ -36,3 +36,19 @@
       }
    }
 }
+
+@media only screen and (max-width: 768px) {
+   .integrations {
+      .field {
+         width: 100%;
+      }
+   }
+   .integrationSelect {
+      width: 100%;
+      margin-bottom: 30px;
+
+      :global([class*='_dropdown_']) {
+         width: 100%;
+      }
+   }
+}

@@ -219,4 +219,21 @@ export class ReplicationFailedNotification extends BaseNotification {
 
 		return JSON.stringify({ embeds: [embed] });
 	}
+
+	buildPushContent(data: ReplicationFailedNotificationPayload) {
+		const { appTitle, deviceName, storageName, storageType, plan, failedMirrors = [] } = data;
+		const sourceCount = plan.sourceConfig.includes.length;
+
+		const payload = {
+			title: `${appTitle}: Replication Failed for Plan "${plan.title}"`,
+			body: `Failed to replicate ${sourceCount} sources from ${deviceName} to ${failedMirrors.length} storages. 
+         ${failedMirrors.map(mirror => `${mirror.storageName} : (${mirror.error || 'Unknown Error'})`).join(', ')}
+         `,
+			priority: 3,
+			emoji: 'white_check_mark',
+			buttonUrl: `${configService.config.APP_URL}/plan/${data.plan.id}`,
+			buttonText: 'View Plan',
+		};
+		return JSON.stringify(payload);
+	}
 }
