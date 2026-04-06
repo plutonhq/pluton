@@ -97,7 +97,7 @@ const providerFeatures = {
 		EmptyDir: true,
 		Hashing: true,
 	},
-	'files': {
+	'filescom': {
 		Purge: true,
 		Copy: true,
 		Move: true,
@@ -293,7 +293,7 @@ const providerFeatures = {
 		EmptyDir: true,
 		Hashing: false,
 	},
-	'azureBlob': {
+	'azureblob': {
 		Purge: true,
 		Copy: true,
 		Move: false,
@@ -349,7 +349,7 @@ const providerFeatures = {
 		EmptyDir: false,
 		Hashing: true,
 	},
-	'oracle': {
+	'oracleobjectstorage': {
 		Purge: false,
 		Copy: true,
 		Move: false,

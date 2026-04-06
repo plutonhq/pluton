@@ -15,16 +15,13 @@ export class BaseStorageManager {
 			throw new Error(`Unsupported storage type: ${type}`);
 		}
 
-		let rcloneStorageType = type;
-		if (provider) {
-			if (provider.s3Adapter) {
-				rcloneStorageType = 's3';
-				if (!bucketName) {
-					return {
-						success: false,
-						result: 'Bucket Name is required.',
-					};
-				}
+		const rcloneStorageType = provider?.type || type;
+		if (rcloneStorageType === 's3') {
+			if (!bucketName) {
+				return {
+					success: false,
+					result: 'Bucket Name is required.',
+				};
 			}
 		}
 

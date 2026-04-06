@@ -1,6 +1,6 @@
 import azureblobSettings from './providers/azureblob';
 import b2Settings from './providers/b2';
-import boxSettings from './providers/boxCom';
+import boxSettings from './providers/box';
 import dropboxSettings from './providers/dropbox';
 import fichierSettings from './providers/fichier';
 import gcsSettings from './providers/gcs';
@@ -18,7 +18,7 @@ import megaSettings from './providers/mega';
 import netstorageSettings from './providers/netstorage';
 import onedriveSettings from './providers/onedrive';
 import opendriveSettings from './providers/opendrive';
-import oracleSettings from './providers/oracle';
+import oracleSettings from './providers/oracleobjectstorage';
 import pikpakSettings from './providers/pikpak';
 import pixeldrainSettings from './providers/pixeldrain';
 import premiumizemeSettings from './providers/premiumizeme';
@@ -38,7 +38,7 @@ import webdavSettings from './providers/webdav';
 import yandexSettings from './providers/yandex';
 import zohoSettings from './providers/zoho';
 import pcloudSettings from './providers/pcloud';
-import filesComSettings from './providers/filesCom';
+import filesComSettings from './providers/filescom';
 import smbSettings from './providers/smb';
 import ftpSettings from './providers/ftp';
 import sftpSettings from './providers/sftp';
@@ -96,7 +96,7 @@ export interface ProviderConfig {
 		About: boolean;
 		EmptyDir: boolean;
 	};
-	s3Adapter?: boolean;
+	type?: string;
 	settings?: ProviderSetting[];
 	doc?: string;
 	setup: (credentials: Record<string, string>, type?: string) => string[] | false;
@@ -117,36 +117,6 @@ export const providers: Record<string, ProviderConfig> = {
 		authTypes: ['client'],
 		features: providerFeatures['b2'],
 		setup: creds => ['account', creds.account, 'key', creds.key],
-	},
-	s3: {
-		name: 'AWS S3',
-		doc: '/storages/connecting-aws-s3',
-		settings: s3Settings,
-		authTypes: ['client'],
-		features: providerFeatures['s3'],
-		s3Adapter: true,
-		setup: creds => {
-			const args = [
-				'provider',
-				'AWS',
-				'access_key_id',
-				creds.access_key_id,
-				'secret_access_key',
-				creds.secret_access_key,
-				'region',
-				creds.region,
-				'acl',
-				creds.acl || 'private',
-			];
-			if (creds.location_constraint && creds.location_constraint !== 'us-east-1') {
-				args.push('location_constraint', creds.location_constraint);
-			}
-			if (creds.endpoint) {
-				args.push('endpoint', creds.endpoint);
-			}
-
-			return args;
-		},
 	},
 	drive: {
 		name: 'Google Drive',
@@ -254,16 +224,17 @@ export const providers: Record<string, ProviderConfig> = {
 			}
 		},
 	},
-	azureBlob: {
+	azureblob: {
 		name: 'Azure Blob Storage',
 		doc: '/storages/connecting-azure-blob-storage',
 		settings: azureblobSettings,
 		authTypes: ['client', 'password'],
 		setup: creds => ['account', creds.account, 'key', creds.key],
-		features: providerFeatures['azureBlob'],
+		features: providerFeatures['azureblob'],
 	},
 	gcs: {
 		name: 'Google Cloud Storage',
+		type: 'google cloud storage',
 		doc: '/storages/connecting-google-cloud-storage',
 		settings: gcsSettings,
 		authTypes: ['client', 'oauth'],
@@ -640,13 +611,13 @@ export const providers: Record<string, ProviderConfig> = {
 		],
 		features: providerFeatures['netstorage'],
 	},
-	files: {
+	filescom: {
 		name: 'Files.com', // authentication either using apiKey or username/password
 		doc: '/storages/connecting-files-com',
 		authTypes: ['client', 'password'],
 		settings: filesComSettings,
 		setup: creds => ['api_key', creds.api_key],
-		features: providerFeatures['files'],
+		features: providerFeatures['filescom'],
 	},
 	gofile: {
 		name: 'GoFile',
@@ -658,6 +629,7 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	gphotos: {
 		name: 'Google Photos',
+		type: 'google photos',
 		doc: '/storages/connecting-google-photos',
 		authTypes: ['client', 'password'],
 		settings: gphotosSettings,
@@ -685,7 +657,7 @@ export const providers: Record<string, ProviderConfig> = {
 		setup: creds => ['api_key', creds.api_key],
 		features: providerFeatures['linkbox'],
 	},
-	oracle: {
+	oracleobjectstorage: {
 		name: 'Oracle Object Storage',
 		doc: '/storages/connecting-oracle-object-storage',
 		authTypes: ['client'],
@@ -702,14 +674,14 @@ export const providers: Record<string, ProviderConfig> = {
 			'secret_key',
 			creds.secret_key,
 		],
-		features: providerFeatures['oracle'],
+		features: providerFeatures['oracleobjectstorage'],
 	},
 	pikpak: {
 		name: 'PikPak',
 		doc: '/storages/connecting-pikpak',
 		authTypes: ['password'],
 		settings: pikpakSettings,
-		setup: creds => ['username', creds.username, 'password', creds.password],
+		setup: creds => ['user', creds.username, 'pass', creds.password],
 		features: providerFeatures['pikpak'],
 	},
 	pixeldrain: {
@@ -733,7 +705,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-quatrix',
 		authTypes: ['client'],
 		settings: quatrixSettings,
-		setup: creds => ['api_key', creds.api_key, 'user', creds.user, 'host', creds.host],
+		setup: creds => ['api_key', creds.api_key, 'host', creds.host],
 		features: providerFeatures['quatrix'],
 	},
 	sia: {
@@ -741,7 +713,7 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-sia',
 		authTypes: ['client'],
 		settings: siaSettings,
-		setup: creds => ['api_url', creds.api_url, 'password', creds.password],
+		setup: creds => ['api_url', creds.api_url, 'api_password', creds.api_password],
 		features: providerFeatures['sia'],
 	},
 	ulozto: {
@@ -761,11 +733,11 @@ export const providers: Record<string, ProviderConfig> = {
 		features: providerFeatures['hdfs'],
 	},
 	smb: {
-		name: 'SMB',
+		name: 'Samba (SMB)',
 		doc: '/storages/connecting-smb',
 		authTypes: ['password'],
 		settings: smbSettings,
-		setup: creds => ['host', creds.host, 'username', creds.username, 'password', creds.password],
+		setup: creds => ['host', creds.host, 'user', creds.user, 'pass', creds.pass],
 		features: providerFeatures['smb'],
 	},
 	sftp: {
@@ -842,13 +814,43 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 
 	/* ===================== S3 Compatible Storages ========================== */
+	s3: {
+		name: 'AWS S3',
+		type: 's3',
+		doc: '/storages/connecting-aws-s3',
+		settings: s3Settings,
+		authTypes: ['client'],
+		features: providerFeatures['s3'],
+		setup: creds => {
+			const args = [
+				'provider',
+				'AWS',
+				'access_key_id',
+				creds.access_key_id,
+				'secret_access_key',
+				creds.secret_access_key,
+				'region',
+				creds.region,
+				'acl',
+				creds.acl || 'private',
+			];
+			if (creds.location_constraint && creds.location_constraint !== 'us-east-1') {
+				args.push('location_constraint', creds.location_constraint);
+			}
+			if (creds.endpoint) {
+				args.push('endpoint', creds.endpoint);
+			}
+
+			return args;
+		},
+	},
 	r2: {
 		name: 'Cloudflare R2',
+		type: 's3',
 		doc: '/storages/connecting-cloudflare-r2',
 		authTypes: ['client'],
 		settings: r2Settings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Cloudflare',
@@ -866,11 +868,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	oss: {
 		name: 'Alibaba Cloud Object Storage System (OSS)',
+		type: 's3',
 		doc: '/storages/connecting-alibaba-cloud-oss',
 		authTypes: ['client'],
 		settings: ossSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Alibaba',
@@ -886,11 +888,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	ceph: {
 		name: 'Ceph',
+		type: 's3',
 		doc: '/storages/connecting-ceph',
 		authTypes: ['client'],
 		settings: cephSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Ceph', //TODO: No region field
@@ -906,11 +908,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	dreamobjects: {
 		name: 'DreamObjects',
+		type: 's3',
 		doc: '/storages/connecting-dreamhost',
 		authTypes: ['client'],
 		settings: dreamobjectsSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'DreamHost', //TODO: No region field
@@ -926,11 +928,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	spaces: {
 		name: 'DigitalOcean Spaces',
+		type: 's3',
 		doc: '/storages/connecting-digitalocean-spaces',
 		authTypes: ['client'],
 		settings: spacesSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'DigitalOcean', //TODO: No region field
@@ -944,11 +946,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	obs: {
 		name: 'Huawei OBS',
+		type: 's3',
 		doc: '/storages/connecting-huawei-obs',
 		authTypes: ['client'],
 		settings: obsSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'HuaweiOBS',
@@ -966,11 +968,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	ibmcos: {
 		name: 'IBM Cloud Object Storage',
+		type: 's3',
 		doc: '/storages/connecting-ibm-cos-s3',
 		authTypes: ['client'],
 		settings: ibmcosSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'IBMCOS',
@@ -990,11 +992,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	idrive: {
 		name: 'IDrive e2',
+		type: 's3',
 		doc: '/storages/connecting-idrive-e2',
 		authTypes: ['client'],
 		settings: idriveSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'IDrive',
@@ -1008,11 +1010,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	ionos: {
 		name: 'IONOS Cloud',
+		type: 's3',
 		doc: '/storages/connecting-ionos-cloud',
 		authTypes: ['client'],
 		settings: ionosSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'IONOS', //TODO: No region field
@@ -1026,11 +1028,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	minio: {
 		name: 'Minio',
+		type: 's3',
 		doc: '/storages/connecting-minio',
 		authTypes: ['client'],
 		settings: minioSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Minio',
@@ -1046,11 +1048,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	outscale: {
 		name: 'Outscale Object Storage',
+		type: 's3',
 		doc: '/storages/connecting-outscale',
 		authTypes: ['client'],
 		settings: outscaleSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Outscale',
@@ -1066,10 +1068,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	qiniu: {
 		name: 'Qiniu Object Storage (KODO)',
+		type: 's3',
 		authTypes: ['client'],
 		settings: qiniuSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-qiniu-kodo',
 		setup: creds => [
 			'provider',
@@ -1092,10 +1094,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	rackcorp: {
 		name: 'RackCorp',
+		type: 's3',
 		authTypes: ['client'],
 		settings: rackcorpSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-rackcorp',
 		setup: creds => [
 			'provider',
@@ -1114,10 +1116,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	rclone: {
 		name: 'Rclone Serve S3',
+		type: 's3',
 		authTypes: ['client'],
 		settings: rcloneSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Rclone',
@@ -1131,13 +1133,12 @@ export const providers: Record<string, ProviderConfig> = {
 			'false',
 		],
 	},
-
 	scaleway: {
 		name: 'Scaleway Object Storage',
+		type: 's3',
 		authTypes: ['client'],
 		settings: scalewaySettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-scaleway',
 		setup: creds => [
 			'provider',
@@ -1166,10 +1167,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	lyvecloud: {
 		name: 'Seagate LyveCloud',
+		type: 's3',
 		authTypes: ['client'],
 		settings: lyvecloudSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-seagate-lyve-cloud',
 		setup: creds => [
 			'provider',
@@ -1184,10 +1185,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	seaweedfs: {
 		name: 'SeaweedFS',
+		type: 's3',
 		authTypes: ['client'],
 		settings: seaweedfsSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-seaweedfs',
 		setup: creds => [
 			'provider',
@@ -1202,10 +1203,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	selectel: {
 		name: 'Selectel',
+		type: 's3',
 		authTypes: ['client'],
 		settings: selectelSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-selectel',
 		setup: creds => [
 			'provider',
@@ -1224,10 +1225,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	wasabi: {
 		name: 'Wasabi',
+		type: 's3',
 		authTypes: ['client'],
 		settings: wasabiSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-wasabi',
 		setup: creds => [
 			'provider',
@@ -1244,11 +1245,11 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	leviia: {
 		name: 'Leviia',
+		type: 's3',
 		doc: '/storages/connecting-leviia',
 		authTypes: ['client'],
 		settings: leviiaSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => [
 			'provider',
 			'Leviia',
@@ -1264,10 +1265,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	liara: {
 		name: 'Liara',
+		type: 's3',
 		authTypes: ['client'],
 		settings: liaraSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-liara',
 		setup: creds => [
 			'provider',
@@ -1282,10 +1283,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	linode: {
 		name: 'Linode Object Storage',
+		type: 's3',
 		authTypes: ['client'],
 		settings: linodeSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-linode',
 		setup: creds => [
 			'provider',
@@ -1300,10 +1301,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	magalu: {
 		name: 'Magalu',
+		type: 's3',
 		authTypes: ['client'],
 		settings: magaluSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-magalu',
 		setup: creds => [
 			'provider',
@@ -1318,10 +1319,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	arvan: {
 		name: 'ArvanCloud',
+		type: 's3',
 		authTypes: ['client'],
 		settings: arvanSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-arvan-cloud',
 		setup: creds => [
 			'provider',
@@ -1338,10 +1339,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	tencent: {
 		name: 'Tencent Cloud Object Storage (COS)',
+		type: 's3',
 		authTypes: ['client'],
 		settings: tencentSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-tencent-cos',
 		setup: creds => [
 			'provider',
@@ -1356,10 +1357,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	petabox: {
 		name: 'Petabox',
+		type: 's3',
 		authTypes: ['client'],
 		settings: petaboxSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-petabox',
 		setup: creds => [
 			'provider',
@@ -1376,10 +1377,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	synologyc2: {
 		name: 'Synology C2',
+		type: 's3',
 		authTypes: ['client'],
 		settings: synologySettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		doc: '/storages/connecting-synology',
 		setup: creds => [
 			'provider',
@@ -1398,10 +1399,10 @@ export const providers: Record<string, ProviderConfig> = {
 	},
 	s3compatible: {
 		name: 'S3 Compatible Storage',
+		type: 's3',
 		authTypes: ['client'],
 		settings: s3CompatibleSettings,
 		features: providerFeatures['s3'],
-		s3Adapter: true,
 		setup: creds => {
 			const args = [
 				'provider',

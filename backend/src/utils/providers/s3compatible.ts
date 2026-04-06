@@ -6,7 +6,7 @@ const s3CompatibleSettings = [
 		value: 'endpoint',
 		fieldType: 'string',
 		authFieldType: 'client',
-		required: false,
+		required: true,
 		default: '',
 		description: 'Endpoint for S3-compatible storage API endpoint.',
 		command: '--s3-endpoint',

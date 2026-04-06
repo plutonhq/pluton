@@ -10,16 +10,6 @@ const smbSettings = [
 		command: '--smb-host',
 	},
 	{
-		label: 'Username',
-		value: 'user',
-		fieldType: 'string',
-		authFieldType: 'password',
-		required: false,
-		default: '$USER',
-		description: 'SMB username.',
-		command: '--smb-user',
-	},
-	{
 		label: 'Port',
 		value: 'port',
 		fieldType: 'int',
@@ -28,6 +18,16 @@ const smbSettings = [
 		default: '445',
 		description: 'SMB port number.',
 		command: '--smb-port',
+	},
+	{
+		label: 'Username',
+		value: 'user',
+		fieldType: 'string',
+		authFieldType: 'password',
+		required: false,
+		default: '$USER',
+		description: 'SMB username.',
+		command: '--smb-user',
 	},
 	{
 		label: 'Password',
