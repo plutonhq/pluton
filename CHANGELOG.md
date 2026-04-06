@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.9.0](https://github.com/plutonhq/pluton/compare/pluton-v0.8.0...pluton-v0.9.0) (2026-04-05)
+
+
+### Features
+
+* adds discord and slack notification methods ([bdbf85d](https://github.com/plutonhq/pluton/commit/bdbf85dbb4798053df01d6702f416e05758ecef9))
+* adds the ability to create S3 Compatible storage ([7e93171](https://github.com/plutonhq/pluton/commit/7e93171fb5b0bb6fb860305ca7437a1011edb28c))
+
+
+### Bug Fixes
+
+* Minor Ui adjustments ([2645f16](https://github.com/plutonhq/pluton/commit/2645f16c17a388d893c256a367a23af986de0cd4))
+* resolves broken linux AppImage download link ([bfe90a1](https://github.com/plutonhq/pluton/commit/bfe90a14f7a656d27e69233c21bb4279f14a9dab))
+* resolves incorrect prune policy label issue ([4a6ee46](https://github.com/plutonhq/pluton/commit/4a6ee461a57cd7639c1a5e8b310dd1fdfdcb23cf))
+* resolves JottaCloud connectivity issue ([644ded8](https://github.com/plutonhq/pluton/commit/644ded83a0bd7165075a5219b4ea02a88a0b3333))
+* resolves missing drives in file manager on Windows 11 ([8a100de](https://github.com/plutonhq/pluton/commit/8a100de827d627b243baf2893a998b0440718fd7))
+* resolves stale app settings after validating SMTP ([aaf08f2](https://github.com/plutonhq/pluton/commit/aaf08f20579587672be5292b8cf813bbca8e021b))
+
 ## [0.8.0](https://github.com/plutonhq/pluton/compare/pluton-v0.7.4...pluton-v0.8.0) (2026-04-03)
 
 
