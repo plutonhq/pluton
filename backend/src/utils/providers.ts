@@ -720,13 +720,13 @@ export const providers: Record<string, ProviderConfig> = {
 		setup: creds => ['api_key', creds.api_key],
 		features: providerFeatures['pixeldrain'],
 	},
-	proton: {
+	protondrive: {
 		name: 'Proton Drive',
 		doc: '/storages/connecting-proton-drive',
 		authTypes: ['password'],
 		settings: protondriveSettings,
 		setup: creds => ['username', creds.username, 'password', creds.password],
-		features: providerFeatures['proton'],
+		features: providerFeatures['protondrive'],
 	},
 	quatrix: {
 		name: 'Quatrix by Maytech',

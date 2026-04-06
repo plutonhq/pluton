@@ -433,7 +433,7 @@ const providerFeatures = {
 		EmptyDir: true,
 		Hashing: true,
 	},
-	'proton': {
+	'protondrive': {
 		Purge: true,
 		Copy: false,
 		Move: true,

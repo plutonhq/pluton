@@ -23,6 +23,7 @@ const protondriveSettings = [
 		label: '2FA Code',
 		value: '2fa',
 		fieldType: 'string',
+		authFieldType: 'password',
 		required: false,
 		default: '',
 		description: 'The 2FA code for your Proton account, if 2FA is enabled.',
@@ -99,8 +100,7 @@ const protondriveSettings = [
 		fieldType: 'string',
 		required: false,
 		default: 'macos-drive@1.0.0-alpha.1+rclone"',
-		description:
-			'The app version string sent with every API request.',
+		description: 'The app version string sent with every API request.',
 		command: '--protondrive-app-version',
 	},
 	{
