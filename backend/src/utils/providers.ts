@@ -323,16 +323,22 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-seafile',
 		settings: seafileSettings,
 		authTypes: ['password'],
-		setup: creds => [
-			'url',
-			creds.url,
-			'user',
-			creds.user,
-			'pass',
-			creds.pass,
-			'library',
-			creds.library,
-		],
+		setup: creds => {
+			const config = [
+				'url',
+				creds.url,
+				'user',
+				creds.user,
+				'pass',
+				creds.pass,
+				'library',
+				creds.library,
+			];
+			if (creds['2fa']) {
+				config.push('2fa', creds['2fa']);
+			}
+			return config;
+		},
 		features: providerFeatures['seafile'],
 	},
 	jottacloud: {
@@ -697,7 +703,13 @@ export const providers: Record<string, ProviderConfig> = {
 		doc: '/storages/connecting-proton-drive',
 		authTypes: ['password'],
 		settings: protondriveSettings,
-		setup: creds => ['username', creds.username, 'password', creds.password],
+		setup: creds => {
+			const config = ['username', creds.username, 'password', creds.password];
+			if (creds['2fa']) {
+				config.push('2fa', creds['2fa']);
+			}
+			return config;
+		},
 		features: providerFeatures['protondrive'],
 	},
 	quatrix: {
