@@ -206,7 +206,7 @@ export async function getSnapshotByTag(
 		const snapRes = await runResticCommand(snapshotResticArgs, {
 			RESTIC_PASSWORD: repoPassword,
 		});
-		console.log('snapRes :', snapRes);
+
 		if (snapRes) {
 			const snapResArr = JSON.parse(snapRes);
 			if (Array.isArray(snapResArr) && snapResArr[0] && snapResArr[0].id) {
