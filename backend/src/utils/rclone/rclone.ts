@@ -21,7 +21,7 @@ export function runRcloneCommand(args: string[], env?: Record<string, string>): 
 			...globalRcloneEnv,
 			...env, // Per-call overrides still take precedence
 		};
-		// console.log('rcloneBinary :', rcloneBinary);
+		// console.log('rcloneBinary :', rcloneBinary, args);
 		const rcProcess = spawn(rcloneBinary, args, { env: envVars });
 		let output = '';
 		let errorOutput = '';

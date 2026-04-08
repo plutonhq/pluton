@@ -164,8 +164,8 @@ export class PlanController {
 				return;
 			}
 
-			await this.planService.performBackup(req.params.id);
-			res.status(200).json({ success: true, message: 'Backup initiated successfully' });
+			const result = await this.planService.performBackup(req.params.id);
+			res.status(200).json({ success: true, message: result || 'Backup initiated successfully' });
 		} catch (error: unknown) {
 			const appError = error as AppError;
 			res.status(appError.statusCode || 500).json({

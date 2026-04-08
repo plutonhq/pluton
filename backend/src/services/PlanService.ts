@@ -268,7 +268,7 @@ export class PlanService {
 	/**
 	 * Triggers a one-off manual backup for a plan.
 	 */
-	public async performBackup(planId: string): Promise<void> {
+	public async performBackup(planId: string): Promise<string> {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError(`Plan with ID ${planId} not found.`);
 
@@ -281,6 +281,8 @@ export class PlanService {
 
 		if (!performResult.success) {
 			throw new AppError(500, performResult.result);
+		} else {
+			return performResult.result;
 		}
 	}
 

@@ -98,14 +98,16 @@ export const usePlanSingleActions = (): {
       const toastId = toast.loading(`Starting ${isSync ? 'Sync' : 'Backup'}...`);
 
       performBackupMutation.mutate(plan.id, {
-         onSuccess: () => {
+         onSuccess: (data) => {
             toast.update(toastId, {
-               render: `${isSync ? 'Sync' : 'Backup'} initiated successfully! 🚀`,
+               render: isSync ? data?.message || 'Sync initiated successfully! 🚀' : 'Backup initiated successfully! 🚀',
                type: 'success',
                isLoading: false,
                autoClose: 3000,
             });
-            navigate(`/plan/${plan.id}?pendingbackup=1`);
+            if (!isSync) {
+               navigate(`/plan/${plan.id}?pendingbackup=1`);
+            }
          },
          onError: (error: any) => {
             toast.update(toastId, {
