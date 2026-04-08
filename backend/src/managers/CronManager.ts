@@ -50,8 +50,52 @@ export class CronManager<T extends ScheduleOptions> {
 	): CronManager<T> {
 		if (!CronManager.instance) {
 			CronManager.instance = new CronManager<T>(taskCallbacks, scheduleFilePath);
+		} else {
+			CronManager.instance.registerCallbacks(taskCallbacks);
 		}
 		return CronManager.instance;
+	}
+
+	/**
+	 * Merge new taskCallbacks into the existing map and patch any already-loaded
+	 * schedules whose callback was undefined because the callback wasn't registered yet.
+	 */
+	private async registerCallbacks(callbacks: TaskCallbacks): Promise<void> {
+		let hasNew = false;
+		for (const key of Object.keys(callbacks)) {
+			if (!this.taskCallbacks[key]) {
+				this.taskCallbacks[key] = callbacks[key];
+				hasNew = true;
+			}
+		}
+		if (!hasNew) return;
+
+		// Wait for initial load to finish before patching
+		await this.initialized;
+
+		// Patch any schedules that were loaded before this callback was registered
+		for (const [id, entries] of this.schedules.entries()) {
+			const patched: ScheduleEntry<T>[] = [];
+			for (const entry of entries) {
+				const cb = this.taskCallbacks[entry.type];
+				if (!(entry.options as any).taskCallback && cb) {
+					// Stop the old (no-op) cron and recreate with the real callback
+					entry.cron.stop();
+					const patchedOptions = { ...entry.options, taskCallback: cb } as T;
+					const cronExpression = (patchedOptions as any).cronExpression;
+					const newCron = new Cron(cronExpression, () => {
+						(patchedOptions as any).taskCallback(id, patchedOptions);
+					});
+					if (!patchedOptions.isActive) {
+						newCron.pause();
+					}
+					patched.push({ type: entry.type, cron: newCron, options: patchedOptions });
+				} else {
+					patched.push(entry);
+				}
+			}
+			this.schedules.set(id, patched);
+		}
 	}
 
 	private async saveSchedules(): Promise<void> {
