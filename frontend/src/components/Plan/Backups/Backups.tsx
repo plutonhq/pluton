@@ -6,7 +6,14 @@ import { formatBytes, formatDateTime, formatDuration, formatNumberToK, timeAgo }
 import Icon from '../../common/Icon/Icon';
 import classes from './Backups.module.scss';
 import ActionModal from '../../common/ActionModal/ActionModal';
-import { useCancelBackupDownload, useDeleteBackup, useDownloadBackup, useGetBackupDownload, useUpdateBackup } from '../../../services/backups';
+import {
+   useCancelBackupDownload,
+   useDeleteBackup,
+   useDownloadBackup,
+   useGetBackupDownload,
+   useUpdateBackup,
+   useBrowseSnapshot,
+} from '../../../services/backups';
 import { useQueryClient } from '@tanstack/react-query';
 import RestoreWizard from '../../Restore/RestoreWizard/RestoreWizard';
 import StatusLabel from '../../common/StatusLabel/StatusLabel';
@@ -14,6 +21,7 @@ import BackupEvents from '../BackupEvents/BackupEvents';
 import Input from '../../common/form/Input/Input';
 import MirrorStatusBadge from '../Mirrors/MirrorStatusBadge';
 import MirrorStorageSelectorModal from '../Mirrors/MirrorStorageSelectorModal';
+import { SidePanel, SnapshotViewer } from '../..';
 
 const DownloadLabel = ({ download, downloadBackup }: { download: Backup['download']; downloadBackup: () => void }) => {
    if (download?.status === 'started') {
@@ -92,6 +100,7 @@ const Backups = ({
    const [showDeleteModal, setShowDeleteModal] = useState<Backup | false>(false);
    const [showRestoreModal, setShowRestoreModal] = useState<Backup | false>(false);
    const [showBackupEvents, setShowBackupEvents] = useState<false | string>(false);
+   const [showSnapshotViewer, setShowSnapshotViewer] = useState<Backup | false>(false);
    const [showEditModal, setShowEditModal] = useState<Backup | false>(false);
    const [showStorageSelector, setShowStorageSelector] = useState<Backup | false>(false);
    const queryClient = useQueryClient();
@@ -100,7 +109,10 @@ const Backups = ({
    const downloadBackupMutation = useDownloadBackup();
    const cancelDownloadMutation = useCancelBackupDownload();
    const getDownloadMutation = useGetBackupDownload();
+   const browseSnapshotMutation = useBrowseSnapshot();
    const isSync = method === 'sync';
+
+   const snapshotFiles = browseSnapshotMutation.data?.result;
 
    console.log('backups :', backups);
 
@@ -289,6 +301,20 @@ const Backups = ({
                                     <Icon type={isDownloading ? 'close' : 'download'} size={14} /> {isDownloading ? 'Cancel Download' : 'Download'}
                                  </button>
                               )}
+                              {!isSync && status === 'completed' && active && (
+                                 <button
+                                    onClick={() => {
+                                       toast.promise(browseSnapshotMutation.mutateAsync({ backupId: id }), {
+                                          pending: 'Getting Snapshot Data...',
+                                          error: 'Failed to Get Snapshot Data.',
+                                       });
+                                       setShowSnapOptions(false);
+                                       setShowSnapshotViewer(snapshot);
+                                    }}
+                                 >
+                                    <Icon type="folders" size={14} /> Browse
+                                 </button>
+                              )}
                               {status === 'completed' && active && (
                                  <button
                                     className={isDownloading ? 'notAllowed' : ''}
@@ -413,6 +439,19 @@ const Backups = ({
                }}
                onClose={() => setShowStorageSelector(false)}
             />
+         )}
+         {showSnapshotViewer && showSnapshotViewer.id && browseSnapshotMutation.isSuccess && (
+            <SidePanel width="100%" title="Browse Snapshot" icon={<Icon type={'folders'} size={20} />} close={() => setShowSnapshotViewer(false)}>
+               <SnapshotViewer
+                  files={snapshotFiles || []}
+                  backup={showSnapshotViewer}
+                  planId={planId}
+                  isSync={isSync}
+                  onClose={() => setShowSnapshotViewer(false)}
+                  mirrors={replicationSettings?.enabled ? showSnapshotViewer.mirrors : undefined}
+                  primaryStorage={replicationSettings?.enabled ? storage : undefined}
+               />
+            </SidePanel>
          )}
       </div>
    );

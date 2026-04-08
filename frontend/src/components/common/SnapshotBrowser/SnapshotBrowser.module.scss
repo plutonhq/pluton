@@ -1,0 +1,376 @@
+.snapshotBrowser {
+   display: flex;
+   flex-direction: column;
+   height: 100%;
+   border: 1px solid var(--line-color);
+   border-radius: 8px;
+   overflow: hidden;
+}
+
+.storageSelect {
+   background-color: transparent;
+   :global([class*='_dropdown_']) {
+      min-width: 250px;
+   }
+}
+
+.toolbar {
+   display: flex;
+   padding: 10px;
+   border-bottom: 1px solid var(--line-color);
+   gap: 15px;
+   align-items: center;
+   justify-content: space-between;
+   .toolbarRight {
+      display: flex;
+      flex-direction: row;
+      gap: 15px;
+      justify-content: space-between;
+      align-items: center;
+
+      .search {
+         display: flex;
+         align-items: center;
+         gap: 8px;
+         padding: 6px 12px;
+         border: 1px solid var(--line-color);
+         border-radius: 4px;
+         margin-left: auto;
+
+         input {
+            border: none;
+            outline: none;
+            font-size: 0.75rem;
+            min-width: 200px;
+            background-color: var(--content-background-color);
+         }
+      }
+   }
+
+   .toolbarLeft {
+      .stats {
+         display: flex;
+         flex-direction: row;
+         gap: 8px;
+         color: var(--content-text-color-light);
+         strong {
+            color: var(--content-text-color);
+         }
+      }
+   }
+}
+
+.browserContent {
+   display: flex;
+   flex: 1;
+   overflow: hidden;
+
+   &.loadingState {
+      align-items: center;
+      justify-content: center;
+   }
+}
+
+.sidebar {
+   width: 300px;
+   border-right: 1px solid var(--line-color);
+   overflow-y: auto;
+
+   .sidebarHeader {
+      padding: 12px;
+      background: var(--background-color);
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      h4 {
+         margin: 0;
+      }
+   }
+   .noDirectories {
+      padding: 12px;
+      color: var(--content-text-color-light);
+      font-size: 0.85rem;
+   }
+}
+
+.directory {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 8px 16px;
+   cursor: pointer;
+   position: relative;
+   button {
+      width: 20px;
+   }
+   .toggleButton {
+      border: 1px solid var(--line-color);
+      width: auto;
+      padding: 0px 4px;
+      border-radius: 3px;
+   }
+   .togglePlaceholder {
+      width: 10px;
+      height: 10px;
+   }
+   .dirName {
+      position: relative;
+      .notification {
+         width: 7px;
+         height: 7px;
+         background: var(--primary-color);
+         border-radius: 50%;
+         margin-left: auto;
+         position: absolute;
+         left: -2px;
+         top: 8px;
+      }
+   }
+   &.directoryEmpty {
+      .dirName {
+         padding-left: 20px;
+         .notification {
+            left: 8px;
+         }
+      }
+   }
+
+   &:hover {
+      background: var(--background-color);
+   }
+}
+
+.selected {
+   background: var(--primary-color-light);
+}
+
+.content {
+   flex: 1;
+   overflow-y: auto;
+}
+
+.fileList {
+   .header {
+      display: grid;
+      padding: 12px;
+      background: var(--background-color);
+      font-weight: 600;
+      position: sticky;
+      z-index: 2;
+      top: 0;
+      div {
+         display: flex;
+         width: 100%;
+         justify-content: center;
+         cursor: pointer;
+         user-select: none;
+         &.activeSort {
+            font-weight: bold;
+            cursor: pointer;
+         }
+
+         &:nth-child(1) {
+            justify-content: left;
+         }
+
+         &.headerActions {
+            justify-content: right;
+         }
+      }
+   }
+}
+
+.fileListEmpty {
+   height: calc(100vh - 400px);
+   width: 100%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}
+
+.virtualFileList {
+   flex: 1;
+   overflow: hidden;
+}
+
+.snapshotFile {
+   display: grid;
+   padding: 12px;
+   align-items: center;
+   box-sizing: border-box;
+   border-bottom: 1px solid var(--line-color);
+   & > div {
+      display: flex;
+      width: 100%;
+      justify-content: center;
+
+      &:nth-child(1) {
+         justify-content: left;
+         gap: 5px;
+         word-break: break-all;
+      }
+   }
+
+   &.fileIsDir {
+      .fileName {
+         cursor: pointer;
+         i {
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            margin-left: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+         }
+         &:hover {
+            color: var(--primary-color);
+         }
+      }
+   }
+
+   .fileModifiedAt {
+      i {
+         font-style: normal;
+      }
+   }
+   .fileModifiedAt,
+   .fileSize {
+      color: var(--content-text-color-light);
+   }
+   .fileActions {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      justify-content: right;
+      button {
+         color: var(--icon-color);
+         transition: all 0.12s linear;
+         &:hover {
+            color: var(--primary-color);
+         }
+      }
+   }
+
+   &:last-child {
+      border-bottom: none;
+   }
+}
+
+.goUpButton {
+   font-style: italic;
+   opacity: 0.8;
+   padding: 0px 12px;
+
+   &:hover {
+      background-color: var(--primary-color-light);
+   }
+
+   .fileName {
+      font-weight: normal;
+   }
+}
+
+.loadingState,
+.errorState {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   height: 400px;
+   gap: 16px;
+   color: var(--text-muted);
+
+   small {
+      color: var(--text-muted);
+      opacity: 0.8;
+   }
+}
+
+.errorState button {
+   padding: 8px 16px;
+   background: var(--primary);
+   color: white;
+   border: none;
+   border-radius: 4px;
+   cursor: pointer;
+}
+
+.restoreModalFile {
+   word-break: break-all;
+   background: var(--primary-color-light);
+   padding: 10px;
+   border-radius: 6px;
+}
+
+@media only screen and (max-width: 768px) {
+   .toolbar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      .toolbarLeft {
+         width: 100%;
+         .stats {
+            font-size: 0.9em;
+            :global(.icon) {
+               display: none;
+            }
+         }
+      }
+      .toolbarRight {
+         width: 100%;
+         .search {
+            width: 100%;
+         }
+      }
+   }
+   .sidebar {
+      display: none;
+   }
+
+   .content {
+      padding: 0;
+   }
+
+   .fileList {
+      .header {
+         display: none;
+      }
+      .snapshotFile {
+         display: block;
+         padding: 10px;
+         font-size: 0.9em;
+         .fileName {
+            width: 100%;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+         }
+         & > div {
+            display: block;
+            width: auto;
+            float: left;
+            margin-right: 12px;
+         }
+         .fileActions {
+            display: block;
+            width: auto;
+            float: right;
+            margin-right: 0;
+         }
+         &.goUpButton {
+            display: flex;
+            align-items: center;
+            .fileName::after {
+               content: ' Go Up ↑';
+               font-size: 12px;
+               font-style: normal;
+               font-weight: 500;
+            }
+         }
+      }
+   }
+}

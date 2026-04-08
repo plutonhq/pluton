@@ -1,11 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
-import { FixedSizeList as List } from 'react-window';
 import Icon from '../../common/Icon/Icon';
+import FileIcon from '../../common/FileIcon/FileIcon';
 import classes from './RestoredFileBrowser.module.scss';
 import { RestoredFileItem, RestoredItemsStats } from '../../../@types/restores';
 import { formatBytes, formatNumberToK, isMobile } from '../../../utils/helpers';
 import { getParentPath, getPathSeparator, normalizePath, splitPath } from '../../../utils/restore';
-import FileIcon from '../../common/FileIcon/FileIcon';
+import { SnapshotBrowserToolbar, SnapshotBrowserDirectories, SnapshotBrowserFileList, SnapshotBrowserGoUpRow } from '../../common/SnapshotBrowser';
+import { useSnapshotNavigation } from '../../common/SnapshotBrowser/hooks/useSnapshotNavigation';
+import sbClasses from '../../common/SnapshotBrowser/SnapshotBrowser.module.scss';
 
 interface RestoredFileBrowserProps {
    files: RestoredFileItem[];
@@ -15,9 +17,9 @@ interface RestoredFileBrowserProps {
 
 const isMobileDevice = isMobile();
 const ITEM_HEIGHT = isMobileDevice ? 65 : 45;
+const GRID_COLUMNS = '1fr 100px minmax(80px, auto)';
 
 const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBrowserProps) => {
-   const [selectedFolder, setSelectedFolder] = useState<string>('');
    const [search, setSearch] = useState('');
    const [filters, setFilters] = useState({
       unchanged: true,
@@ -34,7 +36,6 @@ const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBr
 
          parts.forEach((part, index) => {
             currentPath = currentPath ? `${currentPath}${separator}${part}` : part;
-            // Only expand folders up to 5 levels deep (index < 5)
             if (index < 3) {
                allPaths.add(currentPath);
             }
@@ -54,7 +55,6 @@ const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBr
          })
          .forEach((file) => {
             const dirPath = getParentPath(file.path);
-            // Use the normalized path as key
             const normalizedDirPath = normalizePath(dirPath);
 
             if (normalizedDirPath) {
@@ -70,7 +70,6 @@ const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBr
 
    const directories = useMemo(() => {
       const dirs = new Set<string>();
-      // Derive directories from all files, not filtered fileSystem, to keep tree stable during search
       files.forEach((file) => {
          const dirPath = getParentPath(file.path);
          const separator = getPathSeparator(dirPath);
@@ -87,62 +86,22 @@ const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBr
       return Array.from(dirs);
    }, [files]);
 
-   // Set initial selected folder when directories change
+   const { selectedFolder, setSelectedFolder, hasSubdirectories, isVisible, expandParentFolders, toggleFolder } = useSnapshotNavigation(
+      directories,
+      expandedFolders,
+      setExpandedFolders,
+      { splitPath, getPathSeparator, hasLeadingSeparator: false },
+   );
+
    useEffect(() => {
       if (directories.length > 0 && selectedFolder === '') {
          setSelectedFolder(directories[0]);
       }
-   }, [directories, selectedFolder]);
-
-   const hasSubdirectories = (dir: string) => {
-      const separator = getPathSeparator(dir);
-      return directories.some((d) => d !== dir && d.startsWith(dir + separator));
-   };
+   }, [directories, selectedFolder, setSelectedFolder]);
 
    const hasUpdatedContent = (dir: string) => {
-      return Object.entries(fileSystem).some(([path, files]) => {
-         return path.startsWith(dir) && files.some((f) => f.action === 'restored' || f.action === 'updated');
-      });
-   };
-
-   const expandParentDirectories = (dir: string) => {
-      const newExpanded = new Set(expandedFolders);
-      const separator = getPathSeparator(dir);
-      const parts = splitPath(dir);
-      let currentPath = '';
-
-      // Expand all parent directories
-      parts.forEach((part, index) => {
-         currentPath = currentPath ? `${currentPath}${separator}${part}` : part;
-         if (index < parts.length - 1) {
-            // Don't expand the target directory itself
-            newExpanded.add(currentPath);
-         }
-      });
-
-      setExpandedFolders(newExpanded);
-   };
-
-   const toggleFolder = (dir: string) => {
-      const newExpanded = new Set(expandedFolders);
-      if (expandedFolders.has(dir)) {
-         newExpanded.delete(dir);
-      } else {
-         newExpanded.add(dir);
-      }
-      setExpandedFolders(newExpanded);
-   };
-
-   const isVisible = (dir: string) => {
-      const separator = getPathSeparator(dir);
-      const parts = splitPath(dir);
-      const parentParts = parts.slice(0, -1);
-      let parentPath = '';
-
-      // Check if all parent folders are expanded
-      return parentParts.every((part) => {
-         parentPath = parentPath ? `${parentPath}${separator}${part}` : part;
-         return expandedFolders.has(parentPath);
+      return Object.entries(fileSystem).some(([path, dirFiles]) => {
+         return path.startsWith(dir) && dirFiles.some((f) => f.action === 'restored' || f.action === 'updated');
       });
    };
 
@@ -155,11 +114,9 @@ const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBr
          const isDirectoryA = directories.includes(normalizedPathA);
          const isDirectoryB = directories.includes(normalizedPathB);
 
-         // First sort by type: directories first, then files
          if (isDirectoryA && !isDirectoryB) return -1;
          if (!isDirectoryA && isDirectoryB) return 1;
 
-         // If both are same type, sort by status priority
          const priority = { restored: 0, updated: 1, unchanged: 2 };
          return priority[a.action] - priority[b.action];
       });
@@ -169,25 +126,19 @@ const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBr
    const totalItems = sortedFiles.length + (showGoUpButton ? 1 : 0);
 
    const FileRow = ({ index, style }: { index: number; style: React.CSSProperties }) => {
-      // If showing go up button and this is the first item
       if (showGoUpButton && index === 0) {
          return (
-            <div
+            <SnapshotBrowserGoUpRow
                style={style}
-               className={`${classes.file} ${classes.fileIsDir} ${classes.goUpButton}`}
-               onClick={() => {
+               onGoUp={() => {
                   const parentPath = getParentPath(selectedFolder);
                   const normalizedParentPath = normalizePath(parentPath);
-                  console.log('normalizedParentPath :', normalizedParentPath);
                   if (!normalizedParentPath || normalizedParentPath === '') return;
-                  expandParentDirectories(normalizedParentPath);
+                  expandParentFolders(normalizedParentPath);
                   setSelectedFolder(normalizedParentPath);
                }}
-            >
-               <div className={classes.fileName}>...</div>
-               <div className={classes.status}></div>
-               <div></div>
-            </div>
+               gridTemplateColumns={GRID_COLUMNS}
+            />
          );
       }
 
@@ -202,22 +153,22 @@ const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBr
       const isDirectory = directories.includes(normalizedPath);
       const hasUpdates = hasUpdatedContent(normalizedPath);
       const fileAction = file.action;
-      const isRestored = file.action === 'restored' ? true : false;
+      const isRestored = file.action === 'restored';
       const fileActionLabel = isRestored ? 'New' : file.action;
 
       return (
          <div
-            style={style}
-            className={`${classes.file} ${isDirectory ? classes.fileIsDir : ''}`}
+            style={{ ...style, gridTemplateColumns: GRID_COLUMNS }}
+            className={`${sbClasses.snapshotFile} ${isDirectory ? sbClasses.fileIsDir : ''}`}
             onClick={() => {
                if (isDirectory) {
                   setSelectedFolder(normalizedPath);
-                  expandParentDirectories(normalizedPath);
+                  expandParentFolders(normalizedPath);
                }
             }}
          >
-            <div className={classes.fileName}>
-               {isDirectory ? <Icon type={isDirectory ? 'fm-directory' : 'fm-file'} size={16} /> : <FileIcon filename={fileName || ''} />}{' '}
+            <div className={sbClasses.fileName}>
+               {isDirectory ? <Icon type={'fm-directory'} size={16} /> : <FileIcon filename={fileName || ''} />}{' '}
                {isRestored && <span className={classes.newFileIndicator} />} {fileName}
                {hasUpdates && <i />}
             </div>
@@ -230,17 +181,19 @@ const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBr
    };
 
    return (
-      <div className={classes.restoredFileBrowser}>
-         <div className={classes.toolbar}>
-            <div className={classes.toolbarLeft}>
-               {stats && (
-                  <div className={classes.stats}>
+      <div className={sbClasses.snapshotBrowser}>
+         <SnapshotBrowserToolbar
+            search={search}
+            onSearchChange={setSearch}
+            leftContent={
+               stats && (
+                  <div className={sbClasses.stats}>
                      <strong>Summary: </strong> {formatNumberToK(stats.total_files)} Items {' • '}
                      {formatBytes(stats.bytes_restored)}/{formatBytes(stats.total_bytes)}
                   </div>
-               )}
-            </div>
-            <div className={classes.toolbarRight}>
+               )
+            }
+            rightContent={
                <div className={classes.filters}>
                   {(Object.keys(filters) as Array<keyof typeof filters>).map((action) => (
                      <label key={action}>
@@ -249,81 +202,43 @@ const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBr
                      </label>
                   ))}
                </div>
-               <div className={classes.search}>
-                  <Icon type="search" size={16} />
-                  <input type="text" placeholder="Search in current Directory..." value={search} onChange={(e) => setSearch(e.target.value)} />
-               </div>
-            </div>
-         </div>
+            }
+         />
 
-         <div className={classes.browserContent}>
-            <div className={`${classes.sidebar} styled__scrollbar`}>
-               <div className={classes.sidebarHeader}>Directories</div>
-               {directories.map((dir) => {
-                  const parts = splitPath(dir);
-                  const dirName = parts[parts.length - 1];
-                  const depth = parts.length - 1;
-                  const isExpanded = expandedFolders.has(dir);
+         <div className={sbClasses.browserContent}>
+            <SnapshotBrowserDirectories
+               directories={directories}
+               selectedFolder={selectedFolder}
+               expandedFolders={expandedFolders}
+               onDirectoryClick={(dir) => {
+                  setSelectedFolder(dir);
+                  expandParentFolders(dir);
+               }}
+               onToggleFolder={toggleFolder}
+               isVisible={isVisible}
+               hasSubdirectories={hasSubdirectories}
+               renderDirectoryExtra={(dir) => {
                   const hasUpdates = hasUpdatedContent(dir);
-                  const hasChildren = hasSubdirectories(dir);
+                  return hasUpdates ? <span className={classes.notification} /> : null;
+               }}
+            />
 
-                  // Only render if parent folders are expanded or if it's a root folder
-                  if (depth === 0 || isVisible(dir)) {
-                     return (
-                        <div
-                           key={dir}
-                           className={`${classes.directory} ${selectedFolder === dir ? classes.selected : ''} ${hasChildren ? '' : classes.directoryEmpty}`}
-                           style={{ paddingLeft: `${depth * 20}px` }}
-                           onClick={() => {
-                              setSelectedFolder(dir);
-                              expandParentDirectories(dir);
-                           }}
-                        >
-                           {hasChildren ? (
-                              <button
-                                 className={classes.toggleButton}
-                                 onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFolder(dir);
-                                 }}
-                              >
-                                 {isExpanded ? '-' : '+'}
-                              </button>
-                           ) : (
-                              <span className={`${classes.togglePlaceholder}`} />
-                           )}
-                           <span className={classes.dirName}>
-                              <Icon type={'fm-directory'} size={14} /> {dirName}
-                              {hasUpdates && <span className={classes.notification} />}
-                           </span>
-                        </div>
-                     );
+            <div className={sbClasses.content}>
+               <SnapshotBrowserFileList
+                  files={Array(totalItems)}
+                  height={window.innerHeight - (isPreview ? 370 : 250)}
+                  itemSize={ITEM_HEIGHT}
+                  headerContent={
+                     <>
+                        <div>Name</div>
+                        <div>Status</div>
+                        <div>Size</div>
+                     </>
                   }
-                  return null;
-               })}
-            </div>
-
-            <div className={classes.content}>
-               <div className={classes.fileList}>
-                  <div className={classes.header}>
-                     <div>Name</div>
-                     <div>Status</div>
-                     <div>Size</div>
-                  </div>
-                  {selectedFolder && totalItems > 0 ? (
-                     <List
-                        height={window.innerHeight - (isPreview ? 370 : 250)}
-                        itemCount={totalItems}
-                        itemSize={ITEM_HEIGHT}
-                        width="100%"
-                        className={`${classes.fileListVirtualized} styled__scrollbar`}
-                     >
-                        {FileRow}
-                     </List>
-                  ) : (
-                     <div className={classes.fileListEmpty}>Select a folder from the left to browse its content</div>
-                  )}
-               </div>
+                  renderRow={FileRow}
+                  selectedFolder={selectedFolder || null}
+                  gridTemplateColumns={GRID_COLUMNS}
+               />
             </div>
          </div>
       </div>

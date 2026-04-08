@@ -1,11 +1,13 @@
-import { useState, useMemo } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import { useState, useMemo, useEffect } from 'react';
 import Icon from '../../common/Icon/Icon';
 import { RestoreFileItem } from '../../../@types/restores';
 import { calculateDirectorySizes, formatBytes, formatDateTime, formatNumberToK, isMobile, sortFileItems } from '../../../utils/helpers';
 import FileIcon from '../../common/FileIcon/FileIcon';
 import classes from './RestoreFileSelector.module.scss';
 import { getParentPath, getPathSeparator, normalizePath, splitPath } from '../../../utils/restore';
+import { SnapshotBrowserToolbar, SnapshotBrowserDirectories, SnapshotBrowserFileList, SnapshotBrowserGoUpRow } from '../../common/SnapshotBrowser';
+import { useSnapshotNavigation } from '../../common/SnapshotBrowser/hooks/useSnapshotNavigation';
+import sbClasses from '../../common/SnapshotBrowser/SnapshotBrowser.module.scss';
 
 interface RestoreFileSelectorProps {
    selected: {
@@ -23,9 +25,9 @@ interface RestoreFileSelectorProps {
 
 const isMobileDevice = isMobile();
 const ITEM_HEIGHT = isMobileDevice ? 65 : 45;
+const GRID_COLUMNS = '1fr 180px minmax(80px, auto)';
 
 const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showChange, onSelect, fileSelectCondition }: RestoreFileSelectorProps) => {
-   const [selectedFolder, setSelectedFolder] = useState<string>('');
    const [search, setSearch] = useState('');
    const [sortField, setSortField] = useState<'name' | 'modifiedAt' | 'size'>('name');
    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -152,12 +154,22 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
          return aParts.length - bParts.length;
       });
 
-      // Set the first directory as selected by default
-      console.log('SelectedFolder :', sortedDirs[0]);
-      setSelectedFolder(sortedDirs[0] || '');
-
       return sortedDirs;
    }, [files]);
+
+   const { selectedFolder, setSelectedFolder, hasSubdirectories, isVisible, expandParentFolders, toggleFolder } = useSnapshotNavigation(
+      directories,
+      expandedFolders,
+      setExpandedFolders,
+      { splitPath, getPathSeparator, hasLeadingSeparator: false },
+   );
+
+   // Set the first directory as selected by default
+   useEffect(() => {
+      if (directories.length > 0 && selectedFolder === '') {
+         setSelectedFolder(directories[0]);
+      }
+   }, [directories, selectedFolder, setSelectedFolder]);
 
    const summary = useMemo(() => {
       let selectedFilesCount = 0;
@@ -182,11 +194,6 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
       };
    }, [files, selectedFiles]);
 
-   const hasSubdirectories = (dir: string) => {
-      const separator = getPathSeparator(dir);
-      return directories.some((d) => d !== dir && d.startsWith(dir + separator));
-   };
-
    const handleSort = (field: 'name' | 'modifiedAt' | 'size') => {
       if (sortField === field) {
          // Toggle direction if clicking the same field
@@ -196,44 +203,6 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
          setSortField(field);
          setSortDirection('asc');
       }
-   };
-
-   const expandParentFolders = (dirPath: string) => {
-      const newExpanded = new Set(expandedFolders);
-      const separator = getPathSeparator(dirPath);
-      const parts = splitPath(dirPath);
-      let currentPath = '';
-
-      // Expand all parent directories
-      parts.forEach((part) => {
-         currentPath = currentPath ? `${currentPath}${separator}${part}` : part;
-         newExpanded.add(currentPath);
-      });
-
-      setExpandedFolders(newExpanded);
-   };
-
-   const toggleFolder = (dir: string) => {
-      const newExpanded = new Set(expandedFolders);
-      if (expandedFolders.has(dir)) {
-         newExpanded.delete(dir);
-      } else {
-         newExpanded.add(dir);
-      }
-      setExpandedFolders(newExpanded);
-   };
-
-   const isVisible = (dir: string) => {
-      const separator = getPathSeparator(dir);
-      const parts = splitPath(dir);
-      const parentParts = parts.slice(0, -1);
-      let parentPath = '';
-
-      // Check if all parent folders are expanded
-      return parentParts.every((part) => {
-         parentPath = parentPath ? `${parentPath}${separator}${part}` : part;
-         return expandedFolders.has(parentPath);
-      });
    };
 
    const onFileSelect = (path: string, isDirectory: boolean) => {
@@ -343,19 +312,17 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
       // Parent directory navigation
       if (item === null) {
          return (
-            <div
+            <SnapshotBrowserGoUpRow
                style={style}
-               className={`${classes.file} ${classes.fileIsDir} ${classes.goUpButton}`}
-               onClick={() => {
+               onGoUp={() => {
                   const parentPath = getParentPath(selectedFolder);
                   const normalizedParentPath = normalizePath(parentPath);
                   if (!normalizedParentPath || normalizedParentPath === '') return;
                   expandParentFolders(normalizedParentPath);
                   setSelectedFolder(normalizedParentPath);
                }}
-            >
-               <div className={classes.fileName}>...</div>
-            </div>
+               gridTemplateColumns={GRID_COLUMNS}
+            />
          );
       }
 
@@ -369,9 +336,9 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
 
       return (
          <div
-            style={style}
+            style={{ ...style, gridTemplateColumns: GRID_COLUMNS }}
             key={file.path}
-            className={`${classes.file} ${isDirectory ? classes.fileIsDir : ''} ${showChange && file.changeType === 'modified' ? classes.fileModified : ''} ${showChange && file.changeType === 'removed' ? classes.fileRemoved : ''}`}
+            className={`${sbClasses.snapshotFile} ${isDirectory ? sbClasses.fileIsDir : ''} ${showChange && file.changeType === 'modified' ? classes.fileModified : ''} ${showChange && file.changeType === 'removed' ? classes.fileRemoved : ''}`}
             onClick={() => {
                if (isDirectory) {
                   expandParentFolders(normalizedPath);
@@ -379,7 +346,7 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
                }
             }}
          >
-            <div className={classes.fileName}>
+            <div className={sbClasses.fileName}>
                <button
                   className={`${classes.selectButton} ${isSelected ? classes.selected : ''} ${!canBeSelected ? classes.notSelectable : ''}`}
                   onClick={(e) => {
@@ -406,10 +373,12 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
                <Icon type="loading" size={24} /> Loading Snapshot Content..
             </div>
          )}
-         <div className={classes.restoredFileBrowser}>
-            <div className={classes.toolbar}>
-               <div className={classes.toolbarLeft}>
-                  <div className={classes.stats}>
+         <div className={sbClasses.snapshotBrowser}>
+            <SnapshotBrowserToolbar
+               search={search}
+               onSearchChange={setSearch}
+               leftContent={
+                  <div className={sbClasses.stats}>
                      <strong>Summary: </strong>
                      {formatNumberToK(summary.selectedFiles)}/{formatNumberToK(summary.totalFiles)} Items {' • '}
                      {formatBytes(summary.selectedBytes)}/{formatBytes(summary.totalBytes)}
@@ -423,91 +392,59 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
                         </div>
                      )}
                   </div>
-               </div>
-               <div className={classes.toolbarRight}>
-                  <div className={classes.search}>
-                     <Icon type="search" size={16} />
-                     <input type="text" placeholder="Search in current Directory..." value={search} onChange={(e) => setSearch(e.target.value)} />
-                  </div>
-               </div>
-            </div>
+               }
+            />
 
-            <div className={classes.browserContent}>
-               <div className={`${classes.sidebar} styled__scrollbar`}>
-                  <div className={classes.sidebarHeader}>Directories</div>
-                  {directories.map((dir) => {
-                     const parts = splitPath(dir);
-                     const dirName = parts[parts.length - 1];
-                     const depth = parts.length - 1;
-                     const isExpanded = expandedFolders.has(dir);
-                     const hasChildren = hasSubdirectories(dir);
+            <div className={sbClasses.browserContent}>
+               <SnapshotBrowserDirectories
+                  directories={directories}
+                  selectedFolder={selectedFolder}
+                  expandedFolders={expandedFolders}
+                  onDirectoryClick={(dir) => setSelectedFolder(dir)}
+                  onToggleFolder={toggleFolder}
+                  isVisible={isVisible}
+                  hasSubdirectories={hasSubdirectories}
+                  renderDirectoryExtra={(dir) => {
                      const isSelected = isPathSelected(files.find((f) => f.isDirectory && normalizePath(f.path) === dir)?.path || dir);
+                     return (
+                        <button
+                           className={`${classes.selectButton} ${isSelected ? classes.selected : ''}`}
+                           onClick={(e) => {
+                              e.stopPropagation();
+                              const originalPath = files.find((f) => f.isDirectory && normalizePath(f.path) === dir)?.path || dir;
+                              onFileSelect(originalPath, true);
+                           }}
+                        >
+                           <Icon type={isSelected ? 'check-circle-filled' : 'check-circle'} size={13} />
+                        </button>
+                     );
+                  }}
+               />
 
-                     // Only render if parent folders are expanded or if it's a root folder
-                     if (depth === 0 || isVisible(dir)) {
-                        return (
-                           <div
-                              key={dir}
-                              className={`${classes.directory} ${selectedFolder === dir ? classes.selected : ''} ${hasChildren ? '' : classes.directoryEmpty}`}
-                              style={{ paddingLeft: `${depth * 20}px` }}
-                              onClick={() => setSelectedFolder(dir)}
-                           >
-                              {hasChildren ? (
-                                 <button
-                                    className={`${classes.toggleButton} ${isExpanded ? classes.active : ''}`}
-                                    onClick={(e) => {
-                                       e.stopPropagation();
-                                       toggleFolder(dir);
-                                    }}
-                                 >
-                                    {isExpanded ? '-' : '+'}
-                                 </button>
-                              ) : (
-                                 <span className={`${classes.togglePlaceholder}`} />
-                              )}
-                              <div className={classes.dirName}>
-                                 <Icon type={'fm-directory'} size={14} />
-                                 <button
-                                    className={`${classes.selectButton} ${isSelected ? classes.selected : ''}`}
-                                    onClick={(e) => {
-                                       e.stopPropagation();
-                                       const originalPath = files.find((f) => f.isDirectory && normalizePath(f.path) === dir)?.path || dir;
-                                       onFileSelect(originalPath, true);
-                                    }}
-                                 >
-                                    <Icon type={isSelected ? 'check-circle-filled' : 'check-circle'} size={13} />
-                                 </button>
-                                 {dirName}
-                              </div>
+               <div className={`${sbClasses.content} styled__scrollbar`}>
+                  <SnapshotBrowserFileList
+                     files={directChildren}
+                     height={window.innerHeight - 370}
+                     itemSize={ITEM_HEIGHT}
+                     headerContent={
+                        <>
+                           <div onClick={() => handleSort('name')} className={sortField === 'name' ? classes.activeSort : ''}>
+                              Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
                            </div>
-                        );
+                           <div onClick={() => handleSort('modifiedAt')} className={sortField === 'modifiedAt' ? classes.activeSort : ''}>
+                              Last Modified {sortField === 'modifiedAt' && (sortDirection === 'asc' ? '↑' : '↓')}
+                           </div>
+                           <div onClick={() => handleSort('size')} className={sortField === 'size' ? classes.activeSort : ''}>
+                              Size {sortField === 'size' && (sortDirection === 'asc' ? '↑' : '↓')}
+                           </div>
+                        </>
                      }
-                     return null;
-                  })}
-               </div>
-
-               <div className={`${classes.content} styled__scrollbar`}>
-                  <div className={classes.fileList}>
-                     <div className={classes.header}>
-                        <div onClick={() => handleSort('name')} className={sortField === 'name' ? classes.activeSort : ''}>
-                           Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </div>
-                        <div onClick={() => handleSort('modifiedAt')} className={sortField === 'modifiedAt' ? classes.activeSort : ''}>
-                           Last Modified {sortField === 'modifiedAt' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </div>
-                        <div onClick={() => handleSort('size')} className={sortField === 'size' ? classes.activeSort : ''}>
-                           Size {sortField === 'size' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </div>
-                     </div>
-                     {selectedFolder ? (
-                        <List height={window.innerHeight - 370} itemCount={directChildren.length} itemSize={ITEM_HEIGHT} width="100%">
-                           {Row}
-                        </List>
-                     ) : (
-                        <div className={classes.fileListEmpty}>Select a folder from the left to browse it's content</div>
-                     )}
-                     {errorFetching && <div className={classes.error}>Failed to load files. Please try again.</div>}
-                  </div>
+                     renderRow={Row}
+                     selectedFolder={selectedFolder || null}
+                     gridTemplateColumns={GRID_COLUMNS}
+                     emptyMessage="Select a folder from the left to browse it's content"
+                  />
+                  {errorFetching && <div className={classes.error}>Failed to load files. Please try again.</div>}
                </div>
             </div>
          </div>

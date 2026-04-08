@@ -20,6 +20,7 @@ import { SnapShotFile } from '../types/restic';
 import { Backup } from '../db/schema/backups';
 import { BackupMirror } from '../types/backups';
 import { PlanStats } from '../types/plans';
+import { AppError, NotFoundError } from '../utils/AppError';
 
 export class BackupService {
 	constructor(
@@ -203,18 +204,25 @@ export class BackupService {
 		}
 		return progressResult.result;
 	}
-
 	async getSnapshotFiles(backupId: string, replicationId?: string): Promise<SnapShotFile[]> {
 		const backup = await this.backupStore.getById(backupId);
 		if (!backup) {
 			throw new Error('Backup not found');
 		}
 		const backupDevice = backup.sourceId ? backup.sourceId : 'main';
-		const strategy = this.getSnapshotStrategy(backupDevice);
+		const backupMethod = backup.method;
+
 		// If replicationId is provided, browse from mirror storage
 		let effectiveStorageId = backup.storageId as string;
 		let effectiveStoragePath = backup.storagePath as string;
 		if (replicationId) {
+			//if replicationId is passed, its a replication storage ID, so find the storage path and name from the backup's mirrors
+			if (backup.mirrors && backup.mirrors.length > 0) {
+				const planReplicationStorage = backup.mirrors.find(s => s.replicationId === replicationId);
+				if (!planReplicationStorage) {
+					throw new NotFoundError('Replication Storage not found in Plan settings');
+				}
+			}
 			const mirrors = (backup.mirrors || []) as BackupMirror[];
 			const mirror = mirrors.find(m => m.replicationId === replicationId);
 			if (mirror) {
@@ -223,23 +231,20 @@ export class BackupService {
 			}
 		}
 		const storageName = await this.getStorageName(effectiveStorageId);
-		const snapshotFilesResult = await strategy.getSnapshotFiles(
-			backup.planId as string,
-			backup.id as string,
-			{
-				storageName,
-				storagePath: effectiveStoragePath,
-				encryption: backup.encryption as boolean,
-			}
-		);
-		if (!snapshotFilesResult.success || !Array.isArray(snapshotFilesResult.result)) {
-			throw new Error(
-				typeof snapshotFilesResult.result === 'string'
-					? snapshotFilesResult.result
-					: 'Failed to get Snapshot Files'
+		const strategy = this.getSnapshotStrategy(backupDevice, backupMethod);
+		const browseRes = await strategy.getSnapshotFiles(backup.planId as string, backup.id, {
+			storagePath: effectiveStoragePath || '',
+			storageName: storageName,
+			encryption: backup.encryption || false,
+			skipCache: !!replicationId,
+		});
+		if (!browseRes.success || !browseRes.result || typeof browseRes.result === 'string') {
+			throw new AppError(
+				500,
+				typeof browseRes.result === 'string' ? browseRes.result : 'Browse snapshot failed'
 			);
 		}
-		return snapshotFilesResult.result;
+		return browseRes.result;
 	}
 
 	async updateBackup(backupId: string, data: Partial<Backup>): Promise<any> {

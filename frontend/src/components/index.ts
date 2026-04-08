@@ -90,6 +90,8 @@ export { default as PlanTypeSettings } from './Plan/PlanSettings/PlanTypeSetting
 export { default as PlanStats } from './Plan/PlanStats/PlanStats';
 export { default as PlanUnlockModal } from './Plan/PlanUnlockModal/PlanUnlockModal';
 export { default as PlanIntegrity } from './Plan/PlanIntegrity/PlanIntegrity';
+export { default as SnapshotViewer } from './Plan/SnapshotViewer/SnapshotViewer';
+export { default as SnapshotViewerFile } from './Plan/SnapshotViewer/SnapshotViewerFile';
 
 // Mirror/Replication components
 export { default as MirrorStatusBadge } from './Plan/Mirrors/MirrorStatusBadge';
@@ -126,3 +128,14 @@ export { default as EditStorage } from './Storage/EditStorage/EditStorage';
 export { default as StorageAuthSettings } from './Storage/StorageAuthSettings/StorageAuthSettings';
 export { default as StorageItem } from './Storage/StorageItem/StorageItem';
 export { default as StorageSettings } from './Storage/StorageSettings/StorageSettings';
+
+// SnapshotBrowser components
+export { default as SnapshotBrowserToolbar } from './common/SnapshotBrowser/SnapshotBrowserToolbar';
+export { default as SnapshotBrowserDirectories } from './common/SnapshotBrowser/SnapshotBrowserDirectories';
+export { default as SnapshotBrowserFileList } from './common/SnapshotBrowser/SnapshotBrowserFileList';
+export { default as SnapshotBrowserFileRow } from './common/SnapshotBrowser/SnapshotBrowserFileRow';
+export { default as SnapshotBrowserGoUpRow } from './common/SnapshotBrowser/SnapshotBrowserGoUpRow';
+export { useSnapshotSort } from './common/SnapshotBrowser/hooks/useSnapshotSort';
+export { useSnapshotNavigation } from './common/SnapshotBrowser/hooks/useSnapshotNavigation';
+export { useSnapshotDatabase } from './common/SnapshotBrowser/hooks/useSnapshotDatabase';
+// export { default as SnapshotBrowserStyles } from './common/SnapshotBrowser/SnapshotBrowser.module.scss';

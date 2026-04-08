@@ -261,6 +261,18 @@ export function useGetSnapshotFiles(payload: { backupId: string }) {
    });
 }
 
+// Get Snapshot Files (Mutation)
+// To be used for manual refresh or when triggered from an action,
+// since it bypasses the cache and directly calls the API
+export function useBrowseSnapshot() {
+   return useMutation({
+      mutationFn: getSnapshotFiles,
+      onSuccess: (res, payload) => {
+         console.log('res :', payload, res);
+      },
+   });
+}
+
 // Retry Failed Replications
 export async function retryFailedReplications({ backupId, replicationId }: { backupId: string; planId: string; replicationId: string }) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
