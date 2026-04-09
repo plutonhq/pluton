@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.10.0](https://github.com/plutonhq/pluton/compare/pluton-v0.9.0...pluton-v0.10.0) (2026-04-06)
+
+
+### Features
+
+* adds the ability to get push notifications on backup events via ntfy ([27d81d2](https://github.com/plutonhq/pluton/commit/27d81d2cc9156ea2c74e88af3b880cf4e5aad037))
+
+
+### Bug Fixes
+
+* resolves incorrect timeout issue for user scripts ([bcc7054](https://github.com/plutonhq/pluton/commit/bcc70546e8511c75f04bf06b172b2fb3aa2dfce7)), closes [#45](https://github.com/plutonhq/pluton/issues/45)
+* resolves missing sign_accept_encoding option in s3 storages. ([75f4363](https://github.com/plutonhq/pluton/commit/75f4363e273a6358c50341143fee396c0da206f0))
+* resolves Proton Drive connectivity issue ([cd5ec6a](https://github.com/plutonhq/pluton/commit/cd5ec6a5e5853aad95886ace6e91f607615377c4))
+* resolves storage auth options appearing twice while editing storage ([73e8d67](https://github.com/plutonhq/pluton/commit/73e8d67e7f47c4f45fe2d590ae9d6da6c5018e27))
+* resolves various storage connectivity issues ([6232b9c](https://github.com/plutonhq/pluton/commit/6232b9c4ea76f3c41a61c164495fbbccc4482041))
+
 ## [0.9.0](https://github.com/plutonhq/pluton/compare/pluton-v0.8.0...pluton-v0.9.0) (2026-04-05)
 
 
