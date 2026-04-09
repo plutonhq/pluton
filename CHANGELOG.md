@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.11.0](https://github.com/plutonhq/pluton/compare/pluton-v0.10.0...pluton-v0.11.0) (2026-04-09)
+
+
+### Features
+
+* adds the ability to browse snapshot files ([d8313af](https://github.com/plutonhq/pluton/commit/d8313af6f2debd8100826348dc2688ef63f35b4c))
+
+
+### Bug Fixes
+
+* resolves broken proton drive connectivity for account with 2fa enabled. ([efff40a](https://github.com/plutonhq/pluton/commit/efff40a8c88f86c0eb54d2ce5fd304bbf334377e))
+* resolves broken sync backups in pro ([977c8cf](https://github.com/plutonhq/pluton/commit/977c8cfe9c75a0d661e25600816cb8db6942ee39))
+* resolves forever loading issue when sync now button was clicked ([6d5d3f6](https://github.com/plutonhq/pluton/commit/6d5d3f6feeff98c5f7d8d5294aca4042d9664f4e))
+* resolves unnecessary logging ([e6806cb](https://github.com/plutonhq/pluton/commit/e6806cb03fc2d386b4ad5f546549c23384593973))
+
 ## [0.10.0](https://github.com/plutonhq/pluton/compare/pluton-v0.9.0...pluton-v0.10.0) (2026-04-06)
 
 
