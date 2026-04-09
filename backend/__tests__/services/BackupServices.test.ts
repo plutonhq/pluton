@@ -482,6 +482,7 @@ describe('BackupService', () => {
 					storageName: mockStorage.name,
 					storagePath: mockBackup.storagePath,
 					encryption: mockBackup.encryption,
+					skipCache: false,
 				}
 			);
 			expect(result).toEqual(mockFiles);
