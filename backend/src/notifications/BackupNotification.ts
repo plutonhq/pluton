@@ -63,7 +63,7 @@ export class BackupNotification {
 		try {
 			const notification = plan.settings.notification;
 			const shouldSend = this.shouldSend(notification?.email?.case || 'end', notificationType);
-			if (!shouldSend) throw new Error('Does not match Plan Notification Case.');
+			if (!shouldSend) return;
 			const emailType = notification?.email?.type || 'smtp';
 
 			if (!notification?.email?.emails) throw new Error('Email Notification Emails Missing.');
@@ -103,8 +103,7 @@ export class BackupNotification {
 			const notification = plan.settings.notification;
 			const theCase = notificationCase ? notificationCase : notification?.slack?.case || 'end';
 			const shouldSend = notificationCase ? true : this.shouldSend(theCase, notificationType);
-
-			if (!shouldSend) throw new Error('Does not match Plan Notification Case.');
+			if (!shouldSend) return;
 
 			const webhookUrl = notification?.slack?.url;
 			if (!webhookUrl) throw new Error('Slack Webhook URL Missing.');
@@ -142,7 +141,7 @@ export class BackupNotification {
 			const notification = plan.settings.notification;
 			const theCase = notificationCase ? notificationCase : notification?.discord?.case || 'end';
 			const shouldSend = notificationCase ? true : this.shouldSend(theCase, notificationType);
-			if (!shouldSend) throw new Error('Does not match Plan Notification Case.');
+			if (!shouldSend) return;
 
 			const webhookUrl = notification?.discord?.url;
 			if (!webhookUrl) throw new Error('Discord Webhook URL Missing.');
@@ -180,7 +179,7 @@ export class BackupNotification {
 			const { notification } = plan.settings;
 			const theCase = notificationCase ? notificationCase : notification?.push?.case || 'end';
 			const shouldSend = notificationCase ? true : this.shouldSend(theCase, notificationType);
-			if (!shouldSend) throw new Error('Does not match Plan Notification Case.');
+			if (!shouldSend) return;
 			if (!notification?.push?.url) throw new Error('Push Notification URL missing.');
 
 			const ntfyChannel = await this.notificationChannelResolver.getChannel('ntfy');

@@ -240,9 +240,8 @@ describe('BackupNotification', () => {
 			await backupNotification.sendEmail(mockPlan, 'start', { id: 'backup-1' });
 
 			expect(mockChannel.send).not.toHaveBeenCalled();
-			expect(mockLogger.error).toHaveBeenCalledWith(
-				expect.stringContaining('Does not match Plan Notification Case')
-			);
+			expect(mockLogger.error).not.toHaveBeenCalled();
+			expect(mockLogger.info).not.toHaveBeenCalled();
 		});
 
 		it('should throw error when emails are missing', async () => {
@@ -318,9 +317,8 @@ describe('BackupNotification', () => {
 			await backupNotification.sendSlack(mockPlan, 'start', { id: 'backup-1' });
 
 			expect(mockSlackChannel.send).not.toHaveBeenCalled();
-			expect(mockLogger.error).toHaveBeenCalledWith(
-				expect.stringContaining('Does not match Plan Notification Case')
-			);
+			expect(mockLogger.error).not.toHaveBeenCalled();
+			expect(mockLogger.info).not.toHaveBeenCalled();
 		});
 
 		it('should throw error when webhook URL is missing', async () => {
@@ -403,9 +401,8 @@ describe('BackupNotification', () => {
 			await backupNotification.sendDiscord(mockPlan, 'start', { id: 'backup-1' });
 
 			expect(mockDiscordChannel.send).not.toHaveBeenCalled();
-			expect(mockLogger.error).toHaveBeenCalledWith(
-				expect.stringContaining('Does not match Plan Notification Case')
-			);
+			expect(mockLogger.error).not.toHaveBeenCalled();
+			expect(mockLogger.info).not.toHaveBeenCalled();
 		});
 
 		it('should throw error when webhook URL is missing', async () => {
