@@ -17,7 +17,7 @@
   <br />
   <br />
   <figure>
-    <img src="https://usepluton.com/_astro/pluton-screenshot.CPFk1SrO.png" alt="Pluton Screenshot" />
+    <img src="https://docs.usepluton.com/assets/images/pluton-7e857a9affdac9ed2ec659e343f892eb.gif" alt="Pluton Screenshot" />
   </figure>
 </div>
 
