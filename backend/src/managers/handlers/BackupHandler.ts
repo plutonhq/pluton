@@ -489,6 +489,7 @@ export class BackupHandler {
 				console.warn(
 					`[BackupHandler]: Failed to unlock stale locks for plan: ${planId}. Error:  ${error.message}`
 				);
+				throw Error(`Failed to unlock stale locks. ${error.message || 'Reason Unknown'}`);
 			}
 		}
 	}
