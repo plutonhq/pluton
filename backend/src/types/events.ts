@@ -1,6 +1,12 @@
 import { RestoreConfig, RestoreStats } from '../types/restores';
 import { BackupCompletionStats, BackupTaskStats } from './backups';
 
+// Event emitted before the dry-run to initialize the backup entry in the database.
+export interface BackupInitEvent {
+	planId: string;
+	backupId: string;
+}
+
 // Event emitted when the pre-check (dry-run) is done and the real backup is starting.
 export interface BackupStartEvent {
 	planId: string;

@@ -11,6 +11,7 @@ import { backupInsertSchema, NewBackup } from '../../db/schema/backups';
 import { SourceTypes } from '../../types/source';
 // import { jobProcessor } from '../../jobs/JobProcessor';
 import {
+	BackupInitEvent,
 	BackupStartEvent,
 	BackupCompleteEvent,
 	BackupErrorEvent,
@@ -34,8 +35,8 @@ export class BackupEventService {
 		this.backupNotification = new BackupNotification();
 	}
 
-	async onBackupStart(data: BackupStartEvent): Promise<void> {
-		const { planId, backupId, summary } = data;
+	async onBackupInit(data: BackupInitEvent): Promise<void> {
+		const { planId, backupId } = data;
 		if (!planId) {
 			return;
 		}
@@ -76,7 +77,7 @@ export class BackupEventService {
 				} = thePlan;
 				const newBackupData: NewBackup = {
 					id: backupId,
-					status: 'started',
+					status: 'initializing',
 					inProgress: true,
 					planId,
 					storageId,
@@ -86,7 +87,7 @@ export class BackupEventService {
 					encryption,
 					compression,
 					sourceConfig,
-					taskStats: summary,
+					taskStats: null,
 					method: 'backup',
 				};
 
@@ -121,26 +122,54 @@ export class BackupEventService {
 					});
 				}
 
-				// Send Notification
-				const plan = await this.planStore.getById(planId);
-				if (plan && plan.settings.notification) {
-					await this.backupNotification.send(plan, 'start', {
-						id: backup.id,
-						startTime: backup.started || new Date(),
-						stats: summary,
-					});
-				}
-				// Log Backup Start Event
+				// Log Backup Init Event
 				planLogger('backup', planId, backup.id).info(
-					`Started Backing Up "${plan?.title || 'Unknown Plan'}"`
+					`Initializing Backup for "${thePlan?.title || 'Unknown Plan'}"`
 				);
 			} catch (error: any) {
 				planLogger('backup', planId).error(
-					`Error Starting Backup for Plan ${planId} : ${
+					`Error Initializing Backup for Plan ${planId} : ${
 						error?.message.toString() || 'Unknown Error'
 					}`
 				);
 			}
+		}
+	}
+
+	async onBackupStart(data: BackupStartEvent): Promise<void> {
+		const { planId, backupId, summary } = data;
+		if (!planId) {
+			return;
+		}
+
+		try {
+			// Update the existing backup entry with dry run summary and status
+			const backup = await this.backupStore.update(backupId, {
+				status: 'started',
+				taskStats: summary,
+			});
+			if (!backup) {
+				planLogger('backup', planId).error('Failed to update Backup entry with dry run summary.');
+				return;
+			}
+
+			// Send Notification
+			const plan = await this.planStore.getById(planId);
+			if (plan && plan.settings.notification) {
+				await this.backupNotification.send(plan, 'start', {
+					id: backup.id,
+					startTime: backup.started || new Date(),
+					stats: summary,
+				});
+			}
+			// Log Backup Start Event
+			planLogger('backup', planId, backup.id).info(
+				`Started Backing Up "${plan?.title || 'Unknown Plan'}"`
+			);
+		} catch (error: any) {
+			planLogger('backup', planId).error(
+				`Error Starting Backup for Plan ${planId} : ${error?.message.toString() || 'Unknown Error'}`
+			);
 		}
 	}
 

@@ -125,6 +125,14 @@ describe('BackupHandler', () => {
 
 		// Mock fs.promises.access
 		jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
+
+		// Simulate the event listener that responds to backup_init by emitting backup_created.
+		// This mirrors what BackupEventService.onBackupInit does in production.
+		emitter.on('backup_init', (data: { planId: string; backupId: string }) => {
+			setImmediate(() => {
+				emitter.emit('backup_created', { planId: data.planId, backupId: data.backupId });
+			});
+		});
 	});
 
 	afterEach(() => {
@@ -133,16 +141,7 @@ describe('BackupHandler', () => {
 
 	describe('execute', () => {
 		it('should successfully execute backup with all phases', async () => {
-			const backupCreatedListener = jest.fn();
-			emitter.on('backup_created', backupCreatedListener);
-
-			// Simulate backup_created event after dry run
-			mockRunResticCommand.mockImplementationOnce(async () => {
-				setTimeout(() => {
-					emitter.emit('backup_created', { planId: 'plan-1', backupId: 'backup-1' });
-				}, 10);
-				return '{"files_new":10,"total_files_processed":10}';
-			});
+			mockRunResticCommand.mockResolvedValueOnce('{"files_new":10,"total_files_processed":10}');
 
 			const result = await handler.execute('plan-1', 'backup-1', baseOptions, {
 				attempts: 0,
@@ -178,11 +177,6 @@ describe('BackupHandler', () => {
 		});
 
 		it('should handle retry attempts correctly', async () => {
-			emitter.on('backup_created', () => {});
-			setTimeout(() => {
-				emitter.emit('backup_created', { planId: 'plan-1', backupId: 'backup-1' });
-			}, 10);
-
 			await handler.execute('plan-1', 'backup-1', baseOptions, { attempts: 2, maxAttempts: 5 });
 
 			expect(mockUpdateAction).toHaveBeenCalledWith(
@@ -213,11 +207,6 @@ describe('BackupHandler', () => {
 		it('should emit error event and schedule retry on non-final failure', async () => {
 			const errorListener = jest.fn();
 			emitter.on('backup_error', errorListener);
-
-			emitter.on('backup_created', () => {});
-			setTimeout(() => {
-				emitter.emit('backup_created', { planId: 'plan-1', backupId: 'backup-1' });
-			}, 10);
 
 			mockRunResticCommand.mockRejectedValueOnce(new Error('Network error'));
 
@@ -250,11 +239,6 @@ describe('BackupHandler', () => {
 		});
 
 		it('should mark as permanently failed on final attempt', async () => {
-			emitter.on('backup_created', () => {});
-			setTimeout(() => {
-				emitter.emit('backup_created', { planId: 'plan-1', backupId: 'backup-1' });
-			}, 10);
-
 			mockRunResticCommand.mockRejectedValueOnce(new Error('Fatal error'));
 
 			await expect(
@@ -819,10 +803,6 @@ describe('BackupHandler', () => {
 
 			mockRunResticCommand.mockResolvedValueOnce('{"files_new":10,"total_files_processed":10}');
 
-			setTimeout(() => {
-				emitter.emit('backup_created', { planId: 'plan-1', backupId: 'backup-1' });
-			}, 10);
-
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
 			await handler['preBackupPhase']('plan-1', 'backup-1', baseOptions, resticArgsAndEnv);
 
@@ -870,10 +850,6 @@ describe('BackupHandler', () => {
 				.mockResolvedValueOnce('{"files_new":5,"total_files_processed":5}')
 				.mockResolvedValueOnce('unlocked'); // unlock command
 
-			setTimeout(() => {
-				emitter.emit('backup_created', { planId: 'plan-1', backupId: 'backup-1' });
-			}, 10);
-
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
 			await handler['preBackupPhase']('plan-1', 'backup-1', baseOptions, resticArgsAndEnv);
 
@@ -916,7 +892,9 @@ describe('BackupHandler', () => {
 			mockRunResticCommand.mockRejectedValueOnce(new Error('Unlock failed'));
 
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
-			await handler['unlockStaleLocks']('plan-1', baseOptions, resticArgsAndEnv);
+			await expect(
+				handler['unlockStaleLocks']('plan-1', baseOptions, resticArgsAndEnv)
+			).rejects.toThrow('Failed to unlock stale locks. Unlock failed');
 
 			expect(consoleWarnSpy).toHaveBeenCalledWith(
 				expect.stringContaining('Failed to unlock stale locks')

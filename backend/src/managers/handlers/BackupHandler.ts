@@ -158,13 +158,17 @@ export class BackupHandler {
 				permanentlyFailed
 			);
 
-			// Emit backup_complete with failure so the DB sets inProgress=false
-			this.emitter.emit('backup_complete', {
-				planId,
-				backupId,
-				success: false,
-				summary: null,
-			});
+			// Emit backup_complete with failure so the DB sets inProgress=false.
+			// Only emit for permanent failures. For retryable failures, the backup
+			// stays inProgress so the frontend keeps showing the progress bar.
+			if (permanentlyFailed) {
+				this.emitter.emit('backup_complete', {
+					planId,
+					backupId,
+					success: false,
+					summary: null,
+				});
+			}
 
 			if (!permanentlyFailed) {
 				await this.updateProgress(
@@ -212,6 +216,16 @@ export class BackupHandler {
 		// Update progress: Pre-backup start
 		await this.updateProgress(planId, backupId, 'pre-backup', 'PRE_BACKUP_START', false);
 
+		// Emit backup_init to create the DB entry before dry run.
+		// This ensures the backup is visible in the DB even if the dry run hangs.
+		this.emitter.emit('backup_init', {
+			planId: options.id,
+			backupId: backupId,
+		});
+
+		// Wait for the 'backup_created' event before proceeding.
+		await this.waitForBackupCreation(planId, backupId);
+
 		// Perform dry run
 		await this.updateProgress(planId, backupId, 'pre-backup', 'PRE_BACKUP_DRY_RUN_START', false);
 
@@ -238,15 +252,12 @@ export class BackupHandler {
 			throw error;
 		}
 
-		// Emit the 'start' event to signal the listener to create the DB record.
+		// Emit backup_start with dry run summary to update the DB record and send notifications.
 		this.emitter.emit('backup_start', {
 			planId: options.id,
 			backupId: backupId,
 			summary: dryRunSummary,
 		});
-
-		// Wait for the 'backup_created' event before proceeding.
-		await this.waitForBackupCreation(planId, backupId);
 
 		// Run pre-flight checks
 		await this.updateProgress(planId, backupId, 'pre-backup', 'PRE_BACKUP_CHECKS_START', false);

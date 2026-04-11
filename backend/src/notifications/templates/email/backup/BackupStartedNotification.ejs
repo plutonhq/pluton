@@ -98,13 +98,13 @@
 												<tr>
 													<td width="50%" class="backupDetailsStat">
 														<p class="backupDetailsValue">
-															<%= formatBytes(stats.total_bytes_processed || 0) %>
+															<%= formatBytes(stats?.total_bytes_processed || 0) %>
 														</p>
 														<p class="backupDetailsLabel">Backup Size</p>
 													</td>
 													<td width="50%" class="backupDetailsStat">
 														<p class="backupDetailsValue">
-															<%= formatNumberToK(stats.total_files_processed || 0) %>
+															<%= formatNumberToK(stats?.total_files_processed || 0) %>
 														</p>
 														<p class="backupDetailsLabel">Total Files</p>
 													</td>

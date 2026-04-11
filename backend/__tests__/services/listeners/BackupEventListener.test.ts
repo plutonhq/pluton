@@ -5,6 +5,7 @@ import { PlanStore } from '../../../src/stores/PlanStore';
 import { BackupStore } from '../../../src/stores/BackupStore';
 import { BackupEventService } from '../../../src/services/events/BackupEventService';
 import {
+	BackupInitEvent,
 	BackupStartEvent,
 	BackupCompleteEvent,
 	BackupErrorEvent,
@@ -73,6 +74,7 @@ describe('BackupEventListener', () => {
 
 		// Capture the mocked BackupEventService instance created inside the constructor
 		mockBackupEventService = {
+			onBackupInit: jest.fn().mockResolvedValue(undefined),
 			onBackupStart: jest.fn().mockResolvedValue(undefined),
 			onBackupComplete: jest.fn().mockResolvedValue(undefined),
 			onBackupError: jest.fn().mockResolvedValue(undefined),
@@ -92,11 +94,26 @@ describe('BackupEventListener', () => {
 		});
 
 		it('should register event listeners on the localAgent', () => {
+			expect(localAgent.listenerCount('backup_init')).toBe(1);
 			expect(localAgent.listenerCount('backup_start')).toBe(1);
 			expect(localAgent.listenerCount('backup_complete')).toBe(1);
 			expect(localAgent.listenerCount('backup_error')).toBe(1);
 			expect(localAgent.listenerCount('backup_stats_update')).toBe(1);
 			expect(localAgent.listenerCount('pruneEnd')).toBe(1);
+		});
+	});
+
+	describe('backup_init event', () => {
+		it('should delegate to backupEventService.onBackupInit', () => {
+			const event: BackupInitEvent = {
+				planId: 'plan-1',
+				backupId: 'backup-1',
+			};
+
+			localAgent.emit('backup_init', event);
+
+			expect(mockBackupEventService.onBackupInit).toHaveBeenCalledWith(event);
+			expect(mockBackupEventService.onBackupInit).toHaveBeenCalledTimes(1);
 		});
 	});
 

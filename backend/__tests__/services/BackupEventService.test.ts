@@ -13,7 +13,7 @@ import { BackupNotification } from '../../src/notifications/BackupNotification';
 import { PlanFull } from '../../src/types/plans';
 import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
-import { BackupStartEvent } from '#core-backend/types/events';
+import { BackupInitEvent, BackupStartEvent } from '#core-backend/types/events';
 
 jest.mock('../../src/db/index', () => ({
 	db: {
@@ -67,7 +67,7 @@ describe('BackupEventService', () => {
 		backupEventService = new BackupEventService(mockPlanStore, mockBackupStore, mockLocalAgent);
 	});
 
-	describe('onBackupStart', () => {
+	describe('onBackupInit', () => {
 		const planId = 'plan-123';
 		const backupId = 'backup-abc';
 		const mockPlan: PlanFull = {
@@ -83,10 +83,9 @@ describe('BackupEventService', () => {
 				},
 			},
 		} as any;
-		const mockSummary = { message_type: 'summary', total_files_processed: 10 } as any;
-		const startEvent: BackupStartEvent = { planId, backupId, summary: mockSummary };
+		const initEvent: BackupInitEvent = { planId, backupId };
 
-		it('should create a new backup record, emit "backup_created", and send a notification for a new local backup', async () => {
+		it('should create a new backup record with "initializing" status and emit "backup_created" for a local backup', async () => {
 			// Arrange
 			mockBackupStore.getById.mockResolvedValue(null);
 			mockPlanStore.hasActiveBackups.mockResolvedValue(false);
@@ -96,7 +95,7 @@ describe('BackupEventService', () => {
 			);
 
 			// Act
-			await backupEventService.onBackupStart(startEvent);
+			await backupEventService.onBackupInit(initEvent);
 
 			// Assert
 			expect(mockBackupStore.getById).toHaveBeenCalledWith(backupId);
@@ -105,18 +104,13 @@ describe('BackupEventService', () => {
 				expect.objectContaining({
 					id: backupId,
 					planId,
-					status: 'started',
+					status: 'initializing',
 					inProgress: true,
 					sourceId: 'main',
-					taskStats: mockSummary,
+					taskStats: null,
 				})
 			);
 			expect(mockLocalAgent.emit).toHaveBeenCalledWith('backup_created', { planId, backupId });
-			expect(mockBackupNotification.send).toHaveBeenCalledWith(
-				mockPlan,
-				'start',
-				expect.objectContaining({ id: backupId, stats: mockSummary })
-			);
 		});
 
 		it('should not emit "backup_created" for a new remote backup', async () => {
@@ -128,7 +122,7 @@ describe('BackupEventService', () => {
 			mockBackupStore.create.mockResolvedValue({ id: backupId } as any);
 
 			// Act
-			await backupEventService.onBackupStart(startEvent);
+			await backupEventService.onBackupInit(initEvent);
 
 			// Assert
 			expect(mockLocalAgent.emit).not.toHaveBeenCalled();
@@ -140,7 +134,7 @@ describe('BackupEventService', () => {
 			mockBackupStore.getById.mockResolvedValue(existingBackup as any);
 
 			// Act
-			await backupEventService.onBackupStart(startEvent);
+			await backupEventService.onBackupInit(initEvent);
 
 			// Assert
 			expect(mockBackupStore.update).toHaveBeenCalledWith(backupId, {
@@ -158,10 +152,72 @@ describe('BackupEventService', () => {
 			mockPlanStore.hasActiveBackups.mockResolvedValue(true);
 
 			// Act
-			await backupEventService.onBackupStart(startEvent);
+			await backupEventService.onBackupInit(initEvent);
 
 			// Assert
 			expect(mockBackupStore.create).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('onBackupStart', () => {
+		const planId = 'plan-123';
+		const backupId = 'backup-abc';
+		const mockPlan: PlanFull = {
+			id: planId,
+			title: 'Test Plan',
+			sourceId: 'main',
+			storageId: 'storage-xyz',
+			sourceType: 'device',
+			method: 'backup',
+			settings: {
+				notification: {
+					email: { enabled: true, case: 'start', type: 'smtp', emails: 'test@example.com' },
+				},
+			},
+		} as any;
+		const mockSummary = { message_type: 'summary', total_files_processed: 10 } as any;
+		const startEvent: BackupStartEvent = { planId, backupId, summary: mockSummary };
+
+		it('should update the backup record with dry run summary and send notification', async () => {
+			// Arrange
+			mockBackupStore.update.mockResolvedValue({
+				id: backupId,
+				started: new Date(),
+			} as any);
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+
+			// Act
+			await backupEventService.onBackupStart(startEvent);
+
+			// Assert
+			expect(mockBackupStore.update).toHaveBeenCalledWith(backupId, {
+				status: 'started',
+				taskStats: mockSummary,
+			});
+			expect(mockBackupNotification.send).toHaveBeenCalledWith(
+				mockPlan,
+				'start',
+				expect.objectContaining({ id: backupId, stats: mockSummary })
+			);
+		});
+
+		it('should not send notification if plan has no notification settings', async () => {
+			// Arrange
+			const planNoNotif = { ...mockPlan, settings: {} } as any;
+			mockBackupStore.update.mockResolvedValue({
+				id: backupId,
+				started: new Date(),
+			} as any);
+			mockPlanStore.getById.mockResolvedValue(planNoNotif);
+
+			// Act
+			await backupEventService.onBackupStart(startEvent);
+
+			// Assert
+			expect(mockBackupStore.update).toHaveBeenCalledWith(backupId, {
+				status: 'started',
+				taskStats: mockSummary,
+			});
 			expect(mockBackupNotification.send).not.toHaveBeenCalled();
 		});
 	});

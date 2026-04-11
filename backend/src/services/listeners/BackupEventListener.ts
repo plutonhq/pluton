@@ -4,6 +4,7 @@ import { PlanStore } from '../../stores/PlanStore';
 import { appPaths } from '../../utils/AppPaths';
 import { jobProcessor } from '../../jobs/JobProcessor';
 import {
+	BackupInitEvent,
 	BackupStartEvent,
 	BackupCompleteEvent,
 	BackupErrorEvent,
@@ -35,6 +36,7 @@ export class BackupEventListener {
 	 * Registers event listeners for backup-related events emitted by the local agent.
 	 */
 	protected registerEventListeners(): void {
+		this.localAgent.on('backup_init', (event: BackupInitEvent) => this.onBackupInit(event));
 		this.localAgent.on('backup_start', (event: BackupStartEvent) => this.onBackupStart(event));
 		this.localAgent.on('backup_complete', (event: BackupCompleteEvent) =>
 			this.onBackupComplete(event)
@@ -73,6 +75,10 @@ export class BackupEventListener {
 		jobProcessor.on('integrity_failed', (event: any) => {
 			this.onIntegrityCheckFailure(event);
 		});
+	}
+
+	protected async onBackupInit(data: BackupInitEvent): Promise<void> {
+		await this.backupEventService.onBackupInit(data);
 	}
 
 	protected async onBackupStart(data: BackupStartEvent): Promise<void> {

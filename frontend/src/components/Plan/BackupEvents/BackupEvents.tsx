@@ -57,9 +57,11 @@ const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inPro
                   <Icon type={inProgress ? 'loading' : hasFinished === 'Completed' ? 'check-circle-filled' : 'error-circle-filled'} size={14} />{' '}
                   {inProgress ? `${type} In Progress` : `${type} ${hasFinished}` || 'Unknown'}
                </div>
-               <div title="Duration" className={classes.duration}>
-                  <Icon type="clock" size={14} /> {(progressDataToUse?.duration && formatDuration(progressDataToUse.duration / 1000)) || 'N/A'}
-               </div>
+               {!inProgress && hasFinished && (
+                  <div title="Duration" className={classes.duration}>
+                     <Icon type="clock" size={14} /> {(progressDataToUse?.duration && formatDuration(progressDataToUse.duration / 1000)) || 'N/A'}
+                  </div>
+               )}
             </div>
             {isLoading && (
                <div className={classes.loading}>
