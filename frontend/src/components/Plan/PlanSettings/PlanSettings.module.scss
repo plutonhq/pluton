@@ -113,9 +113,14 @@
    flex-direction: row;
    align-items: center;
    margin-bottom: 10px;
+   gap: 10px;
    & > div {
       width: 100px;
       margin: 0 10px;
+   }
+   div[class*='_toggleField'] {
+      width: auto;
+      margin: 0;
    }
 }
 

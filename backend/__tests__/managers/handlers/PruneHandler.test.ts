@@ -73,12 +73,10 @@ describe('PruneHandler', () => {
 			expect(result.success).toBe(true);
 			expect(result.result).toBe('Pruned Old Snapshots Successfully.');
 
-			// Should call runResticCommand twice: once for policy, once for snapCount
-			expect(mockRunResticCommand).toHaveBeenCalledTimes(2);
+			// All args are combined into a single runResticCommand call
+			expect(mockRunResticCommand).toHaveBeenCalledTimes(1);
 
-			// First call: policy prune
-			expect(mockRunResticCommand).toHaveBeenNthCalledWith(
-				1,
+			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining([
 					'forget',
 					'--prune',
@@ -90,14 +88,9 @@ describe('PruneHandler', () => {
 					'4',
 					'--keep-monthly',
 					'12',
+					'--keep-last',
+					'50',
 				]),
-				expect.objectContaining({ RESTIC_PASSWORD: 'test-key' })
-			);
-
-			// Second call: snap count prune
-			expect(mockRunResticCommand).toHaveBeenNthCalledWith(
-				2,
-				expect.arrayContaining(['--keep-last', '50']),
 				expect.objectContaining({ RESTIC_PASSWORD: 'test-key' })
 			);
 
@@ -149,7 +142,7 @@ describe('PruneHandler', () => {
 			);
 		});
 
-		it('should successfully prune with forgetByDate policy', async () => {
+		it('should treat forgetByDate as unknown policy (no policy args, keep-last 1 failsafe)', async () => {
 			const optionsWithDate = {
 				...baseOptions,
 				settings: {
@@ -164,10 +157,13 @@ describe('PruneHandler', () => {
 			const result = await handler.prune('plan-1', optionsWithDate, false);
 
 			expect(result.success).toBe(true);
+			// forgetByDate is no longer a supported policy; only the failsafe --keep-last 1 is applied
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
-				expect.arrayContaining(['forget', '--prune', '--keep-before', '2024-01-01']),
+				expect.arrayContaining(['forget', '--prune', '--keep-last', '1']),
 				expect.any(Object)
 			);
+			const call = mockRunResticCommand.mock.calls[0][0];
+			expect(call).not.toContain('--keep-before');
 		});
 
 		it('should update stats when updateStats is true', async () => {
@@ -328,12 +324,10 @@ describe('PruneHandler', () => {
 
 			expect(result.success).toBe(true);
 
-			// Check both calls include --json
-			const firstCall = mockRunResticCommand.mock.calls[0][0];
-			const secondCall = mockRunResticCommand.mock.calls[1][0];
-
-			expect(firstCall).toContain('--json');
-			expect(secondCall).toContain('--json');
+			// All args are combined into a single call — verify it includes --json
+			expect(mockRunResticCommand).toHaveBeenCalledTimes(1);
+			const call = mockRunResticCommand.mock.calls[0][0];
+			expect(call).toContain('--json');
 		});
 
 		it('should use correct repository path', async () => {
@@ -366,21 +360,14 @@ describe('PruneHandler', () => {
 			expect(mockGenerateResticRepoPath).toHaveBeenCalledWith('test-storage', '');
 		});
 
-		it('should run policy prune before snapCount prune', async () => {
-			const callOrder: string[] = [];
-
-			mockRunResticCommand.mockImplementation((args: string[]) => {
-				if (args.includes('--keep-last')) {
-					callOrder.push('snapCount');
-				} else {
-					callOrder.push('policy');
-				}
-				return Promise.resolve('{}');
-			});
-
+		it('should combine policy args and snapCount into a single prune command', async () => {
 			await handler.prune('plan-1', baseOptions, false);
 
-			expect(callOrder).toEqual(['policy', 'snapCount']);
+			// Policy args and --keep-last are all sent in one combined command
+			expect(mockRunResticCommand).toHaveBeenCalledTimes(1);
+			const call = mockRunResticCommand.mock.calls[0][0];
+			expect(call).toContain('--keep-daily');
+			expect(call).toContain('--keep-last');
 		});
 
 		it('should handle stats update failure gracefully', async () => {
@@ -464,7 +451,7 @@ describe('PruneHandler', () => {
 			expect(result.policyArgs).toContain('60d');
 		});
 
-		it('should generate correct command for forgetByDate policy', () => {
+		it('should return empty policyArgs for forgetByDate policy (no longer supported)', () => {
 			const optionsWithDate = {
 				...baseOptions,
 				settings: {
@@ -478,8 +465,9 @@ describe('PruneHandler', () => {
 
 			const result = handler['generatePruneCommand']('plan-1', optionsWithDate);
 
-			expect(result.policyArgs).toContain('--keep-before');
-			expect(result.policyArgs).toContain('2023-12-31');
+			// forgetByDate was removed; treated as unknown policy with no policy args
+			expect(result.policyArgs).toEqual([]);
+			expect(result.policyArgs).not.toContain('--keep-before');
 		});
 
 		it('should include insecure-no-password when encryption is false', () => {
