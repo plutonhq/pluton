@@ -300,10 +300,10 @@ class ConfigService {
 	}
 
 	/**
-	 * Hash a password and store the hash in keys.json.
+	 * Hash a password and store the hash (and username) in keys.json.
 	 * Used by SetupController and password change endpoints.
 	 */
-	public hashAndStorePassword(plaintextPassword: string): string {
+	public hashAndStorePassword(plaintextPassword: string, userName?: string): string {
 		const hash = bcrypt.hashSync(plaintextPassword, BCRYPT_SALT_ROUNDS);
 
 		let keysFileContent: Record<string, any> = {};
@@ -316,7 +316,10 @@ class ConfigService {
 		}
 
 		try {
-			const newContent = { ...keysFileContent, PASSWORD_HASH: hash };
+			const newContent: Record<string, any> = { ...keysFileContent, PASSWORD_HASH: hash };
+			if (userName) {
+				newContent.USER_NAME = userName;
+			}
 			const dir = path.dirname(this.keysPath);
 			if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 			fs.writeFileSync(this.keysPath, JSON.stringify(newContent, null, 2), { mode: 0o600 });
@@ -371,8 +374,11 @@ class ConfigService {
 			throw new Error('Setup is not pending. Cannot complete setup.');
 		}
 
-		// Hash the password and store in keys.json
-		const passwordHash = this.hashAndStorePassword(credentials.USER_PASSWORD);
+		// Hash the password and store both USER_NAME and PASSWORD_HASH in keys.json
+		const passwordHash = this.hashAndStorePassword(
+			credentials.USER_PASSWORD,
+			credentials.USER_NAME
+		);
 
 		// Update the config with the new credentials
 		this._config = {
@@ -389,6 +395,10 @@ class ConfigService {
 	/**
 	 * Reinitialize ConfigService with credentials from keyring.
 	 * Used after initial setup to reload config with actual credentials.
+	 *
+	 * On subsequent startups (keys.json already has USER_NAME + PASSWORD_HASH),
+	 * only ENCRYPTION_KEY is loaded from the keyring. USER_NAME and PASSWORD_HASH
+	 * are read from keys.json to avoid overwriting CLI password resets.
 	 */
 	public static async reinitializeWithKeyringCredentials(): Promise<boolean> {
 		if (!ConfigService.instance || !ConfigService.instance._isSetupPending) {
@@ -400,15 +410,77 @@ class ConfigService {
 			const { keyringService } = await import('./KeyringService');
 			const credentials = await keyringService.getAllCredentials();
 
-			if (credentials.ENCRYPTION_KEY && credentials.USER_NAME && credentials.USER_PASSWORD) {
-				// All credentials present - complete normal setup
-				ConfigService.instance.completeSetup({
+			if (!credentials.ENCRYPTION_KEY) {
+				return false;
+			}
+
+			// Check if keys.json already has USER_NAME and PASSWORD_HASH from a previous setup
+			// or CLI password reset. If so, use those instead of re-hashing from keyring.
+			let keysFileContent: Record<string, any> = {};
+			try {
+				if (fs.existsSync(ConfigService.instance.keysPath)) {
+					keysFileContent = JSON.parse(fs.readFileSync(ConfigService.instance.keysPath, 'utf-8'));
+				}
+			} catch {
+				// Ignore read errors
+			}
+
+			const existingPasswordHash = keysFileContent.PASSWORD_HASH;
+			const existingUserName = keysFileContent.USER_NAME;
+
+			if (existingPasswordHash && existingUserName) {
+				// Subsequent startup: keys.json is authoritative for auth credentials.
+				// Only ENCRYPTION_KEY comes from the keyring.
+				ConfigService.instance._config = {
+					...ConfigService.instance._config,
 					ENCRYPTION_KEY: credentials.ENCRYPTION_KEY,
-					USER_NAME: credentials.USER_NAME,
-					USER_PASSWORD: credentials.USER_PASSWORD,
-				});
+					USER_NAME: existingUserName,
+					USER_PASSWORD: credentials.USER_PASSWORD || '',
+					PASSWORD_HASH: existingPasswordHash,
+					SETUP_PENDING: false,
+				} as AppConfig;
+				ConfigService.instance._isSetupPending = false;
+				console.log(
+					'✅ [ConfigService] Credentials loaded (ENCRYPTION_KEY from keyring, auth from keys.json).'
+				);
 				return true;
 			}
+
+			if (existingPasswordHash && !existingUserName && credentials.USER_NAME) {
+				// Migration: keys.json has PASSWORD_HASH from prior version but no USER_NAME.
+				// Copy USER_NAME from keyring to keys.json without re-hashing the password.
+				try {
+					const newContent = { ...keysFileContent, USER_NAME: credentials.USER_NAME };
+					fs.writeFileSync(ConfigService.instance.keysPath, JSON.stringify(newContent, null, 2), {
+						mode: 0o600,
+					});
+					console.log('[ConfigService] Migrated USER_NAME from keyring to keys.json');
+				} catch (error) {
+					console.error(`[ConfigService] Failed to migrate USER_NAME to keys.json: ${error}`);
+				}
+
+				ConfigService.instance._config = {
+					...ConfigService.instance._config,
+					ENCRYPTION_KEY: credentials.ENCRYPTION_KEY,
+					USER_NAME: credentials.USER_NAME,
+					USER_PASSWORD: credentials.USER_PASSWORD || '',
+					PASSWORD_HASH: existingPasswordHash,
+					SETUP_PENDING: false,
+				} as AppConfig;
+				ConfigService.instance._isSetupPending = false;
+				console.log(
+					'✅ [ConfigService] Credentials loaded (migrated USER_NAME from keyring to keys.json).'
+				);
+				return true;
+			}
+
+			// If keys.json has no PASSWORD_HASH, this is a fresh install (or data was wiped).
+			// Even if the keyring has credentials from a previous installation, do NOT
+			// auto-configure — let the user go through the setup wizard instead.
+			// The ENCRYPTION_KEY remains in the keyring and can be reused during setup.
+			console.log(
+				'[ConfigService] Keyring has credentials but keys.json has no PASSWORD_HASH. Awaiting setup wizard.'
+			);
 		} catch (error) {
 			console.error('[ConfigService] Failed to reinitialize with keyring credentials:', error);
 		}

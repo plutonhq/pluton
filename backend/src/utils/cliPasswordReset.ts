@@ -62,6 +62,7 @@ async function storeNewPassword(userName: string, password: string): Promise<voi
 	}
 
 	keysFileContent.PASSWORD_HASH = hash;
+	keysFileContent.USER_NAME = userName;
 	const dir = path.dirname(keysPath);
 	if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 	fs.writeFileSync(keysPath, JSON.stringify(keysFileContent, null, 2), { mode: 0o600 });
