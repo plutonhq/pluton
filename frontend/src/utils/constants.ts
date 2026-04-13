@@ -57,7 +57,7 @@ export const DEFAULT_PLAN_SETTINGS: NewPlanSettings = {
          snapCount: 5,
          policy: 'forgetByAge',
          forgetAge: '1m',
-         revisions: true,
+         revisions: false,
       },
       performance: {
          scan: true,
