@@ -47,7 +47,7 @@ const PlanSourceSettings = ({ plan, onUpdate, error, isEditing }: PlanSourceSett
                onUpdate={(paths) => onUpdate({ ...plan, sourceConfig: { ...paths } })}
                deviceId={deviceId}
                single={plan.method === 'sync'}
-               disallowChange={plan.method === 'sync'}
+               disallowChange={plan.method === 'sync' && isEditing}
             />
          </div>
       </>
