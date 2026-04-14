@@ -10,11 +10,12 @@ type TagsInputProps = {
    icon?: string;
    type?: string;
    inline?: boolean;
+   hint?: string;
    fieldValue: string[];
    onUpdate: (f: string[]) => void;
 };
 
-const TagsInput = ({ label, description, customClasses = '', fieldValue = [], onUpdate, icon, type = 'tag', inline }: TagsInputProps) => {
+const TagsInput = ({ label, description, customClasses = '', hint = '', fieldValue = [], onUpdate, icon, type = 'tag', inline }: TagsInputProps) => {
    const [tags, setTags] = useState<string[]>(() => (Array.isArray(fieldValue) ? fieldValue : []));
    const [newTag, setNewTag] = useState('');
 
@@ -56,7 +57,7 @@ const TagsInput = ({ label, description, customClasses = '', fieldValue = [], on
    };
 
    return (
-      <FormField type={'tags'} label={label} description={description} inline={inline} classes={`${classes.tagField} ${customClasses}`}>
+      <FormField type={'tags'} label={label} hint={hint} description={description} inline={inline} classes={`${classes.tagField} ${customClasses}`}>
          <div className={classes.tagBox}>
             {tags.map((t, i) => (
                <div className={classes.tag} key={t + i}>
