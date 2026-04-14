@@ -732,6 +732,18 @@ const Icon = ({ type, color = 'currentColor', size = 16, title = '', classes = '
                </g>
             </IconWrapper>
          )}
+         {type === 'folder-exclude' && (
+            <IconWrapper size={size} viewBox="0 0 24 24">
+               <path
+                  fill="none"
+                  stroke={color}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13.5 19H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4l3 3h7a2 2 0 0 1 2 2v4m1 9l-5-5m0 5l5-5"
+               ></path>
+            </IconWrapper>
+         )}
 
          {type === 'folders' && (
             <IconWrapper size={size} viewBox="0 0 24 24">
