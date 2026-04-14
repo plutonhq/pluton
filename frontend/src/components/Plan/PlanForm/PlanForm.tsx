@@ -261,23 +261,6 @@ const PlanForm = ({
                         }
                      />
                   </div>
-
-                  <div className={classes.field} style={{ width: '150px' }}>
-                     <NumberInput
-                        label="Backups to Keep"
-                        fieldValue={planSettings.settings.prune.snapCount}
-                        onUpdate={(val) =>
-                           onPlanSettingsChange({
-                              ...planSettings,
-                              settings: { ...planSettings.settings, prune: { ...planSettings.settings.prune, snapCount: val } },
-                           })
-                        }
-                        placeholder="5"
-                        min={1}
-                        inline={false}
-                        hint="Number of Active Restorable Backups/Snapshots to Keep regardless of the Removal Policy"
-                     />
-                  </div>
                   <PlanPruneSettings
                      plan={planSettings}
                      onUpdate={(pruneSettings) =>
