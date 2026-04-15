@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import classes from './PlanSettings.module.scss';
 import PathPicker from '../../common/PathPicker/PathPicker';
 import { NewPlanSettings } from '../../../@types/plans';
@@ -26,6 +27,19 @@ const PlanSourceSettings = ({ plan, onUpdate, error, isEditing }: PlanSourceSett
          })),
       );
    }
+
+   // When the device changes, reset the sourceConfig paths to prevent invalid paths from being submitted
+   useEffect(() => {
+      if (!isEditing) {
+         onUpdate({
+            ...plan,
+            sourceConfig: {
+               includes: [],
+               excludes: [],
+            },
+         });
+      }
+   }, [isEditing, deviceId]);
 
    return (
       <>

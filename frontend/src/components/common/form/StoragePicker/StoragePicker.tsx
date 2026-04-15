@@ -70,6 +70,13 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
       }
    }, [selectedStorage, path]);
 
+   useEffect(() => {
+      if (!disabled) {
+         setSelectedStorage(null);
+         setPath('');
+      }
+   }, [deviceId, disabled]);
+
    // console.log('Storage path :', path, !disabled && isLocalStorage && !path);
 
    return (
@@ -98,7 +105,7 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
                   <Input
                      disabled={disabled}
                      fieldValue={path}
-                     onUpdate={(val) => setPath(val.startsWith('/') ? val.slice(1) : val)} //if the val starts with a slash remove it
+                     onUpdate={(val) => setPath(!isLocalStorage && val.startsWith('/') ? val.slice(1) : val)} //if the val starts with a slash remove it (only for remote storages, local paths need the leading slash)
                      placeholder={isLocalStorage ? 'Select a folder' : hasBucketName ? 'subfolder' : `folder-or-bucket/subfolder`}
                      full={true}
                      required={!disabled && isLocalStorage}

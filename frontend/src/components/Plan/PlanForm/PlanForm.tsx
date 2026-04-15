@@ -5,7 +5,6 @@ import StoragePicker from '../../common/form/StoragePicker/StoragePicker';
 import PlanStrategySettings from '../PlanSettings/PlanStrategySettings';
 import PlanSourceSettings from '../PlanSettings/PlanSourceSettings';
 import { NewPlanSettings } from '../../../@types/plans';
-import NumberInput from '../../common/form/NumberInput/NumberInput';
 import classes from '../AddPlan/AddPlan.module.scss';
 import PFClasses from './PlanForm.module.scss';
 import { useGetSettings } from '../../../services/settings';
