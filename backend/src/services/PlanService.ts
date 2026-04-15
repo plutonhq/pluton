@@ -103,10 +103,21 @@ export class PlanService {
 		if (!device) {
 			throw new NotFoundError('Source device not found');
 		}
-		const isRemote = sourceId !== 'main';
-		const targetOS = isRemote ? (device.os ?? undefined) : undefined;
 
-		const theStoragePath = sanitizeStoragePath(storagePath, planStorage.type, targetOS);
+		let theStoragePath;
+		if (storagePath) {
+			try {
+				const isRemote = sourceId !== 'main';
+				const targetOS = isRemote ? (device.os ?? undefined) : undefined;
+				theStoragePath = sanitizeStoragePath(storagePath, planStorage.type, targetOS);
+			} catch (error) {
+				if (error instanceof AppError) {
+					throw error;
+				}
+				throw new AppError(400, 'Invalid storage path');
+			}
+		}
+
 		let newPlanData: NewPlan = {
 			id: planId,
 			title: title.trim(),

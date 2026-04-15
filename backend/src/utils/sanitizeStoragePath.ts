@@ -37,21 +37,28 @@ export function sanitizeStoragePath(
 
 	// **Security Check:** After normalization, if ".." still exists, it's a sign of a
 	if (normalizedPath.includes('..')) {
-		throw new AppError(400, 'Invalid path: Directory traversal sequences ("..") are not allowed.');
+		throw new AppError(
+			400,
+			'Invalid Storage Destination path: Directory traversal sequences ("..") are not allowed.'
+		);
 	}
 
 	if (storageType === 'local') {
 		// For local storage, we need a fully qualified absolute path.
+		// Check *before* resolve() because resolve() always returns an absolute path
+		// by prepending the server's CWD, which mangles paths for remote devices
+		// (e.g., a Linux path "home/user" resolved on a Windows server becomes
+		// "/JS/apps/.../backend/home/user" instead of "/home/user").
+		if (!pathModule.isAbsolute(normalizedPath)) {
+			throw new AppError(
+				400,
+				`Invalid Storage Destination path: An absolute path is required for local storage (e.g., "${isTargetWindows ? 'C:\\' : '/'}home/user/backups").`
+			);
+		}
+
 		// When targeting a remote OS, use the target path module to avoid
 		// the server's OS mangling the path (e.g., adding a Windows drive letter to a Linux path).
 		const resolvedPath = pathModule.resolve(normalizedPath);
-
-		if (!isTargetWindows && !pathModule.isAbsolute(resolvedPath)) {
-			throw new AppError(
-				400,
-				'Invalid path: An absolute path is required for local storage on this operating system.'
-			);
-		}
 		return resolvedPath;
 	} else {
 		// For all remote/cloud storage types (s3, b2, etc.), the path must be relative

@@ -18,7 +18,7 @@ describe('sanitizeStoragePath', () => {
 		});
 
 		it('should handle empty string input', () => {
-			expect(sanitizeStoragePath('', 'local')).toBe(path.resolve(''));
+			expect(() => sanitizeStoragePath('', 'local')).toThrow(AppError);
 			expect(sanitizeStoragePath('', 's3')).toBe('');
 		});
 	});
@@ -42,15 +42,15 @@ describe('sanitizeStoragePath', () => {
 	});
 
 	describe('local storage type', () => {
-		it('should return absolute path for local storage', () => {
-			const result = sanitizeStoragePath('uploads/files', 'local');
-			expect(path.isAbsolute(result)).toBe(true);
+		it('should reject relative paths for local storage', () => {
+			expect(() => sanitizeStoragePath('uploads/files', 'local')).toThrow(AppError);
+			expect(() => sanitizeStoragePath('uploads/files', 'local')).toThrow(
+				'absolute path is required'
+			);
 		});
 
-		it('should resolve relative paths to absolute paths', () => {
-			const result = sanitizeStoragePath('./uploads', 'local');
-			expect(path.isAbsolute(result)).toBe(true);
-			expect(result).toContain('uploads');
+		it('should reject relative paths starting with dot for local storage', () => {
+			expect(() => sanitizeStoragePath('./uploads', 'local')).toThrow(AppError);
 		});
 
 		it('should handle already absolute paths', () => {
@@ -60,12 +60,17 @@ describe('sanitizeStoragePath', () => {
 		});
 
 		it('should normalize path separators', () => {
-			const result = sanitizeStoragePath('uploads//files///documents', 'local');
+			const absolutePath =
+				os.platform() === 'win32'
+					? 'C:\\uploads\\files\\\\documents'
+					: '/uploads//files///documents';
+			const result = sanitizeStoragePath(absolutePath, 'local');
 			expect(result).not.toContain('//');
 		});
 
 		it('should resolve "." in path', () => {
-			const result = sanitizeStoragePath('./uploads/./files', 'local');
+			const absolutePath = os.platform() === 'win32' ? 'C:\\uploads\\.\\files' : '/uploads/./files';
+			const result = sanitizeStoragePath(absolutePath, 'local');
 			expect(path.isAbsolute(result)).toBe(true);
 			expect(result).not.toContain('/./');
 		});
@@ -144,9 +149,8 @@ describe('sanitizeStoragePath', () => {
 	});
 
 	describe('edge cases', () => {
-		it('should handle path with only dots (single dot)', () => {
-			const result = sanitizeStoragePath('.', 'local');
-			expect(path.isAbsolute(result)).toBe(true);
+		it('should reject path with only dots (single dot) for local storage', () => {
+			expect(() => sanitizeStoragePath('.', 'local')).toThrow(AppError);
 		});
 
 		it('should handle path with only slashes for remote storage', () => {
@@ -236,11 +240,21 @@ describe('sanitizeStoragePath', () => {
 			expect(() => sanitizeStoragePath('..\\secret', 'local', 'windows')).toThrow(AppError);
 		});
 
+		it('should reject relative paths for local storage on remote Linux device', () => {
+			// A relative Linux path like "home/user/backup" should not be resolved
+			// against the server's CWD (which could be on Windows)
+			expect(() => sanitizeStoragePath('home/towfiq/pluton_sync_test', 'local', 'linux')).toThrow(
+				AppError
+			);
+			expect(() => sanitizeStoragePath('home/towfiq/pluton_sync_test', 'local', 'linux')).toThrow(
+				'absolute path is required'
+			);
+		});
+
 		it('should fall back to server OS behavior when targetOS is undefined', () => {
-			// Should behave identically to calling without the parameter
-			const withoutParam = sanitizeStoragePath('uploads/files', 'local');
-			const withUndefined = sanitizeStoragePath('uploads/files', 'local', undefined);
-			expect(withoutParam).toBe(withUndefined);
+			// Both should throw since relative paths are not allowed for local storage
+			expect(() => sanitizeStoragePath('uploads/files', 'local')).toThrow(AppError);
+			expect(() => sanitizeStoragePath('uploads/files', 'local', undefined)).toThrow(AppError);
 		});
 
 		it('should not affect remote storage types regardless of targetOS', () => {
