@@ -62,6 +62,9 @@ export type Backup = {
    changes: { new: number; modified: number; removed: number };
    active?: boolean;
    errorMsg?: string;
+   hasRevisions?: boolean;
+   revisionsSkipped?: boolean;
+   hasChangesFile?: boolean;
    download?: {
       status: string;
       storageId?: string;

@@ -9,6 +9,7 @@ export type PlanPrune = {
 	snapCount: number;
 	policy: string; // forgetByAge, forgetByDate, custom
 	revisions?: boolean; //for sync backup types.
+	revisionSkipThreshold?: number; // Auto-skip revisions when sync changes exceed this count (default: 50000, 0 = disabled)
 	forgetAge?: string;
 	forgetDate?: string;
 	keepDailySnaps?: number;
@@ -124,6 +125,7 @@ export type PlanPerformanceSettings = {
 	multiThreadCutoff?: string; //sync [rclone] --multi-thread-cutoff. Use multi-thread downloads for files above this size (default 256Mi)
 	multiThreadWriteBufferSize?: string; //sync [rclone] --multi-thread-write-buffer-size.  In memory buffer size for writing when in multi-thread mode (default 128Ki)
 	syncStrategy?: string; // sync [rclone] checksum | size-only | default
+	maxChangeFiles?: number; // Max number of individual file changes stored per sync entry (default: 10000)
 };
 
 export type PlanScripts = {

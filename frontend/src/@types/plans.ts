@@ -10,6 +10,7 @@ export type PlanPrune = {
    keepWeeklySnaps?: number;
    keepMonthlySnaps?: number;
    revisions?: boolean; // for sync backups
+   revisionSkipThreshold?: number; // Auto-skip revisions when sync changes exceed this count (default: 50000, 0 = disabled)
 };
 
 export type PlanNotificationCase = 'start' | 'end' | 'success' | 'failure' | 'both';
@@ -100,6 +101,7 @@ export type PlanPerformanceSettings = {
    multiThreadCutoff?: string; //sync
    multiThreadWriteBufferSize?: string; //sync
    syncStrategy?: string;
+   maxChangeFiles?: number; // Max number of individual file changes stored per sync entry (default: 10000)
 };
 
 export type PlanIntegritySettings = {
