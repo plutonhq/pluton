@@ -82,6 +82,10 @@ export class BackupFailedNotification extends BaseNotification {
 		return JSON.stringify(payload);
 	}
 
+	protected loadHTMLTemplate(): string {
+		return loadBackupTemplate('BackupFailedNotification.ejs');
+	}
+
 	protected buildHTMLContent(data: BackupFailedNotificationPayload): string {
 		// Generate the Email Body
 		const startDate = new Date(data.startTime ? data.startTime : 0).toLocaleDateString('en-US', {
@@ -102,7 +106,7 @@ export class BackupFailedNotification extends BaseNotification {
 			? providers[data.storageType]?.name || data.storageType
 			: '';
 
-		const templateString = loadBackupTemplate('BackupFailedNotification.ejs');
+		const templateString = this.loadHTMLTemplate();
 		const renderedBody = ejs.render(templateString, {
 			...data,
 			appUrl: configService.config.APP_URL,

@@ -68,6 +68,10 @@ export class BackupStartedNotification extends BaseNotification {
 		return JSON.stringify(payload);
 	}
 
+	protected loadHTMLTemplate(): string {
+		return loadBackupTemplate('BackupStartedNotification.ejs');
+	}
+
 	protected buildHTMLContent(data: BackupStartedPayload): string {
 		// Generate the Email Body
 		const startDate = new Date(data.startTime ? data.startTime : 0).toLocaleDateString('en-US', {
@@ -82,7 +86,7 @@ export class BackupStartedNotification extends BaseNotification {
 			? providers[data.storageType]?.name || data.storageType
 			: '';
 
-		const templateString = loadBackupTemplate('BackupStartedNotification.ejs');
+		const templateString = this.loadHTMLTemplate();
 		const renderedBody = ejs.render(templateString, {
 			...data,
 			appUrl: configService.config.APP_URL,

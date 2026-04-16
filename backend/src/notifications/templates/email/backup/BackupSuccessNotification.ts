@@ -86,6 +86,10 @@ export class BackupSuccessNotification extends BaseNotification {
 		return JSON.stringify(payload);
 	}
 
+	protected loadHTMLTemplate(): string {
+		return loadBackupTemplate('BackupSuccessNotification.ejs');
+	}
+
 	protected buildHTMLContent(data: BackupSuccessNotificationPayload): string {
 		// Generate the Email Body
 		const startDate = new Date(data.startTime ? data.startTime : 0).toLocaleDateString('en-US', {
@@ -105,7 +109,7 @@ export class BackupSuccessNotification extends BaseNotification {
 		const storageTypeName = data.storageType
 			? providers[data.storageType]?.name || data.storageType
 			: '';
-		const templateString = loadBackupTemplate('BackupSuccessNotification.ejs');
+		const templateString = this.loadHTMLTemplate();
 		const renderedBody = ejs.render(templateString, {
 			...data,
 			appUrl: configService.config.APP_URL,

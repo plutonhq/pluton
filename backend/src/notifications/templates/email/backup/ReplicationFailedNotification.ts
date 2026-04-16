@@ -70,6 +70,10 @@ export class ReplicationFailedNotification extends BaseNotification {
 		return JSON.stringify(payload);
 	}
 
+	protected loadHTMLTemplate(): string {
+		return loadBackupTemplate('ReplicationFailedNotification.ejs');
+	}
+
 	protected buildHTMLContent(data: ReplicationFailedNotificationPayload): string {
 		const startDate = new Date(data.startTime ? data.startTime : 0).toLocaleDateString('en-US', {
 			year: 'numeric',
@@ -89,7 +93,7 @@ export class ReplicationFailedNotification extends BaseNotification {
 			? providers[data.storageType]?.name || data.storageType
 			: '';
 
-		const templateString = loadBackupTemplate('ReplicationFailedNotification.ejs');
+		const templateString = this.loadHTMLTemplate();
 		const renderedBody = ejs.render(templateString, {
 			...data,
 			appUrl: configService.config.APP_URL,
