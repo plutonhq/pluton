@@ -52,7 +52,7 @@ const PlanHistory = ({ planId, history, itemsCount = 10 }: PlanHistoryProps) => 
                   <div><b>Changes</b>: ${backupChanges(h.changes)}</div>
                   <div><b>Started</b>: ${formatDateTime(h.started)}</div>
                   <div><b>Ended</b>: ${h.ended ? formatDateTime(h.ended) : ' - '}</div>
-                  <div><b>Duration</b>: ${duration ? formatDuration(duration) : '0ms'} </div>
+                  <div><b>Duration</b>: ${h.status !== 'started' && duration ? formatDuration(duration) : '-'} </div>
                `}
                   data-tooltip-place="top"
                ></div>
