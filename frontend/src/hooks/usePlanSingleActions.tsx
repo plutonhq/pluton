@@ -51,7 +51,7 @@ export const usePlanSingleActions = (): {
    const sortedHistory = [...(plan.backups || [])].sort((a, b) => b.started - a.started);
    const activeBackups = sortedHistory.filter((s) => s.inProgress);
    const activeRestores = (plan.restores || []).filter((s) => s.status === 'started');
-   const lastBackupItem = sortedHistory[0];
+   const lastBackupItem = isSync ? sortedHistory.filter((s) => s.status === 'completed')[0] : sortedHistory[0];
    const actionInProgress = activeBackups.length > 0 || activeRestores.length > 0;
    const taskPending = pauseMutation.isPending || resumeMutation.isPending || performBackupMutation.isPending;
 
