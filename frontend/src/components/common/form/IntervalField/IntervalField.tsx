@@ -1,3 +1,4 @@
+import { NumberInput } from '../../..';
 import { PlanInterval } from '../../../../@types/plans';
 import Icon from '../../Icon/Icon';
 import FormField from '../FormField/FormField';
@@ -44,6 +45,7 @@ const IntervalField = ({
                      { label: 'Daily', value: 'daily' },
                      { label: 'Weekly', value: 'weekly' },
                      { label: 'Monthly', value: 'monthly' },
+                     { label: 'Every x Minutes', value: 'minutes' },
                      { label: 'Every x Hours', value: 'hours' },
                      { label: 'Every x Days', value: 'days' },
                   ]}
@@ -84,7 +86,7 @@ const IntervalField = ({
                      </div>
                   </>
                )}
-               {fieldValue.type !== 'hourly' && fieldValue.type !== 'hours' && (
+               {fieldValue.type !== 'hourly' && fieldValue.type !== 'hours' && fieldValue.type !== 'minutes' && (
                   <>
                      <span>at</span>
                      <TimePicker fieldValue={fieldValue.time || '10:00AM'} onUpdate={(val) => onUpdate({ ...fieldValue, time: val })} />
@@ -121,6 +123,24 @@ const IntervalField = ({
                         fieldValue={fieldValue.days || 'first'}
                         onUpdate={(val: string) => onUpdate({ ...fieldValue, days: val })}
                      />
+                  </>
+               )}
+               {fieldValue.type === 'minutes' && (
+                  <>
+                     <span>Every</span>
+                     <NumberInput
+                        min={5}
+                        inline={true}
+                        fieldValue={fieldValue.minutes || 5}
+                        onUpdate={(minutes) =>
+                           onUpdate({
+                              ...fieldValue,
+                              minutes: minutes,
+                           })
+                        }
+                        placeholder="1"
+                     />{' '}
+                     Minutes
                   </>
                )}
                {fieldValue.type === 'hours' && (
