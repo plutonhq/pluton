@@ -2,7 +2,6 @@ import { Cron } from 'croner';
 import { jobQueue } from './JobQueue';
 import { cronLogger } from '../utils/logger';
 import { SystemJobConfig } from '../types/global';
-import { SYSTEM_JOBS } from './systemJobs';
 
 /**
  * A singleton class that initializes and manages system-wide, recurring tasks.
@@ -59,5 +58,3 @@ export class SystemTaskManager {
 		this.cronJobs.forEach(cron => cron.stop());
 	}
 }
-
-export const systemTaskManager = SystemTaskManager.getInstance(SYSTEM_JOBS);

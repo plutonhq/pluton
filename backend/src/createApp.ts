@@ -46,7 +46,8 @@ import { BaseSystemManager } from './managers/BaseSystemManager';
 import { BaseStorageManager } from './managers/BaseStorageManager';
 import { StorageService } from './services/StorageService';
 import { SettingsService } from './services/SettingsService';
-import { systemTaskManager } from './jobs/SystemTaskManager';
+import { SystemTaskManager } from './jobs/SystemTaskManager';
+import { SYSTEM_JOBS } from './jobs/systemJobs';
 import { jobProcessor } from './jobs/JobProcessor';
 import { initializeLogger } from './utils/logger';
 import { configService } from './services/ConfigService';
@@ -238,6 +239,7 @@ export async function createApp(): Promise<{ app: Express }> {
 	});
 
 	// Start System task schedules
+	const systemTaskManager = SystemTaskManager.getInstance(SYSTEM_JOBS);
 	systemTaskManager.initialize();
 
 	// Start Backup Job Schedules
