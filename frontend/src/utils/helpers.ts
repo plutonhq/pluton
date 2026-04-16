@@ -1,5 +1,6 @@
 import { storageOptionField } from '../@types/storages';
 import { FileItem } from '../@types/system';
+import { PlanInterval } from '../@types/plans';
 
 export const isMobile = (): boolean => {
    // Server-side rendering check
@@ -469,6 +470,30 @@ export const getAvailableCliApps = (platform?: string) => {
             });
          });
          return allShells;
+   }
+};
+
+export const formatIntervalDisplay = (interval: PlanInterval): string => {
+   const time = interval.time ? ` at ${interval.time}` : '';
+   switch (interval.type) {
+      case 'hourly':
+         return 'every hour';
+      case 'hours':
+         return `every ${interval.hours?.replace('hrs', '')} hours`;
+      case 'minutes':
+         return `every ${interval.minutes} minutes`;
+      case 'daily':
+         return `daily${time}`;
+      case 'weekly':
+         return `weekly on ${interval.days}${time}`;
+      case 'days': {
+         const dayList = interval.days?.replace(/-$/, '').replace(/-/g, ', ');
+         return `every ${dayList}${time}`;
+      }
+      case 'monthly':
+         return `monthly (${interval.days})${time}`;
+      default:
+         return interval.type;
    }
 };
 

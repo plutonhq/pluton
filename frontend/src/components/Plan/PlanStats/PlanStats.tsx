@@ -1,6 +1,6 @@
 import Icon from '../../common/Icon/Icon';
 import { Plan } from '../../../@types/plans';
-import { formatBytes, formatNumberToK } from '../../../utils/helpers';
+import { formatBytes, formatNumberToK, formatIntervalDisplay } from '../../../utils/helpers';
 import PlanHistory from '../PlanHistory/PlanHistory';
 import classes from './PlanStats.module.scss';
 import PlanStorageInfo from '../PlanStorageInfo/PlanStorageInfo';
@@ -45,13 +45,7 @@ const PlanStats = ({ plan, isSync, lastBackupItem }: PlanStatsProps) => {
                <div
                   data-tooltip-id="htmlToolTip"
                   data-tooltip-place="top"
-                  data-tooltip-html={
-                     isActive
-                        ? isSync
-                           ? `Syncing changes every ${interval.minutes} minutes`
-                           : `Copying changes ${['hours', 'minutes', 'days'].includes(interval.type) ? interval[interval.type as 'hours' | 'minutes' | 'days'] + interval.type : interval.type}`
-                        : 'Plan is Not Active'
-                  }
+                  data-tooltip-html={isActive ? `${isSync ? 'Syncing' : 'Copying'} changes ${formatIntervalDisplay(interval)}` : 'Plan is Not Active'}
                >
                   <Icon type={isActive ? (isSync ? 'reload' : 'copy') : 'pause'} size={16} />
                   <div className={classes.sourceArrow}>→</div>

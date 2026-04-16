@@ -13,11 +13,11 @@ export function planIntervalName(interval: PlanInterval): string {
       case 'monthly':
          return 'Every Month';
       case 'days':
-         return `Every ${interval.days} days`;
+         return `Every ${interval.days}`;
       case 'hours':
-         return `Every ${interval.hours} hrs`;
+         return `Every ${interval.hours}`;
       case 'minutes':
-         return `Every ${interval.minutes} mins`;
+         return `Every ${interval.minutes}`;
       default:
          return '';
    }
