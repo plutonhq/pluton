@@ -2,6 +2,7 @@ export interface Restore {
    id: number;
    status: string;
    error: string | null;
+   inProgress: boolean;
    taskStats: {
       total_files: number;
       files_restored: number;
@@ -39,6 +40,7 @@ export interface RestoreSlim {
    id: string;
    status: 'completed' | 'cancelled' | 'failed' | 'started';
    error: string | null;
+   inProgress: boolean;
    taskStats: RestoredItemsStats | null;
    config: {
       target: string;

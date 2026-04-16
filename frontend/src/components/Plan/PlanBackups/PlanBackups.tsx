@@ -16,6 +16,9 @@ const PlanBackups = ({ plan }: PlanBackupsProps) => {
 
    const { backups = [], stats, restores = [], method, sourceId, sourceType, settings, storage } = plan;
 
+   const finishedBackups = backups.filter((b) => b.inProgress === false);
+   const finishedRestores = restores.filter((r) => r.inProgress === false);
+
    const sortedHistory = [...(backups || [])].sort((a, b) => new Date(b.started).getTime() - new Date(a.started).getTime());
    const isSync = method === 'sync';
    const snapshotsCount = stats.snapshots?.length || 0;
@@ -25,10 +28,10 @@ const PlanBackups = ({ plan }: PlanBackupsProps) => {
          <div className={classes.backupsHeader}>
             <div className={classes.historyTabs}>
                <button onClick={() => setHistoryTab('backups')} className={historyTab === 'backups' ? classes.historyTabActive : ''}>
-                  {isSync ? 'Sync Tasks' : 'Backups'} <i>{sortedHistory.length}</i>
+                  {isSync ? 'Sync Tasks' : 'Backups'} <i>{finishedBackups.length}</i>
                </button>
                <button onClick={() => setHistoryTab('restores')} className={historyTab === 'restores' ? classes.historyTabActive : ''}>
-                  Restores <i>{restores.length}</i>
+                  Restores <i>{finishedRestores.length}</i>
                </button>
             </div>
             {!isSync && historyTab === 'backups' && (
