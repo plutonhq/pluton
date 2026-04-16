@@ -122,6 +122,12 @@ export class CronManager<T extends ScheduleOptions> {
 			const scheduleData: StoredSchedule<T>[] = JSON.parse(data);
 
 			for (const { id, cronExpression, options, scheduleType } of scheduleData) {
+				const hasCallback = !!this.taskCallbacks[scheduleType];
+				console.log(
+					`[CronManager] Loaded schedule — id: '${id}', type: '${scheduleType}', ` +
+						`cron: '${cronExpression}', isActive: ${options.isActive}, hasCallback: ${hasCallback}`
+				);
+
 				const taskOptions = {
 					...options,
 					taskCallback: this.taskCallbacks[scheduleType],
