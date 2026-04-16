@@ -124,6 +124,8 @@ Type: files; Name: "{app}\pluton-open.url"
 
 [Code]
 var
+  DashboardLinkLabel: TNewStaticText;
+  FinishNoteLabel: TNewStaticText;
   SettingsPage: TInputQueryWizardPage;
   IsUpgrade: Boolean;
   
@@ -199,6 +201,22 @@ begin
   end;
 end;
 
+function GetDashboardUrl(): String;
+begin
+  if ServerPort = '' then
+    ServerPort := '5173';
+
+  Result := 'http://localhost:' + ServerPort;
+end;
+
+procedure DashboardLinkLabelOnClick(Sender: TObject);
+var
+  ErrorCode: Integer;
+begin
+  if not ShellExec('open', GetDashboardUrl(), '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode) then
+    MsgBox('Failed to open the dashboard URL.', mbError, MB_OK);
+end;
+
 // Stop the service if it's running
 function StopService(ServiceName: String): Boolean;
 var
@@ -267,6 +285,22 @@ procedure InitializeWizard;
 begin
   // Customize Wizard Colors
   WizardForm.MainPanel.Color := $fff5f5;
+
+  DashboardLinkLabel := TNewStaticText.Create(WizardForm);
+  DashboardLinkLabel.Parent := WizardForm.FinishedLabel.Parent;
+  DashboardLinkLabel.Left := WizardForm.FinishedLabel.Left;
+  DashboardLinkLabel.Top := WizardForm.FinishedLabel.Top;
+  DashboardLinkLabel.Cursor := crHand;
+  DashboardLinkLabel.Font.Color := clBlue;
+  DashboardLinkLabel.Font.Style := DashboardLinkLabel.Font.Style + [fsUnderline];
+  DashboardLinkLabel.Visible := False;
+  DashboardLinkLabel.OnClick := @DashboardLinkLabelOnClick;
+
+  FinishNoteLabel := TNewStaticText.Create(WizardForm);
+  FinishNoteLabel.Parent := WizardForm.FinishedLabel.Parent;
+  FinishNoteLabel.Left := WizardForm.FinishedLabel.Left;
+  FinishNoteLabel.Top := WizardForm.FinishedLabel.Top;
+  FinishNoteLabel.Visible := False;
   
   // --- General Settings Page ---
   // NOTE: Security credentials (Encryption Key, Username, Password) are now configured
@@ -307,15 +341,18 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   ConfigPath: String;
   ConfigContent: String;
+  DashboardUrl: String;
   UrlFilePath: String;
   UrlFileContent: String;
 begin
   if CurStep = ssPostInstall then
   begin
+    DashboardUrl := GetDashboardUrl();
+
     // Create URL shortcut file with dynamic port
     UrlFilePath := ExpandConstant('{app}\pluton-open.url');
     UrlFileContent := '[InternetShortcut]' + #13#10 +
-      'URL=http://localhost:' + ServerPort + #13#10 +
+      'URL=' + DashboardUrl + #13#10 +
       'IconIndex=0' + #13#10 +
       'IconFile=' + ExpandConstant('{app}\pluton.ico');
     SaveStringToFile(UrlFilePath, UrlFileContent, False);
@@ -346,10 +383,13 @@ end;
 // Custom Completion Page
 procedure CurPageChanged(CurPageID: Integer);
 var
+  DashboardUrl: String;
   UpgradeNote: String;
 begin
   if CurPageID = wpFinished then
   begin
+    DashboardUrl := GetDashboardUrl();
+
     if IsUpgrade then
       UpgradeNote := 'Pluton has been upgraded successfully.' + #13#10 + #13#10
     else
@@ -357,11 +397,23 @@ begin
       
     WizardForm.FinishedLabel.Caption := UpgradeNote +
       'The service has been started successfully.' + #13#10 + #13#10 +
-      'Access the dashboard at:' + #13#10 +
-      'http://localhost:' + ServerPort + #13#10 + #13#10 +
-      'Please click Finish to exit Setup.';
+      'Access the dashboard at:';
+    WizardForm.AdjustLabelHeight(WizardForm.FinishedLabel);
+    DashboardLinkLabel.Caption := DashboardUrl;
+    DashboardLinkLabel.Left := WizardForm.FinishedLabel.Left;
+    DashboardLinkLabel.Top := WizardForm.FinishedLabel.Top + WizardForm.FinishedLabel.Height + ScaleY(4);
+    DashboardLinkLabel.Visible := True;
+    FinishNoteLabel.Caption := 'Please click Finish to exit Setup.';
+    FinishNoteLabel.Left := WizardForm.FinishedLabel.Left;
+    FinishNoteLabel.Top := DashboardLinkLabel.Top + DashboardLinkLabel.Height + ScaleY(8);
+    FinishNoteLabel.Visible := True;
       
     // Optional: Open browser
-    // ShellExec('open', 'http://localhost:' + ServerPort, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
+    // ShellExec('open', DashboardUrl, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
+  end
+  else
+  begin
+    DashboardLinkLabel.Visible := False;
+    FinishNoteLabel.Visible := False;
   end;
 end;
