@@ -70,7 +70,6 @@ class JobProcessor extends EventEmitter {
 		}
 
 		for (const task of tasksToRegister) {
-			console.log('🎀 task :', task.name);
 			this.tasks.set(task.name, task);
 		}
 	}
