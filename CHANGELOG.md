@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.13.0](https://github.com/plutonhq/pluton/compare/pluton-v0.12.0...pluton-v0.13.0) (2026-04-17)
+
+
+### Features
+
+* adds the ability to run backups every x minutes ([fe69eed](https://github.com/plutonhq/pluton/commit/fe69eed5bb4e1014138c875b20a3335c367afed8))
+
+
+### Bug Fixes
+
+* minor ui issues ([8b6645b](https://github.com/plutonhq/pluton/commit/8b6645bd5d40ae927e824b09f01186f0c731088e))
+* resolves broken global tasks ([2519fff](https://github.com/plutonhq/pluton/commit/2519fffe3b1cbd67ad512754f10e79c20a5b73f2))
+* resolves broken password-reset functionality ([22a57f1](https://github.com/plutonhq/pluton/commit/22a57f1f14c6c6d9ee98808f7d71826657c41c49))
+* resolves buggy interval labels in various places ([a9cd1af](https://github.com/plutonhq/pluton/commit/a9cd1af263402477bde881f877fd32c21cf02d5a))
+* resolves duplicate prune option ([8bbeaf7](https://github.com/plutonhq/pluton/commit/8bbeaf7442fb4ae90da54cf15e5aadb4efb610de))
+* resolves inability to edit the sync source while creating sync plans ([4ab31e0](https://github.com/plutonhq/pluton/commit/4ab31e081ba32e09fa33d7be88845a9d85efbae5))
+* resolves incorrect backup count display issue ([ff81a5a](https://github.com/plutonhq/pluton/commit/ff81a5aa658acf45a98b1a33157c89706c224cf2))
+* resolves incorrect duration value in plan stats for pending backups ([f8b0f69](https://github.com/plutonhq/pluton/commit/f8b0f6903ab66cc8c84257a580a590cf42882393)), closes [#61](https://github.com/plutonhq/pluton/issues/61)
+* resolves incorrect sync source stats on failed syncs. ([d7b2155](https://github.com/plutonhq/pluton/commit/d7b2155c5d46ca1752b909e1508778085d192263))
+* resolves missing app url on windows installer setup ([a38cd18](https://github.com/plutonhq/pluton/commit/a38cd182f869891778e0aef661565f5918932c0d))
+* resolves not respecting the remove data policy on plan removal ([3f49c42](https://github.com/plutonhq/pluton/commit/3f49c42713b303d3a2717450e23912cecd09cc11))
+* resolves various mobile ui issues ([54b01ed](https://github.com/plutonhq/pluton/commit/54b01edd55af842764204bb0b14a414bc998f1dc))
+
+
+### Miscellaneous Chores
+
+* release 0.13.0 ([d8b2379](https://github.com/plutonhq/pluton/commit/d8b237923f1410816b539aeabab4432935ca66da))
+
 ## [0.12.0](https://github.com/plutonhq/pluton/compare/pluton-v0.11.0...pluton-v0.12.0) (2026-04-11)
 
 
