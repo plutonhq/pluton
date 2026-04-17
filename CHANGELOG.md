@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.12.0](https://github.com/plutonhq/pluton/compare/pluton-v0.11.0...pluton-v0.12.0) (2026-04-11)
+
+
+### Features
+
+* enhance pruning mechanism. Thanks [@akleber](https://github.com/akleber) ([663d101](https://github.com/plutonhq/pluton/commit/663d10172c0977f8ed44a45f6410b868dc9e0cb5)), closes [#53](https://github.com/plutonhq/pluton/issues/53)
+
+
+### Bug Fixes
+
+* resolves missing log for failed repo unlocks ([ecef6aa](https://github.com/plutonhq/pluton/commit/ecef6aa881dd227c351c7b26ce0693eecd12fc72))
+* resolves stuck backup issues caused by failed dry run ([189356b](https://github.com/plutonhq/pluton/commit/189356b512e93fa53bd21394672cfa2dcda58894))
+
 ## [0.11.0](https://github.com/plutonhq/pluton/compare/pluton-v0.10.0...pluton-v0.11.0) (2026-04-09)
 
 
