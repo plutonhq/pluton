@@ -253,7 +253,7 @@ const PlanForm = ({
                <div className={PFClasses.planStep}>
                   <div className={classes.field} style={{ width: '150px' }}>
                      <IntervalField
-                        label="Backup Interval*"
+                        label="Backup Interval"
                         fieldValue={planSettings.settings.interval}
                         onUpdate={(intervalSettings) =>
                            onPlanSettingsChange({ ...planSettings, settings: { ...planSettings.settings, interval: intervalSettings } })

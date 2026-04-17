@@ -1,5 +1,6 @@
 .planStats {
    display: flex;
+   justify-content: space-between;
    gap: 20px;
    .widgetTitle {
       padding: 2px 6px;
@@ -42,6 +43,7 @@
             gap: 5px;
             font-size: 0.75rem;
             font-weight: 500;
+            min-width: 80px;
             img {
                width: auto;
                max-height: 18px;
@@ -55,6 +57,7 @@
                border: 1px solid var(--line-color);
                border-radius: 50%;
                width: 30px;
+               min-width: 30px;
                height: 30px;
                box-sizing: border-box;
                padding-top: 4px;
