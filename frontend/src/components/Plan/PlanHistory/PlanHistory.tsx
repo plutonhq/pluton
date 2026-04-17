@@ -40,24 +40,27 @@ const PlanHistory = ({ planId, history, itemsCount = 10 }: PlanHistoryProps) => 
                ></div>
             ))}
 
-         {history.slice(0, itemsCount).map((h, i) => {
-            const duration = h.duration || (h.ended ? (new Date(h.ended).getTime() - new Date(h.started).getTime()) / 1000 : 0);
-            return (
-               <div
-                  className={`${h.status === 'completed' ? classes.historyItemSuccess : ''} ${h.status === 'failed' || h.status === 'cancelled' ? classes.historyItemFailed : ''} ${h.inProgress ? classes.historyItemPending : ''}`}
-                  key={`${planId}-history-${i}`}
-                  data-tooltip-id="htmlToolTip"
-                  data-tooltip-html={`
+         {history
+            .slice(0, itemsCount)
+            .sort((a, b) => (b.inProgress ? 1 : 0) - (a.inProgress ? 1 : 0))
+            .map((h, i) => {
+               const duration = !h.inProgress && (h.duration || (h.ended ? (new Date(h.ended).getTime() - new Date(h.started).getTime()) / 1000 : 0));
+               return (
+                  <div
+                     className={`${h.status === 'completed' ? classes.historyItemSuccess : ''} ${h.status === 'failed' || h.status === 'cancelled' ? classes.historyItemFailed : ''} ${h.inProgress ? classes.historyItemPending : ''}`}
+                     key={`${planId}-history-${i}`}
+                     data-tooltip-id="htmlToolTip"
+                     data-tooltip-html={`
                   <div><b>Status</b>: ${statusVals[h.status as keyof typeof statusVals] || 'Unknown'}</div>
                   <div><b>Changes</b>: ${backupChanges(h.changes)}</div>
                   <div><b>Started</b>: ${formatDateTime(h.started)}</div>
                   <div><b>Ended</b>: ${h.ended ? formatDateTime(h.ended) : ' - '}</div>
-                  <div><b>Duration</b>: ${h.status !== 'started' && duration ? formatDuration(duration) : '-'} </div>
+                  <div><b>Duration</b>: ${h.status && h.status !== 'started' && duration ? formatDuration(duration) : '-'} </div>
                `}
-                  data-tooltip-place="top"
-               ></div>
-            );
-         })}
+                     data-tooltip-place="top"
+                  ></div>
+               );
+            })}
       </div>
    );
 };
