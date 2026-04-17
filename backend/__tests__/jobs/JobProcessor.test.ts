@@ -105,27 +105,23 @@ describe('JobProcessor', () => {
 			const mockBackupManager = {} as any;
 			const mockRestoreManager = {} as any;
 
-			const logSpy = jest.spyOn(console, 'log').mockImplementation();
-
 			jobProcessor.registerTasks({
 				backupManager: mockBackupManager,
 				restoreManager: mockRestoreManager,
 			});
 
-			// Should log registered tasks (CleanDownloads, Backup, Restore)
-			expect(logSpy).toHaveBeenCalled();
-
-			logSpy.mockRestore();
+			expect(Array.from((jobProcessor as any).tasks.keys())).toEqual([
+				'CleanDownloads',
+				'Backup',
+				'ReplicationRetry',
+				'Restore',
+			]);
 		});
 
 		it('registers only CleanDownloadsTask without dependencies', () => {
-			const logSpy = jest.spyOn(console, 'log').mockImplementation();
-
 			jobProcessor.registerTasks({});
 
-			expect(logSpy).toHaveBeenCalledWith('🎀 task :', 'CleanDownloads');
-
-			logSpy.mockRestore();
+			expect(Array.from((jobProcessor as any).tasks.keys())).toEqual(['CleanDownloads']);
 		});
 	});
 
