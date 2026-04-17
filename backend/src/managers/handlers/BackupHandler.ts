@@ -487,7 +487,6 @@ export class BackupHandler {
 		resticArgsAndEnv: ResticArgsAndEnv
 	): Promise<void> {
 		if (options.storage && options.storagePath) {
-			console.log(`[BackupHandler]: Unlocking stale locks for plan: ${planId}`);
 			try {
 				const repoPath = generateResticRepoPath(options.storage.name, options.storagePath || '');
 				const repoPassword = options.settings.encryption ? configService.config.ENCRYPTION_KEY : '';
