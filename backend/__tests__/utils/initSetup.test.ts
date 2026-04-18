@@ -462,7 +462,7 @@ describe('runInitialSetup', () => {
 					totp: { enabled: false, secret: '', recoveryCodes: [] },
 					reporting: {
 						emails: [],
-						time: '20:00',
+						time: '23:00',
 						daily: { enabled: false },
 						weekly: { enabled: false },
 						monthly: { enabled: false },
