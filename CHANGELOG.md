@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.13.1](https://github.com/plutonhq/pluton/compare/pluton-v0.13.0...pluton-v0.13.1) (2026-04-18)
+
+
+### Bug Fixes
+
+* resolves plans in db and cron schedule drifting issue ([88ff487](https://github.com/plutonhq/pluton/commit/88ff487d4503a8e8e19e8d3eeea60872496461d7)), closes [#69](https://github.com/plutonhq/pluton/issues/69)
+* resolves wrong duration & position of active backup in health bar ([0723a76](https://github.com/plutonhq/pluton/commit/0723a7692140c3b77a919f45106e4d939aec039a)), closes [#61](https://github.com/plutonhq/pluton/issues/61)
+
 ## [0.13.0](https://github.com/plutonhq/pluton/compare/pluton-v0.12.0...pluton-v0.13.0) (2026-04-17)
 
 
