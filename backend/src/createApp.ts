@@ -238,6 +238,13 @@ export async function createApp(): Promise<{ app: Express }> {
 		res.sendFile(path.join(publicPath, 'index.html'));
 	});
 
+	// Reconcile CronManager schedules with the database (fixes drift on restart)
+	try {
+		await planService.reconcileSchedules();
+	} catch (error: any) {
+		console.error('[Startup] Schedule reconciliation failed:', error?.message);
+	}
+
 	// Start System task schedules
 	const systemTaskManager = SystemTaskManager.getInstance(SYSTEM_JOBS);
 	systemTaskManager.initialize();

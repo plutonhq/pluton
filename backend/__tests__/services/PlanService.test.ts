@@ -1,6 +1,3 @@
-import fs from 'fs';
-import * as fsPromises from 'fs/promises';
-import { Readable } from 'stream';
 import { PlanService } from '../../src/services/PlanService';
 import { PlanStore } from '../../src/stores/PlanStore';
 import { StorageStore } from '../../src/stores/StorageStore';
@@ -8,7 +5,6 @@ import { DeviceStore } from '../../src/stores/DeviceStore';
 import { RestoreStore } from '../../src/stores/RestoreStore';
 import { BaseBackupManager } from '../../src/managers/BaseBackupManager';
 import { NewPlanReq, PlanBackupSettings } from '../../src/types/plans';
-import { NotFoundError } from '../../src/utils/AppError';
 import { initializeLogger } from '../../src/utils/logger';
 
 // Mock the dependencies using Jest's mocking factory
@@ -78,7 +74,7 @@ describe('PlanService', () => {
 			// This prevents the background task from running and crashing other tests.
 			performBackupSpy = jest
 				.spyOn(planService, 'performBackup')
-				.mockImplementation(() => Promise.resolve());
+				.mockImplementation(() => Promise.resolve(''));
 		});
 
 		afterEach(() => {
@@ -911,6 +907,197 @@ describe('PlanService', () => {
 				success: false,
 				result: { primary: 'No Backup schedule found' },
 			});
+		});
+	});
+
+	// -------------------------------------------------
+	// Tests for reconciling schedules with the database
+	// -------------------------------------------------
+
+	describe('reconcileSchedules', () => {
+		let mockCronManager: {
+			getSchedules: jest.Mock;
+			removeSchedule: jest.Mock;
+		};
+
+		beforeEach(() => {
+			mockCronManager = {
+				getSchedules: jest.fn(),
+				removeSchedule: jest.fn(),
+			};
+			// Attach the mock cronManager to the localAgent
+			(mockLocalAgent as any).cronManager = mockCronManager;
+		});
+
+		const makePlan = (id: string, overrides: Record<string, any> = {}) =>
+			({
+				id,
+				title: `Plan ${id}`,
+				sourceId: 'main',
+				storageId: 'storage-123',
+				storagePath: '/backups/test',
+				isActive: true,
+				settings: {
+					interval: { type: 'daily', time: '10:00AM' },
+				},
+				...overrides,
+			}) as any;
+
+		it('should remove orphaned schedules not present in the database', async () => {
+			// Arrange: CronManager has a schedule for plan-orphan, but DB has no plans
+			const schedulesMap = new Map();
+			schedulesMap.set('plan-orphan', [{ type: 'backup', options: {} }]);
+			mockCronManager.getSchedules.mockResolvedValue(schedulesMap);
+			mockCronManager.removeSchedule.mockResolvedValue(undefined);
+			mockPlanStore.getDevicePlans.mockResolvedValue([]);
+
+			// Act
+			await planService.reconcileSchedules();
+
+			// Assert
+			expect(mockCronManager.removeSchedule).toHaveBeenCalledWith('plan-orphan');
+			expect(mockCronManager.removeSchedule).toHaveBeenCalledTimes(1);
+		});
+
+		it('should recreate missing schedules for plans in the database', async () => {
+			// Arrange: DB has a plan but CronManager has no schedules
+			const plan = makePlan('plan-missing');
+			const schedulesMap = new Map();
+			mockCronManager.getSchedules.mockResolvedValue(schedulesMap);
+			mockPlanStore.getDevicePlans.mockResolvedValue([plan]);
+			mockStorageStore.getById.mockResolvedValue({
+				id: 'storage-123',
+				name: 'Test Storage',
+				type: 'local',
+				authType: 'none',
+				settings: {},
+				credentials: {},
+				defaultPath: '/',
+			} as any);
+			mockLocalAgent.createOrUpdateSchedules = jest.fn().mockResolvedValue(undefined);
+
+			// Act
+			await planService.reconcileSchedules();
+
+			// Assert
+			expect(mockLocalAgent.createOrUpdateSchedules).toHaveBeenCalledWith(
+				'plan-missing',
+				expect.objectContaining({
+					id: 'plan-missing',
+					cronExpression: expect.any(String),
+					storage: expect.objectContaining({ name: 'Test Storage' }),
+				}),
+				'create'
+			);
+		});
+
+		it('should make no changes when schedules and database are in sync', async () => {
+			// Arrange: DB and CronManager both have the same plan
+			const plan = makePlan('plan-synced');
+			const schedulesMap = new Map();
+			schedulesMap.set('plan-synced', [{ type: 'backup', options: {} }]);
+			mockCronManager.getSchedules.mockResolvedValue(schedulesMap);
+			mockPlanStore.getDevicePlans.mockResolvedValue([plan]);
+
+			// Act
+			await planService.reconcileSchedules();
+
+			// Assert: No removals or creations
+			expect(mockCronManager.removeSchedule).not.toHaveBeenCalled();
+			expect(mockLocalAgent.createOrUpdateSchedules).not.toHaveBeenCalled();
+		});
+
+		it('should skip plans without interval settings', async () => {
+			// Arrange: DB has a plan with no interval
+			const planNoInterval = makePlan('plan-no-interval', { settings: {} });
+			const schedulesMap = new Map();
+			mockCronManager.getSchedules.mockResolvedValue(schedulesMap);
+			mockPlanStore.getDevicePlans.mockResolvedValue([planNoInterval]);
+
+			// Act
+			await planService.reconcileSchedules();
+
+			// Assert: No schedule creation attempted
+			expect(mockLocalAgent.createOrUpdateSchedules).not.toHaveBeenCalled();
+		});
+
+		it('should skip plans whose storage cannot be resolved', async () => {
+			// Arrange: DB has a plan, but storage lookup fails
+			const plan = makePlan('plan-bad-storage');
+			const schedulesMap = new Map();
+			mockCronManager.getSchedules.mockResolvedValue(schedulesMap);
+			mockPlanStore.getDevicePlans.mockResolvedValue([plan]);
+			mockStorageStore.getById.mockResolvedValue(null); // Storage not found
+
+			// Act — should not throw
+			await planService.reconcileSchedules();
+
+			// Assert: No schedule creation attempted (getStorageDetails throws, caught inside)
+			expect(mockLocalAgent.createOrUpdateSchedules).not.toHaveBeenCalled();
+		});
+
+		it('should handle both orphans and missing schedules in one pass', async () => {
+			// Arrange: CronManager has orphan, DB has a plan missing from schedules
+			const plan = makePlan('plan-exists');
+			const schedulesMap = new Map();
+			schedulesMap.set('plan-deleted', [{ type: 'backup', options: {} }]);
+			mockCronManager.getSchedules.mockResolvedValue(schedulesMap);
+			mockCronManager.removeSchedule.mockResolvedValue(undefined);
+			mockPlanStore.getDevicePlans.mockResolvedValue([plan]);
+			mockStorageStore.getById.mockResolvedValue({
+				id: 'storage-123',
+				name: 'Test Storage',
+				type: 'local',
+				authType: 'none',
+				settings: {},
+				credentials: {},
+				defaultPath: '/',
+			} as any);
+			mockLocalAgent.createOrUpdateSchedules = jest.fn().mockResolvedValue(undefined);
+
+			// Act
+			await planService.reconcileSchedules();
+
+			// Assert: Both operations happened
+			expect(mockCronManager.removeSchedule).toHaveBeenCalledWith('plan-deleted');
+			expect(mockLocalAgent.createOrUpdateSchedules).toHaveBeenCalledWith(
+				'plan-exists',
+				expect.objectContaining({ id: 'plan-exists' }),
+				'create'
+			);
+		});
+
+		it('should continue reconciling other plans if one plan fails', async () => {
+			// Arrange: Two plans in DB, first one's storage lookup throws, second succeeds
+			const plan1 = makePlan('plan-fail', { storageId: 'storage-bad' });
+			const plan2 = makePlan('plan-ok', { storageId: 'storage-good' });
+			const schedulesMap = new Map();
+			mockCronManager.getSchedules.mockResolvedValue(schedulesMap);
+			mockPlanStore.getDevicePlans.mockResolvedValue([plan1, plan2]);
+			mockStorageStore.getById.mockImplementation(async (id: string) => {
+				if (id === 'storage-bad') return null; // Will cause getStorageDetails to throw
+				return {
+					id: 'storage-good',
+					name: 'Good Storage',
+					type: 'local',
+					authType: 'none',
+					settings: {},
+					credentials: {},
+					defaultPath: '/',
+				} as any;
+			});
+			mockLocalAgent.createOrUpdateSchedules = jest.fn().mockResolvedValue(undefined);
+
+			// Act — should not throw
+			await planService.reconcileSchedules();
+
+			// Assert: Only plan2's schedule was created (plan1 was skipped due to error)
+			expect(mockLocalAgent.createOrUpdateSchedules).toHaveBeenCalledTimes(1);
+			expect(mockLocalAgent.createOrUpdateSchedules).toHaveBeenCalledWith(
+				'plan-ok',
+				expect.objectContaining({ id: 'plan-ok' }),
+				'create'
+			);
 		});
 	});
 });

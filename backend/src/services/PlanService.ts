@@ -25,6 +25,7 @@ import { AppError, NotFoundError } from '../utils/AppError';
 import { SourceTypes } from '../types/source';
 import { sanitizeStoragePath } from '../utils/sanitizeStoragePath';
 import { BackupNotification } from '../notifications/BackupNotification';
+import { ScheduleReconciler } from './ScheduleReconciler';
 
 /**
  * PlanService is the central orchestrator for all business logic related to backup plans.
@@ -32,6 +33,8 @@ import { BackupNotification } from '../notifications/BackupNotification';
  * and delegates remote execution to strategies.
  */
 export class PlanService {
+	protected scheduleReconciler: ScheduleReconciler;
+
 	constructor(
 		protected localAgent: BaseBackupManager,
 		protected planStore: PlanStore,
@@ -39,7 +42,13 @@ export class PlanService {
 		protected storageStore: StorageStore,
 		protected deviceStore: DeviceStore,
 		protected restoreStore: RestoreStore
-	) {}
+	) {
+		this.scheduleReconciler = new ScheduleReconciler(
+			this.localAgent,
+			this.planStore,
+			this.storageStore
+		);
+	}
 
 	getStrategy(plan: NewPlan | Plan): BackupStrategy | any {
 		const isRemote = plan.sourceId !== 'main';
@@ -656,6 +665,10 @@ export class PlanService {
 			credentials: storage.credentials as Record<string, string>,
 			defaultPath: storage.defaultPath as string,
 		};
+	}
+
+	public async reconcileSchedules(): Promise<void> {
+		await this.scheduleReconciler.reconcileSchedules();
 	}
 
 	/**
