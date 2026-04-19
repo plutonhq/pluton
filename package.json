@@ -8,6 +8,7 @@
     "setup:hooks": "node ./scripts/setup-git-hooks.js",
     "build": "turbo run build",
     "build:executables": "node ./scripts/build-executables.js",
+    "build:executables:local": "node ./scripts/build-executables.js --platform windows",
     "build:appimage:local": "wsl -e bash -c \"cd /mnt/f/JS/apps/pluton/codebase/pluton-app/pluton/installers/linux && ./build-appimage.sh all pluton\"",
     "build:exe:local": "node ./installers/windows/build-installer.js",
     "dev:backend": "pnpm --filter @plutonhq/core-backend dev",
