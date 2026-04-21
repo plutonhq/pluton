@@ -1,39 +1,40 @@
 #!/bin/bash
 # Pluton macOS Service Wrapper
-# Ensures the system keychain is available before starting the Pluton daemon.
+# Loads credentials from env files before starting the Pluton daemon.
 #
-# When running as a LaunchDaemon (system-level), macOS does not provide a default
-# keychain for the root user. This wrapper creates and unlocks a dedicated keychain
-# so that @napi-rs/keyring can store and retrieve credentials.
+# macOS plists do not support EnvironmentFile like systemd. This wrapper reads
+# /etc/pluton/pluton.env and /etc/pluton/pluton.enc.env so that installer-provided
+# admin credentials and the encryption key are available to the daemon.
 
 set -e
 
 # Ensure HOME points to root's actual home directory.
-# When invoked via sudo, HOME may still reference the calling user's home,
-# causing `security default-keychain` to fail with a permissions error.
 export HOME=/var/root
 
-KEYCHAIN_DIR="/var/root/Library/Keychains"
-KEYCHAIN_PATH="${KEYCHAIN_DIR}/pluton.keychain-db"
-KEYCHAIN_PASSWORD="pluton-service-keychain"
+# ── Load environment from credentials files ──────────────────────────────────
 
-# Create keychain directory if needed
-mkdir -p "${KEYCHAIN_DIR}"
+ENV_FILE="/etc/pluton/pluton.env"
+ENC_ENV_FILE="/etc/pluton/pluton.enc.env"
 
-# Create the Pluton keychain if it doesn't exist
-if [ ! -f "${KEYCHAIN_PATH}" ]; then
-    security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+if [ -f "${ENV_FILE}" ]; then
+    while IFS='=' read -r key value; do
+        case "$key" in '#'*|'') continue;; esac
+        key=$(echo "$key" | xargs)
+        case "$key" in
+            PLUTON_USER_NAME) export PLUTON_USER_NAME="$value" ;;
+            PLUTON_USER_PASSWORD) export PLUTON_USER_PASSWORD="$value" ;;
+        esac
+    done < "${ENV_FILE}"
 fi
 
-# Unlock the keychain (required after every reboot)
-security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+if [ -f "${ENC_ENV_FILE}" ]; then
+    while IFS='=' read -r key value; do
+        case "$key" in '#'*|'') continue;; esac
+        key=$(echo "$key" | xargs)
+        [ "$key" = "PLUTON_ENCRYPTION_KEY" ] && export PLUTON_ENCRYPTION_KEY="$value"
+    done < "${ENC_ENV_FILE}"
+fi
 
-# Disable auto-lock (timeout=0 means no auto-lock)
-security set-keychain-settings "${KEYCHAIN_PATH}"
+# ── Execute the Pluton binary (replaces this process) ────────────────────────
 
-# Set as the default keychain and add to the search list
-security list-keychains -d system -s "${KEYCHAIN_PATH}"
-security default-keychain -s "${KEYCHAIN_PATH}"
-
-# Execute the Pluton binary (replaces this process)
 exec /opt/pluton/pluton

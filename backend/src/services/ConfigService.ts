@@ -1,12 +1,10 @@
 import { z } from 'zod';
 import fs from 'fs';
-import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
 import { appPaths } from '../utils/AppPaths';
 import path from 'path';
-import { requiresKeyringSetup } from '../utils/installHelpers';
-
-const BCRYPT_SALT_ROUNDS = 10;
+import { requiresDesktopSetup } from '../utils/installHelpers';
+import { readEncryptionKeyFromEnvFile, verifyFilePermissions } from '../utils/envFileHelpers';
+import { credentialManager } from './CredentialManager';
 
 // Schema for the .env config file (with optional sensitive fields for setup mode)
 const baseConfigSchema = z.object({
@@ -86,7 +84,6 @@ export type SetupModeConfig = z.infer<typeof setupModeConfigSchema>;
 class ConfigService {
 	private static instance: ConfigService;
 	private _config!: AppConfig | SetupModeConfig;
-	private keysPath: string = '';
 	private _isSetupPending: boolean = false;
 
 	/**
@@ -125,8 +122,22 @@ class ConfigService {
 			normalizedEnv.USER_PASSWORD = normalizedEnv.PLUTON_USER_PASSWORD;
 		}
 
+		// 1b. Load ENCRYPTION_KEY from pluton.enc.env if not already in process env
+		// On server installs, the file lives in /etc/pluton/; on desktop, in the data dir.
+		const dataDir = appPaths.getDataDir();
+		if (!normalizedEnv.ENCRYPTION_KEY) {
+			const serverEncEnvPath = '/etc/pluton/pluton.enc.env';
+			const envFileKey =
+				(process.platform !== 'win32' && fs.existsSync(serverEncEnvPath)
+					? readEncryptionKeyFromEnvFile('/etc/pluton')
+					: null) ?? readEncryptionKeyFromEnvFile(dataDir);
+			if (envFileKey) {
+				normalizedEnv.ENCRYPTION_KEY = envFileKey;
+				console.log('[ConfigService] Loaded ENCRYPTION_KEY from pluton.enc.env');
+			}
+		}
+
 		const envConfig = configSchema.partial().parse(normalizedEnv);
-		// Initialize or load SECRET and APIKEY
 
 		// 2. Layer user's config.json file
 		let fileConfig: Record<string, any> = {};
@@ -163,12 +174,11 @@ class ConfigService {
 			);
 		}
 
-		// 3. Load or Generate System Secrets (New logic)
-		this.keysPath = path.join(appPaths.getDataDir(), 'keys.json');
-		const secrets = this.loadOrGenerateSecrets(envConfig.SECRET, envConfig.APIKEY);
+		// 3. Load or Generate System Secrets
+		const secrets = credentialManager.loadOrGenerateSecrets(envConfig.SECRET, envConfig.APIKEY);
 
 		// 4. Hash the password if provided via env var
-		const passwordHash = this.hashPasswordIfNeeded(envConfig.USER_PASSWORD);
+		const passwordHash = credentialManager.hashPasswordIfNeeded(envConfig.USER_PASSWORD);
 
 		// 5. Merge all sources (file overrides env, which overrides defaults)
 		const mergedConfig = {
@@ -185,9 +195,9 @@ class ConfigService {
 		const parsedConfig = finalConfigSchema.safeParse(mergedConfig);
 
 		if (!parsedConfig.success) {
-			// Check if we're in binary mode on a keyring-supported platform
+			// Check if we're in binary mode on a desktop platform
 			// In this case, we can start in "setup pending" mode
-			if (requiresKeyringSetup()) {
+			if (requiresDesktopSetup()) {
 				console.log('⏳ [ConfigService] Binary mode detected without credentials.');
 				console.log('⏳ [ConfigService] Starting in setup pending mode...');
 				console.log('⏳ [ConfigService] Please complete the initial setup via the web interface.');
@@ -222,81 +232,17 @@ class ConfigService {
 		}
 
 		this._config = parsedConfig.data;
+
+		// Verify permissions on sensitive files
+		verifyFilePermissions(credentialManager.getKeysPath());
+		const serverEncEnvPath = '/etc/pluton/pluton.enc.env';
+		const encEnvPath =
+			process.platform !== 'win32' && fs.existsSync(serverEncEnvPath)
+				? serverEncEnvPath
+				: path.join(dataDir, 'pluton.enc.env');
+		verifyFilePermissions(encEnvPath);
+
 		console.log('✅ Environment configuration loaded and validated successfully.');
-	}
-
-	private loadOrGenerateSecrets(envSecret?: string, envApiKey?: string) {
-		let keysFileContent: Record<string, any> = {};
-
-		// Read existing keys.json
-		try {
-			if (fs.existsSync(this.keysPath)) {
-				keysFileContent = JSON.parse(fs.readFileSync(this.keysPath, 'utf-8'));
-			}
-		} catch (error) {
-			// Ignore read errors, we will overwrite/create
-		}
-
-		// Priority: Env > Existing File > Generate
-		const finalSecret =
-			envSecret || keysFileContent.SECRET || crypto.randomBytes(32).toString('hex');
-		const finalApiKey =
-			envApiKey || keysFileContent.APIKEY || crypto.randomBytes(24).toString('hex');
-
-		// Save if something changed or didn't exist
-		if (finalSecret !== keysFileContent.SECRET || finalApiKey !== keysFileContent.APIKEY) {
-			try {
-				const newContent = {
-					...keysFileContent,
-					SECRET: finalSecret,
-					APIKEY: finalApiKey,
-				};
-
-				// Ensure dir exists (synchronously, as ConfigService is sync)
-				const dir = path.dirname(this.keysPath);
-				if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-				fs.writeFileSync(this.keysPath, JSON.stringify(newContent, null, 2), { mode: 0o600 });
-				console.log(`[ConfigService] Secrets updated in ${this.keysPath}`);
-			} catch (error) {
-				console.error(`[ConfigService] Failed to save secrets to keys.json: ${error}`);
-			}
-		}
-
-		return { SECRET: finalSecret, APIKEY: finalApiKey };
-	}
-
-	/**
-	 * Hash a plaintext password and store the hash in keys.json.
-	 * If no plaintext password is provided, returns the existing hash from keys.json (if any).
-	 */
-	private hashPasswordIfNeeded(plaintextPassword?: string): string | undefined {
-		let keysFileContent: Record<string, any> = {};
-		try {
-			if (fs.existsSync(this.keysPath)) {
-				keysFileContent = JSON.parse(fs.readFileSync(this.keysPath, 'utf-8'));
-			}
-		} catch (error) {
-			// Ignore read errors
-		}
-
-		// If a plaintext password is provided (from env var), hash it and store
-		if (plaintextPassword) {
-			const hash = bcrypt.hashSync(plaintextPassword, BCRYPT_SALT_ROUNDS);
-			try {
-				const newContent = { ...keysFileContent, PASSWORD_HASH: hash };
-				const dir = path.dirname(this.keysPath);
-				if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-				fs.writeFileSync(this.keysPath, JSON.stringify(newContent, null, 2), { mode: 0o600 });
-				console.log('[ConfigService] Password hash stored in keys.json');
-			} catch (error) {
-				console.error(`[ConfigService] Failed to save password hash to keys.json: ${error}`);
-			}
-			return hash;
-		}
-
-		// Otherwise, return the existing hash from keys.json (for keyring/setup flow)
-		return keysFileContent.PASSWORD_HASH || undefined;
 	}
 
 	/**
@@ -304,33 +250,8 @@ class ConfigService {
 	 * Used by SetupController and password change endpoints.
 	 */
 	public hashAndStorePassword(plaintextPassword: string, userName?: string): string {
-		const hash = bcrypt.hashSync(plaintextPassword, BCRYPT_SALT_ROUNDS);
-
-		let keysFileContent: Record<string, any> = {};
-		try {
-			if (fs.existsSync(this.keysPath)) {
-				keysFileContent = JSON.parse(fs.readFileSync(this.keysPath, 'utf-8'));
-			}
-		} catch (error) {
-			// Ignore read errors
-		}
-
-		try {
-			const newContent: Record<string, any> = { ...keysFileContent, PASSWORD_HASH: hash };
-			if (userName) {
-				newContent.USER_NAME = userName;
-			}
-			const dir = path.dirname(this.keysPath);
-			if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-			fs.writeFileSync(this.keysPath, JSON.stringify(newContent, null, 2), { mode: 0o600 });
-			console.log('[ConfigService] Password hash updated in keys.json');
-		} catch (error) {
-			console.error(`[ConfigService] Failed to save password hash to keys.json: ${error}`);
-		}
-
-		// Update in-memory config
+		const hash = credentialManager.hashAndStorePassword(plaintextPassword, userName);
 		(this._config as any).PASSWORD_HASH = hash;
-
 		return hash;
 	}
 
@@ -339,8 +260,7 @@ class ConfigService {
 	 */
 	public verifyPassword(plaintextPassword: string): boolean {
 		const hash = (this._config as any).PASSWORD_HASH;
-		if (!hash) return false;
-		return bcrypt.compareSync(plaintextPassword, hash);
+		return credentialManager.verifyPassword(plaintextPassword, hash);
 	}
 
 	/**
@@ -363,7 +283,7 @@ class ConfigService {
 
 	/**
 	 * Complete the initial setup by updating config with credentials.
-	 * This is called after credentials are stored in the keyring.
+	 * This is called after credentials are stored in the env file.
 	 */
 	public completeSetup(credentials: {
 		ENCRYPTION_KEY: string;
@@ -375,7 +295,7 @@ class ConfigService {
 		}
 
 		// Hash the password and store both USER_NAME and PASSWORD_HASH in keys.json
-		const passwordHash = this.hashAndStorePassword(
+		const passwordHash = credentialManager.hashAndStorePassword(
 			credentials.USER_PASSWORD,
 			credentials.USER_NAME
 		);
@@ -389,103 +309,53 @@ class ConfigService {
 		} as AppConfig;
 
 		this._isSetupPending = false;
-		console.log('✅ [ConfigService] Setup completed. Credentials loaded from keyring.');
+		console.log('✅ [ConfigService] Setup completed. Credentials stored securely.');
 	}
 
 	/**
-	 * Reinitialize ConfigService with credentials from keyring.
-	 * Used after initial setup to reload config with actual credentials.
+	 * Roll back in-memory state to setup-pending after a post-setup failure
+	 * (e.g. initSetup threw). The persisted files (pluton.enc.env, keys.json) are
+	 * left in place — they are idempotent and will be picked up on next restart.
+	 */
+	public markSetupPending(): void {
+		this._isSetupPending = true;
+		(this._config as any).SETUP_PENDING = true;
+		console.log('⚠️  [ConfigService] Setup rolled back to pending state.');
+	}
+
+	/**
+	 * Reinitialize ConfigService by loading ENCRYPTION_KEY from pluton.enc.env (preferred)
+	 * or by migrating from the OS keyring (legacy desktop installs).
 	 *
 	 * On subsequent startups (keys.json already has USER_NAME + PASSWORD_HASH),
-	 * only ENCRYPTION_KEY is loaded from the keyring. USER_NAME and PASSWORD_HASH
-	 * are read from keys.json to avoid overwriting CLI password resets.
+	 * only ENCRYPTION_KEY is needed from the env file (or keyring for migration).
+	 * USER_NAME and PASSWORD_HASH are read from keys.json to avoid overwriting CLI password resets.
 	 */
-	public static async reinitializeWithKeyringCredentials(): Promise<boolean> {
+	public static async reinitializeFromEnvFileOrKeyring(): Promise<boolean> {
 		if (!ConfigService.instance || !ConfigService.instance._isSetupPending) {
 			return false;
 		}
 
-		try {
-			// Dynamically import keyring service to avoid circular dependencies
-			const { keyringService } = await import('./KeyringService');
-			const credentials = await keyringService.getAllCredentials();
+		const result = await credentialManager.loadCredentialsFromEnvFileOrKeyring();
 
-			if (!credentials.ENCRYPTION_KEY) {
-				return false;
-			}
-
-			// Check if keys.json already has USER_NAME and PASSWORD_HASH from a previous setup
-			// or CLI password reset. If so, use those instead of re-hashing from keyring.
-			let keysFileContent: Record<string, any> = {};
-			try {
-				if (fs.existsSync(ConfigService.instance.keysPath)) {
-					keysFileContent = JSON.parse(fs.readFileSync(ConfigService.instance.keysPath, 'utf-8'));
-				}
-			} catch {
-				// Ignore read errors
-			}
-
-			const existingPasswordHash = keysFileContent.PASSWORD_HASH;
-			const existingUserName = keysFileContent.USER_NAME;
-
-			if (existingPasswordHash && existingUserName) {
-				// Subsequent startup: keys.json is authoritative for auth credentials.
-				// Only ENCRYPTION_KEY comes from the keyring.
-				ConfigService.instance._config = {
-					...ConfigService.instance._config,
-					ENCRYPTION_KEY: credentials.ENCRYPTION_KEY,
-					USER_NAME: existingUserName,
-					USER_PASSWORD: credentials.USER_PASSWORD || '',
-					PASSWORD_HASH: existingPasswordHash,
-					SETUP_PENDING: false,
-				} as AppConfig;
-				ConfigService.instance._isSetupPending = false;
-				console.log(
-					'✅ [ConfigService] Credentials loaded (ENCRYPTION_KEY from keyring, auth from keys.json).'
-				);
-				return true;
-			}
-
-			if (existingPasswordHash && !existingUserName && credentials.USER_NAME) {
-				// Migration: keys.json has PASSWORD_HASH from prior version but no USER_NAME.
-				// Copy USER_NAME from keyring to keys.json without re-hashing the password.
-				try {
-					const newContent = { ...keysFileContent, USER_NAME: credentials.USER_NAME };
-					fs.writeFileSync(ConfigService.instance.keysPath, JSON.stringify(newContent, null, 2), {
-						mode: 0o600,
-					});
-					console.log('[ConfigService] Migrated USER_NAME from keyring to keys.json');
-				} catch (error) {
-					console.error(`[ConfigService] Failed to migrate USER_NAME to keys.json: ${error}`);
-				}
-
-				ConfigService.instance._config = {
-					...ConfigService.instance._config,
-					ENCRYPTION_KEY: credentials.ENCRYPTION_KEY,
-					USER_NAME: credentials.USER_NAME,
-					USER_PASSWORD: credentials.USER_PASSWORD || '',
-					PASSWORD_HASH: existingPasswordHash,
-					SETUP_PENDING: false,
-				} as AppConfig;
-				ConfigService.instance._isSetupPending = false;
-				console.log(
-					'✅ [ConfigService] Credentials loaded (migrated USER_NAME from keyring to keys.json).'
-				);
-				return true;
-			}
-
-			// If keys.json has no PASSWORD_HASH, this is a fresh install (or data was wiped).
-			// Even if the keyring has credentials from a previous installation, do NOT
-			// auto-configure — let the user go through the setup wizard instead.
-			// The ENCRYPTION_KEY remains in the keyring and can be reused during setup.
-			console.log(
-				'[ConfigService] Keyring has credentials but keys.json has no PASSWORD_HASH. Awaiting setup wizard.'
-			);
-		} catch (error) {
-			console.error('[ConfigService] Failed to reinitialize with keyring credentials:', error);
+		if (result.loaded && result.config) {
+			ConfigService.instance._config = {
+				...ConfigService.instance._config,
+				...result.config,
+			} as AppConfig;
+			ConfigService.instance._isSetupPending = false;
+			return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * @deprecated Use reinitializeFromEnvFileOrKeyring() instead.
+	 * Kept for backward compatibility during migration period.
+	 */
+	public static async reinitializeWithKeyringCredentials(): Promise<boolean> {
+		return ConfigService.reinitializeFromEnvFileOrKeyring();
 	}
 }
 

@@ -7,4 +7,4 @@ Type=Application
 Categories=Utility;
 Terminal=false
 StartupNotify=true
-X-AppImage-Version=0.0.1
+X-AppImage-Version=0.13.0

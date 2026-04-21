@@ -41,13 +41,14 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Dirs]
 ; Create the data directory structure in ProgramData
-Name: "{commonappdata}\{#MyAppName}"; Permissions: users-modify
-Name: "{commonappdata}\{#MyAppName}\config"; Permissions: users-modify
-Name: "{commonappdata}\{#MyAppName}\db"; Permissions: users-modify
-Name: "{commonappdata}\{#MyAppName}\logs"; Permissions: users-modify
-Name: "{commonappdata}\{#MyAppName}\backups"; Permissions: users-modify
-Name: "{commonappdata}\{#MyAppName}\restores"; Permissions: users-modify
-Name: "{commonappdata}\{#MyAppName}\temp"; Permissions: users-modify
+; Restrict access to SYSTEM and Administrators only for sensitive data
+Name: "{commonappdata}\{#MyAppName}"; Permissions: admins-full
+Name: "{commonappdata}\{#MyAppName}\config"; Permissions: admins-full
+Name: "{commonappdata}\{#MyAppName}\db"; Permissions: admins-full
+Name: "{commonappdata}\{#MyAppName}\logs"; Permissions: admins-full
+Name: "{commonappdata}\{#MyAppName}\backups"; Permissions: admins-full
+Name: "{commonappdata}\{#MyAppName}\restores"; Permissions: admins-full
+Name: "{commonappdata}\{#MyAppName}\temp"; Permissions: admins-full
 
 [Files]
 ; Main executable
@@ -69,7 +70,7 @@ Source: "..\..\dist\executables\pluton-win-x64\drizzle\*"; DestDir: "{app}\drizz
 ; NSSM for service management (Assumes you have downloaded nssm.exe to installers/windows/tools/)
 Source: "tools\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 
-; Visual C++ Redistributable (required for native Node.js modules like @napi-rs/keyring)
+; Visual C++ Redistributable (required for native Node.js modules like better-sqlite3)
 ; Download from: https://aka.ms/vs/17/release/vc_redist.x64.exe
 Source: "tools\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: ignoreversion deleteafterinstall; Check: not IsVCRedistInstalled
 
@@ -87,8 +88,6 @@ Name: "{group}\Uninstall Pluton"; Filename: "{uninstallexe}"
 ; Set the data directory environment variable
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "PLUTON_DATA_DIR"; ValueData: "{commonappdata}\{#MyAppName}"; Flags: uninsdeletevalue
 
-; NOTE: PLUTON_ENCRYPTION_KEY, PLUTON_USER_NAME, PLUTON_USER_PASSWORD are no longer set here.
-; They will be configured via the web interface and stored securely in Windows Credential Manager.
 
 [Run]
 ; Install Visual C++ Redistributable if not already installed (required for native Node.js modules)
@@ -104,13 +103,13 @@ Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} Start SERVICE_A
 Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} AppDirectory ""{app}"""; Flags: runhidden
 ; Set environment variables for data directory on the service
 Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} AppEnvironmentExtra PLUTON_DATA_DIR=""{commonappdata}\{#MyAppName}"""; Flags: runhidden
-; NOTE: Credentials (ENCRYPTION_KEY, USER_NAME, USER_PASSWORD) are now stored in Windows Credential Manager
-; and will be configured via the web interface on first launch.
 ; Set stdout and stderr logging
 Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} AppStdout ""{commonappdata}\{#MyAppName}\logs\service-out.log"""; Flags: runhidden
 Filename: "{app}\nssm.exe"; Parameters: "set {#MyAppServiceName} AppStderr ""{commonappdata}\{#MyAppName}\logs\service-err.log"""; Flags: runhidden
-; Start the service
-Filename: "{app}\nssm.exe"; Parameters: "start {#MyAppServiceName}"; Flags: runhidden; StatusMsg: "Starting service..."
+; Harden data directory ACL: remove inherited permissions, grant SYSTEM and Administrators only
+Filename: "icacls.exe"; Parameters: """{commonappdata}\{#MyAppName}"" /inheritance:r /grant:r *S-1-5-18:(OI)(CI)F /grant:r *S-1-5-32-544:(OI)(CI)F"; Flags: runhidden; StatusMsg: "Setting data directory permissions..."
+; Start the service (BeforeInstall writes config.json + URL shortcut before the service launches)
+Filename: "{app}\nssm.exe"; Parameters: "start {#MyAppServiceName}"; BeforeInstall: WriteConfigAndUrlFiles; Flags: runhidden; StatusMsg: "Starting service..."
 
 [UninstallRun]
 ; Stop the service
@@ -303,8 +302,8 @@ begin
   FinishNoteLabel.Visible := False;
   
   // --- General Settings Page ---
-  // NOTE: Security credentials (Encryption Key, Username, Password) are now configured
-  // via the web interface after installation and stored in Windows Credential Manager.
+  // NOTE: Security credentials (Encryption Key, Username, Password) are configured
+  // via the web interface after installation and stored in pluton.enc.env and keys.json.
   SettingsPage := CreateInputQueryPage(wpLicense,
     'General Settings', 'Configure the application defaults.',
     'You can change these settings later in the config file.' + #13#10 + #13#10 +
@@ -337,7 +336,9 @@ begin
   end;
 end;
 
-procedure CurStepChanged(CurStep: TSetupStep);
+// Called via BeforeInstall on the 'nssm start' [Run] entry so that
+// config.json exists BEFORE the service launches for the first time.
+procedure WriteConfigAndUrlFiles;
 var
   ConfigPath: String;
   ConfigContent: String;
@@ -345,38 +346,35 @@ var
   UrlFilePath: String;
   UrlFileContent: String;
 begin
-  if CurStep = ssPostInstall then
+  DashboardUrl := GetDashboardUrl();
+
+  // Create URL shortcut file with dynamic port
+  UrlFilePath := ExpandConstant('{app}\pluton-open.url');
+  UrlFileContent := '[InternetShortcut]' + #13#10 +
+    'URL=' + DashboardUrl + #13#10 +
+    'IconIndex=0' + #13#10 +
+    'IconFile=' + ExpandConstant('{app}\pluton.ico');
+  SaveStringToFile(UrlFilePath, UrlFileContent, False);
+
+  // Only write config.json if it doesn't exist (preserve user settings on upgrade)
+  ConfigPath := ExpandConstant('{commonappdata}\{#MyAppName}\config\config.json');
+
+  if not FileExists(ConfigPath) then
   begin
-    DashboardUrl := GetDashboardUrl();
+    // Construct JSON content manually
+    ConfigContent := '{' + #13#10 +
+      '  "SERVER_PORT": ' + ServerPort + ',' + #13#10 +
+      '  "MAX_CONCURRENT_BACKUPS": ' + MaxConcurrentBackups + #13#10 +
+      '}';
 
-    // Create URL shortcut file with dynamic port
-    UrlFilePath := ExpandConstant('{app}\pluton-open.url');
-    UrlFileContent := '[InternetShortcut]' + #13#10 +
-      'URL=' + DashboardUrl + #13#10 +
-      'IconIndex=0' + #13#10 +
-      'IconFile=' + ExpandConstant('{app}\pluton.ico');
-    SaveStringToFile(UrlFilePath, UrlFileContent, False);
-
-    // Only write config.json if it doesn't exist (preserve user settings on upgrade)
-    ConfigPath := ExpandConstant('{commonappdata}\{#MyAppName}\config\config.json');
-    
-    if not FileExists(ConfigPath) then
+    if not SaveStringToFile(ConfigPath, ConfigContent, False) then
     begin
-      // Construct JSON content manually
-      ConfigContent := '{' + #13#10 +
-        '  "SERVER_PORT": ' + ServerPort + ',' + #13#10 +
-        '  "MAX_CONCURRENT_BACKUPS": ' + MaxConcurrentBackups + #13#10 +
-        '}';
-
-      if not SaveStringToFile(ConfigPath, ConfigContent, False) then
-      begin
-        MsgBox('Failed to write configuration file.', mbError, MB_OK);
-      end;
-    end
-    else
-    begin
-      Log('Config file already exists - preserving user settings');
+      MsgBox('Failed to write configuration file.', mbError, MB_OK);
     end;
+  end
+  else
+  begin
+    Log('Config file already exists - preserving user settings');
   end;
 end;
 

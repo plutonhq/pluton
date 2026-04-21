@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import { appPaths } from './AppPaths';
+import { applyStrictPermissions } from './envFileHelpers';
 
 const BCRYPT_SALT_ROUNDS = 10;
 
@@ -44,7 +45,7 @@ function prompt(question: string, hidden = false): Promise<string> {
 }
 
 /**
- * Stores the new password hash in keys.json and updates the keyring credentials.
+ * Stores the new password hash in keys.json.
  */
 async function storeNewPassword(userName: string, password: string): Promise<void> {
 	// Hash the password
@@ -66,20 +67,7 @@ async function storeNewPassword(userName: string, password: string): Promise<voi
 	const dir = path.dirname(keysPath);
 	if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 	fs.writeFileSync(keysPath, JSON.stringify(keysFileContent, null, 2), { mode: 0o600 });
-
-	// Update keyring credentials (if available)
-	try {
-		const { keyringService } = await import('../services/KeyringService');
-		const isAvailable = await keyringService.waitForInitialization();
-		if (isAvailable) {
-			const { KEYRING_KEYS } = await import('../services/KeyringService');
-			await keyringService.setCredential(KEYRING_KEYS.USER_NAME, userName);
-			await keyringService.setCredential(KEYRING_KEYS.USER_PASSWORD, password);
-			console.log('✅ Credentials updated in system keyring.');
-		}
-	} catch {
-		// Keyring not available - that's fine, hash is stored in keys.json
-	}
+	applyStrictPermissions(keysPath);
 
 	console.log('✅ Password hash updated in keys.json.');
 }
@@ -118,7 +106,7 @@ export async function handlePasswordReset(): Promise<void> {
 	await storeNewPassword(userName, password1);
 
 	console.log(
-		'\n✅ Password reset successful. You can now start Pluton and log in with your new credentials.\n'
+		'\n✅ Password reset successful. Restart the Pluton service and log in with your new credentials.\n'
 	);
 	process.exit(0);
 }

@@ -234,6 +234,11 @@ class AppPaths {
 		this.checkInitialized();
 		return this.paths.rescue;
 	}
+
+	public getEncEnvFilePath(): string {
+		this.checkInitialized();
+		return path.join(this.paths.base, 'pluton.enc.env');
+	}
 }
 
 // Export the singleton instance. The first time this is imported and used,

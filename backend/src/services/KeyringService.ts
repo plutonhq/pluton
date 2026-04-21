@@ -210,6 +210,22 @@ class KeyringService {
 	}
 
 	/**
+	 * Read an arbitrary key from the keyring under the Pluton service.
+	 * Used for one-time migration of keys not in the standard credential set (e.g. LICENSE_KEY).
+	 */
+	public async getCredentialByName(key: string): Promise<string | null> {
+		if (!(await this.waitForInitialization())) {
+			return null;
+		}
+		try {
+			const entry = new this.Entry(SERVICE_NAME, key);
+			return entry.getPassword() || null;
+		} catch {
+			return null;
+		}
+	}
+
+	/**
 	 * Deletes a credential from the OS keyring
 	 */
 	public async deleteCredential(key: KeyringKey): Promise<boolean> {

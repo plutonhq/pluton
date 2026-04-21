@@ -20,6 +20,7 @@ NC='\033[0m' # No Color
 # Installation paths
 INSTALL_DIR="/opt/pluton"
 DATA_DIR="/var/lib/pluton"
+CONFIG_DIR="/etc/pluton"
 PLIST_FILE="/Library/LaunchDaemons/com.plutonhq.pluton.plist"
 PLIST_LABEL="com.plutonhq.pluton"
 
@@ -122,7 +123,9 @@ mkdir -p "${INSTALL_DIR}/binaries"
 mkdir -p "${INSTALL_DIR}/node_modules"
 mkdir -p "${INSTALL_DIR}/drizzle"
 
-# Create data directory with subdirectories
+# Create config and data directories
+echo "  Creating config directory: ${CONFIG_DIR}"
+mkdir -p "${CONFIG_DIR}"
 echo "  Creating data directory: ${DATA_DIR}"
 mkdir -p "${DATA_DIR}/config"
 mkdir -p "${DATA_DIR}/db"
@@ -166,32 +169,20 @@ if [ -f "${SCRIPT_DIR}/uninstall.sh" ]; then
     chmod +x "${INSTALL_DIR}/uninstall.sh"
 fi
 
-# Copy service wrapper script (sets up keychain for LaunchDaemon)
+# Copy service wrapper script
 echo "  Installing service wrapper..."
 if [ -f "${SCRIPT_DIR}/pluton-service.sh" ]; then
     cp "${SCRIPT_DIR}/pluton-service.sh" "${INSTALL_DIR}/pluton-service.sh"
     chmod +x "${INSTALL_DIR}/pluton-service.sh"
 fi
 
-# Set up macOS keychain for LaunchDaemon (root) context
-# LaunchDaemons run as root without a default keychain, which causes
-# @napi-rs/keyring to fail. We create a dedicated Pluton keychain.
-echo "  Setting up system keychain for service..."
-export HOME=/var/root
-KEYCHAIN_DIR="/var/root/Library/Keychains"
-KEYCHAIN_PATH="${KEYCHAIN_DIR}/pluton.keychain-db"
-KEYCHAIN_PASSWORD="pluton-service-keychain"
-mkdir -p "${KEYCHAIN_DIR}"
-if [ ! -f "${KEYCHAIN_PATH}" ]; then
-    security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
-    echo "  Created Pluton keychain at ${KEYCHAIN_PATH}"
-else
-    echo "  Pluton keychain already exists"
-fi
-security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
-security set-keychain-settings "${KEYCHAIN_PATH}"
-security list-keychains -d system -s "${KEYCHAIN_PATH}"
-security default-keychain -s "${KEYCHAIN_PATH}"
+# Ensure config directory has restrictive permissions for sensitive env files
+echo "  Setting config directory permissions..."
+chmod 700 "${CONFIG_DIR}"
+
+# Ensure data directory has restrictive permissions for sensitive files
+echo "  Setting data directory permissions..."
+chmod 700 "${DATA_DIR}"
 
 # Write configuration file (only on fresh install — preserve on upgrade)
 if [ "$IS_UPGRADE" = false ] || [ ! -f "${DATA_DIR}/config/config.json" ]; then

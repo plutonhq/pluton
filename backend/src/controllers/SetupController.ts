@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
-import { keyringService, KeyringCredentials } from '../services/KeyringService';
+import fs from 'fs';
 import { configService } from '../services/ConfigService';
-import { requiresKeyringSetup, isBinaryMode } from '../utils/installHelpers';
+import { requiresDesktopSetup, isBinaryMode } from '../utils/installHelpers';
+import { writeEncryptionKeyToEnvFile, encEnvFileExists } from '../utils/envFileHelpers';
+import { appPaths } from '../utils/AppPaths';
 import { initSetup } from '../utils/initSetup';
 import { db } from '../db';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
@@ -14,14 +16,17 @@ export class SetupController {
 		try {
 			const isSetupPending = configService.isSetupPending();
 			const isBinary = isBinaryMode();
-			const requiresKeyring = requiresKeyringSetup();
+			const requiresSetup = requiresDesktopSetup();
+			const hasEncEnvFile = encEnvFileExists(appPaths.getDataDir());
 
 			res.json({
 				success: true,
 				data: {
 					setupPending: isSetupPending,
 					isBinary,
-					requiresKeyringSetup: requiresKeyring,
+					requiresSetup,
+					requiresKeyringSetup: requiresSetup, // backward compat
+					hasEncEnvFile,
 					platform: process.platform,
 				},
 			});
@@ -35,7 +40,8 @@ export class SetupController {
 
 	/**
 	 * Complete the initial setup with credentials
-	 * This endpoint stores credentials in the OS keyring and initializes the app
+	 * This endpoint stores the encryption key in pluton.enc.env and
+	 * credentials in keys.json, then initializes the app
 	 */
 	async completeSetup(req: Request, res: Response) {
 		try {
@@ -47,11 +53,12 @@ export class SetupController {
 				});
 			}
 
-			// Verify we're on a keyring-supported platform
-			if (!requiresKeyringSetup()) {
+			// Verify we're on a desktop platform (binary install)
+			if (!requiresDesktopSetup()) {
 				return res.status(400).json({
 					success: false,
-					error: 'Keyring setup is only available on Windows and macOS binary installations.',
+					error:
+						'Desktop setup is only available on Windows, macOS and Linux desktop binary installations.',
 				});
 			}
 
@@ -89,23 +96,12 @@ export class SetupController {
 				});
 			}
 
-			// Store credentials in the OS keyring
-			const credentials: KeyringCredentials = {
-				ENCRYPTION_KEY: encryptionKey,
-				USER_NAME: userName,
-				USER_PASSWORD: userPassword,
-			};
+			// Store encryption key in pluton.enc.env (replaces keyring storage)
+			writeEncryptionKeyToEnvFile(appPaths.getDataDir(), encryptionKey);
 
-			const stored = await keyringService.setAllCredentials(credentials);
-
-			if (!stored) {
-				return res.status(500).json({
-					success: false,
-					error: 'Failed to store credentials in the system keyring',
-				});
-			}
-
-			// Update ConfigService with the new credentials
+			// Persist credentials to disk first (idempotent — safe to redo on retry).
+			// completeSetup hashes the password, writes keys.json, and updates in-memory
+			// config, but we will roll back the in-memory flag if initSetup fails.
 			configService.completeSetup({
 				ENCRYPTION_KEY: encryptionKey,
 				USER_NAME: userName,
@@ -113,7 +109,14 @@ export class SetupController {
 			});
 
 			// Run the initial setup (creates database tables, default settings, etc.)
-			await initSetup(db as unknown as BetterSQLite3Database);
+			// If this fails, re-mark setup as pending so the wizard can be retried
+			// in the same process. The persisted files stay — they're idempotent.
+			try {
+				await initSetup(db as unknown as BetterSQLite3Database);
+			} catch (initError) {
+				configService.markSetupPending();
+				throw initError;
+			}
 
 			res.json({
 				success: true,
@@ -129,25 +132,34 @@ export class SetupController {
 	}
 
 	/**
-	 * Check if keyring is available on this system
+	 * Check if the system is ready for setup (write permissions, etc.)
+	 * Previously checked keyring availability; now checks env file writability.
+	 * Kept at the same endpoint for backward compatibility.
 	 */
 	async checkKeyringAvailability(req: Request, res: Response) {
 		try {
-			const isSupported = keyringService.isPlatformSupported();
-			const isAvailable = await keyringService.waitForInitialization();
+			const dataDir = appPaths.getDataDir();
+			let writable = false;
+			try {
+				fs.accessSync(dataDir, fs.constants.W_OK);
+				writable = true;
+			} catch {
+				writable = false;
+			}
 
 			res.json({
 				success: true,
 				data: {
-					platformSupported: isSupported,
-					keyringAvailable: isAvailable,
+					platformSupported: requiresDesktopSetup(),
+					keyringAvailable: writable, // backward compat field name
+					dataDirWritable: writable,
 					platform: process.platform,
 				},
 			});
 		} catch (error: any) {
 			res.status(500).json({
 				success: false,
-				error: error.message || 'Failed to check keyring availability',
+				error: error.message || 'Failed to check system availability',
 			});
 		}
 	}

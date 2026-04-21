@@ -5,7 +5,7 @@ import { createApp } from './createApp';
 import { db } from './db';
 import { initSetup } from './utils/initSetup';
 import { configService, ConfigService } from './services/ConfigService';
-import { requiresKeyringSetup } from './utils/installHelpers';
+import { requiresDesktopSetup } from './utils/installHelpers';
 
 // Export main entry point for use as a library
 export { createApp } from './createApp';
@@ -30,14 +30,14 @@ if (isMainModule || isDevelopment) {
 			return; // handlePasswordReset calls process.exit(), but just in case
 		}
 
-		// For binary installations on Windows/macOS, try to load credentials from keyring
-		if (requiresKeyringSetup() && configService.isSetupPending()) {
-			console.log('Attempting to load credentials from system keyring...');
-			const loaded = await ConfigService.reinitializeWithKeyringCredentials();
+		// For binary installations on desktop platforms, try to load credentials from env file or keyring
+		if (requiresDesktopSetup() && configService.isSetupPending()) {
+			console.log('Attempting to load credentials from env file or system keyring...');
+			const loaded = await ConfigService.reinitializeFromEnvFileOrKeyring();
 			if (loaded) {
-				console.log('Credentials loaded from keyring successfully.');
+				console.log('Credentials loaded successfully.');
 			} else {
-				console.log('No credentials found in keyring. Waiting for initial setup...');
+				console.log('No credentials found. Waiting for initial setup...');
 			}
 		}
 
@@ -91,26 +91,20 @@ if (isMainModule || isDevelopment) {
 			}
 		});
 
-		// Graceful shutdown handling for Docker
-		process.on('SIGTERM', async () => {
-			console.log('SIGTERM received, shutting down gracefully...');
+		// Handle graceful shutdown
+		const gracefulShutdown = () => {
+			console.log('Shutting down gracefully...');
 			const forceExit = setTimeout(() => {
 				process.exit(1);
-			}, 30000); // 30 seconds timeout
-
+			}, 30000);
 			server.close(() => {
+				console.log('HTTP server closed.');
 				clearTimeout(forceExit);
-				console.log('Server closed');
 				process.exit(0);
 			});
-		});
+		};
 
-		process.on('SIGINT', async () => {
-			console.log('SIGINT received, shutting down gracefully...');
-			server.close(() => {
-				console.log('Server closed');
-				process.exit(0);
-			});
-		});
+		process.on('SIGINT', gracefulShutdown);
+		process.on('SIGTERM', gracefulShutdown);
 	})();
 }

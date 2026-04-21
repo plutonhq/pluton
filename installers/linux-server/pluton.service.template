@@ -12,8 +12,9 @@ RestartSec=5
 StandardOutput=append:/var/lib/pluton/logs/stdout.log
 StandardError=append:/var/lib/pluton/logs/stderr.log
 
-# Load sensitive credentials from environment file
+# Load sensitive credentials from environment files
 EnvironmentFile=/etc/pluton/pluton.env
+EnvironmentFile=/etc/pluton/pluton.enc.env
 
 # Non-sensitive environment variables
 Environment="PLUTON_DATA_DIR=/var/lib/pluton"

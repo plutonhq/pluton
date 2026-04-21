@@ -171,7 +171,10 @@ export function useValidateIntegration() {
 export interface SetupStatus {
    setupPending: boolean;
    isBinary: boolean;
+   requiresSetup: boolean;
+   /** @deprecated Use requiresSetup instead */
    requiresKeyringSetup: boolean;
+   hasEncEnvFile: boolean;
    platform: string;
 }
 

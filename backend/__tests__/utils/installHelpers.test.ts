@@ -6,6 +6,8 @@ import {
 	isLinuxDesktop,
 	isKeyringPlatform,
 	requiresKeyringSetup,
+	isDesktopPlatform,
+	requiresDesktopSetup,
 } from '../../src/utils/installHelpers';
 
 describe('installHelpers', () => {
@@ -316,6 +318,25 @@ describe('installHelpers', () => {
 			delete process.env.IS_DOCKER;
 			Object.defineProperty(process, 'platform', { value: 'darwin' });
 			expect(requiresKeyringSetup()).toBe(false);
+		});
+	});
+
+	describe('isDesktopPlatform (alias)', () => {
+		it('should be an alias for isKeyringPlatform', () => {
+			Object.defineProperty(process, 'platform', { value: 'win32' });
+			expect(isDesktopPlatform()).toBe(isKeyringPlatform());
+			Object.defineProperty(process, 'platform', { value: 'linux' });
+			expect(isDesktopPlatform()).toBe(isKeyringPlatform());
+		});
+	});
+
+	describe('requiresDesktopSetup (alias)', () => {
+		it('should be an alias for requiresKeyringSetup', () => {
+			(process as any).pkg = { entrypoint: '/snapshot/app/index.js' };
+			Object.defineProperty(process, 'platform', { value: 'win32' });
+			expect(requiresDesktopSetup()).toBe(requiresKeyringSetup());
+			delete (process as any).pkg;
+			expect(requiresDesktopSetup()).toBe(requiresKeyringSetup());
 		});
 	});
 });

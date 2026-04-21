@@ -71,8 +71,16 @@ export function isLinuxDesktop(): boolean {
 
 /**
  * Check if running on a platform that supports keyring (Windows/macOS/Linux Desktop)
+ * @deprecated Use isDesktopPlatform() instead
  */
 export function isKeyringPlatform(): boolean {
+	return isDesktopPlatform();
+}
+
+/**
+ * Check if running on a desktop platform (Windows/macOS/Linux Desktop)
+ */
+export function isDesktopPlatform(): boolean {
 	const platform = process.platform;
 	return (
 		platform === 'win32' || platform === 'darwin' || (platform === 'linux' && isLinuxDesktop())
@@ -81,8 +89,16 @@ export function isKeyringPlatform(): boolean {
 
 /**
  * Check if the app requires keyring-based initial setup
- * This is true when: running as binary + on a keyring-supported platform
+ * @deprecated Use requiresDesktopSetup() instead
  */
 export function requiresKeyringSetup(): boolean {
-	return isBinaryMode() && isKeyringPlatform();
+	return requiresDesktopSetup();
+}
+
+/**
+ * Check if the app requires desktop-based initial setup (via web UI).
+ * This is true when: running as binary + on a desktop platform.
+ */
+export function requiresDesktopSetup(): boolean {
+	return isBinaryMode() && isDesktopPlatform();
 }

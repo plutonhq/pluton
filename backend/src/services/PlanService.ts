@@ -117,7 +117,12 @@ export class PlanService {
 		if (storagePath) {
 			try {
 				const isRemote = sourceId !== 'main';
-				const targetOS = isRemote ? (device.os ?? undefined) : undefined;
+				const targetOS = isRemote
+					? device.platform
+						? device.platform.toLowerCase()
+						: undefined
+					: undefined;
+				console.log('platform: ', sourceId, targetOS);
 				theStoragePath = sanitizeStoragePath(storagePath, planStorage.type, targetOS);
 			} catch (error) {
 				if (error instanceof AppError) {
