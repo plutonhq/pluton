@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.14.0](https://github.com/plutonhq/pluton/compare/pluton-v0.13.1...pluton-v0.14.0) (2026-04-21)
+
+
+### Miscellaneous Chores
+
+* release 0.14.0 ([7bb3b62](https://github.com/plutonhq/pluton/commit/7bb3b6212865fb4ef98f99c3f3347ba8ae8e5bd5))
+
+
+### Code Refactoring
+
+* migrate from keychain usage for desktop installations ([fb1da3b](https://github.com/plutonhq/pluton/commit/fb1da3bfaaab24e87393a13e0f9dffa09dde4f08))
+
 ## [0.13.1](https://github.com/plutonhq/pluton/compare/pluton-v0.13.0...pluton-v0.13.1) (2026-04-18)
 
 
