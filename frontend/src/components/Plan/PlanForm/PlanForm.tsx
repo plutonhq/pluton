@@ -273,7 +273,13 @@ const PlanForm = ({
             )}
             {step === 4 && (
                <div className={PFClasses.planStep}>
-                  <PlanAdvancedSettings plan={planSettings} appSettings={appSettings} onUpdate={onPlanSettingsChange} device={deviceInstance} />
+                  <PlanAdvancedSettings
+                     plan={planSettings}
+                     appSettings={appSettings}
+                     onUpdate={onPlanSettingsChange}
+                     device={deviceInstance}
+                     isEditing={type === 'edit'}
+                  />
                </div>
             )}
          </div>

@@ -16,9 +16,10 @@ interface PlanAdvancedSettingsProps {
    appSettings?: Record<string, any>;
    device: Device;
    onUpdate: (notificationSettings: NewPlanSettings) => void;
+   isEditing: boolean;
 }
 
-const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate }: PlanAdvancedSettingsProps) => {
+const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing }: PlanAdvancedSettingsProps) => {
    const [advancedTab, setAdvancedTab] = useState('General');
    const settings = plan.settings;
    const integrationTypes = useMemo(() => {
@@ -75,7 +76,11 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate }: PlanAdvan
          )}
          <div className={classes.advancedTabContent}>
             {advancedTab === 'General' && (
-               <PlanGeneralSettings settings={settings} onUpdate={(newSettings) => onUpdate({ ...plan, settings: newSettings })} />
+               <PlanGeneralSettings
+                  settings={settings}
+                  onUpdate={(newSettings) => onUpdate({ ...plan, settings: newSettings })}
+                  isEditing={isEditing}
+               />
             )}
             {advancedTab === 'Notification' && (
                <PlanNotificationSettings

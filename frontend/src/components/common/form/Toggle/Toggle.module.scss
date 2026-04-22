@@ -61,6 +61,13 @@
    label:active:after {
       width: 30px;
    }
+   &.toggleDisabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      label {
+         cursor: not-allowed;
+      }
+   }
 }
 
 .description {

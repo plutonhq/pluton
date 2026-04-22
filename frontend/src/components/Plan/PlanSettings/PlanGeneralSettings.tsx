@@ -6,9 +6,10 @@ import classes from './PlanSettings.module.scss';
 interface PlanGeneralSettingsProps {
    settings: NewPlanSettings['settings'];
    onUpdate: (settings: NewPlanSettings['settings']) => void;
+   isEditing: boolean;
 }
 
-const PlanGeneralSettings = ({ settings, onUpdate }: PlanGeneralSettingsProps) => {
+const PlanGeneralSettings = ({ settings, onUpdate, isEditing }: PlanGeneralSettingsProps) => {
    const { encryption, compression, retries, retryDelay } = settings;
    return (
       <>
@@ -16,6 +17,7 @@ const PlanGeneralSettings = ({ settings, onUpdate }: PlanGeneralSettingsProps) =
             <label className={classes.label}>Encryption</label>
             <Toggle
                fieldValue={encryption}
+               disabled={isEditing}
                onUpdate={(val: boolean) => onUpdate({ ...settings, encryption: val })}
                description="Encrypt Source Files before backup"
             />
