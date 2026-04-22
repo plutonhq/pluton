@@ -7,6 +7,7 @@ import { BackupPlanArgs, PlanPrune } from '../types/plans';
 import { BackupHandler } from './handlers/BackupHandler';
 import { PruneHandler } from './handlers/PruneHandler';
 import { jobQueue } from '../jobs/JobQueue';
+import { jobProcessor } from '../jobs/JobProcessor';
 import { generateUID } from '../utils/helpers';
 import { configService } from '../services/ConfigService';
 
@@ -186,7 +187,14 @@ export class BaseBackupManager extends EventEmitter {
 			return { success: false, result: 'No backup schedule found for this plan.' };
 		}
 		jobQueue.addPriorityJob('Backup', { planId, backupId }, retries, retryDelay * 1000);
-		return { success: true, result: 'Backup job has been added to the queue.' };
+		const activeBackupJobs = jobProcessor.getActiveBackupJobs();
+		const maxConcurrentBackups = configService.config.MAX_CONCURRENT_BACKUPS;
+		const reachedLimit = activeBackupJobs >= maxConcurrentBackups;
+		const resultMessage = reachedLimit
+			? `Backup Queue has reached the concurrency limit of ${maxConcurrentBackups}. Your backup will start shortly.`
+			: 'Backup job has been added to the queue and will start shortly.';
+
+		return { success: true, result: resultMessage };
 	}
 
 	/**

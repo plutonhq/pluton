@@ -90,6 +90,13 @@ class JobProcessor extends EventEmitter {
 	}
 
 	/**
+	 * Returns the number of currently running backup jobs.
+	 */
+	public getActiveBackupJobs(): number {
+		return this.activeBackupJobs;
+	}
+
+	/**
 	 * Starts the JobProcessor and checks for jobs every `interval` milliseconds.
 	 * @param interval - Optional interval in milliseconds. Default is 5000ms.
 	 */

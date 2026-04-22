@@ -99,13 +99,15 @@ export const usePlanSingleActions = (): {
 
       performBackupMutation.mutate(plan.id, {
          onSuccess: (data) => {
+            const msg = data?.message || `${isSync ? 'Sync' : 'Backup'} initiated successfully!  🚀`;
+            const notStarted = !isSync && data?.message && data?.message.includes('reached the concurrency limit');
             toast.update(toastId, {
-               render: isSync ? data?.message || 'Sync initiated successfully! 🚀' : 'Backup initiated successfully! 🚀',
+               render: isSync ? msg : notStarted ? data?.message : 'Backup initiated successfully!',
                type: 'success',
                isLoading: false,
                autoClose: 3000,
             });
-            if (!isSync) {
+            if (!isSync && !notStarted) {
                navigate(`/plan/${plan.id}?pendingbackup=1`);
             }
          },
