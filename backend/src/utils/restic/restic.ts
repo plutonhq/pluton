@@ -56,6 +56,11 @@ export function runResticCommand(
 			path.join(appPaths.getTempDir(), 'restic-cache'),
 		];
 
+		// if an empty password is passed, it means encryption is disabled, so we avoid restic prompting for a password
+		if ((envVars as Record<string, string>)?.RESTIC_PASSWORD === '') {
+			finalArgs.push('--insecure-no-password');
+		}
+
 		const resticProcess = spawn(resticBinary, finalArgs, { env: envVars });
 
 		if (onProcess) {
