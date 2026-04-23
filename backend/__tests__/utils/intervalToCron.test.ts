@@ -66,7 +66,7 @@ describe('intervalToCron', () => {
 	describe('daily intervals', () => {
 		it('should return cron for daily at midnight', () => {
 			const interval: PlanInterval = { type: 'daily', time: '12:00AM' };
-			expect(intervalToCron(interval)).toBe('00 12 * * *');
+			expect(intervalToCron(interval)).toBe('00 0 * * *');
 		});
 
 		it('should return cron for daily at 9:00 AM', () => {
@@ -168,12 +168,12 @@ describe('intervalToCron', () => {
 	describe('time parsing', () => {
 		it('should handle 12:00 PM correctly', () => {
 			const interval: PlanInterval = { type: 'daily', time: '12:00PM' };
-			expect(intervalToCron(interval)).toBe('00 24 * * *');
+			expect(intervalToCron(interval)).toBe('00 12 * * *');
 		});
 
 		it('should handle 12:00 AM correctly', () => {
 			const interval: PlanInterval = { type: 'daily', time: '12:00AM' };
-			expect(intervalToCron(interval)).toBe('00 12 * * *');
+			expect(intervalToCron(interval)).toBe('00 0 * * *');
 		});
 
 		it('should handle 1:00 AM correctly', () => {

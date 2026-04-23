@@ -15,7 +15,16 @@ export function intervalToCron(interval: PlanInterval): string {
 		? interval.time.match(/(\d+):(\d+)([AaPp][Mm])/)?.slice(1, 3) || []
 		: [];
 	const isPM = interval.time?.toLowerCase().includes('pm');
-	const hour = hours ? (isPM ? (parseInt(hours) + 12).toString() : hours) : '0';
+	const parsedHour = hours ? parseInt(hours, 10) : 0;
+
+	let hour = '0';
+	if (hours) {
+		if (isPM) {
+			hour = parsedHour === 12 ? '12' : String(parsedHour + 12);
+		} else {
+			hour = parsedHour === 12 ? '0' : String(parsedHour);
+		}
+	}
 
 	switch (interval.type) {
 		case 'hourly':
