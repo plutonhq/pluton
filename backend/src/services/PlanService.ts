@@ -122,7 +122,7 @@ export class PlanService {
 						? device.platform.toLowerCase()
 						: undefined
 					: undefined;
-				console.log('platform: ', sourceId, targetOS);
+
 				theStoragePath = sanitizeStoragePath(storagePath, planStorage.type, targetOS);
 			} catch (error) {
 				if (error instanceof AppError) {
