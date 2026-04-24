@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.14.1](https://github.com/plutonhq/pluton/compare/pluton-v0.14.0...pluton-v0.14.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* incorrect cron schedule  for 12AM backup plans ([d10c022](https://github.com/plutonhq/pluton/commit/d10c02262cbf9d8eab07054695842227995d656b))
+* prevent encryption setting changes after plan creation ([67cffba](https://github.com/plutonhq/pluton/commit/67cffba561e965551c06a8aee9a09bc7cd24073f))
+* resolve replication frozen issue on stale lock ([5931b85](https://github.com/plutonhq/pluton/commit/5931b8579a15bf2970ef9f7033ba857985130173))
+* resolves broken backup plans with disabled encryption ([342b97c](https://github.com/plutonhq/pluton/commit/342b97cbac8834d117fb6f548f678ebef30c3568))
+* show missing concurrency limit message on backup now trigger ([5ecbab1](https://github.com/plutonhq/pluton/commit/5ecbab1479185ca044156e3ae6b7693a143de0ef))
+
+
+### Dependencies
+
+* bump rclone ([1123d35](https://github.com/plutonhq/pluton/commit/1123d3549601ddbc4c8eb74a3616f437d174d435))
+
 ## [0.14.0](https://github.com/plutonhq/pluton/compare/pluton-v0.13.1...pluton-v0.14.0) (2026-04-21)
 
 
