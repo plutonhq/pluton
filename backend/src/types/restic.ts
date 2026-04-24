@@ -65,3 +65,8 @@ export interface ResticRestoredFile {
 	action: string;
 	isDirectory?: boolean;
 }
+
+export type ResticCommandError = Error & {
+	code?: number;
+	stderr?: string;
+};

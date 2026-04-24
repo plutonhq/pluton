@@ -147,27 +147,20 @@ export class ReplicationHandler {
 				planId,
 				backupId,
 				replicationId,
-				'REPLICATION_COPY_START',
+				'REPLICATION_START',
 				false
 			);
 
 			const destRepoPath = generateResticRepoPath(storageName, storagePath);
 
 			// Step 1: Ensure replication repo is initialized (with chunker params from source)
-			await this.progressManager.updateReplicationAction(
-				planId,
-				backupId,
-				replicationId,
-				'REPLICATION_INIT_START',
-				false
-			);
-
 			try {
 				await this.ensureRepoInitialized(
 					destRepoPath,
 					sourceRepoPath,
 					password,
 					encryption,
+					planId,
 					backupId,
 					replicationId
 				);
@@ -184,20 +177,19 @@ export class ReplicationHandler {
 				throw initError;
 			}
 
-			await this.progressManager.updateReplicationAction(
-				planId,
-				backupId,
-				replicationId,
-				'REPLICATION_INIT_COMPLETE',
-				true
-			);
-
 			// Check for cancellation
 			if (this.cancelledBackups.has(planId)) {
 				throw new Error('Cancelled by user');
 			}
 
 			// Step 2: Unlock stale locks (non-fatal)
+			await this.progressManager.updateReplicationAction(
+				planId,
+				backupId,
+				replicationId,
+				'REPLICATION_UNLOCK_START',
+				true
+			);
 			try {
 				const unlockArgs = ['unlock', '-r', destRepoPath];
 				if (!encryption) unlockArgs.push('--insecure-no-password');
@@ -214,6 +206,15 @@ export class ReplicationHandler {
 			} catch (err) {
 				// Non-fatal - swallow errors
 			}
+
+			// Step 2: Unlock stale locks (non-fatal)
+			await this.progressManager.updateReplicationAction(
+				planId,
+				backupId,
+				replicationId,
+				'REPLICATION_COPY_START',
+				true
+			);
 
 			// Step 3: Run restic copy
 			const copyArgs = [
@@ -449,8 +450,9 @@ export class ReplicationHandler {
 		sourceRepoPath: string,
 		password: string,
 		encryption: boolean,
-		backupId?: string,
-		replicationId?: string
+		planId: string,
+		backupId: string,
+		replicationId: string
 	): Promise<void> {
 		if (this.initializedRepos.has(repoPath)) {
 			return;
@@ -463,8 +465,8 @@ export class ReplicationHandler {
 		};
 
 		try {
-			// Try to list snapshots to check if repo exists
-			const checkArgs = ['snapshots', '-r', repoPath, '--json'];
+			// Check if the repo exists in replication storage
+			const checkArgs = ['cat', 'config', '--no-lock', '-r', repoPath];
 			if (!encryption) checkArgs.push('--insecure-no-password');
 			await runResticCommand(
 				checkArgs,
@@ -475,34 +477,61 @@ export class ReplicationHandler {
 				trackProcess
 			);
 			this.initializedRepos.add(repoPath);
-		} catch (error) {
-			// Repo doesn't exist, initialize it with chunker params from source for deduplication
-			try {
-				const initArgs = [
-					'-r',
-					repoPath,
-					'init',
-					'--from-repo',
-					sourceRepoPath,
-					'--copy-chunker-params',
-				];
-				if (!encryption) {
-					initArgs.push('--insecure-no-password');
-					initArgs.push('--from-insecure-no-password');
-				}
-				const initEnv: Record<string, string> = {
-					RESTIC_PASSWORD: password,
-					RESTIC_FROM_PASSWORD: password,
-				};
-				await runResticCommand(initArgs, initEnv, undefined, undefined, undefined, trackProcess);
-				this.initializedRepos.add(repoPath);
-			} catch (initError: any) {
-				// If init also fails with "already initialized", that's OK
-				if (initError.message?.includes('already initialized')) {
+		} catch (error: any) {
+			if (error.code === 10) {
+				// Repo doesn't exist
+				await this.progressManager.updateReplicationAction(
+					planId,
+					backupId,
+					replicationId,
+					'REPLICATION_INIT_START',
+					false
+				);
+
+				//initialize it with chunker params from source for deduplication
+				try {
+					const initArgs = [
+						'-r',
+						repoPath,
+						'init',
+						'--from-repo',
+						sourceRepoPath,
+						'--copy-chunker-params',
+					];
+					if (!encryption) {
+						initArgs.push('--insecure-no-password');
+						initArgs.push('--from-insecure-no-password');
+					}
+					const initEnv: Record<string, string> = {
+						RESTIC_PASSWORD: password,
+						RESTIC_FROM_PASSWORD: password,
+					};
+					await runResticCommand(initArgs, initEnv, undefined, undefined, undefined, trackProcess);
 					this.initializedRepos.add(repoPath);
-				} else {
-					throw initError;
+					await this.progressManager.updateReplicationAction(
+						planId,
+						backupId,
+						replicationId,
+						'REPLICATION_INIT_COMPLETE',
+						true
+					);
+				} catch (initError: any) {
+					// If init also fails with "already initialized", that's OK
+					if (initError.message?.includes('already initialized')) {
+						this.initializedRepos.add(repoPath);
+					} else {
+						throw initError;
+					}
 				}
+			} else if (error.code === 11) {
+				// failed to lock repo - likely due to stale lock from previous replication attempt.
+				// do not throw we want to attempt to unlock and continue - the copy command will handle any remaining lock issues.
+				console.log(
+					'Repo is locked, likely from a previous failed replication attempt. Will attempt to unlock and continue.',
+					repoPath
+				);
+			} else {
+				throw error;
 			}
 		}
 	}

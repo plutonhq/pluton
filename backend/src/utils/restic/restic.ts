@@ -10,6 +10,11 @@ import { configService } from '../../services/ConfigService';
 import { buildResticEnvFromSettings, buildRcloneEnvFromSettings } from '../globalSettings';
 import { BackupVerifiedResult } from '../../types/plans';
 
+export type ResticCommandError = Error & {
+	code?: number;
+	stderr?: string;
+};
+
 export function runResticCommand(
 	args: string[],
 	env?: Record<string, string>,
@@ -55,6 +60,8 @@ export function runResticCommand(
 			'--cache-dir',
 			path.join(appPaths.getTempDir(), 'restic-cache'),
 		];
+
+		// console.log('🎷', 'restic ', finalArgs.join(' '));
 
 		// if an empty password is passed, it means encryption is disabled, so we avoid restic prompting for a password
 		if ((envVars as Record<string, string>)?.RESTIC_PASSWORD === '') {
@@ -136,8 +143,13 @@ export function runResticCommand(
 				if (code === 0) {
 					resolve(output.trim());
 				} else {
-					console.log('Restic Error :', errorOutput.trim() || 'Restic command failed');
-					const error = new Error(errorOutput.trim() || 'Restic command failed');
+					const stderr = errorOutput.trim();
+					console.log('Restic Error :', stderr || 'Restic command failed');
+					const error: ResticCommandError = new Error(
+						stderr || 'Restic command failed with code ' + code
+					);
+					error.code = code;
+					error.stderr = stderr;
 					onError?.(Buffer.from(error.message));
 					reject(error);
 				}

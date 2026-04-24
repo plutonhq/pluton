@@ -334,9 +334,9 @@ describe('ReplicationHandler', () => {
 
 			// Check that relevant progress actions were called
 			const actionCalls = mockUpdateReplicationAction.mock.calls.map((c: any) => c[3]);
+			expect(actionCalls).toContain('REPLICATION_START');
+			expect(actionCalls).toContain('REPLICATION_UNLOCK_START');
 			expect(actionCalls).toContain('REPLICATION_COPY_START');
-			expect(actionCalls).toContain('REPLICATION_INIT_START');
-			expect(actionCalls).toContain('REPLICATION_INIT_COMPLETE');
 			expect(actionCalls).toContain('REPLICATION_COPY_COMPLETE');
 			expect(actionCalls).toContain('REPLICATION_COMPLETE');
 		});
@@ -425,10 +425,11 @@ describe('ReplicationHandler', () => {
 		});
 
 		it('should report REPLICATION_INIT_FAILED when repo init fails', async () => {
-			// First call is snapshots check (fails = repo doesn't exist)
+			// First call is repo config check (code 10 = repo doesn't exist)
 			// Second call is init (also fails)
+			const repoMissingError = Object.assign(new Error('repo not found'), { code: 10 });
 			mockRunResticCommand
-				.mockRejectedValueOnce(new Error('repo not found'))
+				.mockRejectedValueOnce(repoMissingError)
 				.mockRejectedValueOnce(new Error('Init permission denied'));
 
 			const results = await handler.replicateSnapshot(
@@ -452,12 +453,17 @@ describe('ReplicationHandler', () => {
 	describe('cancelReplications', () => {
 		it('should kill all active replication processes for a backup', async () => {
 			// Start a replication that we can check tracking for
+			let copyStartedResolve: Function;
+			const copyStartedPromise = new Promise(resolve => {
+				copyStartedResolve = resolve;
+			});
 			let copyResolve: Function;
 			const copyPromise = new Promise(resolve => {
 				copyResolve = resolve;
 			});
 			mockRunResticCommand.mockImplementation(async (args: string[]) => {
 				if (args.includes('copy')) {
+					copyStartedResolve!('started');
 					// Simulate a long-running copy
 					await copyPromise;
 				}
@@ -476,8 +482,8 @@ describe('ReplicationHandler', () => {
 				retryInfo
 			);
 
-			// Give it a tick to start
-			await new Promise(resolve => setTimeout(resolve, 10));
+			// Wait until copy starts so the replication is definitely active
+			await copyStartedPromise;
 
 			// Cancel
 			await handler.cancelReplications(backupId);
