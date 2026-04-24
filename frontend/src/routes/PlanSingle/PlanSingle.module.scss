@@ -7,6 +7,16 @@
    }
 }
 
+.planError {
+   border: 1px solid #f3cfcf;
+   padding-top: 0;
+   cursor: pointer;
+   transition: all 0.12s linear;
+   &:hover {
+      background-color: #f3cfcf;
+   }
+}
+
 .planActions {
    position: relative;
    .moreOptions {

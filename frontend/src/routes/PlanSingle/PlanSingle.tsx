@@ -65,7 +65,7 @@ const PlanSingle = () => {
          );
       }
 
-      const { isActive, method, title, description, stats, settings } = plan;
+      const { isActive, method, title, description, verified, stats, settings } = plan;
       const prune = settings.prune;
       const snapshotsCount = stats.snapshots?.length || 0;
       const isSync = method === 'sync';
@@ -84,6 +84,11 @@ const PlanSingle = () => {
                      {!isActive && (
                         <span className="label warn">
                            <Icon size={14} type={'pause'} color="#bf8d20" /> Paused
+                        </span>
+                     )}
+                     {verified?.hasError && (
+                        <span className={`label error ${classes.planError}`} onClick={() => setShowIntegrityModal(true)}>
+                           <Icon size={14} type={'error-circle-filled'} color="#dd6b6b" /> Integrity Error
                         </span>
                      )}
                   </>
