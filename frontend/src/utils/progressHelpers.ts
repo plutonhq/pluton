@@ -114,6 +114,7 @@ export const getBackupEventActionMessage = (action: string, storageName?: string
       PRE_BACKUP_START: 'Preparing Backup...',
       PRE_BACKUP_DRY_RUN_START: 'Performing Dry Run...',
       PRE_BACKUP_DRY_RUN_COMPLETE: 'Dry Run Complete',
+      PRE_BACKUP_DRY_RUN_ERROR: 'Dry Run Encountered Errors',
       PRE_BACKUP_CHECKS_START: 'Running Checks...',
       PRE_BACKUP_CHECKS_COMPLETE: 'Checks Complete',
       PRE_BACKUP_SCRIPTS_START: 'Running Scripts...',
