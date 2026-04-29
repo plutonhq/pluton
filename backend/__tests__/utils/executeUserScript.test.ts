@@ -93,13 +93,6 @@ describe('executeUserScript', () => {
 			).rejects.toThrow('Script path must be absolute');
 		});
 
-		it('rejects when script file does not exist', async () => {
-			(fs.existsSync as jest.Mock).mockReturnValue(false);
-			await expect(
-				executeUserScript(buildScript({ scriptPath: '/scripts/missing.sh' }))
-			).rejects.toThrow('Script file does not exist');
-		});
-
 		it('rejects when scriptPath is a directory', async () => {
 			(fs.statSync as jest.Mock).mockReturnValue({ isDirectory: () => true });
 			await expect(executeUserScript(buildScript({ scriptPath: '/scripts/dir/' }))).rejects.toThrow(

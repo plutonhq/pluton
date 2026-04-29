@@ -1,6 +1,6 @@
 import os from 'os';
 import { execSync } from 'child_process';
-import { chmod, readdir, stat, mkdtemp, rm } from 'fs/promises';
+import { chmod, readFile, readdir, stat, mkdtemp, rm } from 'fs/promises';
 import { createWriteStream } from 'fs';
 import path from 'path';
 import si from 'systeminformation';
@@ -20,6 +20,7 @@ const execAsync = promisify(exec);
 
 export class BaseSystemManager {
 	private storageManager: BaseStorageManager;
+	private linuxOwnerNames?: Promise<Map<number, string>>;
 	constructor() {
 		this.storageManager = new BaseStorageManager();
 	}
@@ -493,6 +494,7 @@ export class BaseSystemManager {
 					drives.result.map(async (drive: any) => {
 						try {
 							const stats = await stat(drive.path);
+							const owner = await this.getOwnerName(stats.uid);
 							return {
 								name: drive.name,
 								path: drive.path,
@@ -500,7 +502,7 @@ export class BaseSystemManager {
 								isDirectory: drive.isDirectory,
 								size: stats.isDirectory() ? 0 : stats.size,
 								modifiedAt: stats.mtime,
-								owner: stats.uid,
+								owner,
 								permissions: this.formatPermissions(stats.mode),
 							};
 						} catch (error) {
@@ -540,6 +542,7 @@ export class BaseSystemManager {
 					try {
 						const fullPath = path.join(formattedPath, item.name).split(path.sep).join('/');
 						const stats = await stat(fullPath);
+						const owner = await this.getOwnerName(stats.uid);
 
 						return {
 							name: item.name,
@@ -548,7 +551,7 @@ export class BaseSystemManager {
 							isDirectory: item.isDirectory(),
 							size: stats.size,
 							modifiedAt: stats.mtime,
-							owner: stats.uid,
+							owner,
 							permissions: this.formatPermissions(stats.mode),
 						};
 					} catch (error: any) {
@@ -579,6 +582,41 @@ export class BaseSystemManager {
 			};
 		}
 	}
+
+	private async getOwnerName(uid?: number): Promise<string | number> {
+		if (typeof uid !== 'number') {
+			return '';
+		}
+
+		if (os.platform() !== 'linux') {
+			return uid;
+		}
+
+		const ownerNames = await this.getLinuxOwnerNames();
+		return ownerNames.get(uid) || String(uid);
+	}
+
+	private async getLinuxOwnerNames(): Promise<Map<number, string>> {
+		if (!this.linuxOwnerNames) {
+			this.linuxOwnerNames = readFile('/etc/passwd', 'utf8')
+				.then(contents => {
+					const ownerNames = new Map<number, string>();
+					for (const line of contents.split('\n')) {
+						if (!line || line.startsWith('#')) continue;
+						const [name, , uidText] = line.split(':');
+						const uid = Number.parseInt(uidText, 10);
+						if (name && Number.isInteger(uid)) {
+							ownerNames.set(uid, name);
+						}
+					}
+					return ownerNames;
+				})
+				.catch(() => new Map<number, string>());
+		}
+
+		return this.linuxOwnerNames;
+	}
+
 	private formatPermissions(mode: number): string {
 		const permissions = [
 			mode & 0o400 ? 'r' : '-',

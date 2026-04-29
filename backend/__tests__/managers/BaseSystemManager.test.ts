@@ -338,6 +338,7 @@ describe('BaseSystemManager', () => {
 	describe('getBrowsePath', () => {
 		it('without givenPath returns drives with stats and fallback on stat error', async () => {
 			const manager = new BaseSystemManager();
+			readFileMock.mockResolvedValue('root:x:0:0:root:/root:/bin/bash\nalice:x:1000:1000::/home/alice:/bin/bash\n');
 			const drivesResult = {
 				success: true,
 				result: [
@@ -364,12 +365,14 @@ describe('BaseSystemManager', () => {
 			const items = (res.result as any).items;
 			const etc = items.find((i: any) => i.path === '/etc');
 			const missing = items.find((i: any) => i.path === '/missing');
+			expect(etc.owner).toBe('alice');
 			expect(etc.permissions.startsWith('d')).toBe(true);
 			expect(missing.permissions).toBe('');
 		});
 
 		it('with givenPath lists directory contents sorted with directories first', async () => {
 			const manager = new BaseSystemManager();
+			readFileMock.mockResolvedValue('root:x:0:0:root:/root:/bin/bash\nalice:x:1000:1000::/home/alice:/bin/bash\n');
 			// Dirents
 			readdirMock.mockResolvedValue([
 				{ name: 'b', isDirectory: () => true },
@@ -390,6 +393,24 @@ describe('BaseSystemManager', () => {
 			expect(items[1].name).toBe('a.txt');
 			expect(items[0].isDirectory).toBe(true);
 			expect(items[1].isDirectory).toBe(false);
+			expect(items[0].owner).toBe('alice');
+			expect(items[1].owner).toBe('alice');
+		});
+
+		it('falls back to uid string when linux owner name is unknown', async () => {
+			const manager = new BaseSystemManager();
+			readFileMock.mockResolvedValue('root:x:0:0:root:/root:/bin/bash\n');
+			readdirMock.mockResolvedValue([{ name: 'orphaned', isDirectory: () => false }]);
+			statMock.mockResolvedValue({
+				size: 5,
+				mtime: new Date('2021-01-02'),
+				uid: 12345,
+				mode: 0o100644,
+			} as any);
+
+			const res = await manager.getBrowsePath('/tmp');
+			expect(res.success).toBe(true);
+			expect((res.result as any).items[0].owner).toBe('12345');
 		});
 	});
 
