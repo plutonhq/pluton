@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import classes from './StoragePicker.module.scss';
 import Select from '../Select/Select';
 import { useGetStorages } from '../../../../services/storage';
@@ -70,11 +70,19 @@ const StoragePicker = ({ onUpdate, storagePath = '', storageId, disabled = false
       }
    }, [selectedStorage, path]);
 
+   // Reset the storage selection only when the device actually changes (not on mount/remount,
+   // e.g. when navigating between steps in the Add Plan form).
+   const prevDeviceIdRef = useRef<string | undefined | null>(null);
    useEffect(() => {
-      if (!disabled) {
+      if (disabled) {
+         prevDeviceIdRef.current = deviceId;
+         return;
+      }
+      if (prevDeviceIdRef.current !== null && prevDeviceIdRef.current !== deviceId) {
          setSelectedStorage(null);
          setPath('');
       }
+      prevDeviceIdRef.current = deviceId;
    }, [deviceId, disabled]);
 
    // console.log('Storage path :', path, !disabled && isLocalStorage && !path);

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import classes from './PlanSettings.module.scss';
 import PathPicker from '../../common/PathPicker/PathPicker';
 import { NewPlanSettings } from '../../../@types/plans';
@@ -28,9 +28,16 @@ const PlanSourceSettings = ({ plan, onUpdate, error, isEditing }: PlanSourceSett
       );
    }
 
-   // When the device changes, reset the sourceConfig paths to prevent invalid paths from being submitted
+   // When the device changes, reset the sourceConfig paths to prevent invalid paths from being submitted.
+   // Use a ref to track the previous deviceId so we only reset on an actual change (not on mount/remount,
+   // e.g. when navigating between steps in the Add Plan form).
+   const prevDeviceIdRef = useRef<string | null>(null);
    useEffect(() => {
-      if (!isEditing) {
+      if (isEditing) {
+         prevDeviceIdRef.current = deviceId;
+         return;
+      }
+      if (prevDeviceIdRef.current !== null && prevDeviceIdRef.current !== deviceId) {
          onUpdate({
             ...plan,
             sourceConfig: {
@@ -39,6 +46,7 @@ const PlanSourceSettings = ({ plan, onUpdate, error, isEditing }: PlanSourceSett
             },
          });
       }
+      prevDeviceIdRef.current = deviceId;
    }, [isEditing, deviceId]);
 
    return (
