@@ -14,6 +14,7 @@ import { BaseStorageManager } from './BaseStorageManager';
 import { runCommand } from '../utils/runCommand';
 import { appPaths } from '../utils/AppPaths';
 import { saveRcloneGlobalSettings, saveResticGlobalSettings } from '../utils/globalSettings';
+import { isLinuxInstalledRuntime, runHelper } from '../utils/linuxHelper';
 
 const execAsync = promisify(exec);
 
@@ -783,11 +784,17 @@ export class BaseSystemManager {
 				return { success: false, result: 'lsblk is only supported on Linux systems' };
 			}
 
-			const { stdout, stderr } = await execAsync(
-				'lsblk --json -o NAME,FSTYPE,LABEL,UUID,MOUNTPOINT,SIZE'
-			);
-			if (stderr) {
-				return { success: false, result: `Error executing lsblk: ${stderr}` };
+			let lsblkOutput: string;
+			if (isLinuxInstalledRuntime()) {
+				lsblkOutput = await runHelper('system-info', ['mounts']);
+			} else {
+				const { stdout, stderr } = await execAsync(
+					'lsblk --json -o NAME,FSTYPE,LABEL,UUID,MOUNTPOINT,SIZE'
+				);
+				if (stderr) {
+					return { success: false, result: `Error executing lsblk: ${stderr}` };
+				}
+				lsblkOutput = stdout;
 			}
 
 			let dfData;
@@ -799,24 +806,7 @@ export class BaseSystemManager {
 				console.log('df output failed!');
 			}
 
-			const filesystems = await this.analyzeBlockDevices(stdout, dfData);
-
-			// 			const dummyOutput =
-			// 				'{"blockdevices":[{"name":"vda","fstype":null,"label":null,"uuid":null,"mountpoint":null,"size":"10G","children":[{"name":"vda1","fstype":null,"label":null,"uuid":null,"mountpoint":null,"size":"1M"},{"name":"vda2","fstype":"vfat","label":null,"uuid":"A893-0D16","mountpoint":"/boot/efi","size":"256M"},{"name":"vda3","fstype":"ext4","label":null,"uuid":"fc0fca72-9290-4996-b6c3-5b963959e146","mountpoint":"/boot","size":"800M"},{"name":"vda4","fstype":"ext4","label":null,"uuid":"cbdc5f51-f4b3-4772-9d61-86cb1e2b089c","mountpoint":"/","size":"9G"}]},{"name":"vdb","fstype":"ext4","label":"ephemeral0","uuid":"e8afea20-c269-4593-9347-2622cd524c1e","mountpoint":"/data","size":"300G"}]}';
-			// 			const dummyDFOutput = `Filesystem      Size  Used Avail Use% Mounted on
-			// tmpfs           1.2G  976K  1.2G   1% /run
-			// efivarfs         56K   16K   36K  30% /sys/firmware/efi/efivars
-			// /dev/vda4       8.8G  4.2G  4.2G  51% /
-			// tmpfs           5.9G     0  5.9G   0% /dev/shm
-			// tmpfs           5.0M     0  5.0M   0% /run/lock
-			// /dev/vdb        295G  612M  279G   1% /data
-			// /dev/vda3       770M   65M  650M  10% /boot
-			// /dev/vda2       256M  6.1M  250M   3% /boot/efi
-			// overlay         8.8G  4.2G  4.2G  51% /var/lib/docker/overlay2/233a3438f3732cb014fbb15261647c03877ffced00278e8a6abee4c27111acd7/merged
-			// tmpfs           1.2G     0  1.2G   0% /run/user/0
-			// overlay         8.8G  4.2G  4.2G  51% /var/lib/docker/overlay2/6d0db4005ad4a4cdee861888afc2fa886c7afdeaef68752944ffb18b5a04ac03/merged`;
-			// 			const dfData = this.parseDfOutput(dummyDFOutput);
-			// 			const filesystems = await this.analyzeBlockDevices(dummyOutput, dfData);
+			const filesystems = await this.analyzeBlockDevices(lsblkOutput, dfData);
 
 			return { success: true, result: filesystems };
 		} catch {

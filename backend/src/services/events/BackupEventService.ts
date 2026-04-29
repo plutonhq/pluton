@@ -7,7 +7,7 @@ import { PlanStore } from '../../stores/PlanStore';
 import { planLogger } from '../../utils/logger';
 import { BackupNotification } from '../../notifications/BackupNotification';
 import { appPaths } from '../../utils/AppPaths';
-import { backupInsertSchema, NewBackup } from '../../db/schema/backups';
+import { Backup, backupInsertSchema, NewBackup } from '../../db/schema/backups';
 import { SourceTypes } from '../../types/source';
 // import { jobProcessor } from '../../jobs/JobProcessor';
 import {
@@ -88,7 +88,7 @@ export class BackupEventService {
 					compression,
 					sourceConfig,
 					taskStats: null,
-					method: 'backup',
+					method: thePlan.method,
 				};
 
 				// Parse Backup Data
@@ -206,19 +206,31 @@ export class BackupEventService {
 				}
 			}
 
-			const backup = await this.backupStore.update(backupId, {
+			const backupPayload: Partial<Backup> = {
 				inProgress: false,
 				status: success ? 'completed' : 'failed',
 				success: !!success,
 				ended: sql`(unixepoch())` as any,
 				completionStats: summaryData ? summaryData : null,
-			});
+            ...(success ? { errorMsg: null } : {}),
+			};
+			const plan = await this.planStore.getById(planId);
+
+			if (plan?.method === 'rescue') {
+				// Since rescue does not do a dry run, we backfill the taskStats with the summary data
+				// from the completion event, so that it can be used in notifications and elsewhere.
+				const shouldBackfillTaskStats = success && summaryData;
+				if (shouldBackfillTaskStats) {
+					backupPayload.taskStats = { ...summaryData, dry_run: false } as any;
+				}
+			}
+
+			const backup = await this.backupStore.update(backupId, backupPayload);
 			if (!backup) {
 				throw new Error('Failed to update Backup entry in Database.');
 			}
 
 			// Send Notification
-			const plan = await this.planStore.getById(data.planId);
 			if (plan && plan.settings.notification) {
 				// Include replication failures in the success notification if any mirrors failed
 				const replicationFailures = (backup.mirrors || [])

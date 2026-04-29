@@ -17,6 +17,7 @@ DATA_DIR="/var/lib/pluton"
 SERVICE_FILE="/etc/systemd/system/pluton.service"
 DESKTOP_FILE="/usr/share/applications/pluton.desktop"
 ICON_FILE="/usr/share/icons/hicolor/256x256/apps/pluton.png"
+HELPER_PATH="/usr/bin/pluton-helper"
 
 echo -e "${BLUE}"
 echo "╔═══════════════════════════════════════════════════════════╗"
@@ -80,6 +81,14 @@ if [ -d "${INSTALL_DIR}" ]; then
     rm -rf "${INSTALL_DIR}"
 fi
 
+if [ -f "${HELPER_PATH}" ]; then
+    echo "Removing helper binary: ${HELPER_PATH}"
+    rm -f "${HELPER_PATH}"
+fi
+
+echo "Removing wrapper commands..."
+rm -f /usr/local/bin/prclone /usr/local/bin/prestic
+
 # Remove desktop shortcut and icon
 if [ -f "${DESKTOP_FILE}" ]; then
     echo "Removing desktop shortcut..."
@@ -116,5 +125,6 @@ if [ "$REMOVE_DATA" = false ]; then
     echo -e "${BLUE}Note:${NC} Your data has been preserved at: ${DATA_DIR}"
     echo "To completely remove all data, run: sudo rm -rf ${DATA_DIR}"
 fi
+echo "System user 'pluton' was preserved."
 
 echo ""

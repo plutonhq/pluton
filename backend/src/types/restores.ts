@@ -29,6 +29,7 @@ export interface RestoreConfig {
 	delete: boolean;
 	storageId?: string;
 	replicationId?: string;
+	sources?: string[];
 }
 
 export interface RestoreStats {

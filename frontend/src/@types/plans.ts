@@ -119,6 +119,7 @@ export type PlanScript = {
    logOutput: boolean;
    timeout?: number;
    abortOnError?: boolean;
+   runAsRoot?: boolean;
 };
 
 export interface PlanReplicationStorage {

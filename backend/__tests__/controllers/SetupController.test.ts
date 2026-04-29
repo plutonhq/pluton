@@ -30,6 +30,7 @@ jest.mock('../../src/db', () => ({
 jest.mock('../../src/utils/AppPaths', () => ({
 	appPaths: {
 		getDataDir: jest.fn().mockReturnValue('/mock/data'),
+		getEncEnvFilePath: jest.fn().mockReturnValue('/mock/config/pluton.enc.env'),
 	},
 }));
 

@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import fs from 'fs';
 import { PlanScript } from '../types/plans';
+import { isLinuxInstalledRuntime, runRootHelper } from './linuxHelper';
 
 /**
  * Executes a user-defined script file, capturing its output
@@ -13,38 +14,39 @@ import { PlanScript } from '../types/plans';
  * @returns A promise that resolves with the stdout and stderr of the script.
  * @throws An error if the script fails (non-zero exit code) or times out.
  */
-export function executeUserScript(script: PlanScript): Promise<{ stdout: string; stderr: string }> {
+export async function executeUserScript(
+	script: PlanScript
+): Promise<{ stdout: string; stderr: string }> {
+	const { scriptPath, timeout } = script;
+	validateScriptPath(scriptPath);
+
+	if (script.runAsRoot && isLinuxInstalledRuntime()) {
+		let stdout = '';
+		let stderr = '';
+		const scriptArgs = getScriptArgs(script);
+
+		try {
+			stdout = await runRootHelper('run-script', [scriptPath, ...scriptArgs], {
+				timeoutMs: timeout ? timeout * 1000 : undefined,
+				onStdout: data => {
+					stdout += data.toString();
+				},
+				onStderr: data => {
+					stderr += data.toString();
+				},
+			});
+			return { stdout, stderr };
+		} catch (error: any) {
+			if (isSudoersAuthorizationError(error)) {
+				throw new Error(
+					`Root script requires an explicit sudoers rule for this script. Ask an administrator to grant NOPASSWD access for: /usr/bin/pluton-helper run-script ${scriptPath}`
+				);
+			}
+			throw error;
+		}
+	}
+
 	return new Promise((resolve, reject) => {
-		const { scriptPath, timeout } = script;
-
-		if (!scriptPath || !scriptPath.trim()) {
-			reject(new Error('Script path is empty.'));
-			return;
-		}
-
-		// Validate path safety
-		if (scriptPath.includes('..')) {
-			reject(new Error('Script path contains ".." traversal sequences.'));
-			return;
-		}
-
-		if (!path.isAbsolute(scriptPath)) {
-			reject(new Error(`Script path must be absolute, got: ${scriptPath}`));
-			return;
-		}
-
-		// Verify the file exists
-		if (!fs.existsSync(scriptPath)) {
-			reject(new Error(`Script file does not exist: ${scriptPath}`));
-			return;
-		}
-
-		const stat = fs.statSync(scriptPath);
-		if (stat.isDirectory()) {
-			reject(new Error(`Script path is a directory, not a file: ${scriptPath}`));
-			return;
-		}
-
 		// Determine how to execute based on file extension
 		const { executable, args } = determineScriptExecution(scriptPath);
 
@@ -84,6 +86,46 @@ export function executeUserScript(script: PlanScript): Promise<{ stdout: string;
 			}
 		});
 	});
+}
+
+function isSudoersAuthorizationError(error: unknown): boolean {
+	const candidate = error as { message?: string; stderr?: string };
+	const text = `${candidate?.message || ''}\n${candidate?.stderr || ''}`;
+	return (
+		/\ba password is required\b/i.test(text) ||
+		/\bno tty present and no askpass program specified\b/i.test(text) ||
+		/\ba terminal is required\b/i.test(text) ||
+		/\bis not in the sudoers file\b/i.test(text) ||
+		/\bmay not run sudo\b/i.test(text) ||
+		/\bnot allowed to execute\b/i.test(text) ||
+		/\bsudoers\b/i.test(text)
+	);
+}
+
+function validateScriptPath(scriptPath: string): void {
+	if (!scriptPath || !scriptPath.trim()) {
+		throw new Error('Script path is empty.');
+	}
+
+	if (scriptPath.includes('..')) {
+		throw new Error('Script path contains ".." traversal sequences.');
+	}
+
+	if (!path.isAbsolute(scriptPath)) {
+		throw new Error(`Script path must be absolute, got: ${scriptPath}`);
+	}
+
+	const stat = fs.statSync(scriptPath);
+	if (stat.isDirectory()) {
+		throw new Error(`Script path is a directory, not a file: ${scriptPath}`);
+	}
+}
+
+function getScriptArgs(script: PlanScript): string[] {
+	const candidate =
+		(script as PlanScript & { args?: unknown; scriptArgs?: unknown }).args ??
+		(script as PlanScript & { scriptArgs?: unknown }).scriptArgs;
+	return Array.isArray(candidate) ? candidate.map(String) : [];
 }
 
 /**

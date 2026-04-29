@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { execSync } from 'child_process';
+import { isBinaryMode, isDockerMode } from './installHelpers';
 
 const ENV_FILE_NAME = 'pluton.enc.env';
 
@@ -9,7 +10,14 @@ const ENV_FILE_NAME = 'pluton.enc.env';
  * Get the full path to the pluton.enc.env file in the given data directory.
  */
 export function getEncEnvFilePath(dataDir: string): string {
+	if (isLinuxInstalledRuntime()) {
+		return path.join('/etc/pluton', ENV_FILE_NAME);
+	}
 	return path.join(dataDir, ENV_FILE_NAME);
+}
+
+export function isLinuxInstalledRuntime(): boolean {
+	return os.platform() === 'linux' && isBinaryMode() && !isDockerMode();
 }
 
 /**

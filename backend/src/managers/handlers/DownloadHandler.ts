@@ -32,7 +32,7 @@ export class DownloadHandler {
 			targetPath: zipPath,
 		});
 
-		await mkdir(path.dirname(tempDir), { recursive: true });
+		await mkdir(tempDir, { recursive: true });
 
 		return new Promise((resolve, reject) => {
 			const handlers = this.createHandlers(planId, backupId);

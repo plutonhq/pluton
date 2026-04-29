@@ -1,8 +1,7 @@
-// src/utils/AppPaths.ts
-
 import path from 'path';
 import os from 'os';
 import fs from 'fs'; // Use the synchronous fs module
+import { isLinuxInstalledRuntime } from './linuxHelper';
 
 /**
  * Defines the structure for all application paths.
@@ -31,9 +30,11 @@ class AppPaths {
 	private static instance: AppPaths;
 	private paths!: IAppPaths;
 	private isInitialized = false;
+	private isLinuxRuntime: boolean = false;
 
 	// The constructor is now responsible for immediate, synchronous initialization.
 	private constructor() {
+		this.isLinuxRuntime = isLinuxInstalledRuntime();
 		this.initializeSync();
 	}
 
@@ -108,7 +109,7 @@ class AppPaths {
 		}
 
 		const baseDir = this.getTheBaseDir();
-		const tempBase = os.tmpdir();
+		const tempBase = this.isLinuxRuntime ? baseDir : os.tmpdir();
 
 		this.paths = {
 			base: baseDir,
@@ -118,7 +119,7 @@ class AppPaths {
 			logs: path.join(baseDir, 'logs'),
 			progress: path.join(baseDir, 'progress'),
 			stats: path.join(baseDir, 'stats'),
-			temp: path.join(tempBase, 'pluton'),
+			temp: this.isLinuxRuntime ? path.join(baseDir, 'temp') : path.join(tempBase, 'pluton'),
 			cache: path.join(tempBase, 'pluton', 'cache'),
 			downloads: path.join(tempBase, 'pluton', 'downloads'),
 			restores: path.join(tempBase, 'pluton', 'restores'),
@@ -149,7 +150,9 @@ class AppPaths {
 			} catch (error: any) {
 				if (error.code !== 'EEXIST') {
 					console.error(
-						`FATAL: Could not create directory ${dir}. Please ensure you have the correct permissions (run with sudo/administrator).`
+						this.isLinuxRuntime
+							? `FATAL: Could not create directory ${dir}. Check that the installer created it and that it is owned by the pluton user.`
+							: `FATAL: Could not create directory ${dir}. Please ensure you have the correct permissions (run with sudo/administrator).`
 					);
 					throw error; // Halt execution
 				}
@@ -237,6 +240,9 @@ class AppPaths {
 
 	public getEncEnvFilePath(): string {
 		this.checkInitialized();
+		if (this.isLinuxRuntime) {
+			return path.join('/etc/pluton', 'pluton.enc.env');
+		}
 		return path.join(this.paths.base, 'pluton.enc.env');
 	}
 }

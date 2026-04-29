@@ -3,8 +3,13 @@ import os from 'os';
 import { existsSync, constants } from 'fs';
 import { rm, access } from 'fs/promises';
 import { EventEmitter } from 'events';
-import { getSnapshotByTag, runResticCommand } from '../../utils/restic/restic';
+import { getSnapshotByTag, runHelperRestore, runResticCommand } from '../../utils/restic/restic';
 import { generateResticRepoPath, resticPathToWindows } from '../../utils/restic/helpers';
+import {
+	buildHelperRestoreArgs,
+	buildResticRestoreCommand,
+	createNormalizedRestoreRequest,
+} from '../../utils/restic/restoreArgs';
 import { processManager } from '../ProcessManager';
 import copyFilesNatively from '../../utils/copyFiles';
 import { ResticRestoredFile, ResticSnapshot } from '../../types/restic';
@@ -13,6 +18,13 @@ import { appPaths } from '../../utils/AppPaths';
 import { RestoreOptions } from '../../types/restores';
 import { RestoreStatsManager } from '../RestoreStatsManager';
 import { configService } from '../../services/ConfigService';
+import {
+	canWriteTargetOrParent,
+	isHelperDeniedTarget,
+	isLinuxInstalledRuntime,
+	isPermissionDeniedError,
+	runHelper,
+} from '../../utils/linuxHelper';
 
 export class RestoreHandler {
 	private runningRestores = new Set<string>();
@@ -268,20 +280,54 @@ export class RestoreHandler {
 		await this.updateProgress(planId, restoreId, 'restore', 'RESTORE_OPERATION_START', false);
 		const handlers = this.createHandlers(planId, backupId, restoreId);
 		const resticOpts = this.createResticRestoreArgs(backupId, snapshot.id, options);
+		const helperArgs = this.createHelperRestoreArgs(backupId, snapshot.id, options);
+		const useHelper = await this.shouldUseHelperRestore(options);
 
 		try {
-			const result = await runResticCommand(
-				resticOpts.args,
-				resticOpts.env,
-				handlers.onProgress,
-				handlers.onError,
-				handlers.onComplete,
-				process => processManager.trackProcess(`restore-${restoreId}`, process)
-			);
+			const result = useHelper
+				? await runHelperRestore(
+					helperArgs,
+					handlers.onProgress,
+					handlers.onError,
+					handlers.onComplete,
+					process => processManager.trackProcess(`restore-${restoreId}`, process)
+				)
+				: await runResticCommand(
+					resticOpts.args,
+					resticOpts.env,
+					handlers.onProgress,
+					handlers.onError,
+					handlers.onComplete,
+					process => processManager.trackProcess(`restore-${restoreId}`, process)
+				);
 			await this.updateProgress(planId, restoreId, 'restore', 'RESTORE_OPERATION_COMPLETE', true);
 			return result;
 		} catch (error: any) {
-			const errMsg = error.message || 'Restic restore command failed';
+			let restoreError = error;
+			if (!useHelper && isLinuxInstalledRuntime() && isPermissionDeniedError(error)) {
+				await this.validateHelperRestoreTarget(options);
+				try {
+					const result = await runHelperRestore(
+						helperArgs,
+						handlers.onProgress,
+						handlers.onError,
+						handlers.onComplete,
+						process => processManager.trackProcess(`restore-${restoreId}`, process)
+					);
+					await this.updateProgress(
+						planId,
+						restoreId,
+						'restore',
+						'RESTORE_OPERATION_COMPLETE',
+						true
+					);
+					return result;
+				} catch (helperError) {
+					restoreError = helperError;
+				}
+			}
+
+			const errMsg = restoreError.message || 'Restic restore command failed';
 
 			// On macOS, restic exits with code 1 for non-fatal xattr errors (e.g.,
 			// SIP-protected "com.apple.rootless"). The file data is restored successfully;
@@ -314,7 +360,7 @@ export class RestoreHandler {
 				true,
 				errMsg
 			);
-			throw error;
+			throw restoreError;
 		}
 	}
 
@@ -460,7 +506,20 @@ export class RestoreHandler {
 		}
 
 		// Check if target path is accessible
-		if (options.target && options.target !== '/') {
+		if (isLinuxInstalledRuntime()) {
+			await this.validateHelperRestoreTarget(options);
+			const target = options.target || '/';
+			const targetWritable = await canWriteTargetOrParent(target);
+			if (!targetWritable) {
+				try {
+					await runHelper('version');
+				} catch (error: any) {
+					throw new Error(
+						`Target path requires pluton-helper, but helper is unavailable: ${error.message}`
+					);
+				}
+			}
+		} else if (options.target && options.target !== '/') {
 			try {
 				await access(path.dirname(options.target), constants.W_OK);
 			} catch (error) {
@@ -468,11 +527,13 @@ export class RestoreHandler {
 			}
 		}
 
-		// Check if restic is installed
-		try {
-			await runResticCommand(['version']);
-		} catch (error) {
-			throw new Error(`Restic is not installed.`);
+		// Check if restic is installed when the direct path may be used.
+		if (!isLinuxInstalledRuntime() || (await canWriteTargetOrParent(options.target || '/'))) {
+			try {
+				await runResticCommand(['version']);
+			} catch (error) {
+				throw new Error(`Restic is not installed.`);
+			}
 		}
 
 		return true;
@@ -484,76 +545,32 @@ export class RestoreHandler {
 		options: RestoreOptions,
 		dryRun: boolean = false
 	) {
-		const {
-			storageName,
-			storagePath,
-			encryption,
-			target,
-			overwrite = 'always',
-			delete: deleteOption,
-			includes,
-			excludes,
-			performanceSettings: performance,
-		} = options;
-		const repoPassword = encryption ? configService.config.ENCRYPTION_KEY : '';
-		const repoPath = generateResticRepoPath(storageName, storagePath || '');
-		const overWriteCommand = overwrite == 'always' ? [] : ['--overwrite', overwrite];
-		// Set the target path for the restore operation
-		// If Windows, use a Pluton temp directory as restic may not restore to original paths on Windows.
-		let theTargetPath = target || '/';
-		const restoresDir = appPaths.getRestoresDir();
-		const winRestorePath = path.join(restoresDir, 'backup-' + backupId);
-		if (theTargetPath === '/' && process.platform === 'win32') {
-			theTargetPath = winRestorePath;
-		}
-		const resticEnv: Record<string, string> = {};
-		const resticArgs = [
-			'restore',
-			'-r',
-			repoPath,
+		const repoPassword = options.encryption ? configService.config.ENCRYPTION_KEY : '';
+		const request = createNormalizedRestoreRequest(
+			backupId,
 			snapshotId,
-			'--target',
-			theTargetPath,
-			...overWriteCommand,
-			'--verbose=2',
-			'--json',
-		];
+			options,
+			repoPassword,
+			dryRun
+		);
+		return buildResticRestoreCommand(request);
+	}
 
-		if (includes && includes.length > 0) {
-			includes.forEach(item => {
-				resticArgs.push('--include', item);
-			});
-		}
-		if (excludes && excludes.length > 0) {
-			excludes.forEach(item => {
-				resticArgs.push('--exclude', item);
-			});
-		}
-		if (deleteOption) {
-			resticArgs.push('--delete');
-		}
-
-		if (performance) {
-			if (performance.maxProcessor) resticEnv.GOMAXPROCS = performance.maxProcessor.toString();
-			if (performance.transfers) {
-				resticEnv['RCLONE_TRANSFERS'] = performance.transfers.toString();
-			}
-			if (performance.bufferSize) {
-				resticEnv['RCLONE_BUFFER_SIZE'] = performance.bufferSize;
-			}
-			if (performance.multiThreadStream) {
-				resticEnv['RCLONE_MULTI_THREAD_STREAMS'] = performance.multiThreadStream.toString();
-			}
-		}
-
-		if (!encryption) {
-			resticArgs.push('--insecure-no-password');
-		}
-
-		if (dryRun) {
-			resticArgs.push('--dry-run');
-		}
-		return { args: resticArgs, env: { RESTIC_PASSWORD: repoPassword, ...resticEnv } };
+	createHelperRestoreArgs(
+		backupId: string,
+		snapshotId: string,
+		options: RestoreOptions,
+		dryRun: boolean = false
+	) {
+		const repoPassword = options.encryption ? configService.config.ENCRYPTION_KEY : '';
+		const request = createNormalizedRestoreRequest(
+			backupId,
+			snapshotId,
+			options,
+			repoPassword,
+			dryRun
+		);
+		return buildHelperRestoreArgs(request);
 	}
 
 	async dryRestore(
@@ -563,19 +580,24 @@ export class RestoreHandler {
 	): Promise<{ success: boolean; result: string | { stats: any; files: ResticRestoredFile[] } }> {
 		try {
 			const resticOpts = this.createResticRestoreArgs(backupId, snapshotId, options, true);
-			const dryRes = await runResticCommand(resticOpts.args, resticOpts.env);
+			const helperArgs = this.createHelperRestoreArgs(backupId, snapshotId, options, true);
+			let dryRes: string;
 
-			const jsonLines = dryRes.split('\n').filter(line => line.trim());
-			const parsedLines = jsonLines.map(line => JSON.parse(line));
-			const stats = parsedLines.find(item => item.message_type === 'summary');
+			if (await this.shouldUseHelperRestore(options)) {
+				dryRes = await runHelperRestore(helperArgs);
+			} else {
+				try {
+					dryRes = await runResticCommand(resticOpts.args, resticOpts.env);
+				} catch (error) {
+					if (!isLinuxInstalledRuntime() || !isPermissionDeniedError(error)) {
+						throw error;
+					}
+					await this.validateHelperRestoreTarget(options);
+					dryRes = await runHelperRestore(helperArgs);
+				}
+			}
 
-			const files: ResticRestoredFile[] = parsedLines
-				.filter(item => item.message_type === 'verbose_status')
-				.map(item => ({
-					path: process.platform === 'win32' ? resticPathToWindows(item.item) : item.item,
-					size: parseInt(item.size, 10),
-					action: item.action,
-				}));
+			const { stats, files } = this.parseDryRestoreResult(dryRes);
 
 			return {
 				success: true,
@@ -595,6 +617,46 @@ export class RestoreHandler {
 				result: error?.message || 'Failed to get dry run results',
 			};
 		}
+	}
+
+	private async shouldUseHelperRestore(options: RestoreOptions): Promise<boolean> {
+		if (!isLinuxInstalledRuntime()) {
+			return false;
+		}
+
+		await this.validateHelperRestoreTarget(options);
+		return !(await canWriteTargetOrParent(options.target || '/'));
+	}
+
+	private async validateHelperRestoreTarget(options: RestoreOptions): Promise<void> {
+		const target = options.target || '/';
+		const allowRootTarget = target === '/' && ((options.includes?.length || 0) > 0 || (options.sources?.length || 0) > 0);
+		if (isHelperDeniedTarget(target, allowRootTarget)) {
+			throw new Error(
+				`Restore target is not allowed for privileged restore: ${target}. Choose a non-system directory such as /srv/pluton-restore.`
+			);
+		}
+		if (target === '/' && !allowRootTarget) {
+			throw new Error(
+				"Privileged restore to '/' requires at least one included source path so the helper can scope the restore."
+			);
+		}
+	}
+
+	private parseDryRestoreResult(dryRes: string): { stats: any; files: ResticRestoredFile[] } {
+		const jsonLines = dryRes.split('\n').filter(line => line.trim());
+		const parsedLines = jsonLines.map(line => JSON.parse(line));
+		const stats = parsedLines.find(item => item.message_type === 'summary');
+
+		const files: ResticRestoredFile[] = parsedLines
+			.filter(item => item.message_type === 'verbose_status')
+			.map(item => ({
+				path: process.platform === 'win32' ? resticPathToWindows(item.item) : item.item,
+				size: parseInt(item.size, 10),
+				action: item.action,
+			}));
+
+		return { stats, files };
 	}
 
 	async cancel(planId: string, restoreId: string) {
@@ -630,7 +692,7 @@ export class RestoreHandler {
 					error: data.toString(),
 				});
 			},
-			onComplete: (code: number) => {
+			onComplete: (code: number | null) => {
 				this.emitter.emit('restore_complete', {
 					backupId,
 					restoreId,

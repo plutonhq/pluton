@@ -109,6 +109,7 @@ export type PlanScript = {
 	logOutput: boolean;
 	timeout?: number;
 	abortOnError?: boolean; // only when event type is onBackupStart
+	runAsRoot?: boolean;
 };
 
 export type PlanPerformanceSettings = {

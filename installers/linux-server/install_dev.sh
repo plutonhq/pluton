@@ -1,10 +1,11 @@
 #!/bin/bash
-# Pluton Server Remote Installation Script
-# Downloads and installs Pluton from the official CDN
-# Usage: curl -sSL https://dl.usepluton.com/server/scripts/install.sh | sudo bash
+# Pluton Server Remote Installation Script for local dev archives
+# Installs Pluton from a locally available tar.gz archive
+# Usage: sudo bash install_dev.sh --archive-path /path/to/pluton-linux-x64.tar.gz
 #
 # For non-interactive install:
-#   curl -sSL https://dl.usepluton.com/server/scripts/install.sh | sudo bash -s -- \
+#   sudo bash install_dev.sh \
+#       --archive-path /path/to/pluton-linux-x64.tar.gz \
 #       --port 5173 --encryption-key "key" --user admin --password "pass" --non-interactive
 
 set -e
@@ -19,11 +20,7 @@ NC='\033[0m' # No Color
 # Product name
 PRODUCT_NAME="Pluton"
 
-# GitHub releases URL
-GITHUB_REPO="plutonhq/pluton"
-GITHUB_RELEASES_URL="https://github.com/${GITHUB_REPO}/releases"
-
-# CDN base URL (for installer scripts only)
+# CDN base URL
 CDN_BASE_URL="https://dl.usepluton.com/server"
 HELPER_BASE_URL="https://dl.usepluton.com/deps/pluton-helper/linux-helper"
 
@@ -47,6 +44,7 @@ DEFAULT_PORT=5173
 DEFAULT_MAX_CONCURRENT=2
 
 # CLI argument variables
+CLI_ARCHIVE_PATH=""
 CLI_PORT=""
 CLI_MAX_CONCURRENT=""
 CLI_ENCRYPTION_KEY=""
@@ -55,22 +53,25 @@ CLI_USER_PASSWORD=""
 CLI_CONFIG_FILE=""
 CLI_UPGRADE=false
 CLI_NON_INTERACTIVE=false
-CLI_VERSION="latest"
+
+# Extracted archive directory
+EXTRACTED_SOURCE_DIR=""
 
 # Print banner
 print_banner() {
     echo -e "${BLUE}"
     echo "╔═══════════════════════════════════════════════════════════╗"
-    echo "║      ☄️ ${PRODUCT_NAME} Backup Service - Remote Installer ║"
+    echo "║    ☄️ ${PRODUCT_NAME} Backup Service - Dev Installer      ║"
     echo "╚═══════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 }
 
 # Print usage
 print_usage() {
-    echo "Usage: curl -sSL https://dl.usepluton.com/server/scripts/install.sh | sudo bash -s -- [OPTIONS]"
+    echo "Usage: sudo bash install_dev.sh [OPTIONS]"
     echo ""
     echo "Options:"
+    echo "  --archive-path <path>      Local path to Pluton dev tar.gz archive"
     echo "  --port <port>              Server port (default: 5173)"
     echo "  --max-concurrent <num>     Max concurrent backups (default: 2)"
     echo "  --encryption-key <key>     Encryption key for backups (min 12 chars)"
@@ -79,26 +80,30 @@ print_usage() {
     echo "  --config <file>            Path to .env config file"
     echo "  --upgrade                  Upgrade existing installation (preserve data)"
     echo "  --non-interactive          Run without prompts (requires all credentials)"
-    echo "  --version <version>        Specific version to install (default: latest)"
     echo "  --help                     Show this help message"
     echo ""
     echo "Examples:"
     echo "  Interactive install:"
-    echo "    curl -sSL https://dl.usepluton.com/server/scripts/install.sh | sudo bash"
+    echo "    sudo bash install_dev.sh --archive-path /tmp/pluton-linux-x64.tar.gz"
     echo ""
     echo "  Non-interactive install:"
-    echo "    curl -sSL https://dl.usepluton.com/server/scripts/install.sh | sudo bash -s -- \\"
-    echo "        --port 5173 --encryption-key 'mysecretkey123' \\"
+    echo "    sudo bash install_dev.sh \\" 
+    echo "        --archive-path /tmp/pluton-linux-x64.tar.gz \\" 
+    echo "        --port 5173 --encryption-key 'mysecretkey123' \\" 
     echo "        --user admin --password 'mypassword' --non-interactive"
     echo ""
     echo "  Upgrade existing installation:"
-    echo "    curl -sSL https://dl.usepluton.com/server/scripts/install.sh | sudo bash -s -- --upgrade"
+    echo "    sudo bash install_dev.sh --archive-path /tmp/pluton-linux-x64.tar.gz --upgrade"
 }
 
 # Parse command line arguments
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case $1 in
+            --archive-path)
+                CLI_ARCHIVE_PATH="$2"
+                shift 2
+                ;;
             --port)
                 CLI_PORT="$2"
                 shift 2
@@ -131,10 +136,6 @@ parse_args() {
                 CLI_NON_INTERACTIVE=true
                 shift
                 ;;
-            --version)
-                CLI_VERSION="$2"
-                shift 2
-                ;;
             --help)
                 print_usage
                 exit 0
@@ -151,13 +152,13 @@ parse_args() {
 # Check for required commands
 check_dependencies() {
     local missing=()
-    
+
     for cmd in curl tar setcap; do
         if ! command -v $cmd &> /dev/null; then
             missing+=($cmd)
         fi
     done
-    
+
     if [ ${#missing[@]} -gt 0 ]; then
         echo -e "${RED}Error: Missing required commands: ${missing[*]}${NC}"
         echo "Please install them and try again."
@@ -294,26 +295,26 @@ check_root() {
 # Check if this is an upgrade
 check_existing_installation() {
     if systemctl is-active --quiet pluton 2>/dev/null || [ -f "${ENV_FILE}" ]; then
-        return 0  # Existing installation found
+        return 0
     fi
-    return 1  # No existing installation
+    return 1
 }
 
 # Load config from file
 load_config_file() {
     local config_file="$1"
-    
+
     if [ ! -f "$config_file" ]; then
         echo -e "${RED}Error: Config file not found: $config_file${NC}"
         exit 1
     fi
-    
+
     echo -e "${GREEN}Loading configuration from: ${config_file}${NC}"
-    
+
     set -a
     source "$config_file"
     set +a
-    
+
     [ -n "${PLUTON_ENCRYPTION_KEY:-}" ] && CLI_ENCRYPTION_KEY="$PLUTON_ENCRYPTION_KEY"
     [ -n "${PLUTON_USER_NAME:-}" ] && CLI_USER_NAME="$PLUTON_USER_NAME"
     [ -n "${PLUTON_USER_PASSWORD:-}" ] && CLI_USER_PASSWORD="$PLUTON_USER_PASSWORD"
@@ -323,13 +324,10 @@ load_config_file() {
 
 # Load existing credentials (for upgrade)
 load_existing_credentials() {
-    # Read pluton.env line-by-line without shell expansion (safe for metacharacters)
     if [ -f "${ENV_FILE}" ]; then
         echo -e "${GREEN}Loading existing credentials from: ${ENV_FILE}${NC}"
         while IFS='=' read -r key value; do
-            # Skip comments and blank lines
             case "$key" in '#'*|'') continue;; esac
-            # Trim leading/trailing whitespace from key
             key=$(echo "$key" | xargs)
             case "$key" in
                 PLUTON_ENCRYPTION_KEY) CLI_ENCRYPTION_KEY="$value" ;;
@@ -339,7 +337,6 @@ load_existing_credentials() {
         done < "${ENV_FILE}"
     fi
 
-    # Read encryption key from /etc/pluton/pluton.enc.env (current location)
     if [ -f "${ENC_ENV_FILE}" ]; then
         echo -e "${GREEN}Loading encryption key from: ${ENC_ENV_FILE}${NC}"
         while IFS='=' read -r key value; do
@@ -355,38 +352,53 @@ load_existing_credentials() {
             [ "$key" = "PLUTON_ENCRYPTION_KEY" ] || [ "$key" = "ENCRYPTION_KEY" ] && CLI_ENCRYPTION_KEY="$value"
         done < "${DATA_DIR}/pluton.enc.env"
     fi
-    
+
     if [ -f "${DATA_DIR}/config/config.json" ]; then
         local port=$(grep -o '"SERVER_PORT"[[:space:]]*:[[:space:]]*[0-9]*' "${DATA_DIR}/config/config.json" 2>/dev/null | grep -o '[0-9]*' || echo "")
         local max_concurrent=$(grep -o '"MAX_CONCURRENT_BACKUPS"[[:space:]]*:[[:space:]]*[0-9]*' "${DATA_DIR}/config/config.json" 2>/dev/null | grep -o '[0-9]*' || echo "")
-        
+
         [ -n "$port" ] && CLI_PORT="$port"
         [ -n "$max_concurrent" ] && CLI_MAX_CONCURRENT="$max_concurrent" || true
     fi
 }
 
+# Prompt for archive path (interactive mode)
+prompt_archive_path() {
+    echo -e "${BLUE}Dev Archive${NC}"
+    echo "Please enter the local path to the Pluton dev archive (.tar.gz)."
+    echo ""
+
+    while [ -z "$CLI_ARCHIVE_PATH" ]; do
+        printf "Archive Path: "
+        read CLI_ARCHIVE_PATH < /dev/tty
+        if [ -z "$CLI_ARCHIVE_PATH" ]; then
+            echo -e "${RED}Error: Archive path is required.${NC}"
+        fi
+    done
+    echo ""
+}
+
 # Prompt for configuration (interactive mode)
-# Note: We read from /dev/tty to support curl | bash usage
 prompt_configuration() {
     echo -e "${BLUE}Configuration Setup${NC}"
     echo "Press Enter to accept default values."
     echo ""
-    
+
     local default_port="${CLI_PORT:-$DEFAULT_PORT}"
     printf "Server Port [${default_port}]: "
     read input_port < /dev/tty
     CLI_PORT="${input_port:-$default_port}"
-    
+
     if ! [[ "$CLI_PORT" =~ ^[0-9]+$ ]] || [ "$CLI_PORT" -lt 1024 ] || [ "$CLI_PORT" -gt 65535 ]; then
         echo -e "${RED}Error: Invalid port. Must be between 1024 and 65535.${NC}"
         exit 1
     fi
-    
+
     local default_max="${CLI_MAX_CONCURRENT:-$DEFAULT_MAX_CONCURRENT}"
     printf "Max Concurrent Backups [${default_max}]: "
     read input_max < /dev/tty
     CLI_MAX_CONCURRENT="${input_max:-$default_max}"
-    
+
     if ! [[ "$CLI_MAX_CONCURRENT" =~ ^[0-9]+$ ]] || [ "$CLI_MAX_CONCURRENT" -lt 1 ] || [ "$CLI_MAX_CONCURRENT" -gt 10 ]; then
         echo -e "${RED}Error: Invalid value. Must be between 1 and 10.${NC}"
         exit 1
@@ -394,13 +406,12 @@ prompt_configuration() {
 }
 
 # Prompt for credentials (interactive mode)
-# Note: We read from /dev/tty to support curl | bash usage
 prompt_credentials() {
     echo ""
     echo -e "${BLUE}Security Credentials${NC}"
     echo "These credentials are required for ${PRODUCT_NAME} to function."
     echo ""
-    
+
     while [ -z "$CLI_ENCRYPTION_KEY" ] || [ ${#CLI_ENCRYPTION_KEY} -lt 12 ]; do
         printf "Encryption Key (min 12 characters): "
         read CLI_ENCRYPTION_KEY < /dev/tty
@@ -409,7 +420,7 @@ prompt_credentials() {
             CLI_ENCRYPTION_KEY=""
         fi
     done
-    
+
     while [ -z "$CLI_USER_NAME" ]; do
         printf "Admin Username: "
         read CLI_USER_NAME < /dev/tty
@@ -417,56 +428,77 @@ prompt_credentials() {
             echo -e "${RED}Error: Username is required.${NC}"
         fi
     done
-    
+
     while true; do
         printf "Admin Password (min 6 characters): "
-        # Disable echo for password input, operating on /dev/tty
         stty -echo < /dev/tty
         read CLI_USER_PASSWORD < /dev/tty
         stty echo < /dev/tty
         echo ""
-        
+
         if [ -z "$CLI_USER_PASSWORD" ]; then
             echo -e "${RED}Error: Password is required.${NC}"
             continue
         fi
-        
+
         if [ ${#CLI_USER_PASSWORD} -lt 6 ]; then
             echo -e "${RED}Error: Password must be at least 6 characters.${NC}"
             CLI_USER_PASSWORD=""
             continue
         fi
-        
+
         printf "Confirm Admin Password: "
         stty -echo < /dev/tty
         read CLI_USER_PASSWORD_CONFIRM < /dev/tty
         stty echo < /dev/tty
         echo ""
-        
+
         if [ "$CLI_USER_PASSWORD" != "$CLI_USER_PASSWORD_CONFIRM" ]; then
             echo -e "${RED}Error: Passwords do not match. Please try again.${NC}"
             CLI_USER_PASSWORD=""
             continue
         fi
-        
+
         break
     done
+}
+
+# Validate archive path
+validate_archive_path() {
+    local errors=0
+
+    if [ -z "$CLI_ARCHIVE_PATH" ]; then
+        echo -e "${RED}Error: Archive path is required (use --archive-path).${NC}"
+        errors=$((errors + 1))
+    elif [ ! -f "$CLI_ARCHIVE_PATH" ]; then
+        echo -e "${RED}Error: Archive file not found: ${CLI_ARCHIVE_PATH}${NC}"
+        errors=$((errors + 1))
+    elif [ ! -r "$CLI_ARCHIVE_PATH" ]; then
+        echo -e "${RED}Error: Archive file is not readable: ${CLI_ARCHIVE_PATH}${NC}"
+        errors=$((errors + 1))
+    fi
+
+    return $errors
 }
 
 # Validate all required values are set
 validate_configuration() {
     local errors=0
-    
+
+    if ! validate_archive_path; then
+        errors=$((errors + 1))
+    fi
+
     if [ -z "$CLI_ENCRYPTION_KEY" ] || [ ${#CLI_ENCRYPTION_KEY} -lt 12 ]; then
         echo -e "${RED}Error: Encryption key is required (min 12 characters).${NC}"
         errors=$((errors + 1))
     fi
-    
+
     if [ -z "$CLI_USER_NAME" ]; then
         echo -e "${RED}Error: Username is required.${NC}"
         errors=$((errors + 1))
     fi
-    
+
     if [ -z "$CLI_USER_PASSWORD" ]; then
         echo -e "${RED}Error: Password is required.${NC}"
         errors=$((errors + 1))
@@ -474,13 +506,13 @@ validate_configuration() {
         echo -e "${RED}Error: Password must be at least 6 characters.${NC}"
         errors=$((errors + 1))
     fi
-    
+
     if [ $errors -gt 0 ]; then
         echo ""
         echo "Use --help for usage information."
         exit 1
     fi
-    
+
     CLI_PORT="${CLI_PORT:-$DEFAULT_PORT}"
     CLI_MAX_CONCURRENT="${CLI_MAX_CONCURRENT:-$DEFAULT_MAX_CONCURRENT}"
 }
@@ -493,92 +525,67 @@ stop_existing_service() {
     fi
 }
 
-# Download and extract files
-download_files() {
+# Extract files from local archive
+extract_archive() {
     local arch="$1"
-    local version="$2"
-    local download_url
-    
-    # Build download URL based on version
-    if [ "$version" = "latest" ]; then
-        download_url="${GITHUB_RELEASES_URL}/latest/download/pluton-linux-${arch}.tar.gz"
-    else
-        # Support both "v1.0.0" and "1.0.0" version formats
-        local tag_version="$version"
-        if [[ ! "$version" =~ ^v && ! "$version" =~ ^pluton-v ]]; then
-            tag_version="pluton-v${version}"
-        fi
-        download_url="${GITHUB_RELEASES_URL}/download/${tag_version}/pluton-linux-${arch}.tar.gz"
-    fi
-    
-    local archive_path="${TMP_DIR}/pluton-linux-${arch}.tar.gz"
-    
-    echo -e "${BLUE}Downloading ${PRODUCT_NAME} (${arch}, ${version})...${NC}"
-    echo "  URL: ${download_url}"
-    
-    # Download with progress
-    if ! curl -fSL --progress-bar -o "${archive_path}" "${download_url}"; then
-        echo -e "${RED}Error: Failed to download from ${download_url}${NC}"
-        echo ""
-        echo "Please check:"
-        echo "  - Your internet connection"
-        echo "  - The version exists: ${version}"
-        echo "  - The architecture is supported: ${arch}"
+    local archive_path="$2"
+
+    echo -e "${BLUE}Installing ${PRODUCT_NAME} from local dev archive...${NC}"
+    echo "  Archive: ${archive_path}"
+
+    if [ ! -f "${archive_path}" ]; then
+        echo -e "${RED}Error: Archive file not found: ${archive_path}${NC}"
         exit 1
     fi
-    
+
     echo "  Extracting..."
-    tar -xzf "${archive_path}" -C "${TMP_DIR}"
-    
-    # The archive should extract to pluton-linux-{arch}/
-    if [ ! -d "${TMP_DIR}/pluton-linux-${arch}" ]; then
-        # Try without architecture suffix (in case archive extracts to pluton/)
-        if [ -d "${TMP_DIR}/pluton" ]; then
-            mv "${TMP_DIR}/pluton" "${TMP_DIR}/pluton-linux-${arch}"
-        else
-            echo -e "${RED}Error: Unexpected archive structure${NC}"
-            exit 1
-        fi
+    if ! tar -xzf "${archive_path}" -C "${TMP_DIR}"; then
+        echo -e "${RED}Error: Failed to extract archive: ${archive_path}${NC}"
+        exit 1
     fi
-    
-    echo -e "  ${GREEN}✓${NC} Download complete"
+
+    if [ -d "${TMP_DIR}/pluton-linux-${arch}" ]; then
+        EXTRACTED_SOURCE_DIR="${TMP_DIR}/pluton-linux-${arch}"
+    elif [ -d "${TMP_DIR}/pluton" ]; then
+        EXTRACTED_SOURCE_DIR="${TMP_DIR}/pluton"
+    else
+        echo -e "${RED}Error: Unexpected archive structure${NC}"
+        echo "Expected the archive to extract to pluton-linux-${arch}/ or pluton/."
+        exit 1
+    fi
+
+    echo -e "  ${GREEN}✓${NC} Archive extracted"
 }
 
 # Install files
 install_files() {
-    local arch="$1"
-    local source_dir="${TMP_DIR}/pluton-linux-${arch}"
-    
+    local source_dir="$1"
+
     echo -e "${BLUE}Installing ${PRODUCT_NAME}...${NC}"
-    
-    # Create directories
+
     echo "  Creating installation directory: ${INSTALL_DIR}"
     mkdir -p "${INSTALL_DIR}"
     mkdir -p "${INSTALL_DIR}/binaries"
     mkdir -p "${INSTALL_DIR}/node_modules"
     mkdir -p "${INSTALL_DIR}/drizzle"
-    
+
     ensure_runtime_ownership
-    
-    # Copy executable
+
     echo "  Copying executable..."
     cp "${source_dir}/pluton" "${INSTALL_DIR}/pluton"
     chmod +x "${INSTALL_DIR}/pluton"
-    
-    # Copy binaries
+
     echo "  Copying binaries..."
     if [ -d "${source_dir}/binaries" ]; then
         cp -r "${source_dir}/binaries"/* "${INSTALL_DIR}/binaries/"
         find "${INSTALL_DIR}/binaries" -type f -exec chmod +x {} \;
     fi
-    
-    # Copy native modules
+
     echo "  Copying native modules..."
     if [ -d "${source_dir}/node_modules" ]; then
         cp -r "${source_dir}/node_modules"/* "${INSTALL_DIR}/node_modules/"
     fi
-    
-    # Copy drizzle migrations
+
     echo "  Copying database migrations..."
     if [ -d "${source_dir}/drizzle" ]; then
         cp -r "${source_dir}/drizzle"/* "${INSTALL_DIR}/drizzle/"
@@ -590,8 +597,7 @@ install_files() {
     find "${INSTALL_DIR}" -type f -exec chmod 644 {} \;
     chmod 755 "${INSTALL_DIR}/pluton"
     find "${INSTALL_DIR}/binaries" -type f -exec chmod 755 {} \; 2>/dev/null || true
-    
-    # Copy documentation
+
     [ -f "${source_dir}/LICENSE" ] && cp "${source_dir}/LICENSE" "${INSTALL_DIR}/" || true
     [ -f "${source_dir}/README.md" ] && cp "${source_dir}/README.md" "${INSTALL_DIR}/" || true
 }
@@ -599,8 +605,6 @@ install_files() {
 # Write configuration files
 write_configuration() {
     echo "  Writing credentials to ${ENV_FILE}..."
-    # Use quoted heredoc delimiter to prevent shell expansion of values,
-    # then write variable values via printf to avoid injection.
     {
         printf '# %s Server Credentials\n' "${PRODUCT_NAME}"
         printf '# Generated by installer on %s\n' "$(date)"
@@ -611,7 +615,6 @@ write_configuration() {
     chown "${PLUTON_USER}:${PLUTON_GROUP}" "${ENV_FILE}"
     chmod 600 "${ENV_FILE}"
 
-    # Write encryption key to config directory (created once, never overwritten)
     if [ ! -f "${ENC_ENV_FILE}" ] && [ -f "${DATA_DIR}/pluton.enc.env" ]; then
         echo "  Migrating legacy encryption key to ${ENC_ENV_FILE}..."
         mv "${DATA_DIR}/pluton.enc.env" "${ENC_ENV_FILE}"
@@ -620,7 +623,7 @@ write_configuration() {
     if [ ! -f "${ENC_ENV_FILE}" ]; then
         echo "  Writing encryption key to ${ENC_ENV_FILE}..."
         {
-            printf '# %s Encryption Key — DO NOT SHARE\n' "${PRODUCT_NAME}"
+            printf '# %s Encryption Key - DO NOT SHARE\n' "${PRODUCT_NAME}"
             printf '# This file is created once and never overwritten by the installer.\n'
             printf '# Generated by installer on %s\n' "$(date)"
             printf 'PLUTON_ENCRYPTION_KEY=%s\n' "${CLI_ENCRYPTION_KEY}"
@@ -630,7 +633,7 @@ write_configuration() {
     fi
     chown "${PLUTON_USER}:${PLUTON_GROUP}" "${ENC_ENV_FILE}"
     chmod 600 "${ENC_ENV_FILE}"
-    
+
     local config_json="${DATA_DIR}/config/config.json"
     if [ ! -f "$config_json" ] || [ "$CLI_UPGRADE" = false ]; then
         echo "  Writing configuration to ${config_json}..."
@@ -650,7 +653,7 @@ EOF
 # Install systemd service
 install_service() {
     echo "  Creating systemd service..."
-    
+
     cat > "${SERVICE_FILE}" << EOF
 [Unit]
 Description=${PRODUCT_NAME} Backup Service
@@ -680,8 +683,7 @@ Environment="NODE_ENV=production"
 [Install]
 WantedBy=multi-user.target
 EOF
-    
-    # Download and install uninstall script
+
     echo "  Installing uninstall script..."
     curl -fsSL -o "${INSTALL_DIR}/uninstall.sh" "${CDN_BASE_URL}/scripts/uninstall.sh" 2>/dev/null || \
     cat > "${INSTALL_DIR}/uninstall.sh" << 'UNINSTALL_EOF'
@@ -743,7 +745,7 @@ echo -e "${GREEN}Pluton uninstalled successfully!${NC}"
 echo "System user 'pluton' was preserved."
 UNINSTALL_EOF
     chmod +x "${INSTALL_DIR}/uninstall.sh"
-    
+
     echo "  Enabling service..."
     systemctl daemon-reload
     systemctl enable pluton
@@ -754,7 +756,7 @@ start_service() {
     echo "  Starting service..."
     systemctl start pluton
     sleep 3
-    
+
     if systemctl is-active --quiet pluton; then
         return 0
     else
@@ -765,7 +767,7 @@ start_service() {
 # Print success message
 print_success() {
     local install_type="$1"
-    
+
     echo ""
     echo -e "${GREEN}╔═══════════════════════════════════════════════════════════╗${NC}"
     if [ "$install_type" = "upgrade" ]; then
@@ -807,11 +809,11 @@ main() {
     print_banner
     check_root
     check_dependencies
-    
+
     local arch=$(detect_architecture)
     echo -e "Detected architecture: ${GREEN}${arch}${NC}"
     echo ""
-    
+
     local is_upgrade=false
     if check_existing_installation; then
         if [ "$CLI_UPGRADE" = true ]; then
@@ -834,14 +836,18 @@ main() {
         fi
         stop_existing_service
     fi
-    
+
     if [ -n "$CLI_CONFIG_FILE" ]; then
         load_config_file "$CLI_CONFIG_FILE"
     fi
-    
+
     if [ "$CLI_NON_INTERACTIVE" = true ]; then
         validate_configuration
     else
+        if [ -z "$CLI_ARCHIVE_PATH" ]; then
+            prompt_archive_path
+        fi
+
         if [ "$is_upgrade" = false ]; then
             prompt_configuration
             if [ -z "$CLI_ENCRYPTION_KEY" ] || [ -z "$CLI_USER_NAME" ] || [ -z "$CLI_USER_PASSWORD" ]; then
@@ -855,17 +861,17 @@ main() {
         fi
         validate_configuration
     fi
-    
+
     echo ""
-    
-    download_files "$arch" "$CLI_VERSION"
+
+    extract_archive "$arch" "$CLI_ARCHIVE_PATH"
     create_pluton_user
-    install_files "$arch"
+    install_files "$EXTRACTED_SOURCE_DIR"
     create_tool_wrappers "$arch"
     install_pluton_helper "$arch"
     write_configuration
     install_service
-    
+
     if start_service; then
         if [ "$is_upgrade" = true ]; then
             print_success "upgrade"

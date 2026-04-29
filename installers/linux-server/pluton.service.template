@@ -6,11 +6,14 @@ After=network.target
 Type=simple
 ExecStart=/opt/pluton/pluton
 WorkingDirectory=/var/lib/pluton
-User=root
+User=pluton
+Group=pluton
 Restart=on-failure
 RestartSec=5
 StandardOutput=append:/var/lib/pluton/logs/stdout.log
 StandardError=append:/var/lib/pluton/logs/stderr.log
+CapabilityBoundingSet=CAP_DAC_READ_SEARCH CAP_DAC_OVERRIDE CAP_CHOWN CAP_FOWNER CAP_SETUID CAP_SETGID
+AmbientCapabilities=CAP_DAC_READ_SEARCH
 
 # Load sensitive credentials from environment files
 EnvironmentFile=/etc/pluton/pluton.env

@@ -7,6 +7,7 @@ const mockWriteFileSync = jest.fn();
 const mockMkdirSync = jest.fn();
 const mockGetConfigDir = jest.fn() as jest.MockedFunction<() => string>;
 const mockGetDataDir = jest.fn() as jest.MockedFunction<() => string>;
+const mockGetEncEnvFilePath = jest.fn() as jest.MockedFunction<() => string>;
 const mockDotenvConfig = jest.fn();
 
 // Mock fs module
@@ -23,6 +24,7 @@ jest.mock('../../src/utils/AppPaths', () => ({
 	appPaths: {
 		getConfigDir: mockGetConfigDir,
 		getDataDir: mockGetDataDir,
+		getEncEnvFilePath: mockGetEncEnvFilePath,
 	},
 }));
 
@@ -74,10 +76,12 @@ describe('ConfigService', () => {
 		mockDotenvConfig.mockReset();
 		mockGetConfigDir.mockReset();
 		mockGetDataDir.mockReset();
+		mockGetEncEnvFilePath.mockReset();
 
 		// Mock appPaths to return a predictable directory
 		mockGetConfigDir.mockReturnValue('/fake/config/dir');
 		mockGetDataDir.mockReturnValue('/fake/data/dir');
+		mockGetEncEnvFilePath.mockReturnValue('/fake/data/dir/pluton.enc.env');
 
 		// Clear the module cache to reset the singleton
 		jest.resetModules();

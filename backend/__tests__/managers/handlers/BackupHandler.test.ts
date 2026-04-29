@@ -123,8 +123,9 @@ describe('BackupHandler', () => {
 
 		process.env.ENCRYPTION_KEY = 'test-key';
 
-		// Mock fs.promises.access
+		// Mock filesystem checks used by canRun.
 		jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
+		jest.spyOn(fs.promises, 'stat').mockResolvedValue({} as any);
 
 		// Simulate the event listener that responds to backup_init by emitting backup_created.
 		// This mirrors what BackupEventService.onBackupInit does in production.
@@ -545,7 +546,7 @@ describe('BackupHandler', () => {
 
 		it('should throw error when source paths not accessible', async () => {
 			jest.spyOn(os, 'freemem').mockReturnValue(1024 * 1024 * 1024);
-			jest.spyOn(fs.promises, 'access').mockRejectedValue(new Error('Path not found'));
+			jest.spyOn(fs.promises, 'stat').mockRejectedValue(new Error('Path not found'));
 
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
 			await expect(handler.canRun(baseOptions, resticArgsAndEnv)).rejects.toThrow(
@@ -1083,7 +1084,7 @@ describe('BackupHandler', () => {
 
 		it('should list all inaccessible paths in error message', async () => {
 			jest.spyOn(os, 'freemem').mockReturnValue(1024 * 1024 * 1024);
-			jest.spyOn(fs.promises, 'access').mockRejectedValue(new Error('Not accessible'));
+			jest.spyOn(fs.promises, 'stat').mockRejectedValue(new Error('Not accessible'));
 
 			const optionsMultiplePaths = {
 				...baseOptions,
@@ -1104,7 +1105,7 @@ describe('BackupHandler', () => {
 
 		it('should check each source path individually', async () => {
 			jest.spyOn(os, 'freemem').mockReturnValue(1024 * 1024 * 1024);
-			const accessSpy = jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
+			const statSpy = jest.spyOn(fs.promises, 'stat').mockResolvedValue({} as any);
 
 			const optionsMultiplePaths = {
 				...baseOptions,
@@ -1120,9 +1121,9 @@ describe('BackupHandler', () => {
 			);
 			await handler.canRun(optionsMultiplePaths, resticArgsAndEnv);
 
-			expect(accessSpy).toHaveBeenCalledTimes(2);
-			expect(accessSpy).toHaveBeenCalledWith('C:\\path1', fs.constants.R_OK);
-			expect(accessSpy).toHaveBeenCalledWith('C:\\path2', fs.constants.R_OK);
+			expect(statSpy).toHaveBeenCalledTimes(2);
+			expect(statSpy).toHaveBeenCalledWith('C:\\path1');
+			expect(statSpy).toHaveBeenCalledWith('C:\\path2');
 		});
 	});
 

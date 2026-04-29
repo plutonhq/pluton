@@ -1,6 +1,6 @@
 import classes from './PlanSettings.module.scss';
 import { useState } from 'react';
-import { NewPlanSettings } from '../../../@types/plans';
+import { NewPlanSettings, PlanScript } from '../../../@types/plans';
 import Icon from '../../common/Icon/Icon';
 import Toggle from '../../common/form/Toggle/Toggle';
 import { secondsToMinutes } from '../../../utils/helpers';
@@ -45,7 +45,7 @@ const PlanScriptsSettings = ({
       onBackupFailure: [],
       onBackupComplete: [],
    },
-   platform,
+   platform = '',
    onUpdate,
 }: PlanScriptsSettingsProps) => {
    const [showTimeoutSettings, setShowTimeoutSettings] = useState<string | false>(false);
@@ -56,8 +56,18 @@ const PlanScriptsSettings = ({
       onBackupFailure: false,
       onBackupComplete: false,
    });
-   console.log('settings :', settings);
-   console.log('### platform :', platform);
+
+   const showRootOption = platform.toLowerCase().includes('linux');
+   // const showRootOption = true;
+
+   const updateScriptBool = (eventKey: ScriptEventKey, index: number, key: keyof PlanScript, value: boolean) => {
+      const updatedScripts = [...(settings[eventKey] || [])];
+      updatedScripts[index] = {
+         ...updatedScripts[index],
+         [key]: value,
+      };
+      onUpdate({ ...settings, [eventKey]: updatedScripts });
+   };
 
    return (
       <div className={classes.eventTabs}>
@@ -171,48 +181,36 @@ const PlanScriptsSettings = ({
                                           // label="Enabled"
                                           fieldValue={script?.enabled || false}
                                           inline={true}
-                                          onUpdate={(checked: boolean) => {
-                                             const updatedScripts = [...(scripts || [])];
-                                             updatedScripts[index] = {
-                                                ...updatedScripts[index],
-                                                enabled: checked,
-                                             };
-                                             onUpdate({ ...settings, [eventKey]: updatedScripts });
-                                          }}
+                                          onUpdate={(checked: boolean) => updateScriptBool(key, index, 'enabled', checked)}
                                        />
                                        <span>Enabled</span>
                                     </div>
-                                    <div className={classes.scriptOptionCheckbox}>
+                                    {/* <div className={classes.scriptOptionCheckbox}>
                                        <Toggle
                                           fieldValue={script?.logOutput || false}
                                           inline={true}
-                                          onUpdate={(checked: boolean) => {
-                                             const updatedScripts = [...(scripts || [])];
-                                             updatedScripts[index] = {
-                                                ...updatedScripts[index],
-                                                logOutput: checked,
-                                             };
-                                             onUpdate({ ...settings, [eventKey]: updatedScripts });
-                                          }}
+                                          onUpdate={(checked: boolean) => updateScriptBool(key, index, 'logOutput', checked)}
                                        />
                                        <span>Log Output</span>
-                                    </div>
+                                    </div> */}
                                     <div className={classes.scriptOptionCheckbox}>
                                        <Toggle
-                                          // label="Abort On Error"
                                           fieldValue={script?.abortOnError || false}
                                           inline={true}
-                                          onUpdate={(checked: boolean) => {
-                                             const updatedScripts = [...(scripts || [])];
-                                             updatedScripts[index] = {
-                                                ...updatedScripts[index],
-                                                abortOnError: checked,
-                                             };
-                                             onUpdate({ ...settings, [eventKey]: updatedScripts });
-                                          }}
+                                          onUpdate={(checked: boolean) => updateScriptBool(key, index, 'abortOnError', checked)}
                                        />
                                        <span>Abort on Error</span>
                                     </div>
+                                    {showRootOption && (
+                                       <div className={classes.scriptOptionCheckbox}>
+                                          <Toggle
+                                             fieldValue={script?.runAsRoot || false}
+                                             inline={true}
+                                             onUpdate={(checked: boolean) => updateScriptBool(key, index, 'runAsRoot', checked)}
+                                          />
+                                          <span>Run as Root</span>
+                                       </div>
+                                    )}
                                     <i className="pipe">|</i>
                                     <div
                                        title="Timeout Settings"

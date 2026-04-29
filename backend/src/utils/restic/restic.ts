@@ -9,6 +9,7 @@ import { generateResticRepoPath } from './helpers';
 import { configService } from '../../services/ConfigService';
 import { buildResticEnvFromSettings, buildRcloneEnvFromSettings } from '../globalSettings';
 import { BackupVerifiedResult } from '../../types/plans';
+import { runHelper } from '../linuxHelper';
 
 export type ResticCommandError = Error & {
 	code?: number;
@@ -155,6 +156,22 @@ export function runResticCommand(
 				}
 			}
 		});
+	});
+}
+
+export function runHelperRestore(
+	args: string[],
+	onProgress?: (data: Buffer) => void,
+	onError?: (data: Buffer) => void,
+	onComplete?: (code: number | null) => void,
+	onProcess?: (process: any) => void
+): Promise<string> {
+	const helperArgs = args[0] === 'restore' ? args.slice(1) : args;
+	return runHelper('restore', helperArgs, {
+		onStdout: onProgress,
+		onStderr: onError,
+		onComplete,
+		onProcess,
 	});
 }
 

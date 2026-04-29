@@ -672,6 +672,46 @@ describe('RestoreHandler', () => {
 		});
 	});
 
+	describe('createHelperRestoreArgs', () => {
+		it('should render helper restore arguments from the shared restore request', () => {
+			const result = handler.createHelperRestoreArgs('backup-1', 'snapshot-123', baseOptions, true);
+
+			expect(result).toEqual(
+				expect.arrayContaining([
+					'restore',
+					'--repo',
+					'rclone:test-storage:backups/test',
+					'--snapshot',
+					'snapshot-123',
+					'--target',
+					'/restore/target',
+					'--dry-run',
+					'--insecure-no-password',
+					'--gomaxprocs',
+					'2',
+					'--rclone-transfers',
+					'4',
+					'--rclone-buffer-size',
+					'16M',
+					'--rclone-multi-thread-streams',
+					'4',
+				])
+			);
+		});
+
+		it('should omit the helper no-password flag when encryption is enabled', () => {
+			const result = handler.createHelperRestoreArgs('backup-1', 'snapshot-123', {
+				...baseOptions,
+				encryption: true,
+				overwrite: 'if-newer',
+			});
+
+			expect(result).toContain('--overwrite');
+			expect(result).toContain('if-newer');
+			expect(result).not.toContain('--insecure-no-password');
+		});
+	});
+
 	describe('createHandlers', () => {
 		it('should create handlers that emit proper events', () => {
 			const errorListener = jest.fn();

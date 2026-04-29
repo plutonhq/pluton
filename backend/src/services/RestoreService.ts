@@ -108,6 +108,7 @@ export class RestoreService {
 					includes: restoreConfig.includes,
 					excludes: restoreConfig.excludes,
 					replicationId: restoreConfig.replicationId,
+					sources: plan.sourceConfig?.includes || [],
 				}
 			);
 

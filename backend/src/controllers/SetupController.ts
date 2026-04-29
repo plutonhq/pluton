@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
+import path from 'path';
 import { configService } from '../services/ConfigService';
 import { requiresDesktopSetup, isBinaryMode } from '../utils/installHelpers';
 import { writeEncryptionKeyToEnvFile, encEnvFileExists } from '../utils/envFileHelpers';
@@ -138,10 +139,10 @@ export class SetupController {
 	 */
 	async checkKeyringAvailability(req: Request, res: Response) {
 		try {
-			const dataDir = appPaths.getDataDir();
+			const encEnvDir = path.dirname(appPaths.getEncEnvFilePath());
 			let writable = false;
 			try {
-				fs.accessSync(dataDir, fs.constants.W_OK);
+				fs.accessSync(encEnvDir, fs.constants.W_OK);
 				writable = true;
 			} catch {
 				writable = false;

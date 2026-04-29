@@ -531,7 +531,10 @@ export class BackupHandler {
 			const pathsNotFound = [];
 			for (const path of options.sourceConfig.includes) {
 				try {
-					await fs.promises.access(path, fs.constants.R_OK);
+					// must use stat instead of access since the linux-helper has read capabilities
+					// through CAP_DAC_READ_SEARCH, which causes access to return false even when the path is readable.
+					// stat correctly returns the file info without being affected by permissions.
+					await fs.promises.stat(path);
 				} catch (error) {
 					pathsNotFound.push(path);
 				}

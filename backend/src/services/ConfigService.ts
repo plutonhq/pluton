@@ -3,7 +3,10 @@ import fs from 'fs';
 import { appPaths } from '../utils/AppPaths';
 import path from 'path';
 import { requiresDesktopSetup } from '../utils/installHelpers';
-import { readEncryptionKeyFromEnvFile, verifyFilePermissions } from '../utils/envFileHelpers';
+import {
+	readEncryptionKeyFromEnvFile,
+	verifyFilePermissions,
+} from '../utils/envFileHelpers';
 import { credentialManager } from './CredentialManager';
 
 // Schema for the .env config file (with optional sensitive fields for setup mode)
@@ -123,14 +126,9 @@ class ConfigService {
 		}
 
 		// 1b. Load ENCRYPTION_KEY from pluton.enc.env if not already in process env
-		// On server installs, the file lives in /etc/pluton/; on desktop, in the data dir.
 		const dataDir = appPaths.getDataDir();
 		if (!normalizedEnv.ENCRYPTION_KEY) {
-			const serverEncEnvPath = '/etc/pluton/pluton.enc.env';
-			const envFileKey =
-				(process.platform !== 'win32' && fs.existsSync(serverEncEnvPath)
-					? readEncryptionKeyFromEnvFile('/etc/pluton')
-					: null) ?? readEncryptionKeyFromEnvFile(dataDir);
+			const envFileKey = readEncryptionKeyFromEnvFile(dataDir);
 			if (envFileKey) {
 				normalizedEnv.ENCRYPTION_KEY = envFileKey;
 				console.log('[ConfigService] Loaded ENCRYPTION_KEY from pluton.enc.env');
@@ -235,12 +233,7 @@ class ConfigService {
 
 		// Verify permissions on sensitive files
 		verifyFilePermissions(credentialManager.getKeysPath());
-		const serverEncEnvPath = '/etc/pluton/pluton.enc.env';
-		const encEnvPath =
-			process.platform !== 'win32' && fs.existsSync(serverEncEnvPath)
-				? serverEncEnvPath
-				: path.join(dataDir, 'pluton.enc.env');
-		verifyFilePermissions(encEnvPath);
+		verifyFilePermissions(appPaths.getEncEnvFilePath());
 
 		console.log('✅ Environment configuration loaded and validated successfully.');
 	}
