@@ -4,18 +4,19 @@ import classes from './Footer.module.scss';
 
 interface FooterProps {
    version: string;
+   edition?: string;
    latestVersion?: string;
    hideUpgradeLink?: boolean;
    changeLogUrl?: string;
 }
 
-const Footer = ({ version = '1.0.0', latestVersion, hideUpgradeLink = false, changeLogUrl }: FooterProps) => {
+const Footer = ({ version = '1.0.0', latestVersion, hideUpgradeLink = false, changeLogUrl, edition = '' }: FooterProps) => {
    const updateDocLink = getUpdateDocLink(hideUpgradeLink);
    return (
       <>
          <div className={classes.footer}>
             <span>
-               Pluton v{version}{' '}
+               Pluton {edition} v{version}{' '}
                {latestVersion && (
                   <span className={classes.newVersion} title={`Latest version: ${latestVersion}`}>
                      <Icon type="arrow-up" size={12} />{' '}
