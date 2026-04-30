@@ -2,6 +2,7 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs'; // Use the synchronous fs module
 import { isLinuxInstalledRuntime } from './linuxHelper';
+import { DeviceSettings } from '../types/devices';
 
 /**
  * Defines the structure for all application paths.
@@ -109,7 +110,9 @@ class AppPaths {
 		}
 
 		const baseDir = this.getTheBaseDir();
-		const tempBase = this.isLinuxRuntime ? baseDir : os.tmpdir();
+		const deviceTempDir = this.loadGeneralDeviceSettings(baseDir)?.tempDir;
+		const defaultTempDir = this.isLinuxRuntime ? baseDir : os.tmpdir();
+		const tempBase = deviceTempDir || defaultTempDir;
 
 		this.paths = {
 			base: baseDir,
@@ -119,7 +122,7 @@ class AppPaths {
 			logs: path.join(baseDir, 'logs'),
 			progress: path.join(baseDir, 'progress'),
 			stats: path.join(baseDir, 'stats'),
-			temp: this.isLinuxRuntime ? path.join(baseDir, 'temp') : path.join(tempBase, 'pluton'),
+			temp: path.join(tempBase, 'pluton'),
 			cache: path.join(tempBase, 'pluton', 'cache'),
 			downloads: path.join(tempBase, 'pluton', 'downloads'),
 			restores: path.join(tempBase, 'pluton', 'restores'),
@@ -179,6 +182,22 @@ class AppPaths {
 		}
 	}
 
+	private loadGeneralDeviceSettings(baseDir: string): DeviceSettings['general'] | undefined {
+		if (this.isInitialized) {
+			return;
+		}
+		const filePath = path.join(baseDir, 'config', 'device_settings.json'); // ← use baseDir
+		try {
+			if (fs.existsSync(filePath)) {
+				const raw = fs.readFileSync(filePath, 'utf-8');
+				const parsed = JSON.parse(raw) as DeviceSettings['general'];
+				return parsed;
+			}
+		} catch (error) {
+			// console.error('[globalSettings] Failed to read device_settings.json:', error);
+		}
+		return undefined;
+	}
 	// --- GETTER METHODS ---
 	public getBaseDir(): string {
 		this.checkInitialized();

@@ -143,7 +143,7 @@ export class DeviceService {
 		}
 
 		if (data.settings) {
-			if (existingDevice.id !== 'main') {
+			if (existingDevice.id === 'main') {
 				try {
 					const strategy = this.getSystemStrategy(id);
 					const updateResp = await strategy.updateSettings(data.settings);

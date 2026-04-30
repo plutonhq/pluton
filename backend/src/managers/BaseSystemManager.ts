@@ -13,7 +13,11 @@ import { DeviceSettings, DiscoveredFilesystem, LsblkDevice, LsblkOutput } from '
 import { BaseStorageManager } from './BaseStorageManager';
 import { runCommand } from '../utils/runCommand';
 import { appPaths } from '../utils/AppPaths';
-import { saveRcloneGlobalSettings, saveResticGlobalSettings } from '../utils/globalSettings';
+import {
+	saveGeneralDeviceSettings,
+	saveRcloneGlobalSettings,
+	saveResticGlobalSettings,
+} from '../utils/globalSettings';
 import { isLinuxInstalledRuntime, runHelper } from '../utils/linuxHelper';
 
 const execAsync = promisify(exec);
@@ -708,6 +712,11 @@ export class BaseSystemManager {
 			// Persist rclone global settings to data/config/rclone_global.json
 			if (deviceSettings.rclone) {
 				saveRcloneGlobalSettings(deviceSettings.rclone);
+			}
+
+			// Persist general device settings to data/config/device_settings.json
+			if (deviceSettings.general) {
+				saveGeneralDeviceSettings(deviceSettings.general);
 			}
 
 			return {

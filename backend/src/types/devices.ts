@@ -1,5 +1,7 @@
 export interface DeviceSettings {
-	tempDir: string;
+	general?: {
+		tempDir: string; // Temporary directory for both restic and rclone. If set, it overrides the individual tempDir settings for restic and rclone.
+	};
 	restic?: {
 		maxProcessor: number; // GOMAXPROCS
 		cacheDir: string; // RESTIC_CACHE_DIR

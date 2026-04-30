@@ -107,8 +107,13 @@ const EditDevice = ({ close, device }: EditDeviceProps) => {
                   <div className={classes.field}>
                      <Input
                         label="Temporary Working Directory"
-                        fieldValue={newDevice.settings?.tempDir || ''}
-                        onUpdate={(val) => setNewDevice({ ...newDevice, settings: { ...newDevice.settings, tempDir: val } })}
+                        fieldValue={newDevice.settings?.general?.tempDir || ''}
+                        onUpdate={(val) =>
+                           setNewDevice({
+                              ...newDevice,
+                              settings: { ...newDevice.settings, general: { ...newDevice.settings?.general, tempDir: val } },
+                           })
+                        }
                         full={true}
                         hint="Where the backup, restores and downloads will be temporarily stored."
                      />
@@ -142,9 +147,11 @@ const EditDevice = ({ close, device }: EditDeviceProps) => {
             <FolderPicker
                deviceId={device.id}
                title="Select Temporary Working Directory"
-               selected={newDevice.settings?.tempDir || ''}
+               selected={newDevice.settings?.general?.tempDir || ''}
                close={() => setShowFileManager(false)}
-               onSelect={(val) => setNewDevice({ ...newDevice, settings: { ...newDevice.settings, tempDir: val } })}
+               onSelect={(val) =>
+                  setNewDevice({ ...newDevice, settings: { ...newDevice.settings, general: { ...newDevice.settings?.general, tempDir: val } } })
+               }
             />
          )}
       </SidePanel>

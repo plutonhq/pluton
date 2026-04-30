@@ -16,6 +16,7 @@ import { DeviceSettings } from '../types/devices';
 
 const getRcloneSettingsPath = () => path.join(appPaths.getConfigDir(), 'rclone_global.json');
 const getResticSettingsPath = () => path.join(appPaths.getConfigDir(), 'restic_global.json');
+const getGeneralSettingsPath = () => path.join(appPaths.getConfigDir(), 'device_settings.json');
 
 // ---------- In-memory caches ----------
 
@@ -44,6 +45,15 @@ export function saveResticGlobalSettings(settings: DeviceSettings['restic']): vo
 	fs.writeFileSync(filePath, JSON.stringify(settings, null, 2), { mode: 0o600 });
 	// Update in-memory cache
 	resticSettingsCache = settings ?? null;
+}
+
+/**
+ * Persist general device settings to `data/config/device_settings.json`.
+ * Only creates the file when the user explicitly changes settings.
+ */
+export function saveGeneralDeviceSettings(settings: DeviceSettings['general']): void {
+	const filePath = getGeneralSettingsPath();
+	fs.writeFileSync(filePath, JSON.stringify(settings, null, 2), { mode: 0o600 });
 }
 
 // ---------- Read helpers (called from runRcloneCommand / runResticCommand) ----------
@@ -92,6 +102,24 @@ export function loadResticGlobalSettings(): DeviceSettings['restic'] | undefined
 		}
 	} catch (error) {
 		console.error('[globalSettings] Failed to read restic_global.json:', error);
+	}
+	return undefined;
+}
+
+/**
+ * Load general device settings. Returns `undefined` if no settings file exists.
+ * This is not cached in memory because it's only used for initial device setup and is expected to be small.
+ */
+export function loadGeneralDeviceSettings(): DeviceSettings['general'] | undefined {
+	const filePath = getGeneralSettingsPath();
+	try {
+		if (fs.existsSync(filePath)) {
+			const raw = fs.readFileSync(filePath, 'utf-8');
+			const parsed = JSON.parse(raw) as DeviceSettings['general'];
+			return parsed;
+		}
+	} catch (error) {
+		// console.error('[globalSettings] Failed to read device_settings.json:', error);
 	}
 	return undefined;
 }
