@@ -154,19 +154,21 @@ main() {
     echo "Removing wrapper commands..."
     rm -f /usr/local/bin/prclone /usr/local/bin/prestic
     
-    # Remove credentials directory
-    if [ -d "${CONFIG_DIR}" ]; then
-        echo "Removing credentials directory: ${CONFIG_DIR}"
-        rm -rf "${CONFIG_DIR}"
-    fi
-    
-    # Remove data directory if requested
+    # Remove data + credentials only when --remove-data is set. Preserving the
+    # credentials directory (${CONFIG_DIR}) along with the data directory lets
+    # a future ${PRODUCT_NAME} or Pluton PRO install --upgrade pick up the
+    # existing encryption key and admin credentials automatically.
     if [ "$REMOVE_DATA" = true ]; then
+        if [ -d "${CONFIG_DIR}" ]; then
+            echo "Removing credentials directory: ${CONFIG_DIR}"
+            rm -rf "${CONFIG_DIR}"
+        fi
         if [ -d "${DATA_DIR}" ]; then
             echo "Removing data directory: ${DATA_DIR}"
             rm -rf "${DATA_DIR}"
         fi
     else
+        echo -e "${BLUE}Keeping credentials directory: ${CONFIG_DIR}${NC}"
         echo -e "${BLUE}Keeping data directory: ${DATA_DIR}${NC}"
     fi
     

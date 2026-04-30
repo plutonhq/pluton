@@ -119,13 +119,23 @@ if security show-keychain-info "${KEYCHAIN_PATH}" &>/dev/null; then
     security delete-keychain "${KEYCHAIN_PATH}" 2>/dev/null || true
 fi
 
-# Remove data directory if requested
+# Remove credentials directory only when --remove-data is set. Preserving
+# /etc/pluton keeps the encryption key and admin credentials available so
+# that a future Pluton or Pluton PRO install can pick them up automatically.
+CONFIG_DIR="/etc/pluton"
+
+# Remove data + credentials if requested
 if [ "$REMOVE_DATA" = true ]; then
+    if [ -d "${CONFIG_DIR}" ]; then
+        echo "Removing credentials directory: ${CONFIG_DIR}"
+        rm -rf "${CONFIG_DIR}"
+    fi
     if [ -d "${DATA_DIR}" ]; then
         echo "Removing data directory: ${DATA_DIR}"
         rm -rf "${DATA_DIR}"
     fi
 else
+    [ -d "${CONFIG_DIR}" ] && echo -e "${BLUE}Keeping credentials directory: ${CONFIG_DIR}${NC}"
     echo -e "${BLUE}Keeping data directory: ${DATA_DIR}${NC}"
 fi
 

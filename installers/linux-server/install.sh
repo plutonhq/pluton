@@ -291,10 +291,26 @@ check_root() {
     fi
 }
 
+# Detect leftover data from a previous installation, even when the service
+# and config dir have been removed (e.g. user uninstalled pluton but kept data).
+check_leftover_data() {
+    if [ -d "${DATA_DIR}" ] && \
+       { [ -f "${DATA_DIR}/keys.json" ] || \
+         [ -f "${DATA_DIR}/config/config.json" ] || \
+         [ -f "${DATA_DIR}/pluton.enc.env" ] || \
+         [ -d "${DATA_DIR}/db" ]; }; then
+        return 0
+    fi
+    return 1
+}
+
 # Check if this is an upgrade
 check_existing_installation() {
-    if systemctl is-active --quiet pluton 2>/dev/null || [ -f "${ENV_FILE}" ]; then
-        return 0  # Existing installation found
+    if systemctl is-active --quiet pluton 2>/dev/null \
+        || [ -f "${ENV_FILE}" ] \
+        || [ -f "${SERVICE_FILE}" ] \
+        || check_leftover_data; then
+        return 0  # Existing installation or leftover data found
     fi
     return 1  # No existing installation
 }
@@ -735,11 +751,18 @@ fi
 rm -rf "${INSTALL_DIR}"
 rm -f "/usr/bin/pluton-helper"
 rm -f /usr/local/bin/prclone /usr/local/bin/prestic
-rm -rf "${CONFIG_DIR}"
-[ "$REMOVE_DATA" = true ] && rm -rf "${DATA_DIR}"
+# Preserve ${CONFIG_DIR} (encryption key + admin credentials) along with ${DATA_DIR}
+# unless --remove-data was passed, so a future install --upgrade can reuse them.
+if [ "$REMOVE_DATA" = true ]; then
+    rm -rf "${CONFIG_DIR}"
+    rm -rf "${DATA_DIR}"
+fi
 
 echo -e "${GREEN}Pluton uninstalled successfully!${NC}"
-[ "$REMOVE_DATA" = false ] && echo "Data preserved at: ${DATA_DIR}"
+if [ "$REMOVE_DATA" = false ]; then
+    echo "Credentials preserved at: ${CONFIG_DIR}"
+    echo "Data preserved at: ${DATA_DIR}"
+fi
 echo "System user 'pluton' was preserved."
 UNINSTALL_EOF
     chmod +x "${INSTALL_DIR}/uninstall.sh"
@@ -814,9 +837,22 @@ main() {
     
     local is_upgrade=false
     if check_existing_installation; then
-        if [ "$CLI_UPGRADE" = true ]; then
+        local has_active_install=false
+        if systemctl is-active --quiet pluton 2>/dev/null || [ -f "${SERVICE_FILE}" ]; then
+            has_active_install=true
+        fi
+
+        if [ "$CLI_UPGRADE" = true ] || [ "$has_active_install" = false ]; then
+            # Either --upgrade was passed, or there is only leftover data from a
+            # previous install (no active service / service file). Auto-load the
+            # existing credentials and configuration so the user is not prompted
+            # again.
             is_upgrade=true
-            echo -e "${YELLOW}Upgrade mode: Preserving existing configuration and data.${NC}"
+            if [ "$has_active_install" = false ]; then
+                echo -e "${YELLOW}Found existing data at ${DATA_DIR}; reusing previous configuration and credentials.${NC}"
+            else
+                echo -e "${YELLOW}Upgrade mode: Preserving existing configuration and data.${NC}"
+            fi
             load_existing_credentials
         else
             echo -e "${YELLOW}${PRODUCT_NAME} is already installed.${NC}"
@@ -831,6 +867,11 @@ main() {
                 echo "Installation cancelled."
                 exit 0
             fi
+            # Reinstall preserves existing data/credentials so the user does not
+            # lose them when reinstalling to fix a corrupt binary.
+            is_upgrade=true
+            echo -e "${YELLOW}Reinstalling: Preserving existing configuration and data.${NC}"
+            load_existing_credentials
         fi
         stop_existing_service
     fi

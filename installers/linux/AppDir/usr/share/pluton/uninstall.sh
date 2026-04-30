@@ -14,6 +14,7 @@ NC='\033[0m' # No Color
 # Installation paths
 INSTALL_DIR="/opt/pluton"
 DATA_DIR="/var/lib/pluton"
+CONFIG_DIR="/etc/pluton"
 SERVICE_FILE="/etc/systemd/system/pluton.service"
 DESKTOP_FILE="/usr/share/applications/pluton.desktop"
 ICON_FILE="/usr/share/icons/hicolor/256x256/apps/pluton.png"
@@ -105,13 +106,20 @@ if command -v update-desktop-database &> /dev/null; then
     update-desktop-database /usr/share/applications 2>/dev/null || true
 fi
 
-# Remove data directory if requested
+# Remove data directory if requested. ${CONFIG_DIR} (encryption key + admin
+# credentials) is preserved together with ${DATA_DIR} so that a future Pluton
+# or Pluton PRO install can pick the credentials up automatically.
 if [ "$REMOVE_DATA" = true ]; then
+    if [ -d "${CONFIG_DIR}" ]; then
+        echo "Removing credentials directory: ${CONFIG_DIR}"
+        rm -rf "${CONFIG_DIR}"
+    fi
     if [ -d "${DATA_DIR}" ]; then
         echo "Removing data directory: ${DATA_DIR}"
         rm -rf "${DATA_DIR}"
     fi
 else
+    [ -d "${CONFIG_DIR}" ] && echo -e "${BLUE}Keeping credentials directory: ${CONFIG_DIR}${NC}"
     echo -e "${BLUE}Keeping data directory: ${DATA_DIR}${NC}"
 fi
 

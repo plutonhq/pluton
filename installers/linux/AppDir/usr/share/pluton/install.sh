@@ -172,25 +172,48 @@ if [ -z "$APPDIR" ]; then
     APPDIR="$(dirname "$(readlink -f "$0")")/.."
 fi
 
+# Detect leftover data from a previous installation (e.g. user uninstalled
+# Pluton but kept the data directory). Treated as an implicit upgrade so the
+# existing port/concurrency configuration is reused without re-prompting.
+check_leftover_data() {
+    if [ -d "${DATA_DIR}" ] && \
+       { [ -f "${DATA_DIR}/keys.json" ] || \
+         [ -f "${DATA_DIR}/config/config.json" ] || \
+         [ -f "${DATA_DIR}/pluton.enc.env" ] || \
+         [ -d "${DATA_DIR}/db" ]; }; then
+        return 0
+    fi
+    return 1
+}
+
+IS_UPGRADE=false
+if systemctl is-active --quiet pluton 2>/dev/null \
+    || [ -f "${SERVICE_FILE}" ] \
+    || check_leftover_data; then
+    IS_UPGRADE=true
+fi
+
 # Check if already installed
 if systemctl is-active --quiet pluton 2>/dev/null; then
-    echo -e "${YELLOW}Pluton service is already running.${NC}"
-    read -p "Do you want to reinstall? This will stop the current service. [y/N] " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Installation cancelled."
-        exit 0
-    fi
+    echo -e "${YELLOW}Pluton service is already running. Reinstalling and preserving data...${NC}"
     echo "Stopping existing service..."
     systemctl stop pluton
     systemctl disable pluton
+elif [ "$IS_UPGRADE" = true ]; then
+    echo -e "${YELLOW}Found existing Pluton data at ${DATA_DIR}. Reusing previous configuration.${NC}"
 fi
 
-# Configuration: Check for config file or prompt user
+# Configuration: Check for config file or reuse existing config when present
 CONFIG_FILE="${APPDIR}/pluton-config.env"
 if [ -f "$CONFIG_FILE" ]; then
     echo -e "${GREEN}Found configuration file: ${CONFIG_FILE}${NC}"
     source "$CONFIG_FILE"
+    SERVER_PORT="${SERVER_PORT:-$DEFAULT_PORT}"
+    MAX_CONCURRENT_BACKUPS="${MAX_CONCURRENT_BACKUPS:-$DEFAULT_MAX_CONCURRENT}"
+elif [ "$IS_UPGRADE" = true ] && [ -f "${DATA_DIR}/config/config.json" ]; then
+    echo -e "${BLUE}Reusing existing configuration from ${DATA_DIR}/config/config.json${NC}"
+    SERVER_PORT=$(grep -o '"SERVER_PORT"[[:space:]]*:[[:space:]]*[0-9]*' "${DATA_DIR}/config/config.json" 2>/dev/null | grep -o '[0-9]*' | head -1)
+    MAX_CONCURRENT_BACKUPS=$(grep -o '"MAX_CONCURRENT_BACKUPS"[[:space:]]*:[[:space:]]*[0-9]*' "${DATA_DIR}/config/config.json" 2>/dev/null | grep -o '[0-9]*' | head -1)
     SERVER_PORT="${SERVER_PORT:-$DEFAULT_PORT}"
     MAX_CONCURRENT_BACKUPS="${MAX_CONCURRENT_BACKUPS:-$DEFAULT_MAX_CONCURRENT}"
 else
@@ -268,30 +291,43 @@ find "${INSTALL_DIR}/binaries" -type f -exec chmod 755 {} \; 2>/dev/null || true
 create_tool_wrappers "${ARCH}"
 install_pluton_helper "${ARCH}"
 
-# Write configuration file
-echo "  Writing configuration..."
-cat > "${DATA_DIR}/config/config.json" << EOF
+# Write configuration file (preserve on upgrade)
+if [ "$IS_UPGRADE" = false ] || [ ! -f "${DATA_DIR}/config/config.json" ]; then
+    echo "  Writing configuration..."
+    cat > "${DATA_DIR}/config/config.json" << EOF
 {
   "SERVER_PORT": ${SERVER_PORT},
   "MAX_CONCURRENT_BACKUPS": ${MAX_CONCURRENT_BACKUPS}
 }
 EOF
+else
+    echo "  Preserving existing configuration at ${DATA_DIR}/config/config.json"
+fi
 chown "${PLUTON_USER}:${PLUTON_GROUP}" "${DATA_DIR}/config/config.json"
 chmod 600 "${DATA_DIR}/config/config.json"
 
-echo "  Writing environment placeholders..."
-{
-    printf '# Pluton credentials\n'
-    printf 'PLUTON_USER_NAME=%s\n' "${PLUTON_USER_NAME:-}"
-    printf 'PLUTON_USER_PASSWORD=%s\n' "${PLUTON_USER_PASSWORD:-}"
-} > "${ENV_FILE}"
+# Write credential env file. On upgrade, preserve any existing non-empty file
+# instead of overwriting it with empty placeholders so the admin credentials
+# carried over from the previous installation stay intact.
+if [ "$IS_UPGRADE" = false ] || [ ! -s "${ENV_FILE}" ]; then
+    echo "  Writing environment placeholders..."
+    {
+        printf '# Pluton credentials\n'
+        printf 'PLUTON_USER_NAME=%s\n' "${PLUTON_USER_NAME:-}"
+        printf 'PLUTON_USER_PASSWORD=%s\n' "${PLUTON_USER_PASSWORD:-}"
+    } > "${ENV_FILE}"
+else
+    echo "  Preserving existing credentials at ${ENV_FILE}"
+fi
 chmod 600 "${ENV_FILE}"
 
-if [ ! -f "${ENC_ENV_FILE}" ]; then
+if [ ! -f "${ENC_ENV_FILE}" ] || [ ! -s "${ENC_ENV_FILE}" ]; then
     {
         printf '# Pluton Encryption Key - setup wizard may populate this file\n'
         printf 'PLUTON_ENCRYPTION_KEY=%s\n' "${PLUTON_ENCRYPTION_KEY:-}"
     } > "${ENC_ENV_FILE}"
+else
+    echo "  Preserving existing encryption key at ${ENC_ENV_FILE}"
 fi
 chown "${PLUTON_USER}:${PLUTON_GROUP}" "${ENV_FILE}" "${ENC_ENV_FILE}"
 chmod 600 "${ENV_FILE}" "${ENC_ENV_FILE}"
