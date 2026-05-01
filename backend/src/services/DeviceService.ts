@@ -143,16 +143,14 @@ export class DeviceService {
 		}
 
 		if (data.settings) {
-			if (existingDevice.id === 'main') {
-				try {
-					const strategy = this.getSystemStrategy(id);
-					const updateResp = await strategy.updateSettings(data.settings);
-					if (!updateResp.success) {
-						throw new Error('Failed to update device settings');
-					}
-				} catch (error: any) {
+			try {
+				const strategy = this.getSystemStrategy(id);
+				const updateResp = await strategy.updateSettings(data.settings);
+				if (!updateResp.success) {
 					throw new Error('Failed to update device settings');
 				}
+			} catch (error: any) {
+				throw new Error('Failed to update device settings');
 			}
 		}
 

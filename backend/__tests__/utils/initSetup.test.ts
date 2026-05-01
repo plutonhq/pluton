@@ -271,7 +271,9 @@ describe('runInitialSetup', () => {
 				},
 				status: 'active',
 				lastSeen: expect.any(Date),
-				settings: { tempDir: '/tmp/pluton' },
+				settings: {
+					general: { tempDir: '/tmp/pluton' },
+				},
 			});
 		});
 

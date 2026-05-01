@@ -6,7 +6,6 @@ import { BaseSystemManager } from '../../src/managers/BaseSystemManager';
 import { LocalStrategy, RemoteStrategy } from '../../src/strategies/system';
 import { Device } from '../../src/db/schema/devices';
 import { Plan } from '../../src/db/schema/plans';
-import { Storage } from '../../src/db/schema/storages';
 import { DeviceMetrics } from '../../src/types/devices';
 
 // Mock dependencies
@@ -179,7 +178,7 @@ describe('DeviceService', () => {
 		});
 
 		it('should call updateSettings on the strategy for a remote device', async () => {
-			const settingsUpdate = { settings: { tempDir: '/new/temp' } };
+			const settingsUpdate = { settings: { general: { tempDir: '/new/temp' } } };
 			mockDeviceStore.getById.mockResolvedValue(mockDevice);
 			mockRemoteStrategy.updateSettings.mockResolvedValue({ success: true, result: 'Updated' });
 
@@ -200,7 +199,7 @@ describe('DeviceService', () => {
 		});
 
 		it('should throw an error if updating settings on a remote device fails', async () => {
-			const settingsUpdate = { settings: { tempDir: '/new/temp' } };
+			const settingsUpdate = { settings: { general: { tempDir: '/new/temp' } } };
 			mockDeviceStore.getById.mockResolvedValue(mockDevice);
 			mockRemoteStrategy.updateSettings.mockResolvedValue({
 				success: false,
