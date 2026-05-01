@@ -133,14 +133,9 @@ export class BackupHandler {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown execution error';
 
 			// If Cancelled by the user, do not retry or mark as failed.
-			const isCancelled = errorMessage.startsWith('BACKUP_CANCELLED:');
+			const isCancelled =
+				errorMessage.startsWith('BACKUP_CANCELLED:') || this.cancelledBackups.has(planId);
 			if (isCancelled) {
-				this.emitter.emit('backup_complete', {
-					planId,
-					backupId,
-					success: false,
-					summary: null,
-				});
 				return '';
 			}
 
