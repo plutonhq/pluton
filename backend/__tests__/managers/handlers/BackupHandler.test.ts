@@ -585,12 +585,20 @@ describe('BackupHandler', () => {
 			mockRunResticCommand.mockResolvedValue(`line1\nline2\n${JSON.stringify(summary)}`);
 
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
-			const result = await handler['dryRunBackup']('plan-1', baseOptions, resticArgsAndEnv);
+			const result = await handler['dryRunBackup'](
+				'plan-1',
+				'backup-1',
+				baseOptions,
+				resticArgsAndEnv
+			);
 
 			expect(result).toEqual(summary);
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['--dry-run']),
-				expect.any(Object)
+				expect.any(Object),
+				expect.any(Function),
+				expect.any(Function),
+				expect.any(Function)
 			);
 		});
 
@@ -599,7 +607,7 @@ describe('BackupHandler', () => {
 
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
 			await expect(
-				handler['dryRunBackup']('plan-1', baseOptions, resticArgsAndEnv)
+				handler['dryRunBackup']('plan-1', 'backup-1', baseOptions, resticArgsAndEnv)
 			).rejects.toThrow('Dry run failed');
 		});
 
@@ -609,11 +617,14 @@ describe('BackupHandler', () => {
 
 			const rescueOptions = { ...baseOptions, method: 'rescue' };
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', rescueOptions as any);
-			await handler['dryRunBackup']('plan-1', rescueOptions, resticArgsAndEnv);
+			await handler['dryRunBackup']('plan-1', 'backup-1', rescueOptions, resticArgsAndEnv);
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['--one-file-system']),
-				expect.any(Object)
+				expect.any(Object),
+				expect.any(Function),
+				expect.any(Function),
+				expect.any(Function)
 			);
 		});
 	});
@@ -1164,11 +1175,14 @@ describe('BackupHandler', () => {
 			mockRunResticCommand.mockResolvedValue(JSON.stringify(summary));
 
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', encryptedOptions as any);
-			await handler['dryRunBackup']('plan-1', encryptedOptions, resticArgsAndEnv);
+			await handler['dryRunBackup']('plan-1', 'backup-1', encryptedOptions, resticArgsAndEnv);
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.any(Array),
-				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' })
+				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' }),
+				expect.any(Function),
+				expect.any(Function),
+				expect.any(Function)
 			);
 		});
 
@@ -1177,11 +1191,14 @@ describe('BackupHandler', () => {
 			mockRunResticCommand.mockResolvedValue(JSON.stringify(summary));
 
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
-			await handler['dryRunBackup']('plan-1', baseOptions, resticArgsAndEnv);
+			await handler['dryRunBackup']('plan-1', 'backup-1', baseOptions, resticArgsAndEnv);
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.not.arrayContaining(['--one-file-system']),
-				expect.any(Object)
+				expect.any(Object),
+				expect.any(Function),
+				expect.any(Function),
+				expect.any(Function)
 			);
 		});
 
@@ -1190,7 +1207,7 @@ describe('BackupHandler', () => {
 
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
 			await expect(
-				handler['dryRunBackup']('plan-1', baseOptions, resticArgsAndEnv)
+				handler['dryRunBackup']('plan-1', 'backup-1', baseOptions, resticArgsAndEnv)
 			).rejects.toThrow('Dry run failed');
 		});
 	});

@@ -37,10 +37,12 @@ const BackupProgress = ({ item, sourceId, sourceType, planId, type = 'backup' }:
    const { data: progressData } =
       type === 'backup' ? useGetBackupProgress({ id, sourceId, sourceType, planId }) : useGetRestoreProgress({ id, sourceId, sourceType, planId });
 
-   console.log('#### data :', progressData);
-
    const resticData = extractResticData(progressData);
    const progressMessage = type === 'backup' ? generateBackupProgressMessage(progressData) : generateRestoreProgressMessage(progressData);
+
+   // Check if DryRun progress tracking phase
+   const actualBackupStarted = progressData?.events.find((e: any) => e.action === 'BACKUP_OPERATION_START' && e.resticData);
+   const isDryRun = type === 'backup' && !actualBackupStarted;
 
    // Extract progress values from restic data or use defaults
    const {
@@ -180,7 +182,7 @@ const BackupProgress = ({ item, sourceId, sourceType, planId, type = 'backup' }:
                </div>
                <div className={classes.progressBar}>
                   <div
-                     className={`${classes.progressBarFill} ${progressPercent > 3 ? classes.progressBarFilled : ''}`}
+                     className={`${classes.progressBarFill} ${progressPercent > 3 ? classes.progressBarFilled : ''} ${isDryRun ? classes.progressBarDryRun : ''}`}
                      style={{ width: progressPercent + '%' }}
                   >
                      <span>{progressPercent}%</span>

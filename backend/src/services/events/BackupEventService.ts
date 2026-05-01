@@ -212,7 +212,7 @@ export class BackupEventService {
 				success: !!success,
 				ended: sql`(unixepoch())` as any,
 				completionStats: summaryData ? summaryData : null,
-            ...(success ? { errorMsg: null } : {}),
+				...(success ? { errorMsg: null } : {}),
 			};
 			const plan = await this.planStore.getById(planId);
 

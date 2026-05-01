@@ -177,7 +177,10 @@ export class ProgressManager {
 			let targetEvent: ProgressEvent | undefined;
 			for (let i = progress.events.length - 1; i >= 0; i--) {
 				const event = progress.events[i];
-				if ((event.phase === 'backup' || event.phase === 'restore') && !event.completed) {
+				if (
+					(event.phase === 'backup' || event.phase === 'restore' || event.phase === 'pre-backup') &&
+					!event.completed
+				) {
 					targetEvent = event;
 					break;
 				}

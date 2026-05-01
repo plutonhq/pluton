@@ -231,7 +231,7 @@ export class BackupHandler {
 
 		let dryRunSummary;
 		try {
-			dryRunSummary = await this.dryRunBackup(planId, options, resticArgsAndEnv);
+			dryRunSummary = await this.dryRunBackup(planId, backupId, options, resticArgsAndEnv);
 			await this.updateProgress(
 				planId,
 				backupId,
@@ -643,6 +643,7 @@ export class BackupHandler {
 	 */
 	protected async dryRunBackup(
 		planId: string,
+		backupId: string,
 		options: Record<string, any>,
 		resticArgsAndEnv: ResticArgsAndEnv
 	): Promise<false | Record<string, any>> {
@@ -655,9 +656,16 @@ export class BackupHandler {
 		if (options.method === 'rescue') {
 			dryRunArgs.push('--one-file-system');
 		}
+		const handlers = this.createHandlers(planId, backupId);
 		try {
-			const dryRunOutput = await runResticCommand(dryRunArgs, dryRunEnv);
-			const outputLines = dryRunOutput.split('\n');
+			const dryRunOutput = await runResticCommand(
+				dryRunArgs,
+				dryRunEnv,
+				handlers.onProgress,
+				handlers.onError,
+				handlers.onComplete
+			);
+			const outputLines = dryRunOutput.split('\n').filter(line => line.trim() !== '');
 			const summaryLine = outputLines[outputLines.length - 1];
 			const dryRunSummary = JSON.parse(summaryLine);
 			return dryRunSummary;
