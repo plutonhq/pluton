@@ -101,7 +101,7 @@ async function createMainDevice(db: BetterSQLite3Database) {
 			},
 			status: 'active',
 			lastSeen: new Date(),
-			settings: { tempDir },
+			settings: { general: { tempDir } },
 		});
 	}
 }
