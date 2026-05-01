@@ -4,6 +4,7 @@ import express, { type Express } from 'express';
 import { IncomingMessage, ServerResponse } from 'http';
 import cors from 'cors';
 import session from 'express-session';
+import createMemoryStore from 'memorystore';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { db } from './db';
@@ -52,6 +53,8 @@ import { jobProcessor } from './jobs/JobProcessor';
 import { initializeLogger } from './utils/logger';
 import { configService } from './services/ConfigService';
 import { BaseRestoreManager } from './managers/BaseRestoreManager';
+
+const MemoryStore = createMemoryStore(session);
 
 export async function createApp(): Promise<{ app: Express }> {
 	// Initialize Logger
@@ -138,13 +141,16 @@ export async function createApp(): Promise<{ app: Express }> {
 	// Session Middleware for 2FA Setup Process
 	app.use(
 		session({
+			store: new MemoryStore({
+				checkPeriod: 86400000,
+			}),
 			secret: configService.config.SECRET,
 			resave: false,
 			saveUninitialized: false,
 			cookie: {
 				secure: configService.config.APP_URL?.startsWith('https'),
 				httpOnly: true,
-				maxAge: 1000 * 60 * 15, // 15 minutes
+				maxAge: 1000 * 60 * 15,
 			},
 		})
 	);

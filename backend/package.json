@@ -29,6 +29,7 @@
 		"express-session": "^1.19.0",
 		"helmet": "^8.1.0",
 		"jsonwebtoken": "^9.0.3",
+		"memorystore": "^1.6.8",
 		"nanoid": "^5.0.9",
 		"node-ssh": "^13.2.0",
 		"nodemailer": "8.0.1",
