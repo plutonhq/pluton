@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.15.0](https://github.com/plutonhq/pluton/compare/pluton-v0.14.1...pluton-v0.15.0) (2026-05-01)
+
+
+### Features
+
+* add dry run progress tracking ([e9008b1](https://github.com/plutonhq/pluton/commit/e9008b1aadecbfb26f492bc41bc7391b81a62da4))
+
+
+### Bug Fixes
+
+* backup cancel action sometimes in some cases ([113aefd](https://github.com/plutonhq/pluton/commit/113aefde9593edbc0a23e12c6b8c781cb95db210))
+* don't require credentials input on re-install with data preserved on linux installation ([dee87c2](https://github.com/plutonhq/pluton/commit/dee87c24cb0d61ea7c60d3f3b993fd47e16d1cc8))
+* file owner name issue on linux in File Manager ([20a155e](https://github.com/plutonhq/pluton/commit/20a155ea79350615825c795691e6bd3109cfcb01))
+* missing dry run error event processing ([a64ded5](https://github.com/plutonhq/pluton/commit/a64ded595be210fadd8815d328868fb84d90ee02))
+* possible memory leak issue ([f36deab](https://github.com/plutonhq/pluton/commit/f36deabe57633ffab7cb0978610476e60136819e))
+* resolve source & storage field resetting issue on plan creation screen ([8946878](https://github.com/plutonhq/pluton/commit/8946878da9b7581ed033f14c4a274bf7fa9142e7))
+* resolves broken device settings ([f05d704](https://github.com/plutonhq/pluton/commit/f05d704dcd8693eea2da1a8d594fb024e3c87961))
+* resolves missing integrity error in plans page ([45e4407](https://github.com/plutonhq/pluton/commit/45e44078d6719322c3bfc0ae696e9c4cd6f35a67))
+
+
+### Code Refactoring
+
+* make linux installations run as a non-root pluton user ([42ad7a5](https://github.com/plutonhq/pluton/commit/42ad7a51146358f967b051d6b3b45c69cb7a568a))
+
 ## [0.14.1](https://github.com/plutonhq/pluton/compare/pluton-v0.14.0...pluton-v0.14.1) (2026-04-24)
 
 
