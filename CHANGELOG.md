@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.1](https://github.com/plutonhq/pluton/compare/pluton-v0.15.0...pluton-v0.15.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* docker build was not building arm64 build ([62b61dc](https://github.com/plutonhq/pluton/commit/62b61dc2cf9cb199ad64b1de38f43a53b01c8b56))
+
 ## [0.15.0](https://github.com/plutonhq/pluton/compare/pluton-v0.14.1...pluton-v0.15.0) (2026-05-01)
 
 
