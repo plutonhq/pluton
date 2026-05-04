@@ -4,7 +4,7 @@
 
 FROM debian:bookworm-slim
 
-ARG TARGETARCH=amd64
+ARG TARGETARCH
 ARG APP_VERSION=0.0.1
 
 # Install runtime dependencies
@@ -20,7 +20,11 @@ WORKDIR /app
 # Select and install the correct architecture using bind mount to avoid copying all binaries to the image layer
 RUN --mount=type=bind,source=dist/executables,target=/tmp/executables \
     set -e && \
-    ARCH_SUFFIX=$( [ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "arm64" ) && \
+    case "$TARGETARCH" in \
+        amd64) ARCH_SUFFIX="x64" ;; \
+        arm64) ARCH_SUFFIX="arm64" ;; \
+        *) echo "Error: unsupported TARGETARCH '$TARGETARCH'"; exit 1 ;; \
+    esac && \
     SOURCE_DIR="/tmp/executables/pluton-linux-${ARCH_SUFFIX}" && \
     if [ ! -d "$SOURCE_DIR" ]; then \
         echo "Error: Directory $SOURCE_DIR not found"; \
