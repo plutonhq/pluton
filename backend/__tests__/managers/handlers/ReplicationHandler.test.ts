@@ -298,7 +298,7 @@ describe('ReplicationHandler', () => {
 				callCount++;
 				if (callCount === 3) {
 					// Cancel during the first storage's copy command
-					cancelledBackups.add(planId);
+					cancelledBackups.add(planId + backupId);
 				}
 				return 'ok';
 			});

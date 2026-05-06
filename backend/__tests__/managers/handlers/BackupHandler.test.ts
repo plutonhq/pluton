@@ -1278,7 +1278,7 @@ describe('BackupHandler', () => {
 		});
 
 		it('should not update completion if backup is cancelled', async () => {
-			handler['cancelledBackups'].add('plan-1');
+			handler['cancelledBackups'].add('plan-1' + 'backup-1');
 
 			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
 			await handler['executeBackupPhase']('plan-1', 'backup-1', baseOptions, resticArgsAndEnv);
@@ -1288,7 +1288,7 @@ describe('BackupHandler', () => {
 			);
 			expect(completeCalls.length).toBe(0);
 
-			handler['cancelledBackups'].delete('plan-1');
+			handler['cancelledBackups'].delete('plan-1' + 'backup-1');
 		});
 	});
 
@@ -1301,7 +1301,7 @@ describe('BackupHandler', () => {
 			}, 10);
 
 			mockRunResticCommand.mockImplementationOnce(async () => {
-				handler['cancelledBackups'].add('plan-1');
+				handler['cancelledBackups'].add('plan-1' + 'backup-1');
 				return '{}';
 			});
 
