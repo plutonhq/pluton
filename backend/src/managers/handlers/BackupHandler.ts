@@ -90,13 +90,13 @@ export class BackupHandler {
 			// --- 1. PRE-BACKUP PHASE ---
 			const resticArgsAndEnv = this.createResticBackupArgs(planId, options as BackupPlanArgs);
 			await this.preBackupPhase(planId, backupId, options, resticArgsAndEnv);
-			if (this.cancelledBackups.has(planId)) {
+			if (this.cancelledBackups.has(planId + backupId)) {
 				throw new Error('BACKUP_CANCELLED: Backup was cancelled');
 			}
 
 			// --- 2. BACKUP PHASE ---
 			const result = await this.executeBackupPhase(planId, backupId, options, resticArgsAndEnv);
-			if (this.cancelledBackups.has(planId)) {
+			if (this.cancelledBackups.has(planId + backupId)) {
 				throw new Error('BACKUP_CANCELLED: Backup was cancelled');
 			}
 
@@ -134,7 +134,8 @@ export class BackupHandler {
 
 			// If Cancelled by the user, do not retry or mark as failed.
 			const isCancelled =
-				errorMessage.startsWith('BACKUP_CANCELLED:') || this.cancelledBackups.has(planId);
+				errorMessage.startsWith('BACKUP_CANCELLED:') ||
+				this.cancelledBackups.has(planId + backupId);
 			if (isCancelled) {
 				return '';
 			}
@@ -195,7 +196,7 @@ export class BackupHandler {
 		} finally {
 			// This block runs regardless of success or failure, ensuring we always clean up.
 			this.runningBackups.delete(planId);
-			this.cancelledBackups.delete(planId);
+			this.cancelledBackups.delete(planId + backupId);
 		}
 	}
 
@@ -303,7 +304,7 @@ export class BackupHandler {
 				handlers.onComplete,
 				process => processManager.trackProcess('backup-' + backupId, process)
 			);
-			if (!this.cancelledBackups.has(planId)) {
+			if (!this.cancelledBackups.has(planId + backupId)) {
 				await this.updateProgress(planId, backupId, 'backup', 'BACKUP_OPERATION_COMPLETE', true);
 			}
 			return result;
@@ -549,7 +550,7 @@ export class BackupHandler {
 	 * @returns A promise that resolves to a boolean indicating if the backup was cancelled.
 	 */
 	async cancel(planId: string, backupId: string): Promise<boolean> {
-		this.cancelledBackups.add(planId);
+		this.cancelledBackups.add(planId + backupId);
 		await this.progressManager.markCompleted(
 			planId,
 			backupId,

@@ -218,7 +218,7 @@ export class ReplicationOrchestrator {
 			if (failedResults.length === 0) break;
 
 			// Check for cancellation before retrying
-			if (this.cancelledBackups.has(planId)) break;
+			if (this.cancelledBackups.has(planId + backupId)) break;
 
 			attempt++;
 			const failedReplicationIds = new Set(failedResults.map(m => m.replicationId));
@@ -239,7 +239,7 @@ export class ReplicationOrchestrator {
 			await new Promise(resolve => setTimeout(resolve, delayMs));
 
 			// Check for cancellation after delay
-			if (this.cancelledBackups.has(planId)) break;
+			if (this.cancelledBackups.has(planId + backupId)) break;
 
 			for (const replicationId of failedReplicationIds) {
 				await this.progressManager.updateReplicationAction(

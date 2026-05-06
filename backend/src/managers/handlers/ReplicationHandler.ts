@@ -64,7 +64,7 @@ export class ReplicationHandler {
 			// Run replications sequentially
 			const results: BackupMirror[] = [];
 			for (let i = 0; i < resolvedStorages.length; i++) {
-				if (this.cancelledBackups.has(planId)) {
+				if (this.cancelledBackups.has(planId + backupId)) {
 					// Mark remaining mirrors as failed
 					for (let j = i; j < resolvedStorages.length; j++) {
 						results.push({
@@ -127,7 +127,7 @@ export class ReplicationHandler {
 
 		try {
 			// Check for cancellation
-			if (this.cancelledBackups.has(planId)) {
+			if (this.cancelledBackups.has(planId + backupId)) {
 				throw new Error('Cancelled by user');
 			}
 
@@ -178,7 +178,7 @@ export class ReplicationHandler {
 			}
 
 			// Check for cancellation
-			if (this.cancelledBackups.has(planId)) {
+			if (this.cancelledBackups.has(planId + backupId)) {
 				throw new Error('Cancelled by user');
 			}
 
@@ -330,7 +330,7 @@ export class ReplicationHandler {
 			);
 
 			// Check for cancellation after copy
-			if (this.cancelledBackups.has(planId)) {
+			if (this.cancelledBackups.has(planId + backupId)) {
 				throw new Error('Cancelled by user');
 			}
 
