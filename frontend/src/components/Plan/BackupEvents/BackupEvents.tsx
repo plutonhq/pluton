@@ -154,8 +154,8 @@ const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inPro
             )}
          </div>
          {showError && (
-            <Modal title="Error Details" closeModal={() => setShowError(false)} width="400px">
-               <div className={classes.errorDetails}>
+            <Modal title="Error Details" closeModal={() => setShowError(false)} width={'400px'}>
+               <div className={classes.errorDetails} data-length={showError.length}>
                   {(() => {
                      if (typeof showError === 'string') {
                         if (showError.startsWith('main-')) {

@@ -161,6 +161,10 @@ button {
    border-right: 1px solid var(--line-color);
 }
 
+.linebreak-tooltip-content {
+   line-break: anywhere;
+}
+
 .loadingScreen {
    width: 100%;
    height: 100vh;

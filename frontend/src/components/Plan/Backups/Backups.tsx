@@ -21,7 +21,7 @@ import BackupEvents from '../BackupEvents/BackupEvents';
 import Input from '../../common/form/Input/Input';
 import MirrorStatusBadge from '../Mirrors/MirrorStatusBadge';
 import MirrorStorageSelectorModal from '../Mirrors/MirrorStorageSelectorModal';
-import { SidePanel, SnapshotViewer } from '../..';
+import { Modal, SidePanel, SnapshotViewer } from '../..';
 
 const DownloadLabel = ({ download, downloadBackup }: { download: Backup['download']; downloadBackup: () => void }) => {
    if (download?.status === 'started') {
@@ -101,6 +101,7 @@ const Backups = ({
    const [showRestoreModal, setShowRestoreModal] = useState<Backup | false>(false);
    const [showBackupEvents, setShowBackupEvents] = useState<false | string>(false);
    const [showSnapshotViewer, setShowSnapshotViewer] = useState<Backup | false>(false);
+   const [showBackupError, setShowBackupError] = useState<string | false>(false);
    const [showEditModal, setShowEditModal] = useState<Backup | false>(false);
    const [showStorageSelector, setShowStorageSelector] = useState<Backup | false>(false);
    const queryClient = useQueryClient();
@@ -240,8 +241,9 @@ const Backups = ({
                         <div
                            className={`${classes.status} ${errorMsg ? classes.statusHasError : ''}`}
                            data-tooltip-id="htmlToolTip"
-                           data-tooltip-html={`<div><string>Error</string>: ${errorMsg}</div>`}
+                           data-tooltip-html={`<div class="linebreak-tooltip-content"><string>Error</string>: ${errorMsg?.slice(0, 120) + (errorMsg && errorMsg.length > 120 ? '...' : '')}</div>`}
                            data-tooltip-hidden={!errorMsg}
+                           onClick={() => errorMsg && errorMsg.length > 120 && setShowBackupError(errorMsg)}
                         >
                            <StatusLabel status={status} hasError={!!errorMsg} />
                         </div>
@@ -452,6 +454,15 @@ const Backups = ({
                   primaryStorage={replicationSettings?.enabled ? storage : undefined}
                />
             </SidePanel>
+         )}
+         {showBackupError && (
+            <Modal title="Error Details" closeModal={() => setShowBackupError(false)} width={'600px'}>
+               <div className={`${classes.errorDetailsModal} styled__scrollbar`}>
+                  {showBackupError.split('\n').map((line, index) => (
+                     <p key={index}>{line}</p>
+                  ))}
+               </div>
+            </Modal>
          )}
       </div>
    );

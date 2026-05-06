@@ -148,7 +148,12 @@ const BackupProgress = ({ item, sourceId, sourceType, planId, type = 'backup' }:
                   {item.errorMsg && (
                      <span className={classes.backupError}>
                         <Icon type="error-circle-filled" size={13} />{' '}
-                        <i data-tooltip-id="htmlToolTip" data-tooltip-place="top" data-tooltip-html={item.errorMsg}>
+                        <i
+                           data-tooltip-id="htmlToolTip"
+                           data-tooltip-place="top"
+                           data-tooltip-html={`<div class="linebreak-tooltip-content">${item.errorMsg.slice(0, 120) + (item.errorMsg.length > 120 ? '...' : '')}</div>`}
+                           onClick={() => setShowProgressDetails(true)}
+                        >
                            <u>Error</u> Occurred.
                         </i>{' '}
                         Retrying...

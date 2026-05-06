@@ -259,4 +259,6 @@
    padding: 10px;
    word-break: break-word;
    color: var(--error-button-color);
+   max-height: 400px;
+   overflow: auto;
 }
