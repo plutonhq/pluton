@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.15.2](https://github.com/plutonhq/pluton/compare/pluton-v0.15.1...pluton-v0.15.2) (2026-05-06)
+
+
+### Bug Fixes
+
+* resolve backup error overflow on backup status hover ([c0c410d](https://github.com/plutonhq/pluton/commit/c0c410dd46b7ca5f336c1e6b70044128cc70295b))
+* resolves stuck backup issue after previous backup cancellation ([4cd3217](https://github.com/plutonhq/pluton/commit/4cd3217a6642b7b8e54d580fd8a06762b17261a3))
+
+
+### Dependencies
+
+* bump rclone version ([895c1c9](https://github.com/plutonhq/pluton/commit/895c1c99ea055c79f78d2440e629e014046b3b97))
+
 ## [0.15.1](https://github.com/plutonhq/pluton/compare/pluton-v0.15.0...pluton-v0.15.1) (2026-05-04)
 
 
