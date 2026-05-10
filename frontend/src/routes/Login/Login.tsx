@@ -65,7 +65,13 @@ const Login = () => {
             </h3>
          </div>
          <div className={classes.container}>
-            <div className="loginForm">
+            <form
+               className="loginForm"
+               onSubmit={(e) => {
+                  e.preventDefault();
+                  handleLogin();
+               }}
+            >
                <div className={classes.loginInput}>
                   <Icon type="user" classes={classes.loginInputIcon} />
                   <input
@@ -90,7 +96,7 @@ const Login = () => {
                   {loginMutation.isPending ? 'Logging in...' : 'Login'}
                </button>
                {error && error.msg && <div className={classes.loginErrorMsg}>{error.msg}</div>}
-            </div>
+            </form>
          </div>
       </div>
    );
