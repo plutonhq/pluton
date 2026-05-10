@@ -1,11 +1,12 @@
 import { StrategyMethodTypes } from '../../types/strategy';
-import { BackupPlanArgs, BackupVerifiedResult } from '../../types/plans';
+import { BackupPlanArgs, BackupVerifiedResult, PlanAddRunSettings } from '../../types/plans';
 import { BackupRunConfig } from '../../types/backups';
 
 export interface BackupStrategy {
 	createBackup(
 		planId: string,
-		options: BackupPlanArgs
+		options: BackupPlanArgs,
+		runSettings?: PlanAddRunSettings
 	): Promise<{ success: boolean; result: string }>;
 	performBackup(
 		planId: string,

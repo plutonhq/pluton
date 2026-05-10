@@ -1,5 +1,5 @@
 import { BackupStrategy } from './BackupStrategy';
-import { BackupPlanArgs, BackupVerifiedResult } from '../../types/plans';
+import { BackupPlanArgs, BackupVerifiedResult, PlanAddRunSettings } from '../../types/plans';
 import { BaseBackupManager } from '../../managers/BaseBackupManager';
 import { readFile } from 'fs/promises';
 import { appPaths } from '../../utils/AppPaths';
@@ -12,8 +12,8 @@ export class LocalStrategy implements BackupStrategy {
 		return await this.localAgent.performBackup(backupId, runConfig);
 	}
 
-	async createBackup(backupId: string, options: BackupPlanArgs) {
-		return await this.localAgent.createBackup(backupId, options);
+	async createBackup(backupId: string, options: BackupPlanArgs, runSettings?: PlanAddRunSettings) {
+		return await this.localAgent.createBackup(backupId, options, runSettings);
 	}
 
 	async updateBackup(backupId: string, options: BackupPlanArgs) {

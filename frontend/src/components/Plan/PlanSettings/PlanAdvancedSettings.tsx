@@ -3,7 +3,7 @@ import Icon from '../../common/Icon/Icon';
 import classes from './PlanSettings.module.scss';
 import PlanNotificationSettings from './PlanNotificationSettings';
 import PlanPerformanceSettings from './PlanPerformanceSettings';
-import { NewPlanSettings } from '../../../@types/plans';
+import { NewPlanSettings, PlanAddRunSettings } from '../../../@types/plans';
 import TagsInput from '../../common/form/TagsInput/TagsInput';
 import PlanGeneralSettings from './PlanGeneralSettings';
 import { isMobile } from '../../../utils/helpers';
@@ -17,9 +17,11 @@ interface PlanAdvancedSettingsProps {
    device: Device;
    onUpdate: (notificationSettings: NewPlanSettings) => void;
    isEditing: boolean;
+   runSettings?: PlanAddRunSettings;
+   setRunSettings?: (runSettings: PlanAddRunSettings) => void;
 }
 
-const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing }: PlanAdvancedSettingsProps) => {
+const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing, runSettings, setRunSettings }: PlanAdvancedSettingsProps) => {
    const [advancedTab, setAdvancedTab] = useState('General');
    const settings = plan.settings;
    const integrationTypes = useMemo(() => {
@@ -80,6 +82,8 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing }
                   settings={settings}
                   onUpdate={(newSettings) => onUpdate({ ...plan, settings: newSettings })}
                   isEditing={isEditing}
+                  runSettings={runSettings}
+                  setRunSettings={setRunSettings}
                />
             )}
             {advancedTab === 'Notification' && (

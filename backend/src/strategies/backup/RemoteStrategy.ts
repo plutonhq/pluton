@@ -1,4 +1,4 @@
-import { BackupVerifiedResult } from '../../types/plans';
+import { BackupVerifiedResult, PlanAddRunSettings } from '../../types/plans';
 import { BackupRunConfig } from '../../types/backups';
 import { BackupStrategy } from './BackupStrategy';
 
@@ -9,7 +9,11 @@ export class RemoteStrategy implements BackupStrategy {
 		this.deviceId = deviceId;
 	}
 
-	async createBackup(planId: string, options: Record<string, any>) {
+	async createBackup(
+		planId: string,
+		options: Record<string, any>,
+		runSettings?: PlanAddRunSettings
+	) {
 		return { success: true, result: 'Backup created successfully' };
 	}
 

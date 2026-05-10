@@ -213,3 +213,7 @@ export interface NewPlanSettings {
 }
 
 export type PlanChildItem = Pick<Plan, 'id' | 'title' | 'createdAt' | 'isActive' | 'stats' | 'method'>;
+
+export interface PlanAddRunSettings {
+   runNow: boolean;
+}

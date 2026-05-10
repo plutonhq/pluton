@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { API_URL } from '../utils/constants';
-import { NewPlanSettings, Plan, PlanNotification } from '../@types/plans';
+import { NewPlanSettings, Plan, PlanAddRunSettings, PlanNotification } from '../@types/plans';
 
 type BackupRunConfig = {
    skipDryRun?: boolean;
@@ -143,14 +143,14 @@ export function useGetDownloadLogs() {
 }
 
 // Create New Plan
-export async function createPlan(newPlan: NewPlanSettings) {
+export async function createPlan({ newPlan, runSettings }: { newPlan: NewPlanSettings; runSettings: PlanAddRunSettings }) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
    console.log('newPlan :', newPlan);
    const res = await fetch(`${API_URL}/plans`, {
       method: 'POST',
       credentials: 'include',
       headers: header,
-      body: JSON.stringify(newPlan),
+      body: JSON.stringify({ plan: newPlan, runSettings }),
    });
    const data = await res.json();
    if (!data.success) {

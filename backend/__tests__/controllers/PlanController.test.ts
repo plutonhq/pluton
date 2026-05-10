@@ -185,12 +185,12 @@ describe('PlanController', () => {
 				sourceConfig: {},
 			};
 			const createdPlan = { id: 'plan-1', ...planPayload };
-			mockRequest.body = planPayload;
+			mockRequest.body = { plan: planPayload };
 			mockPlanService.createPlan.mockResolvedValue(createdPlan as any);
 
 			await planController.createPlan(mockRequest as Request, mockResponse as Response);
 
-			expect(mockPlanService.createPlan).toHaveBeenCalledWith(planPayload);
+			expect(mockPlanService.createPlan).toHaveBeenCalledWith(planPayload, undefined);
 			expect(mockStatus).toHaveBeenCalledWith(201);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: true,
@@ -205,7 +205,7 @@ describe('PlanController', () => {
 				sourceType: 'local',
 				sourceConfig: {},
 			};
-			mockRequest.body = planPayload;
+			mockRequest.body = { plan: planPayload };
 			const error = new AppError(500, 'Creation failed');
 			mockPlanService.createPlan.mockRejectedValue(error);
 

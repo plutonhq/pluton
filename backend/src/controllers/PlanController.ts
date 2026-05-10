@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { NewPlanReq } from '../types/plans';
+import { NewPlanReq, PlanAddRunSettings } from '../types/plans';
 import { BackupRunConfig } from '../types/backups';
 import { PlanService } from '../services/PlanService';
 import { AppError } from '../utils/AppError';
@@ -68,7 +68,8 @@ export class PlanController {
 	}
 
 	async createPlan(req: Request, res: Response): Promise<void> {
-		const planPayload: undefined | NewPlanReq = req.body;
+		const planPayload: undefined | NewPlanReq = req.body?.plan;
+		const runSettings: undefined | PlanAddRunSettings = req.body?.runSettings;
 
 		try {
 			if (
@@ -87,7 +88,7 @@ export class PlanController {
 				return;
 			}
 
-			const plan = await this.planService.createPlan(planPayload);
+			const plan = await this.planService.createPlan(planPayload, runSettings);
 			res.status(201).json({ success: true, result: plan });
 		} catch (error: unknown) {
 			const appError = error as AppError;

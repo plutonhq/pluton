@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router';
-import { NewPlanSettings } from '../../../@types/plans';
+import { NewPlanSettings, PlanAddRunSettings } from '../../../@types/plans';
 import { DEFAULT_PLAN_SETTINGS } from '../../../utils/constants';
 import { useCreatePlan } from '../../../services/plans';
 
@@ -14,6 +14,7 @@ type AddPlanProps = {
 
 const AddPlan = ({ close }: AddPlanProps) => {
    const [newPlan, setNewPlan] = useState<NewPlanSettings>(DEFAULT_PLAN_SETTINGS);
+   const [runSettings, setRunSettings] = useState<PlanAddRunSettings>({ runNow: true });
 
    const createPlanMutation = useCreatePlan();
    const navigate = useNavigate();
@@ -21,23 +22,26 @@ const AddPlan = ({ close }: AddPlanProps) => {
    const createBackup = () => {
       console.log('newPlan :', newPlan);
 
-      createPlanMutation.mutate(newPlan, {
-         onError: (error: any) => {
-            console.log('error :', error);
-            toast.error(error.message || `Error Creating New Backup Plan.`);
-         },
-         onSuccess: (data: any) => {
-            console.log('Success :', data);
-            toast.success(`New Backup Plan Created!`, { autoClose: 5000 });
-            close();
-            if (data?.result) {
-               const planID = Array.isArray(data.result) ? data.result[0].id : data.result.id;
-               if (planID) {
-                  navigate(`/plan/${planID}?pendingbackup=1`);
+      createPlanMutation.mutate(
+         { newPlan, runSettings },
+         {
+            onError: (error: any) => {
+               console.log('error :', error);
+               toast.error(error.message || `Error Creating New Backup Plan.`);
+            },
+            onSuccess: (data: any) => {
+               console.log('Success :', data);
+               toast.success(`New Backup Plan Created!`, { autoClose: 5000 });
+               close();
+               if (data?.result) {
+                  const planID = Array.isArray(data.result) ? data.result[0].id : data.result.id;
+                  if (planID) {
+                     navigate(`/plan/${planID}${runSettings.runNow ? '?pendingbackup=1' : ''}`);
+                  }
                }
-            }
+            },
          },
-      });
+      );
    };
 
    return (
@@ -49,6 +53,8 @@ const AddPlan = ({ close }: AddPlanProps) => {
          onPlanSettingsChange={setNewPlan}
          onSubmit={createBackup}
          close={close}
+         runSettings={runSettings}
+         setRunSettings={(settings) => setRunSettings(settings)}
       />
    );
 };

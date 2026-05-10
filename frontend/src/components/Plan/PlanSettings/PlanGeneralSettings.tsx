@@ -1,4 +1,4 @@
-import { NewPlanSettings } from '../../../@types/plans';
+import { NewPlanSettings, PlanAddRunSettings } from '../../../@types/plans';
 import NumberInput from '../../common/form/NumberInput/NumberInput';
 import Toggle from '../../common/form/Toggle/Toggle';
 import classes from './PlanSettings.module.scss';
@@ -7,9 +7,11 @@ interface PlanGeneralSettingsProps {
    settings: NewPlanSettings['settings'];
    onUpdate: (settings: NewPlanSettings['settings']) => void;
    isEditing: boolean;
+   runSettings?: PlanAddRunSettings;
+   setRunSettings?: (runSettings: PlanAddRunSettings) => void;
 }
 
-const PlanGeneralSettings = ({ settings, onUpdate, isEditing }: PlanGeneralSettingsProps) => {
+const PlanGeneralSettings = ({ settings, onUpdate, isEditing, runSettings, setRunSettings }: PlanGeneralSettingsProps) => {
    const { encryption, compression, retries, retryDelay } = settings;
    return (
       <>
@@ -48,6 +50,16 @@ const PlanGeneralSettings = ({ settings, onUpdate, isEditing }: PlanGeneralSetti
                inline={false}
             />
          </div>
+         {!isEditing && setRunSettings && (
+            <div className={`${classes.field} ${classes.runNowField}`}>
+               <label className={classes.label}>Run Backup Now</label>
+               <Toggle
+                  fieldValue={runSettings?.runNow ?? true}
+                  onUpdate={(val: boolean) => setRunSettings && setRunSettings({ ...runSettings, runNow: val })}
+                  description={'Run backup immediately after creating the plan'}
+               />
+            </div>
+         )}
       </>
    );
 };

@@ -10,6 +10,7 @@ import {
 	BackupPlanArgs,
 	BackupVerifiedResult,
 	NewPlanReq,
+	PlanAddRunSettings,
 	PlanLogItem,
 	PlanNotification,
 	PlanNotificationType,
@@ -85,7 +86,7 @@ export class PlanService {
 	/**
 	 * Creates a new plan, its schedule, and optionally triggers the first backup.
 	 */
-	public async createPlan(planData: NewPlanReq): Promise<Plan> {
+	public async createPlan(planData: NewPlanReq, runSettings?: PlanAddRunSettings): Promise<Plan> {
 		const planId = generateUID();
 		const {
 			title,
@@ -171,7 +172,7 @@ export class PlanService {
 
 		try {
 			const strategy = this.getStrategy(newPlanData) as BackupStrategy;
-			const creationRes = await strategy.createBackup(planId, backupScheduleOptions);
+			const creationRes = await strategy.createBackup(planId, backupScheduleOptions, runSettings);
 			if (!creationRes.success) {
 				throw new AppError(500, creationRes.result);
 			}

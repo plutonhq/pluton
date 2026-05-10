@@ -207,7 +207,8 @@ describe('PlanService', () => {
 				expect.any(String), // The planId
 				expect.objectContaining({
 					storagePath: sanitizedPath, // Check the specific property
-				})
+				}),
+				undefined // runSettings
 			);
 
 			// Check that the store was called with the SANITIZED path

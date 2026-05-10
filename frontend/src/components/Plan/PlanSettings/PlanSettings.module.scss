@@ -26,6 +26,14 @@
    }
 }
 
+.runNowField {
+   padding: 12px;
+   border: 1px solid var(--primary-color-mid);
+   border-radius: 6px;
+   box-sizing: border-box;
+   background: var(--background-color);
+}
+
 .label {
    font-weight: 600;
    display: block;

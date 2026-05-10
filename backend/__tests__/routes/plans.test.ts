@@ -123,10 +123,12 @@ describe('Plan Routes', () => {
 			const response = await request(app)
 				.post('/api/plans')
 				.send({
-					settings: { interval: '0 0 * * *' },
-					storage: { id: 'storage-1' },
-					sourceType: 'device',
-					sourceConfig: { id: 'device-1' },
+					plan: {
+						settings: { interval: '0 0 * * *' },
+						storage: { id: 'storage-1' },
+						sourceType: 'device',
+						sourceConfig: { id: 'device-1' },
+					},
 				});
 
 			expect(response.status).toBe(401);
@@ -139,10 +141,12 @@ describe('Plan Routes', () => {
 			const response = await request(app)
 				.post('/api/plans')
 				.send({
-					settings: { interval: '0 0 * * *' },
-					storage: { id: 'storage-1' },
-					sourceType: 'device',
-					sourceConfig: { id: 'device-1' },
+					plan: {
+						settings: { interval: '0 0 * * *' },
+						storage: { id: 'storage-1' },
+						sourceType: 'device',
+						sourceConfig: { id: 'device-1' },
+					},
 				});
 
 			expect(response.status).toBe(201);

@@ -3,7 +3,12 @@ import { runResticCommand } from '../utils/restic/restic';
 import { generateResticRepoPath } from '../utils/restic/helpers';
 import { runRcloneCommand } from '../utils/rclone/rclone';
 import { CronManager } from './CronManager';
-import { BackupPlanArgs, BackupVerifiedResult, PlanPrune } from '../types/plans';
+import {
+	BackupPlanArgs,
+	BackupVerifiedResult,
+	PlanAddRunSettings,
+	PlanPrune,
+} from '../types/plans';
 import { BackupHandler } from './handlers/BackupHandler';
 import { PruneHandler } from './handlers/PruneHandler';
 import { jobQueue } from '../jobs/JobQueue';
@@ -58,7 +63,8 @@ export class BaseBackupManager extends EventEmitter {
 
 	async createBackup(
 		planId: string,
-		options: BackupPlanArgs
+		options: BackupPlanArgs,
+		runSettings?: PlanAddRunSettings
 	): Promise<{ success: boolean; result: string }> {
 		const { storagePath, storage } = options;
 		const { encryption } = options.settings;
@@ -91,11 +97,20 @@ export class BaseBackupManager extends EventEmitter {
 			await this.createOrUpdateSchedules(planId, options, 'create');
 
 			// Run the initial Backup immediately.
-			const initScheduleRes = await this.performBackup(planId);
-			const initBackupStatus = initScheduleRes.success
-				? 'Backup Schedule Created. Initial Backup Started.'
-				: 'Could not Start the Initial Backup. Please run the Backup Manually.';
-			return { success: true, result: initBackupStatus };
+
+			const shouldRunInitialBackup = runSettings?.runNow ?? true;
+			if (shouldRunInitialBackup) {
+				const initScheduleRes = await this.performBackup(planId);
+				const initBackupStatus = initScheduleRes.success
+					? 'Backup Schedule Created. Initial Backup Started.'
+					: 'Could not Start the Initial Backup. Please run the Backup Manually.';
+				return { success: true, result: initBackupStatus };
+			} else {
+				return {
+					success: true,
+					result: 'Backup Schedule Created. Initial Backup Not Started as per settings.',
+				};
+			}
 		} catch (error: any) {
 			return { success: false, result: error.message };
 		}

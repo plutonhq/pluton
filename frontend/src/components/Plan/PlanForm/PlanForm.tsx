@@ -4,7 +4,7 @@ import SidePanel from '../../common/SidePanel/SidePanel';
 import StoragePicker from '../../common/form/StoragePicker/StoragePicker';
 import PlanStrategySettings from '../PlanSettings/PlanStrategySettings';
 import PlanSourceSettings from '../PlanSettings/PlanSourceSettings';
-import { NewPlanSettings } from '../../../@types/plans';
+import { NewPlanSettings, PlanAddRunSettings } from '../../../@types/plans';
 import classes from '../AddPlan/AddPlan.module.scss';
 import PFClasses from './PlanForm.module.scss';
 import { useGetSettings } from '../../../services/settings';
@@ -27,6 +27,8 @@ type PlanFormProps = {
    storagePath?: string;
    storageId?: string;
    planId?: string;
+   runSettings?: PlanAddRunSettings;
+   setRunSettings?: (runSettings: PlanAddRunSettings) => void;
 };
 
 const PlanForm = ({
@@ -40,6 +42,8 @@ const PlanForm = ({
    storagePath,
    storageId,
    planId,
+   runSettings,
+   setRunSettings,
 }: PlanFormProps) => {
    const [step, setStep] = useState<number>(1);
 
@@ -279,6 +283,8 @@ const PlanForm = ({
                      onUpdate={onPlanSettingsChange}
                      device={deviceInstance}
                      isEditing={type === 'edit'}
+                     runSettings={runSettings}
+                     setRunSettings={setRunSettings}
                   />
                </div>
             )}

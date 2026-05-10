@@ -280,3 +280,7 @@ export type PlanLogItem = {
 	planId: string;
 	time: number;
 };
+
+export interface PlanAddRunSettings {
+	runNow: boolean;
+}
