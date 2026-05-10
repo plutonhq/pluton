@@ -2,18 +2,19 @@ import { useState } from 'react';
 import Icon from '../Icon/Icon';
 import classes from './SortItems.module.scss';
 type SortItemsProps = {
+   id: string;
    onSort: (s: string) => void;
    options: { label: string; value: string }[];
 };
 
-const SortItems = ({ options, onSort }: SortItemsProps) => {
+const SortItems = ({ id, options, onSort }: SortItemsProps) => {
    const [showDropDown, setshowDropDown] = useState(false);
-   const [selected, setsSelected] = useState('');
+   const [selected, setsSelected] = useState(localStorage.getItem(id) || '');
    const selectedLabel = options.find((item) => item.value === selected);
    return (
       <div className={classes.sortItems}>
          <button
-            className={selected ? classes.sortActive : ''}
+            className={selected || showDropDown ? classes.sortActive : ''}
             onClick={() => setshowDropDown(!showDropDown)}
             data-tooltip-id="appTooltip"
             data-tooltip-content="Sort"
@@ -34,6 +35,7 @@ const SortItems = ({ options, onSort }: SortItemsProps) => {
                               onClick={() => {
                                  setsSelected(item.value);
                                  onSort(item.value);
+                                 localStorage.setItem(id, item.value);
                                  setshowDropDown(false);
                               }}
                               className={`${selected && item.value === selected ? classes.selectedItem : ''}`}
@@ -46,6 +48,7 @@ const SortItems = ({ options, onSort }: SortItemsProps) => {
                      onClick={() => {
                         setsSelected('');
                         onSort('');
+                        localStorage.removeItem(id);
                         setshowDropDown(false);
                      }}
                   >

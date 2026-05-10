@@ -27,6 +27,7 @@ export { default as PathPicker } from './common/PathPicker/PathPicker';
 export { default as SearchItems } from './common/SearchItems/SearchItems';
 export { default as SidePanel } from './common/SidePanel/SidePanel';
 export { default as SortItems } from './common/SortItems/SortItems';
+export { default as FilterPlans } from './Plan/FilterPlans/FilterPlans';
 export { default as StatusLabel } from './common/StatusLabel/StatusLabel';
 export { default as Tabs, TabList, TabPanel, Tab } from './common/Tabs/Tabs';
 export { default as TagsFilter } from './common/TagsFilter/TagsFilter';

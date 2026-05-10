@@ -503,3 +503,26 @@ export const secondsToMinutes = (seconds: number) => {
    }
    return seconds > 60 ? `${Math.round(seconds / 60)} min` : `${seconds} sec`;
 };
+
+export const getIntervalMinutes = (interval: PlanInterval): number => {
+   switch (interval.type) {
+      case 'minutes':
+         return interval.minutes || 5;
+      case 'hours':
+         return parseInt(interval.hours || '1') * 60;
+      case 'hourly':
+         return 60;
+      case 'daily':
+         return 1440;
+      case 'days': {
+         const dayCount = interval.days?.split(',').filter(Boolean).length || 1;
+         return Math.round((7 / dayCount) * 1440);
+      }
+      case 'weekly':
+         return 10080;
+      case 'monthly':
+         return 43200;
+      default:
+         return 1440;
+   }
+};

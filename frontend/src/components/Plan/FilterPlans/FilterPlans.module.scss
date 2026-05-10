@@ -1,0 +1,65 @@
+.filterItems {
+   position: relative;
+   .filterBtn {
+      display: flex;
+      align-items: center;
+      .filterCount {
+         background-color: var(--primary-color);
+         color: var(--primary-text-color);
+         padding: 1px 6px;
+         border-radius: 12px;
+         font-size: 10px;
+      }
+      &.filterBtnActive {
+         color: var(--primary-color);
+      }
+   }
+   .dropdown {
+      margin-top: -1px;
+      position: absolute;
+      z-index: 9999;
+      border: 1px solid var(--line-color);
+      background: var(--field-bg);
+      box-shadow: 0 0 15px var(--content-shadow-color);
+      width: calc(100% - 2px);
+      border-radius: 0 0 4px 4px;
+      overflow: auto;
+      font-size: 0.75rem;
+      right: 0;
+      width: max-content;
+      max-height: 320px;
+      border-radius: 6px;
+
+      .field {
+         padding: 12px 12px 0 12px;
+         label {
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: block;
+         }
+      }
+      .footer {
+         border-top: 1px solid var(--line-color);
+         margin-top: 12px;
+         display: flex;
+         justify-content: space-around;
+         button:nth-child(2) {
+            padding: 6px 10px;
+            background: var(--primary-color-light);
+            color: var(--primary-color);
+            line-height: 1em;
+            height: fit-content;
+            border-radius: 4px;
+            margin: 8px;
+            font-weight: 600;
+            &:hover {
+               background: var(--primary-color);
+               color: var(--primary-text-color);
+            }
+         }
+         button:hover {
+            color: var(--primary-color);
+         }
+      }
+   }
+}
