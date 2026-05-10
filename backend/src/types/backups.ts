@@ -95,3 +95,9 @@ export interface BackupMirror {
 	error?: string;
 	size?: number;
 }
+
+export type BackupRunConfig = {
+	skipDryRun?: boolean;
+	skipPrune?: boolean;
+	ignoreErrors?: boolean;
+};

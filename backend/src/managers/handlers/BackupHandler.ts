@@ -11,7 +11,7 @@ import { BackupPlanArgs } from '../../types/plans';
 import { runScriptsForEvent } from '../../utils/executeUserScript';
 import { configService } from '../../services/ConfigService';
 import { ReplicationOrchestrator } from './ReplicationOrchestrator';
-import { BackupMirror } from '../../types/backups';
+import { BackupMirror, BackupRunConfig } from '../../types/backups';
 
 type ResticArgsAndEnv = {
 	resticArgs: string[];
@@ -59,8 +59,9 @@ export class BackupHandler {
 	async execute(
 		planId: string,
 		backupId: string,
-		options: Record<string, any>,
-		retryInfo: { attempts: number; maxAttempts: number }
+		options: BackupPlanArgs,
+		retryInfo: { attempts: number; maxAttempts: number },
+		runConfig?: BackupRunConfig
 	): Promise<string> {
 		// Prevent the same plan from running concurrently.
 		if (this.runningBackups.has(planId)) {
@@ -88,20 +89,26 @@ export class BackupHandler {
 
 		try {
 			// --- 1. PRE-BACKUP PHASE ---
-			const resticArgsAndEnv = this.createResticBackupArgs(planId, options as BackupPlanArgs);
-			await this.preBackupPhase(planId, backupId, options, resticArgsAndEnv);
+			const resticArgsAndEnv = this.createResticBackupArgs(planId, options);
+			await this.preBackupPhase(planId, backupId, options, resticArgsAndEnv, runConfig);
 			if (this.cancelledBackups.has(planId + backupId)) {
 				throw new Error('BACKUP_CANCELLED: Backup was cancelled');
 			}
 
 			// --- 2. BACKUP PHASE ---
-			const result = await this.executeBackupPhase(planId, backupId, options, resticArgsAndEnv);
+			const result = await this.executeBackupPhase(
+				planId,
+				backupId,
+				options,
+				resticArgsAndEnv,
+				runConfig
+			);
 			if (this.cancelledBackups.has(planId + backupId)) {
 				throw new Error('BACKUP_CANCELLED: Backup was cancelled');
 			}
 
 			// --- 3. POST-BACKUP PHASE ---
-			await this.postBackupPhase(planId, backupId, options);
+			await this.postBackupPhase(planId, backupId, options, runConfig);
 
 			// --- 4. REPLICATION PHASE ---
 			if (
@@ -207,7 +214,8 @@ export class BackupHandler {
 		planId: string,
 		backupId: string,
 		options: Record<string, any>,
-		resticArgsAndEnv: ResticArgsAndEnv
+		resticArgsAndEnv: ResticArgsAndEnv,
+		runConfig?: BackupRunConfig
 	): Promise<void> {
 		// Update progress: Pre-backup start
 		await this.updateProgress(planId, backupId, 'pre-backup', 'PRE_BACKUP_START', false);
@@ -223,30 +231,13 @@ export class BackupHandler {
 		await this.waitForBackupCreation(planId, backupId);
 
 		// Perform dry run
-		await this.updateProgress(planId, backupId, 'pre-backup', 'PRE_BACKUP_DRY_RUN_START', false);
-
-		let dryRunSummary;
-		try {
-			dryRunSummary = await this.dryRunBackup(planId, backupId, options, resticArgsAndEnv);
-			await this.updateProgress(
-				planId,
-				backupId,
-				'pre-backup',
-				'PRE_BACKUP_DRY_RUN_COMPLETE',
-				true
-			);
-		} catch (error: any) {
-			const errMsg = error?.message || 'Unknown Error';
-			await this.updateProgress(
-				planId,
-				backupId,
-				'pre-backup',
-				'PRE_BACKUP_DRY_RUN_ERROR',
-				false,
-				errMsg
-			);
-			throw error;
-		}
+		const dryRunSummary = await this.dryRunBackup(
+			planId,
+			backupId,
+			options,
+			resticArgsAndEnv,
+			runConfig
+		);
 
 		// Emit backup_start with dry run summary to update the DB record and send notifications.
 		this.emitter.emit('backup_start', {
@@ -284,7 +275,8 @@ export class BackupHandler {
 		planId: string,
 		backupId: string,
 		options: Record<string, any>,
-		resticArgsAndEnv: ResticArgsAndEnv
+		resticArgsAndEnv: ResticArgsAndEnv,
+		runConfig?: BackupRunConfig
 	): Promise<string> {
 		// Update progress: Backup operation start
 		await this.updateProgress(planId, backupId, 'backup', 'BACKUP_OPERATION_START', false);
@@ -293,6 +285,7 @@ export class BackupHandler {
 		const handlers = this.createHandlers(planId, backupId);
 		const { resticArgs, resticEnv } = resticArgsAndEnv;
 		const resticArgsWithBackupTag: string[] = [...resticArgs, '--tag', `backup-${backupId}`];
+		const ignoreErrors = runConfig?.ignoreErrors || false;
 
 		try {
 			// Run the Restic Backup command.
@@ -309,9 +302,21 @@ export class BackupHandler {
 			}
 			return result;
 		} catch (error: any) {
-			const errMsg = error?.message || 'Unknown Error';
-			await this.updateProgress(planId, backupId, 'backup', 'BACKUP_OPERATION_ERROR', true, errMsg);
-			throw error;
+			if (!ignoreErrors) {
+				const errMsg = error?.message || 'Unknown Error';
+				await this.updateProgress(
+					planId,
+					backupId,
+					'backup',
+					'BACKUP_OPERATION_ERROR',
+					true,
+					errMsg
+				);
+				throw error;
+			} else {
+				await this.updateProgress(planId, backupId, 'backup', 'BACKUP_OPERATION_COMPLETE', true);
+				return '';
+			}
 		}
 	}
 
@@ -321,7 +326,8 @@ export class BackupHandler {
 	private async postBackupPhase(
 		planId: string,
 		backupId: string,
-		options: Record<string, any>
+		options: Record<string, any>,
+		runConfig?: BackupRunConfig
 	): Promise<void> {
 		// Update progress: Post-backup start
 		await this.updateProgress(planId, backupId, 'post-backup', 'POST_BACKUP_START', false);
@@ -338,30 +344,33 @@ export class BackupHandler {
 		);
 
 		// Run pruning and stats update
-		await this.updateProgress(planId, backupId, 'post-backup', 'POST_BACKUP_PRUNE_START', false);
-		try {
-			const pruneHandler = new PruneHandler(this.emitter);
-			await pruneHandler.prune(planId, options);
-			await this.updateProgress(
-				planId,
-				backupId,
-				'post-backup',
-				'POST_BACKUP_PRUNE_COMPLETE',
-				true
-			);
-		} catch (error: any) {
-			const errorMsg = error?.message || 'Unknown Error';
-			console.warn(
-				`[BackupHandler]: Failed to prune repository for plan: ${planId}. Error:  ${errorMsg}`
-			);
-			await this.updateProgress(
-				planId,
-				backupId,
-				'post-backup',
-				'POST_BACKUP_PRUNE_FAILED',
-				true,
-				errorMsg
-			);
+		const skipPrune = runConfig?.skipPrune || false;
+		if (!skipPrune) {
+			await this.updateProgress(planId, backupId, 'post-backup', 'POST_BACKUP_PRUNE_START', false);
+			try {
+				const pruneHandler = new PruneHandler(this.emitter);
+				await pruneHandler.prune(planId, options);
+				await this.updateProgress(
+					planId,
+					backupId,
+					'post-backup',
+					'POST_BACKUP_PRUNE_COMPLETE',
+					true
+				);
+			} catch (error: any) {
+				const errorMsg = error?.message || 'Unknown Error';
+				console.warn(
+					`[BackupHandler]: Failed to prune repository for plan: ${planId}. Error:  ${errorMsg}`
+				);
+				await this.updateProgress(
+					planId,
+					backupId,
+					'post-backup',
+					'POST_BACKUP_PRUNE_FAILED',
+					true,
+					errorMsg
+				);
+			}
 		}
 
 		// Run post-backup repository stats update
@@ -641,33 +650,80 @@ export class BackupHandler {
 		planId: string,
 		backupId: string,
 		options: Record<string, any>,
-		resticArgsAndEnv: ResticArgsAndEnv
+		resticArgsAndEnv: ResticArgsAndEnv,
+		runConfig?: BackupRunConfig
 	): Promise<false | Record<string, any>> {
-		const { resticArgs, resticEnv } = resticArgsAndEnv;
-		const dryRunArgs = [...resticArgs, '--dry-run'];
-		const dryRunEnv = {
-			...resticEnv,
-			RESTIC_PASSWORD: options.settings.encryption ? configService.config.ENCRYPTION_KEY : '',
+		const skip = runConfig?.skipDryRun || false;
+		const ignoreErrors = runConfig?.ignoreErrors || false;
+		let dryRunSummary: Record<string, any> = {
+			message_type: 'summary',
+			dry_run: true,
+			dry_run_skipped: true,
+			files_new: 0,
+			files_changed: 0,
+			files_unmodified: 0,
+			dirs_new: 0,
+			dirs_changed: 0,
+			dirs_unmodified: 0,
+			data_blobs: 0,
+			tree_blobs: 0,
+			data_added: 0,
+			data_added_packed: 0,
+			total_files_processed: 0,
+			total_bytes_processed: 0,
+			total_duration: 0,
+			snapshot_id: '',
 		};
-		if (options.method === 'rescue') {
-			dryRunArgs.push('--one-file-system');
-		}
-		const handlers = this.createHandlers(planId, backupId);
-		try {
-			const dryRunOutput = await runResticCommand(
-				dryRunArgs,
-				dryRunEnv,
-				handlers.onProgress,
-				handlers.onError,
-				handlers.onComplete
-			);
-			const outputLines = dryRunOutput.split('\n').filter(line => line.trim() !== '');
-			const summaryLine = outputLines[outputLines.length - 1];
-			const dryRunSummary = JSON.parse(summaryLine);
+
+		if (!skip) {
+			await this.updateProgress(planId, backupId, 'pre-backup', 'PRE_BACKUP_DRY_RUN_START', false);
+
+			const { resticArgs, resticEnv } = resticArgsAndEnv;
+			const dryRunArgs = [...resticArgs, '--dry-run'];
+			const dryRunEnv = {
+				...resticEnv,
+				RESTIC_PASSWORD: options.settings.encryption ? configService.config.ENCRYPTION_KEY : '',
+			};
+			if (options.method === 'rescue') {
+				dryRunArgs.push('--one-file-system');
+			}
+			const handlers = this.createHandlers(planId, backupId);
+			try {
+				const dryRunOutput = await runResticCommand(
+					dryRunArgs,
+					dryRunEnv,
+					handlers.onProgress,
+					handlers.onError,
+					handlers.onComplete
+				);
+				const outputLines = dryRunOutput.split('\n').filter(line => line.trim() !== '');
+				const summaryLine = outputLines[outputLines.length - 1];
+				dryRunSummary = JSON.parse(summaryLine);
+				await this.updateProgress(
+					planId,
+					backupId,
+					'pre-backup',
+					'PRE_BACKUP_DRY_RUN_COMPLETE',
+					true
+				);
+				return dryRunSummary;
+			} catch (error: any) {
+				if (!ignoreErrors) {
+					await this.updateProgress(
+						planId,
+						backupId,
+						'pre-backup',
+						'PRE_BACKUP_DRY_RUN_ERROR',
+						false,
+						error?.message || 'Unknown Error'
+					);
+					throw new Error(`Dry run failed: ${error.message}`);
+				} else {
+					return dryRunSummary;
+				}
+			}
+		} else {
 			return dryRunSummary;
-		} catch (error: any) {
-			console.error('[dryRunBackup]: Failed', error.message);
-			throw new Error(`Dry run failed: ${error.message}`);
 		}
 	}
 

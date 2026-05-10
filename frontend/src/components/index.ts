@@ -90,6 +90,7 @@ export { default as PlanTypeSettings } from './Plan/PlanSettings/PlanTypeSetting
 export { default as PlanStats } from './Plan/PlanStats/PlanStats';
 export { default as PlanUnlockModal } from './Plan/PlanUnlockModal/PlanUnlockModal';
 export { default as PlanIntegrity } from './Plan/PlanIntegrity/PlanIntegrity';
+export { default as PlanRepair } from './Plan/PlanRepair/PlanRepair';
 export { default as SnapshotViewer } from './Plan/SnapshotViewer/SnapshotViewer';
 export { default as SnapshotViewerFile } from './Plan/SnapshotViewer/SnapshotViewerFile';
 

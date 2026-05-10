@@ -17,6 +17,7 @@ export function createPlanRouter(controller: PlanController, router: Router = Ro
 	router.post('/:id/action/prune', authM, controller.pruneBackup.bind(controller));
 	router.post('/:id/action/unlock', authM, controller.unlockRepo.bind(controller));
 	router.post('/:id/action/checkintegrity', authM, controller.checkIntegrity.bind(controller));
+	router.post('/:id/action/repair', authM, controller.repairRepo.bind(controller));
 	router.post(
 		'/:id/action/delete-replication-storage',
 		authM,

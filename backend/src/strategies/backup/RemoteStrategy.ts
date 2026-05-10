@@ -1,3 +1,5 @@
+import { BackupVerifiedResult } from '../../types/plans';
+import { BackupRunConfig } from '../../types/backups';
 import { BackupStrategy } from './BackupStrategy';
 
 export class RemoteStrategy implements BackupStrategy {
@@ -37,8 +39,8 @@ export class RemoteStrategy implements BackupStrategy {
 		return await this.publishCommand('REMOVE_REPLICATION_STORAGE', { planId, options });
 	}
 
-	async performBackup(planId: string) {
-		return await this.publishCommand('PERFORM_BACKUP', { planId });
+	async performBackup(planId: string, runConfig?: BackupRunConfig) {
+		return await this.publishCommand('PERFORM_BACKUP', { planId, runConfig });
 	}
 
 	async pauseBackup(planId: string) {
@@ -70,6 +72,15 @@ export class RemoteStrategy implements BackupStrategy {
 
 	async checkIntegrity(planId: string): Promise<{ success: boolean; result: any }> {
 		return await this.publishCommand('CHECK_INTEGRITY', { planId });
+	}
+
+	async repairRepo(
+		planId: string,
+		repairType: 'snapshots' | 'index' | 'packs',
+		checkRes: BackupVerifiedResult,
+		options: { storageName: string; storagePath: string }
+	): Promise<{ success: boolean; result: any }> {
+		return await this.publishCommand('REPAIR_REPO', { planId, repairType, checkRes, options });
 	}
 
 	publishCommand(action: string, payload: any): Promise<{ success: boolean; result: any }> {

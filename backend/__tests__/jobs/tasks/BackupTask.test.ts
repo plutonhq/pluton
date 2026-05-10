@@ -101,7 +101,8 @@ describe('BackupTask', () => {
 				{
 					attempts: 1,
 					maxAttempts: 5,
-				}
+				},
+				undefined
 			);
 
 			expect(mockPlanLogger).toHaveBeenCalledWith('backup', 'plan-123', 'backup-456');
@@ -151,7 +152,8 @@ describe('BackupTask', () => {
 				{
 					attempts: 3,
 					maxAttempts: 10,
-				}
+				},
+				undefined
 			);
 		});
 
@@ -173,7 +175,8 @@ describe('BackupTask', () => {
 			expect(mockBackupManagerPerformBackupExecution).toHaveBeenCalledWith(
 				'plan-123',
 				undefined,
-				expect.any(Object)
+				expect.any(Object),
+				undefined
 			);
 		});
 

@@ -270,37 +270,51 @@ export function handleResticCheckResult(
 	let message = '';
 	let hasError = true;
 	let fix = '';
+	let errorType = 'unknown';
 	const logs: string[] = [];
 
-	if (output.includes('The repository contains damaged pack files')) {
-		message = 'A Pack file of a snapshot was damaged.';
-		const packFileID = output.match(/pack ([a-f0-9]{64}):/)?.[1];
-		fix = `Login to your Machine ${device}.
-      Run this command to first to try and repair the pack file:
-      \`restic repair -r ${repo} packs ${packFileID}\`
-      Then run this command to fix the snapshots if they are still damaged:
-      \`restic repair -r ${repo} snapshots --forget \`
-      When asked for the password, use the Pluton Encryption key.
-      `;
+	if (
+		output.includes('The repository contains damaged pack files') ||
+		(output.includes('pack') && output.includes('does not exist')) ||
+		/id\s+[a-f0-9]+\s+not found in repository/i.test(output) ||
+		output.includes('Pack ID does not match') ||
+		output.includes('Blob ID does not match')
+	) {
+		errorType = 'pack_file_error';
+		message = 'One or more pack files in the repository are damaged or missing.';
 	}
+
+	if (
+		output.includes('The repository contains damaged pack files') &&
+		output.includes('restic repair packs')
+	) {
+		errorType = 'repairable_pack_file_error';
+		message = 'One or more pack files in the repository are damaged.';
+	}
+
 	if (output.includes('The repository index is damaged')) {
+		errorType = 'index_error';
 		message = 'The repository index is damaged.';
 		fix = `Login to your Machine ${device}.
       Run this command:
-      \`restic repair index -r ${repo}\`
+      \`prestic repair index -r ${repo}\`
       When asked for the password, use the Pluton Encryption key.
       `;
 	}
+
 	if (output.includes('ciphertext verification failed')) {
+		errorType = 'ciphertext_verification_error';
 		message = 'Ciphertext verification failed.';
 		fix =
 			'Ciphertext verification issue is hard to fix. Please ask for help in the Restic forum or their IRC channel. These errors are often caused by hardware problems which must be investigated and fixed. Otherwise, the backup will be damaged again and again.';
 	}
 	if (output.includes('failed to authorize account')) {
+		errorType = 'authorization_error';
 		message = 'Storage Authorization failed.';
 		hasError = false;
 	}
 	if (output.includes('no errors were found')) {
+		errorType = '';
 		message = 'No Issue Detected.';
 		hasError = false;
 	}
@@ -311,5 +325,5 @@ export function handleResticCheckResult(
 		}
 	});
 
-	return { message, logs, hasError, fix };
+	return { message, logs, hasError, fix, errorType };
 }

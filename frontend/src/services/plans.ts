@@ -3,6 +3,12 @@ import { toast } from 'react-toastify';
 import { API_URL } from '../utils/constants';
 import { NewPlanSettings, Plan, PlanNotification } from '../@types/plans';
 
+type BackupRunConfig = {
+   skipDryRun?: boolean;
+   skipPrune?: boolean;
+   ignoreErrors?: boolean;
+};
+
 // Get All Plans
 export async function getAllPlans() {
    const url = new URL(`${API_URL}/plans`);
@@ -227,12 +233,13 @@ export function useDeletePlan() {
 }
 
 // Perform Backup
-export async function performBackup(id: string) {
+export async function performBackup({ id, runConfig }: { id: string; runConfig?: BackupRunConfig }) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
    const res = await fetch(`${API_URL}/plans/${id}/action/backup`, {
       method: 'POST',
       credentials: 'include',
       headers: header,
+      body: JSON.stringify({ runConfig }),
    });
    const data = await res.json();
    if (!data.success) {
@@ -464,6 +471,35 @@ export function useCheckPlanIntegrity() {
       onError: (error, payload) => {
          console.error('Error checking plan integrity for planId:', payload.planId, error);
          toast.error(`Error checking plan integrity. ${error instanceof Error ? error.message : 'Unknown error'}`, { autoClose: false });
+      },
+   });
+}
+
+export async function repairBackupPlan({ planId, type, replicationId }: { planId: string; type: string; replicationId?: string }) {
+   // const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/plans/${planId}/action/repair?type=${type}${replicationId ? `&replicationId=${replicationId}` : ''}`, {
+      method: 'POST',
+      credentials: 'include',
+      // headers: header,
+   });
+   // Check if response is ok
+   const data = await res.json();
+   if (!data.success) {
+      throw new Error(data.error);
+   }
+   return data;
+}
+
+export function useRepairBackupPlan() {
+   const queryClient = useQueryClient();
+   return useMutation({
+      mutationFn: repairBackupPlan,
+      onSuccess: (res, payload) => {
+         queryClient.invalidateQueries({ queryKey: ['plan', payload.planId] });
+         console.log('res :', payload, res);
+      },
+      onError: (error, payload) => {
+         console.error('Error repairing backup plan for planId:', payload.planId, error);
       },
    });
 }

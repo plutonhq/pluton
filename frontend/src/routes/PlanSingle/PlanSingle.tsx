@@ -15,10 +15,13 @@ import PlanRemoveModal from '../../components/Plan/PlanRemoveModal/PlanRemoveMod
 import PlanProgress from '../../components/Plan/PlanProgress/PlanProgress';
 import PlanBackups from '../../components/Plan/PlanBackups/PlanBackups';
 import PlanIntegrity from '../../components/Plan/PlanIntegrity/PlanIntegrity';
+import PlanRepair from '../../components/Plan/PlanRepair/PlanRepair';
+import { PlanVerifiedResult } from '../..';
 
 const PlanSingle = () => {
    const [showMoreOptions, setShowMoreOptions] = useState(false);
    const [showIntegrityModal, setShowIntegrityModal] = useState(false);
+   const [showRepoRepair, setShowRepoRepair] = useState('');
    const { id } = useParams();
 
    const EditPlanModal = useComponentOverride('EditPlan', EditPlan);
@@ -198,6 +201,20 @@ const PlanSingle = () => {
                   storage={plan.storage}
                   replicationStorages={plan.settings.replication?.enabled ? plan.settings.replication.storages : []}
                   onClose={() => setShowIntegrityModal(false)}
+                  onRepairOpen={(replicationId) => {
+                     setShowIntegrityModal(false);
+                     setShowRepoRepair(replicationId);
+                  }}
+               />
+            )}
+            {showRepoRepair && !isSync && (
+               <PlanRepair
+                  planId={id}
+                  errorType={
+                     (plan.verified?.result[showRepoRepair as keyof typeof plan.verified.result] as PlanVerifiedResult)?.errorType || 'unknown'
+                  }
+                  onClose={() => setShowRepoRepair('')}
+                  onOpenIntegrity={() => setShowIntegrityModal(true)}
                />
             )}
             {showDeleteModal && (

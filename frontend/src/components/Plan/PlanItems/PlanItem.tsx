@@ -79,7 +79,7 @@ const PlanItem = ({ plan, layout = 'list' }: PlanItemProps) => {
          return;
       }
       toast.promise(
-         performBackupMutation.mutateAsync(id),
+         performBackupMutation.mutateAsync({ id }),
          {
             pending: `Starting ${isSync ? 'Sync' : 'Backup'}...`,
             success: `${isSync ? 'Sync' : 'Backup'} initiated successfully! 🚀`,

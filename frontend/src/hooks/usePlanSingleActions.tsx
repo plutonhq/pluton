@@ -97,30 +97,33 @@ export const usePlanSingleActions = (): {
 
       const toastId = toast.loading(`Starting ${isSync ? 'Sync' : 'Backup'}...`);
 
-      performBackupMutation.mutate(plan.id, {
-         onSuccess: (data) => {
-            const msg = data?.message || `${isSync ? 'Sync' : 'Backup'} initiated successfully!  🚀`;
-            const notStarted = !isSync && data?.message && data?.message.includes('reached the concurrency limit');
-            toast.update(toastId, {
-               render: isSync ? msg : notStarted ? data?.message : 'Backup initiated successfully!',
-               type: 'success',
-               isLoading: false,
-               autoClose: 3000,
-            });
-            if (!isSync && !notStarted) {
-               navigate(`/plan/${plan.id}?pendingbackup=1`);
-            }
+      performBackupMutation.mutate(
+         { id: plan.id },
+         {
+            onSuccess: (data) => {
+               const msg = data?.message || `${isSync ? 'Sync' : 'Backup'} initiated successfully!  🚀`;
+               const notStarted = !isSync && data?.message && data?.message.includes('reached the concurrency limit');
+               toast.update(toastId, {
+                  render: isSync ? msg : notStarted ? data?.message : 'Backup initiated successfully!',
+                  type: 'success',
+                  isLoading: false,
+                  autoClose: 3000,
+               });
+               if (!isSync && !notStarted) {
+                  navigate(`/plan/${plan.id}?pendingbackup=1`);
+               }
+            },
+            onError: (error: any) => {
+               toast.update(toastId, {
+                  render: `${isSync ? 'Sync' : 'Backup'} failed to start. ${error?.message || 'Unknown Error.'}`,
+                  type: 'error',
+                  isLoading: false,
+                  autoClose: false,
+                  closeButton: true,
+               });
+            },
          },
-         onError: (error: any) => {
-            toast.update(toastId, {
-               render: `${isSync ? 'Sync' : 'Backup'} failed to start. ${error?.message || 'Unknown Error.'}`,
-               type: 'error',
-               isLoading: false,
-               autoClose: false,
-               closeButton: true,
-            });
-         },
-      });
+      );
    };
 
    return {

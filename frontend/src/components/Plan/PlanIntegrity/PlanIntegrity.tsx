@@ -13,9 +13,10 @@ interface PlanIntegrityProps {
    storage: { name: string; type: string; id: string };
    replicationStorages: PlanReplicationStorage[];
    onClose: () => void;
+   onRepairOpen: (replicationId: string) => void;
 }
 
-const PlanIntegrity = ({ planId, taskPending, verificationData, storage, replicationStorages = [], onClose }: PlanIntegrityProps) => {
+const PlanIntegrity = ({ planId, taskPending, verificationData, storage, replicationStorages = [], onClose, onRepairOpen }: PlanIntegrityProps) => {
    const [showContent, setShowContent] = useState('primary');
    const integrityCheckMutation = useCheckPlanIntegrity();
 
@@ -67,6 +68,11 @@ const PlanIntegrity = ({ planId, taskPending, verificationData, storage, replica
                      .split('\n')
                      .map((line, index) => <p key={index}>{line.includes('`') ? <code>{line.replace(/`/g, '')}</code> : line}</p>)}
                {!backupResData.fix && <p>No Suggestion for this issue.</p>}
+               {(backupResData.errorType === 'pack_file_error' || backupResData.errorType === 'index_error') && (
+                  <p>
+                     <button onClick={() => onRepairOpen(storageType)}>Open Repo Repair</button> Window for more options.
+                  </p>
+               )}
                <p>
                   Learn more about fixing restic repo issues{' '}
                   <a
@@ -94,6 +100,37 @@ const PlanIntegrity = ({ planId, taskPending, verificationData, storage, replica
       }
 
       return <div className="label error">⛔ Error Found. {backupMessage}</div>;
+   };
+
+   const renderRepairContent = (storageType: string) => {
+      const backupResData = getBackupResultByStorage(storageType);
+      return (
+         <div className={classes.repairBox}>
+            {(backupResData?.errorType === 'pack_file_error' || backupResData?.errorType === 'repairable_pack_file_error') && (
+               <div>
+                  Some pack files in the repository are either damaged or missing and can be repaired.{' '}
+                  <button onClick={() => onRepairOpen(storageType)}>
+                     <Icon type="repair" size={13} /> Open Repo Repair Tool
+                  </button>
+               </div>
+            )}
+            {backupResData?.errorType === 'index_error' && (
+               <div>
+                  The index files in the repository are corrupted and can be repaired.{' '}
+                  <button onClick={() => onRepairOpen(storageType)}>
+                     <Icon type="repair" size={13} /> Open Repo Repair Tool
+                  </button>{' '}
+               </div>
+            )}
+         </div>
+      );
+   };
+
+   const renderRepairOrFixSuggestion = (storageType: string) => {
+      const backupResData = getBackupResultByStorage(storageType);
+      const errorType = backupResData?.errorType;
+      const isRepairable = errorType === 'pack_file_error' || errorType === 'index_error' || errorType === 'repairable_pack_file_error';
+      return isRepairable ? renderRepairContent(storageType) : renderBackupFixSuggestion(storageType);
    };
 
    const renderResultWithReplications = () => {
@@ -130,7 +167,7 @@ const PlanIntegrity = ({ planId, taskPending, verificationData, storage, replica
                            <div className={classes.replicationResultContent}>
                               {renderBackupStatus(storageType)}
                               {renderLogs(storageType)}
-                              {renderBackupFixSuggestion(storageType)}
+                              {renderRepairOrFixSuggestion(storageType)}
                            </div>
                         )}
                      </div>
@@ -152,7 +189,7 @@ const PlanIntegrity = ({ planId, taskPending, verificationData, storage, replica
                         <div className={classes.integrityResult}>
                            {renderBackupStatus('primary')}
                            {renderLogs('primary')}
-                           {renderBackupFixSuggestion('primary')}
+                           {renderRepairOrFixSuggestion('primary')}
                         </div>
                      ) : (
                         renderResultWithReplications()

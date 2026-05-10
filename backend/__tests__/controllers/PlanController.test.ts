@@ -299,11 +299,11 @@ describe('PlanController', () => {
 
 		it('should successfully initiate backup', async () => {
 			mockRequest.params = { id: 'plan-1' };
-			mockPlanService.performBackup.mockResolvedValue(undefined);
+			mockPlanService.performBackup.mockResolvedValue('');
 
 			await planController.performBackup(mockRequest as Request, mockResponse as Response);
 
-			expect(mockPlanService.performBackup).toHaveBeenCalledWith('plan-1');
+			expect(mockPlanService.performBackup).toHaveBeenCalledWith('plan-1', undefined);
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: true,
@@ -479,6 +479,52 @@ describe('PlanController', () => {
 			expect(mockJson).toHaveBeenCalledWith({
 				success: false,
 				error: 'Internal Server Error',
+			});
+		});
+	});
+
+	describe('repairRepo', () => {
+		it('should return 400 if plan ID is missing', async () => {
+			mockRequest.params = {};
+			mockRequest.query = { type: 'index' };
+
+			await planController.repairRepo(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(400);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				error: 'Plan ID is required',
+			});
+		});
+
+		it('should return 400 if repair type is missing', async () => {
+			mockRequest.params = { id: 'plan-1' };
+			mockRequest.query = {};
+
+			await planController.repairRepo(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(400);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: false,
+				error: 'Type is required',
+			});
+		});
+
+		it('should return 200 when repair succeeds', async () => {
+			mockRequest.params = { id: 'plan-1' };
+			mockRequest.query = { type: 'index', replicationId: 'replica-1' };
+			mockPlanService.repairRepo.mockResolvedValue({
+				success: true,
+				result: { primary: 'repair completed' },
+			});
+
+			await planController.repairRepo(mockRequest as Request, mockResponse as Response);
+
+			expect(mockPlanService.repairRepo).toHaveBeenCalledWith('plan-1', 'index', 'replica-1');
+			expect(mockStatus).toHaveBeenCalledWith(200);
+			expect(mockJson).toHaveBeenCalledWith({
+				success: true,
+				result: { primary: 'repair completed' },
 			});
 		});
 	});

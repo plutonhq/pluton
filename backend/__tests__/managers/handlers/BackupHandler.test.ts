@@ -74,31 +74,129 @@ import { EventEmitter } from 'events';
 import { BackupHandler } from '../../../src/managers/handlers/BackupHandler';
 import os from 'os';
 import fs from 'fs';
+import { BackupPlanArgs } from '#core-backend/types/plans';
 
 describe('BackupHandler', () => {
 	let handler: BackupHandler;
 	let emitter: EventEmitter;
 
-	const baseOptions = {
+	const baseOptions: BackupPlanArgs = {
 		id: 'plan-1',
 		title: 'Test Plan',
 		method: 'backup',
-		storage: { name: 'test-storage', type: 'rclone' },
+		storage: {
+			name: 'test-storage',
+			type: 'rclone',
+			settings: {},
+			credentials: {},
+			authType: '',
+			defaultPath: '/',
+		},
 		storagePath: 'backups/test',
 		settings: {
-			encryption: false,
+			interval: { type: 'daily', time: '10:00AM', days: '', hours: '', minutes: 5 },
 			compression: true,
+			encryption: true,
+			retries: 5,
+			retryDelay: 300, // in seconds
+			notification: {
+				email: {
+					enabled: false,
+					case: 'failure',
+					type: 'smtp',
+					emails: '',
+				},
+				webhook: {
+					enabled: false,
+					case: 'failure',
+					method: 'POST',
+					contentType: 'application/json',
+					url: '',
+				},
+				push: {
+					enabled: false,
+					url: '',
+					case: 'failure',
+					authType: 'none',
+					authToken: '',
+					tags: '',
+				},
+				slack: {
+					enabled: false,
+					case: 'failure',
+					url: '',
+				},
+				discord: {
+					enabled: false,
+					case: 'failure',
+					url: '',
+				},
+			},
+			prune: {
+				snapCount: 5,
+				policy: 'forgetByAge',
+				forgetAge: '1m',
+				revisions: false,
+			},
 			performance: {
+				scan: true,
 				maxProcessor: 2,
 				packSize: '16MiB',
+			},
+			integrity: {
+				enabled: false,
+				interval: { type: 'weekly', time: '10:00AM', days: 'sun', hours: '', minutes: 5 },
+				method: 'no-read',
+				notification: {
+					email: {
+						enabled: false,
+						type: 'smtp',
+						emails: '',
+						case: 'failure',
+					},
+					webhook: {
+						enabled: false,
+						method: 'POST',
+						contentType: 'application/json',
+						url: '',
+						case: 'failure',
+					},
+					push: {
+						enabled: false,
+						url: '',
+						authType: 'none',
+						authToken: '',
+						tags: '',
+						case: 'failure',
+					},
+					slack: {
+						enabled: false,
+						case: 'failure',
+						url: '',
+					},
+					discord: {
+						enabled: false,
+						case: 'failure',
+						url: '',
+					},
+				},
+			},
+			scripts: {
+				onBackupStart: [],
+				onBackupEnd: [],
+				onBackupError: [],
+				onBackupFailure: [],
+				onBackupComplete: [],
 			},
 		},
 		sourceConfig: {
 			includes: ['C:\\data'],
 			excludes: ['C:\\temp'],
 		},
-		resticArgs: ['backup', 'C:\\data', '-r', 'test-repo'],
-		resticEnv: { GOMAXPROCS: '2' },
+		sourceId: 'main',
+		cronExpression: '',
+		// resticArgs: ['backup', 'C:\\data', '-r', 'test-repo'],
+		// resticEnv: { GOMAXPROCS: '2' },
 	};
 
 	beforeEach(() => {
@@ -302,8 +400,8 @@ describe('BackupHandler', () => {
 			// Env variables for performance
 			expect(resticEnv.GOMAXPROCS).toBe('2');
 
-			// No encryption => insecure flag
-			expect(resticArgs).toContain('--insecure-no-password');
+			// Encryption is enabled in baseOptions => no insecure flag
+			expect(resticArgs).not.toContain('--insecure-no-password');
 
 			// Tag and json
 			expect(resticArgs).toContain('--tag');
@@ -688,7 +786,7 @@ describe('BackupHandler', () => {
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['--tag', 'backup-backup-1']),
-				expect.objectContaining({ RESTIC_PASSWORD: '' }),
+				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' }),
 				expect.any(Function),
 				expect.any(Function),
 				expect.any(Function),
@@ -853,7 +951,7 @@ describe('BackupHandler', () => {
 				'pre-backup',
 				'PRE_BACKUP_DRY_RUN_ERROR',
 				false,
-				'Dry run failed: Dry run error'
+				'Dry run error'
 			);
 		});
 
@@ -880,7 +978,7 @@ describe('BackupHandler', () => {
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				['unlock', '-r', 'rclone:test-storage:backups/test'],
-				expect.objectContaining({ RESTIC_PASSWORD: '' })
+				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' })
 			);
 		});
 

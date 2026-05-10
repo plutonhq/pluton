@@ -1,14 +1,15 @@
 import { BackupStrategy } from './BackupStrategy';
-import { BackupPlanArgs } from '../../types/plans';
+import { BackupPlanArgs, BackupVerifiedResult } from '../../types/plans';
 import { BaseBackupManager } from '../../managers/BaseBackupManager';
 import { readFile } from 'fs/promises';
 import { appPaths } from '../../utils/AppPaths';
+import { BackupRunConfig } from '../../types/backups';
 
 export class LocalStrategy implements BackupStrategy {
 	constructor(protected localAgent: BaseBackupManager) {}
 
-	async performBackup(backupId: string) {
-		return await this.localAgent.performBackup(backupId);
+	async performBackup(backupId: string, runConfig?: BackupRunConfig) {
+		return await this.localAgent.performBackup(backupId, runConfig);
 	}
 
 	async createBackup(backupId: string, options: BackupPlanArgs) {
@@ -80,6 +81,15 @@ export class LocalStrategy implements BackupStrategy {
 
 	async checkIntegrity(planId: string): Promise<{ success: boolean; result: any }> {
 		return await this.localAgent.checkIntegrity(planId);
+	}
+
+	async repairRepo(
+		planId: string,
+		repairType: 'snapshots' | 'index' | 'packs',
+		checkRes: BackupVerifiedResult,
+		options: { storageName: string; storagePath: string }
+	): Promise<{ success: boolean; result: any }> {
+		return await this.localAgent.repairRepo(planId, repairType, checkRes, options);
 	}
 
 	async getBackupProgress(planId: string, backupId: string) {

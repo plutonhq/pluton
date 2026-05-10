@@ -3,13 +3,14 @@ import { runResticCommand } from '../utils/restic/restic';
 import { generateResticRepoPath } from '../utils/restic/helpers';
 import { runRcloneCommand } from '../utils/rclone/rclone';
 import { CronManager } from './CronManager';
-import { BackupPlanArgs, PlanPrune } from '../types/plans';
+import { BackupPlanArgs, BackupVerifiedResult, PlanPrune } from '../types/plans';
 import { BackupHandler } from './handlers/BackupHandler';
 import { PruneHandler } from './handlers/PruneHandler';
 import { jobQueue } from '../jobs/JobQueue';
 import { jobProcessor } from '../jobs/JobProcessor';
 import { generateUID } from '../utils/helpers';
 import { configService } from '../services/ConfigService';
+import { BackupRunConfig } from '../types/backups';
 
 type ScheduleOptions = (BackupPlanArgs | PlanPrune) & {
 	isActive: boolean;
@@ -177,7 +178,10 @@ export class BaseBackupManager extends EventEmitter {
 	 * This method is used to perform a backup immediately, without waiting for the scheduled time.
 	 * Retries 5 times with a delay of 1 minute between each retry.
 	 */
-	async performBackup(planId: string): Promise<{ success: boolean; result: string }> {
+	async performBackup(
+		planId: string,
+		runConfig?: BackupRunConfig
+	): Promise<{ success: boolean; result: string }> {
 		const backupId = generateUID();
 		const schedules = await this.cronManager.getSchedule(planId);
 		const backupSchedule = schedules?.find(s => s.type === 'backup');
@@ -186,7 +190,7 @@ export class BaseBackupManager extends EventEmitter {
 		if (!backupSchedule || !backupSchedule.options) {
 			return { success: false, result: 'No backup schedule found for this plan.' };
 		}
-		jobQueue.addPriorityJob('Backup', { planId, backupId }, retries, retryDelay * 1000);
+		jobQueue.addPriorityJob('Backup', { planId, backupId, runConfig }, retries, retryDelay * 1000);
 		const activeBackupJobs = jobProcessor.getActiveBackupJobs();
 		const maxConcurrentBackups = configService.config.MAX_CONCURRENT_BACKUPS;
 		const reachedLimit = activeBackupJobs >= maxConcurrentBackups;
@@ -203,7 +207,8 @@ export class BaseBackupManager extends EventEmitter {
 	async performBackupExecution(
 		planId: string,
 		backupId: string,
-		retryInfo: { attempts: number; maxAttempts: number }
+		retryInfo: { attempts: number; maxAttempts: number },
+		runConfig?: BackupRunConfig
 	): Promise<string> {
 		// Retrieve the schedule and its options from the CronManager
 		const schedules = await this.cronManager.getSchedule(planId);
@@ -214,7 +219,7 @@ export class BaseBackupManager extends EventEmitter {
 		}
 
 		const options = backupSchedule.options as BackupPlanArgs;
-		return await this.backupHandler.execute(planId, backupId, options, retryInfo);
+		return await this.backupHandler.execute(planId, backupId, options, retryInfo, runConfig);
 	}
 
 	async cancelBackup(
@@ -601,5 +606,70 @@ export class BaseBackupManager extends EventEmitter {
 			result: { primary: 'No backup schedule found' },
 		});
 		return { success: false, result: { primary: 'No Backup schedule found' } };
+	}
+
+	async repairRepo(
+		planId: string,
+		repairType: 'snapshots' | 'index' | 'packs',
+		checkRes: BackupVerifiedResult,
+		options: { storageName: string; storagePath: string }
+	): Promise<{ success: boolean; result: string }> {
+		try {
+			// Check if encryption is enabled for this plan and if ENCRYPTION_KEY is set when necessary before attempting repair
+			const encKey = configService.config.ENCRYPTION_KEY;
+			const schedules = await this.cronManager.getSchedule(planId);
+			const backupSchedule = schedules?.find(s => s.type === 'backup');
+			const backupOptions = backupSchedule?.options as BackupPlanArgs;
+			const encryption = backupOptions?.settings.encryption;
+			if (encryption && (!encKey || encKey.trim() === '')) {
+				return {
+					success: false,
+					result: 'Encryption is enabled but ENCRYPTION_KEY is not set in environment variables.',
+				};
+			}
+
+			// Run restic repair command to either repair snapshots or index based on the repairType parameter
+			const repoPassword = encryption ? encKey : '';
+			try {
+				const repoPath = generateResticRepoPath(options.storageName, options.storagePath || '');
+				const repairCommand = ['-r', repoPath, 'repair', repairType];
+				if (repairType === 'snapshots') {
+					repairCommand.push('--forget');
+				}
+
+				if (repairType === 'packs') {
+					const resticPackCommandMsg = checkRes.logs.find(log =>
+						log.includes('restic repair packs')
+					);
+					if (resticPackCommandMsg) {
+						const packIdsMatch = resticPackCommandMsg.match(/restic repair packs (.+)/);
+						if (packIdsMatch && packIdsMatch[1]) {
+							const packIds = packIdsMatch[1].split(' ');
+							repairCommand.push(...packIds);
+						} else {
+							return { success: false, result: 'Could not extract pack IDs for repair.' };
+						}
+					}
+				}
+
+				if (!encryption) {
+					repairCommand.push('--insecure-no-password');
+				}
+				const repairResult = await runResticCommand(repairCommand, {
+					RESTIC_PASSWORD: repoPassword,
+					RCLONE_CONFIG_PASS: repoPassword,
+				});
+				return { success: true, result: repairResult };
+			} catch (error: any) {
+				console.warn('[repairRepo] repo Repair Error :', error);
+				return {
+					success: false,
+					result: 'Could Not Repair Restic Repo. Details: ' + error.message,
+				};
+			}
+		} catch (error: any) {
+			console.log('[repairRepo] error :', error);
+			return { success: false, result: 'No Backup schedule found' };
+		}
 	}
 }

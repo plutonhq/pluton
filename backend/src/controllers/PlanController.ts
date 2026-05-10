@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { NewPlanReq } from '../types/plans';
+import { BackupRunConfig } from '../types/backups';
 import { PlanService } from '../services/PlanService';
 import { AppError } from '../utils/AppError';
 
@@ -164,7 +165,8 @@ export class PlanController {
 				return;
 			}
 
-			const result = await this.planService.performBackup(req.params.id);
+			const runConfig = (req.body as { runConfig?: BackupRunConfig } | undefined)?.runConfig;
+			const result = await this.planService.performBackup(req.params.id, runConfig);
 			res.status(200).json({ success: true, message: result || 'Backup initiated successfully' });
 		} catch (error: unknown) {
 			const appError = error as AppError;
@@ -362,6 +364,36 @@ export class PlanController {
 				error: 'Internal Server Error',
 			});
 			return;
+		}
+	}
+
+	async repairRepo(req: Request, res: Response): Promise<void> {
+		if (!req.params.id) {
+			res.status(400).json({
+				success: false,
+				error: 'Plan ID is required',
+			});
+			return;
+		}
+		if (!req.query.type) {
+			res.status(400).json({
+				success: false,
+				error: 'Type is required',
+			});
+			return;
+		}
+		try {
+			const repairType = req.query.type as string;
+			const replicationId =
+				typeof req.query.replicationId === 'string' ? req.query.replicationId : undefined;
+			const result = await this.planService.repairRepo(req.params.id, repairType, replicationId);
+			res.status(result.success ? 200 : 500).json(result);
+		} catch (error: unknown) {
+			const appError = error as AppError;
+			res.status(appError.statusCode || 500).json({
+				success: false,
+				error: appError.message || 'Failed to repair repository',
+			});
 		}
 	}
 

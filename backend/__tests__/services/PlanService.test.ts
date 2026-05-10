@@ -551,7 +551,7 @@ describe('PlanService', () => {
 			// Assert
 			expect(mockPlanStore.getById).toHaveBeenCalledWith(planId);
 			expect(mockPlanStore.hasActiveBackups).toHaveBeenCalledWith(planId);
-			expect(mockStrategy.performBackup).toHaveBeenCalledWith(planId);
+			expect(mockStrategy.performBackup).toHaveBeenCalledWith(planId, undefined);
 		});
 
 		it('should throw a NotFoundError if the plan does not exist', async () => {
@@ -906,6 +906,80 @@ describe('PlanService', () => {
 			expect(result).toEqual({
 				success: false,
 				result: { primary: 'No Backup schedule found' },
+			});
+		});
+	});
+
+	describe('repairRepo', () => {
+		const planId = 'plan-to-repair';
+		const primaryIntegrityResult = { logs: ['restic repair index'] } as any;
+		const mirrorIntegrityResult = { logs: ['restic repair packs abc123'] } as any;
+		const mockPlan = {
+			id: planId,
+			sourceId: 'main',
+			storagePath: '/backups/primary',
+			storage: { name: 'Primary Storage' },
+			settings: {
+				replication: {
+					storages: [
+						{
+							replicationId: 'replica-1',
+							storageId: 'storage-2',
+							storageName: 'Replica Storage',
+							storagePath: '/backups/replica',
+						},
+					],
+				},
+			},
+			verified: {
+				result: {
+					'primary': primaryIntegrityResult,
+					'mirror_storage-2': mirrorIntegrityResult,
+				},
+			},
+		} as any;
+
+		it('should successfully call repairRepo on the strategy for primary storage', async () => {
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockStrategy.repairRepo = jest.fn().mockResolvedValue({
+				success: true,
+				result: { primary: 'repair completed' },
+			});
+
+			const result = await planService.repairRepo(planId, 'index');
+
+			expect(mockPlanStore.getById).toHaveBeenCalledWith(planId);
+			expect(mockStrategy.repairRepo).toHaveBeenCalledWith(
+				planId,
+				'index',
+				primaryIntegrityResult,
+				{
+					storageName: 'Primary Storage',
+					storagePath: '/backups/primary',
+				}
+			);
+			expect(result).toEqual({
+				success: true,
+				result: { primary: 'repair completed' },
+			});
+		});
+
+		it('should successfully call repairRepo on the strategy for a replication storage', async () => {
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockStrategy.repairRepo = jest.fn().mockResolvedValue({
+				success: true,
+				result: { primary: 'replica repair completed' },
+			});
+
+			const result = await planService.repairRepo(planId, 'packs', 'replica-1');
+
+			expect(mockStrategy.repairRepo).toHaveBeenCalledWith(planId, 'packs', mirrorIntegrityResult, {
+				storageName: 'Replica Storage',
+				storagePath: '/backups/replica',
+			});
+			expect(result).toEqual({
+				success: true,
+				result: { primary: 'replica repair completed' },
 			});
 		});
 	});

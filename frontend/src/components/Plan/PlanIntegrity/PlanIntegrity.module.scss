@@ -103,6 +103,25 @@
    }
 }
 
+.repairBox {
+   border: 1px solid var(--line-color);
+   padding: 12px;
+   margin: 15px 5px;
+   box-sizing: border-box;
+   border-radius: 6px;
+   border-color: var(--primary-color-mid) #aaacff;
+   background: var(--background-color);
+
+   button {
+      background-color: var(--primary-color);
+      color: var(--primary-text-color);
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-top: 6px;
+   }
+}
+
 @media only screen and (max-width: 768px) {
    .integrityLogs .integrityLogsHeader {
       flex-direction: column;

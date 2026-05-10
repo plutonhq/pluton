@@ -32,7 +32,7 @@ const googleDriveSettings = [
 		options: [
 			{ label: 'Full access (all files)', value: 'drive' },
 			{ label: 'Read-only access', value: 'drive.readonly' },
-			{ label: 'Access rclone files only', value: 'drive.file' },
+			{ label: 'Access to files only', value: 'drive.file' },
 			{ label: 'Application Data folder', value: 'drive.appfolder' },
 			{ label: 'Read-only metadata', value: 'drive.metadata.readonly' },
 		],

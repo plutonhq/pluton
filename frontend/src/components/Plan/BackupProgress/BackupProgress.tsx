@@ -41,7 +41,7 @@ const BackupProgress = ({ item, sourceId, sourceType, planId, type = 'backup' }:
    const progressMessage = type === 'backup' ? generateBackupProgressMessage(progressData) : generateRestoreProgressMessage(progressData);
 
    // Check if DryRun progress tracking phase
-   const actualBackupStarted = progressData?.events.find((e: any) => e.action === 'BACKUP_OPERATION_START' && e.resticData);
+   const actualBackupStarted = progressData?.events?.find((e: any) => e.action === 'BACKUP_OPERATION_START' && e.resticData);
    const isDryRun = type === 'backup' && !actualBackupStarted;
 
    // Extract progress values from restic data or use defaults

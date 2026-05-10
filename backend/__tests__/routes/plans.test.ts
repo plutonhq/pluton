@@ -61,6 +61,7 @@ describe('Plan Routes', () => {
 			pruneBackups: jest.fn(),
 			unlockRepo: jest.fn(),
 			checkIntegrity: jest.fn(),
+			repairRepo: jest.fn(),
 			deleteReplicationStorage: jest.fn(),
 		} as any;
 
@@ -248,7 +249,19 @@ describe('Plan Routes', () => {
 			const response = await request(app).post('/api/plans/plan-1/action/backup');
 
 			expect(response.status).toBe(200);
-			expect(mockPlanService.performBackup).toHaveBeenCalledWith('plan-1');
+			expect(mockPlanService.performBackup).toHaveBeenCalledWith('plan-1', undefined);
+		});
+
+		it('should forward runConfig when provided', async () => {
+			mockPlanService.performBackup.mockResolvedValue({ success: true } as any);
+			const runConfig = { forceFull: true };
+
+			const response = await request(app)
+				.post('/api/plans/plan-1/action/backup')
+				.send({ runConfig });
+
+			expect(response.status).toBe(200);
+			expect(mockPlanService.performBackup).toHaveBeenCalledWith('plan-1', runConfig);
 		});
 	});
 
@@ -326,6 +339,35 @@ describe('Plan Routes', () => {
 			const response = await request(app).post('/api/plans/plan-1/action/checkintegrity');
 
 			expect(response.status).toBe(500);
+		});
+	});
+
+	describe('POST /api/plans/:id/action/repair', () => {
+		it('should return 401 if not authenticated', async () => {
+			setupAuthMock(false);
+
+			const response = await request(app).post('/api/plans/plan-1/action/repair?type=index');
+
+			expect(response.status).toBe(401);
+		});
+
+		it('should return 400 when repair type is missing', async () => {
+			const response = await request(app).post('/api/plans/plan-1/action/repair');
+
+			expect(response.status).toBe(400);
+			expect(mockPlanService.repairRepo).not.toHaveBeenCalled();
+		});
+
+		it('should repair repository for a plan when authenticated', async () => {
+			mockPlanService.repairRepo.mockResolvedValue({
+				success: true,
+				result: { primary: 'repair completed' },
+			} as any);
+
+			const response = await request(app).post('/api/plans/plan-1/action/repair?type=index');
+
+			expect(response.status).toBe(200);
+			expect(mockPlanService.repairRepo).toHaveBeenCalledWith('plan-1', 'index', undefined);
 		});
 	});
 });

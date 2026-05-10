@@ -8,6 +8,7 @@ import { RestoreStore } from '../stores/RestoreStore';
 import { Plan, NewPlan, planInsertSchema, planUpdateSchema } from '../db/schema/plans';
 import {
 	BackupPlanArgs,
+	BackupVerifiedResult,
 	NewPlanReq,
 	PlanLogItem,
 	PlanNotification,
@@ -26,6 +27,7 @@ import { SourceTypes } from '../types/source';
 import { sanitizeStoragePath } from '../utils/sanitizeStoragePath';
 import { BackupNotification } from '../notifications/BackupNotification';
 import { ScheduleReconciler } from './ScheduleReconciler';
+import { BackupRunConfig } from '../types/backups';
 
 /**
  * PlanService is the central orchestrator for all business logic related to backup plans.
@@ -293,7 +295,7 @@ export class PlanService {
 	/**
 	 * Triggers a one-off manual backup for a plan.
 	 */
-	public async performBackup(planId: string): Promise<string> {
+	public async performBackup(planId: string, runConfig?: BackupRunConfig): Promise<string> {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError(`Plan with ID ${planId} not found.`);
 
@@ -302,7 +304,7 @@ export class PlanService {
 		}
 
 		const strategy = this.getStrategy(plan) as BackupStrategy;
-		const performResult = await strategy.performBackup(planId);
+		const performResult = await strategy.performBackup(planId, runConfig);
 
 		if (!performResult.success) {
 			throw new AppError(500, performResult.result);
@@ -390,6 +392,54 @@ export class PlanService {
 			}
 		} catch (error: any) {
 			console.log('[checkIntegrity] error :', error);
+			throw new AppError(500, error?.message || 'Internal Server Error');
+		}
+	}
+
+	async repairRepo(
+		planId: string,
+		repairType: string,
+		replicationId?: string
+	): Promise<{ success: boolean; result: Record<string, any> }> {
+		try {
+			const plan = await this.planStore.getById(planId);
+			if (!plan) {
+				throw new NotFoundError('Plan not found');
+			}
+			let storageName;
+			let storagePath;
+			const integrityCheckResAll = plan.verified?.result as Record<string, BackupVerifiedResult>;
+			let integrityCheckRes = integrityCheckResAll['primary'];
+			if (replicationId) {
+				const replicationStorage = plan.settings?.replication?.storages?.find(
+					s => s.replicationId === replicationId
+				);
+				if (!replicationStorage) {
+					throw new NotFoundError('Replication storage not found for the given replicationId');
+				}
+				storageName = replicationStorage.storageName;
+				storagePath = replicationStorage.storagePath;
+				integrityCheckRes = integrityCheckResAll[`mirror_${replicationStorage.storageId}`];
+			} else {
+				if (plan.storage) {
+					storageName =
+						plan.storage.name === 'Local' || plan.storage.name === 'Local Storage'
+							? 'local'
+							: plan.storage.name;
+					storagePath = plan.storagePath || '';
+				} else {
+					throw new NotFoundError('Storage not found for the given replicationId');
+				}
+			}
+			const strategy = this.getStrategy(plan);
+
+			const result = await strategy.repairRepo(planId, repairType, integrityCheckRes, {
+				storageName,
+				storagePath,
+			});
+			return result;
+		} catch (error: any) {
+			console.log('[repairRepo] error :', error);
 			throw new AppError(500, error?.message || 'Internal Server Error');
 		}
 	}

@@ -1,0 +1,53 @@
+.repairContainer {
+   position: relative;
+   small {
+      padding: 12px 0;
+      display: block;
+   }
+   .repairContent {
+      border: 1px solid var(--line-color);
+      border-radius: 6px;
+      button {
+         background: var(--background-color);
+         border-radius: 20px;
+         line-height: 1.7em;
+         color: var(--primary-color);
+         padding: 2px 10px;
+         transition: all 0.1s linear;
+         &:hover {
+            background: var(--primary-color);
+            color: var(--primary-text-color);
+         }
+      }
+      .repairTitle {
+         background: var(--background-color);
+         margin-top: 0;
+         font-weight: 600;
+         font-size: 1.1em;
+         padding: 12px;
+      }
+      p {
+         padding: 16px 8px;
+         border-bottom: 1px solid var(--line-color);
+         margin: 0;
+      }
+      p:last-child {
+         border-bottom: none;
+      }
+   }
+   .overlay {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      opacity: 0.95;
+      background-color: var(--modal-bg);
+      z-index: 3;
+      justify-content: center;
+      align-items: center;
+      display: flex;
+      border: 1px solid var(--line-color);
+      border-radius: 6px;
+   }
+}

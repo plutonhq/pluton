@@ -79,6 +79,7 @@ export type BackupVerifiedResult = {
 	logs: string[];
 	fix?: string;
 	hasError: boolean;
+	errorType?: string;
 };
 
 export type SyncVerifiedResult = {

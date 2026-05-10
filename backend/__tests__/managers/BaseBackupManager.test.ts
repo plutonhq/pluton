@@ -366,10 +366,16 @@ describe('BaseBackupManager', () => {
 				maxAttempts: 5,
 			});
 			expect(backupHandlerExecuteMock).toHaveBeenCalledTimes(1);
-			expect(backupHandlerExecuteMock).toHaveBeenCalledWith('plan-1', 'backup-1', baseOptions, {
-				attempts: 1,
-				maxAttempts: 5,
-			});
+			expect(backupHandlerExecuteMock).toHaveBeenCalledWith(
+				'plan-1',
+				'backup-1',
+				baseOptions,
+				{
+					attempts: 1,
+					maxAttempts: 5,
+				},
+				undefined
+			);
 			expect(out).toBe('EXECUTED');
 		});
 

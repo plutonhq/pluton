@@ -477,10 +477,11 @@ export class BackupEventService {
 							: thePlan.settings.replication?.storages?.find(
 									m => m.storageId === key.replace('mirror_', '')
 								);
-					const storageName =
+					let storageName =
 						key === 'primary'
 							? (theStorage as PlanStorageItem)?.name
 							: (theStorage as PlanReplicationStorage)?.storageName || key;
+					if (storageName === 'Local Storage') storageName = 'local';
 					const storagePath =
 						key === 'primary'
 							? thePlan.storagePath

@@ -25,6 +25,7 @@ import {
 	runResticCommand,
 	getBackupPlanStats,
 	getSnapshotByTag,
+	handleResticCheckResult,
 } from '../../../src/utils/restic/restic';
 import { getBinaryPath } from '../../../src/utils/binaryPathResolver';
 import { getRcloneConfigPath } from '../../../src/utils/rclone/helpers';
@@ -937,5 +938,302 @@ describe('getSnapshotByTag', () => {
 		});
 
 		expect(mockGenerateResticRepoPath).toHaveBeenCalledWith('custom-storage', 'custom-path');
+	});
+});
+
+describe('handleResticCheckResult', () => {
+	const testContext = {
+		repo: '/path/to/repo',
+		device: 'test-device-001',
+	};
+
+	describe('successful checks', () => {
+		it('should handle check with no errors', () => {
+			const output = `{
+    "message_type": "summary",
+    "num_errors": 0,
+    "broken_packs": null,
+    "suggest_repair_index": false,
+    "suggest_prune": false
+}
+no errors were found`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('No Issue Detected.');
+			expect(result.hasError).toBe(false);
+			expect(result.fix).toBe('');
+			expect(result.logs).toBeInstanceOf(Array);
+			expect(result.logs.length).toBeGreaterThan(0);
+		});
+
+		it('should handle check with verbose success output', () => {
+			const output = `Loading index
+Checking packs
+Checking snapshots
+Checking data blobs
+no errors were found`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('No Issue Detected.');
+			expect(result.hasError).toBe(false);
+			expect(result.fix).toBe('');
+		});
+	});
+
+	describe('damaged repository index', () => {
+		it('should detect damaged index and provide fix', () => {
+			const output = `Loading index
+The repository index is damaged
+error: index file corrupted`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('The repository index is damaged.');
+			expect(result.hasError).toBe(true);
+			expect(result.fix).toContain('restic repair index');
+			expect(result.fix).toContain(testContext.repo);
+			expect(result.fix).toContain(testContext.device);
+			expect(result.fix).toContain('Pluton Encryption key');
+		});
+
+		it('should provide proper repair command for damaged index', () => {
+			const output = `The repository index is damaged
+Cannot read index file
+error: check failed`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('The repository index is damaged.');
+			expect(result.fix).toContain(`restic repair index -r ${testContext.repo}`);
+		});
+	});
+
+	describe('ciphertext verification failures', () => {
+		it('should detect ciphertext verification failure', () => {
+			const output = `Loading pack 1234567890abcdef
+ciphertext verification failed
+error: decryption error`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('Ciphertext verification failed.');
+			expect(result.hasError).toBe(true);
+			expect(result.fix).toContain('hard to fix');
+			expect(result.fix).toContain('hardware problems');
+			expect(result.fix).toContain('Restic forum');
+		});
+
+		it('should provide appropriate guidance for ciphertext issues', () => {
+			const output = `ciphertext verification failed for blob
+error: authentication failed`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('Ciphertext verification failed.');
+			expect(result.fix).toContain('IRC channel');
+			expect(result.fix).not.toContain('restic repair');
+		});
+	});
+
+	describe('authorization failures', () => {
+		it('should detect failed authorization', () => {
+			const output = `Connecting to repository
+failed to authorize account
+error: access denied`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('Storage Authorization failed.');
+			expect(result.hasError).toBe(false);
+			expect(result.fix).toBe('');
+		});
+
+		it('should handle authorization failure without treating as error', () => {
+			const output = `failed to authorize account: invalid credentials
+Cannot access repository`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('Storage Authorization failed.');
+			expect(result.hasError).toBe(false);
+		});
+	});
+
+	describe('logs processing', () => {
+		it('should filter out empty lines from logs', () => {
+			const output = `Line 1
+
+Line 2
+
+Line 3`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.logs).toEqual(['Line 1', 'Line 2', 'Line 3']);
+			expect(result.logs.length).toBe(3);
+		});
+
+		it('should trim whitespace and filter empty lines', () => {
+			const output = `  Line 1  
+   
+Line 2
+   
+  Line 3  `;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.logs.length).toBe(3);
+			expect(result.logs).not.toContain('');
+		});
+
+		it('should include all non-empty lines in logs', () => {
+			const output = `Loading index
+Checking packs
+Checking snapshots
+no errors were found`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.logs).toContain('Loading index');
+			expect(result.logs).toContain('Checking packs');
+			expect(result.logs).toContain('Checking snapshots');
+			expect(result.logs).toContain('no errors were found');
+		});
+	});
+
+	describe('multiple issues', () => {
+		it('should handle multiple error conditions where last one sets the message', () => {
+			const output = `The repository contains damaged pack files
+pack 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef: error
+The repository index is damaged
+no errors were found`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			// All conditions are checked and message gets set multiple times
+			// Last condition "no errors were found" sets message and hasError
+			expect(result.message).toBe('No Issue Detected.');
+			expect(result.hasError).toBe(false);
+		});
+
+		it('should handle damaged pack file without success message', () => {
+			const output = `The repository contains damaged pack files
+pack 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef: error
+The repository index is damaged`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			// Both conditions are true, but index message comes last
+			expect(result.message).toBe('The repository index is damaged.');
+			expect(result.hasError).toBe(true);
+		});
+
+		it('should handle multiple error conditions and last success message', () => {
+			const output = `ciphertext verification failed
+failed to authorize account
+no errors were found`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			// All three conditions are true, last one wins for message
+			expect(result.message).toBe('No Issue Detected.');
+			// But authorization failure sets hasError to false
+			expect(result.hasError).toBe(false);
+		});
+	});
+
+	describe('edge cases', () => {
+		it('should handle empty output', () => {
+			const output = '';
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('');
+			expect(result.hasError).toBe(true);
+			expect(result.fix).toBe('');
+			expect(result.logs).toEqual([]);
+		});
+
+		it('should handle output with only whitespace', () => {
+			const output = '   \n\n   \n   ';
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('');
+			expect(result.logs).toEqual([]);
+		});
+
+		it('should handle unknown error format', () => {
+			const output = `Some unknown error occurred
+Check failed for unknown reason`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('');
+			expect(result.hasError).toBe(true);
+			expect(result.logs.length).toBe(2);
+		});
+	});
+
+	describe('repository context', () => {
+		it('should use provided repository path in fix commands', () => {
+			const customContext = {
+				repo: '/custom/repo/path',
+				device: 'my-device',
+			};
+			const output = `The repository index is damaged`;
+
+			const result = handleResticCheckResult(output, customContext);
+
+			expect(result.fix).toContain('/custom/repo/path');
+			expect(result.fix).toContain('my-device');
+		});
+	});
+
+	describe('real-world scenarios', () => {
+		it('should handle typical successful check output', () => {
+			const output = `using temporary cache in /tmp/restic-check-cache-123456
+repository 1a2b3c4d opened (version 2, compression level auto)
+created new cache in /tmp/restic-check-cache-123456
+create exclusive lock for repository
+load indexes
+check all packs
+check snapshots, trees and blobs
+[0:00] 100.00%  3 / 3 snapshots
+no errors were found`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('No Issue Detected.');
+			expect(result.hasError).toBe(false);
+			expect(result.fix).toBe('');
+			expect(result.logs.length).toBeGreaterThan(5);
+		});
+
+		it('should handle corrupted repository scenario', () => {
+			const output = `using temporary cache in /tmp/restic-check-cache-123456
+repository 1a2b3c4d opened (version 2, compression level auto)
+Load(<data/1234567890abcd>, 0, 0) returned error, retrying after 552.330144ms: ciphertext verification failed
+Load(<data/1234567890abcd>, 0, 0) returned error, retrying after 552.330144ms: ciphertext verification failed
+ciphertext verification failed
+Fatal: repository contains errors`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('Ciphertext verification failed.');
+			expect(result.hasError).toBe(true);
+			expect(result.fix).toContain('hardware problems');
+		});
+
+		it('should handle authentication error scenario', () => {
+			const output = `Fatal: create repository at s3:s3.amazonaws.com/backup failed: failed to authorize account: Forbidden`;
+
+			const result = handleResticCheckResult(output, testContext);
+
+			expect(result.message).toBe('Storage Authorization failed.');
+			expect(result.hasError).toBe(false);
+		});
 	});
 });

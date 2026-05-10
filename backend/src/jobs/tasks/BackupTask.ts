@@ -16,14 +16,19 @@ export class BackupTask extends Task {
 			throw new Error('Missing planId in job payload');
 		}
 
-		const { planId, backupId } = job.payload;
+		const { planId, backupId, runConfig } = job.payload;
 		logger.info(`Starting backup job for plan: ${planId}`);
 
 		try {
-			await this.backupManager.performBackupExecution(planId, backupId, {
-				attempts: job.attempts,
-				maxAttempts: job.maxAttempts,
-			});
+			await this.backupManager.performBackupExecution(
+				planId,
+				backupId,
+				{
+					attempts: job.attempts,
+					maxAttempts: job.maxAttempts,
+				},
+				runConfig
+			);
 
 			planLogger('backup', planId, backupId).info(
 				`Backup job for plan ${planId} completed successfully.`

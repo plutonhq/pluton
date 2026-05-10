@@ -77,6 +77,7 @@ export type PlanVerifiedResult = {
    logs: string[];
    fix?: string;
    hasError: boolean;
+   errorType?: string;
 };
 
 export type PlanVerification = {
