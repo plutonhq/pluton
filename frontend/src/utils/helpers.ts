@@ -30,6 +30,8 @@ export const isMobile = (): boolean => {
    return false;
 };
 
+export const isDarkMode = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+
 const formatter = new Intl.RelativeTimeFormat('en');
 export const timeAgo = (input: Date) => {
    const date = input instanceof Date ? input : new Date(input);

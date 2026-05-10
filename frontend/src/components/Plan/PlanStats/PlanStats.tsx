@@ -1,9 +1,11 @@
 import Icon from '../../common/Icon/Icon';
 import { Plan } from '../../../@types/plans';
-import { formatBytes, formatNumberToK, formatIntervalDisplay } from '../../../utils/helpers';
+import { formatIntervalDisplay } from '../../../utils/helpers';
 import PlanHistory from '../PlanHistory/PlanHistory';
+import PlanSizeChart from '../PlanSizeChart/PlanSizeChart';
 import classes from './PlanStats.module.scss';
 import PlanStorageInfo from '../PlanStorageInfo/PlanStorageInfo';
+import { formatBytes, formatNumberToK } from '../../../utils/helpers';
 
 interface PlanStatsProps {
    plan: Plan;
@@ -61,18 +63,13 @@ const PlanStats = ({ plan, isSync, lastBackupItem }: PlanStatsProps) => {
          </div>
          <div className={classes.snapshots}>
             <div className={classes.widgetTitle}>
-               <Icon type="folders" size={12} /> Source Stats
+               <Icon type="folders" size={12} /> Stats{' '}
+               <span className={classes.widgetSubTitle}>
+                  {formatNumberToK(totalFiles)} files <i>|</i> {formatBytes(totalSize)}
+               </span>
             </div>
             <div className={classes.snapshotsContent}>
-               <div>
-                  <span>{totalFiles ? formatNumberToK(totalFiles) : 0}</span>
-                  <span>Files</span>
-               </div>
-               <div></div>
-               <div>
-                  <span>{totalSize ? formatBytes(totalSize) : '0.00B'}</span>
-                  <span>Size</span>
-               </div>
+               <PlanSizeChart backups={plan.backups} />
             </div>
          </div>
          <div className={classes.health}>

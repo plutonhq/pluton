@@ -1,0 +1,76 @@
+.chartWrap {
+   position: relative;
+   width: 100%;
+   height: 100%;
+   min-height: 60px;
+}
+
+.chartCanvas {
+   position: absolute;
+   inset: 0;
+}
+
+.rangeSelector {
+   position: absolute;
+   top: -28px;
+   right: 0;
+   z-index: 2;
+}
+
+.rangeBtn {
+   background: var(--content-background-color);
+   color: var(--content-text-color-light);
+   border-radius: 4px;
+   font-size: 0.6875rem;
+   font-weight: 600;
+   padding: 2px 8px;
+   cursor: pointer;
+   line-height: 1.4;
+
+   &:hover {
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+   }
+}
+
+.rangeMenu {
+   position: absolute;
+   top: calc(100% + 4px);
+   right: 0;
+   margin: 0;
+   padding: 4px 0;
+   list-style: none;
+   background: var(--content-background-color);
+   border: 1px solid var(--line-color);
+   border-radius: 4px;
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+   min-width: 70px;
+
+   li {
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: var(--content-text-color);
+
+      &:hover {
+         background: var(--primary-color-light);
+         color: var(--primary-color);
+      }
+
+      &.active {
+         color: var(--primary-color);
+         font-weight: 600;
+      }
+   }
+}
+
+.empty {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 6px;
+   height: 100%;
+   font-size: 0.75rem;
+   color: var(--content-text-color-light);
+   opacity: 0.7;
+}
