@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import classes from './Plans.module.scss';
 import PageHeader from '../../components/common/PageHeader/PageHeader';
 import PlanItem from '../../components/Plan/PlanItems/PlanItem';
 import AddPlan from '../../components/Plan/AddPlan/AddPlan';
-import TagsFilter from '../../components/common/TagsFilter/TagsFilter';
 import SearchItems from '../../components/common/SearchItems/SearchItems';
 import SortItems from '../../components/common/SortItems/SortItems';
 import { useGetPlans } from '../../services/plans';
@@ -40,29 +39,6 @@ const Plans = () => {
    }, [data]);
 
    // console.log('plans :', plans);
-
-   const allTags = useMemo(() => {
-      const tags: string[] = [];
-      if (plans && plans.length > 0) {
-         plans.forEach((plan) => {
-            plan.tags.forEach((tag) => {
-               if (!tags.includes(tag)) {
-                  tags.push(tag);
-               }
-            });
-         });
-      }
-
-      return tags;
-   }, [plans]);
-
-   const filterByTags = (tag: string) => {
-      if (tag) {
-         setPlans(fetchedPlans.filter((p) => p.tags.includes(tag)));
-      } else {
-         setPlans(fetchedPlans);
-      }
-   };
 
    const searchPlans = (term: string) => {
       if (term) {
