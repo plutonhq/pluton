@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.16.0](https://github.com/plutonhq/pluton/compare/pluton-v0.15.2...pluton-v0.16.0) (2026-05-11)
+
+
+### Features
+
+* adds file stats trend graph ([a729d58](https://github.com/plutonhq/pluton/commit/a729d58847f18e195c057ad72172074885b67a21))
+* adds the ability to filter plans & persist sorting ([edb8769](https://github.com/plutonhq/pluton/commit/edb87694df71fabca6a99b4ebda95f71b4d7b856))
+* adds the ability to repair repo issues from ui for some cases ([8fa84e5](https://github.com/plutonhq/pluton/commit/8fa84e51b96b5c69729c4a5ec2cacb0993ce3d71))
+* adds the ability to skip first backup run on plan creation ([b588885](https://github.com/plutonhq/pluton/commit/b58888527facc1b7f8996c92cdb7f2f0f5d34465))
+
+
+### Bug Fixes
+
+* minor ui issue ([7cbe8dd](https://github.com/plutonhq/pluton/commit/7cbe8ddf9a3bf592a59038974a73c56c5dc03a1c))
+
+
+### Dependencies
+
+* bump rclone version to 1.74.1 ([37cfccf](https://github.com/plutonhq/pluton/commit/37cfccf20d6c19e6df9f4ae88d2ba105040a8124))
+
 ## [0.15.2](https://github.com/plutonhq/pluton/compare/pluton-v0.15.1...pluton-v0.15.2) (2026-05-06)
 
 
