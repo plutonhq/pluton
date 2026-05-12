@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.1](https://github.com/plutonhq/pluton/compare/pluton-v0.16.0...pluton-v0.16.1) (2026-05-12)
+
+
+### Bug Fixes
+
+* minor ui issues ([13da83a](https://github.com/plutonhq/pluton/commit/13da83a91c3e17d0fc4fe07567bbdc5a3ebdc9ff))
+* resolves disappearing progress bar issue when plan contains more than 90 backups ([7441e54](https://github.com/plutonhq/pluton/commit/7441e545017b9f7fe980a761585e8e8075f75199))
+* resolves packet-size crash issue due to invalid formatting ([1da5538](https://github.com/plutonhq/pluton/commit/1da5538baab2999be81593b2171c369d69509288))
+
 ## [0.16.0](https://github.com/plutonhq/pluton/compare/pluton-v0.15.2...pluton-v0.16.0) (2026-05-11)
 
 
