@@ -163,6 +163,13 @@
    max-width: 70px;
 }
 
+.fileDate {
+   max-width: 150px;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
 .selected {
    background: #e6f7ff;
 }

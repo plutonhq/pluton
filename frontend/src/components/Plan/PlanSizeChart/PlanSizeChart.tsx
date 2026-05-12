@@ -10,12 +10,12 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, 
 
 type RangeKey = '7d' | '14d' | '1m' | '3m' | '6m';
 
-const RANGE_OPTIONS: { key: RangeKey; label: string; days: number }[] = [
-   { key: '7d', label: '7d', days: 7 },
-   { key: '14d', label: '14d', days: 14 },
-   { key: '1m', label: '1m', days: 30 },
-   { key: '3m', label: '3m', days: 90 },
-   { key: '6m', label: '6m', days: 180 },
+const RANGE_OPTIONS: { key: RangeKey; label: string; labelFull: string; days: number }[] = [
+   { key: '7d', label: '7d', labelFull: '7 days', days: 7 },
+   { key: '14d', label: '14d', labelFull: '14 days', days: 14 },
+   { key: '1m', label: '1m', labelFull: '1 month', days: 30 },
+   { key: '3m', label: '3m', labelFull: '3 months', days: 90 },
+   { key: '6m', label: '6m', labelFull: '6 months', days: 180 },
 ];
 
 interface PlanSizeChartProps {
@@ -42,7 +42,10 @@ const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
 
    const filtered = useMemo(() => {
       const cutoff = Date.now() - activeRange.days * 24 * 60 * 60 * 1000;
-      return [...(backups || [])]
+      // if there is only one backup duplicate the first backup to make 2 items
+      // so that the graph is never empty and shows the size even if there is only one backup in the selected range
+      const theBackups = backups && backups.length === 1 ? [backups[0], backups[0]] : backups || [];
+      return [...theBackups]
          .filter((b) => {
             const t = new Date(b.started).getTime();
             return !isNaN(t) && t >= cutoff;
@@ -141,7 +144,7 @@ const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
                               setOpen(false);
                            }}
                         >
-                           {opt.label}
+                           {opt.labelFull}
                         </li>
                      ))}
                </ul>
