@@ -97,7 +97,7 @@ export class PlanStore {
 					},
 				},
 				backups: {
-					limit: history ? 90 : 10,
+					limit: history ? 999 : 10,
 					orderBy: (backups, { desc }) => [desc(backups.ended)],
 					columns: {
 						id: true,
@@ -115,7 +115,7 @@ export class PlanStore {
 					},
 				},
 				restores: {
-					limit: history ? 90 : 0,
+					limit: history ? 999 : 0,
 					orderBy: (restores, { desc }) => [desc(restores.ended)],
 					columns: {
 						id: true,
