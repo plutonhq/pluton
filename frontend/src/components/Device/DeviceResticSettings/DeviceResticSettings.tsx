@@ -44,8 +44,8 @@ const DeviceResticSettings = ({ settings = {}, onUpdate }: DeviceResticSettingsP
          <div className={classes.field}>
             <NumberInput
                label="Packet Size (MB)"
-               fieldValue={settings?.packSize ? parseInt(settings.packSize.replace('MiB', ''), 10) : ''}
-               onUpdate={(val) => onUpdate({ ...settings, packSize: val ? val + 'MiB' : '' })}
+               fieldValue={settings?.packSize ? parseInt(settings.packSize, 10) : ''}
+               onUpdate={(val) => onUpdate({ ...settings, packSize: val ? val.toString() : '' })}
                min={0}
                max={4000}
                hint="Packs are blobs of data, which are encrypted and stored in the repository. Increasing the pack size requires more disk space for temporary pack files to be created before uploading."

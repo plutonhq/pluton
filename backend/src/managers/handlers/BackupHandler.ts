@@ -766,7 +766,7 @@ export class BackupHandler {
 		if (compression) resticArgs.push('--compression', 'auto'); // auto, max, off
 		if (performance) {
 			if (performance.maxProcessor) resticEnv.GOMAXPROCS = performance.maxProcessor.toString();
-			if (performance.packSize) resticArgs.push('--pack-size', performance.packSize); // 16MiB, 256Mib etc.
+			if (performance.packSize) resticArgs.push('--pack-size', performance.packSize);
 			if (!performance.scan) resticArgs.push('--no-scan');
 			if (performance.readConcurrency)
 				resticArgs.push('--read-concurrency', performance.readConcurrency.toString());

@@ -34,8 +34,8 @@ const PlanPerformanceSettings = ({ plan, onUpdate }: PlanPerformanceSettingsProp
          <div className={classes.field}>
             <NumberInput
                label="Packet Size (MB)"
-               fieldValue={perfSettings?.packSize ? parseInt(perfSettings.packSize.replace('MiB', ''), 10) : ''}
-               onUpdate={(val) => onUpdate({ ...perfSettings, packSize: val + 'MiB' })}
+               fieldValue={perfSettings?.packSize ? parseInt(perfSettings.packSize, 10) : ''}
+               onUpdate={(val) => onUpdate({ ...perfSettings, packSize: val ? val.toString() : '' })}
                min={0}
                max={4000}
             />
