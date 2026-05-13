@@ -17,7 +17,7 @@
   <br />
   <br />
   <figure>
-    <img src="https://docs.usepluton.com/assets/images/pluton-7e857a9affdac9ed2ec659e343f892eb.gif" alt="Pluton Screenshot" />
+    <img src="https://docs.usepluton.com/assets/images/pluton-be6c5af7c03acc29d7e9c43e1399b811.gif" alt="Pluton Screenshot" />
   </figure>
 </div>
 
@@ -36,9 +36,9 @@ Pluton is a self-hosted backup management platform that simplifies automated, in
 - &nbsp; **End-to-end encryption** Backups are totally encrypted from your local machine to your cloud storage.
 - &nbsp; **70+ Storage Support**: Store encrypted data to your favorite cloud storages (powered by rclone).
 - &nbsp; **Event Notifications**: Get notifications to Email, Slack, Discord & Push Notifications (NTFY).
-- &nbsp; **Auto Retry Logic**: Automatically retries backups if it fails with customization options.
+- &nbsp; **Auto Retry Logic**: Automatically retries backups if they fail with customization options.
 - &nbsp; **Intuitive UI**: Manage everything from a single, clean interface.
-- &nbsp; **Real-time Progress Tracking**: Track progress of your backups real-time.
+- &nbsp; **Real-time Progress Tracking**: Track the progress of your backups in real-time.
 - &nbsp; **Extensive Logging**: View app and backup logs right from the UI for better debugging.
 - &nbsp; **Run Scripts before/after**: Ability to run scripts before and after running backups.
 
