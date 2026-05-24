@@ -105,8 +105,8 @@ const PlanItem = ({ plan, layout = 'list' }: PlanItemProps) => {
          className={`${classes.plan} ${layout === 'grid' ? classes.planGrid : classes.planList} ${verified && verified.hasError ? classes.planHasError : ''}`}
       >
          <div className={classes.leftContent}>
-            <div className={`${classes.status} ${!isActive ? classes.paused : ''}`}>
-               <Icon type={method === 'backup' ? 'plans' : 'sync'} size={28} />
+            <div className={`${classes.status} ${!isActive ? classes.paused : ''}  ${inProgress ? classes.inProgress : ''}`}>
+               {inProgress ? <Icon type="loading" size={28} /> : <Icon type={method === 'backup' ? 'plans' : 'sync'} size={28} />}
             </div>
 
             <div className={classes.content}>

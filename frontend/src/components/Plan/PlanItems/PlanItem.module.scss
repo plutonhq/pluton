@@ -37,7 +37,8 @@
       margin-left: 5px;
       position: relative;
       color: var(--success-label);
-      &.paused {
+      &.paused,
+      &.inProgress {
          color: var(--icon-color);
       }
    }
