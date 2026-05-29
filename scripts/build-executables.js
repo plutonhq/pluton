@@ -138,37 +138,90 @@ function exec(command, options = {}) {
 /**
  * Download a file from a URL
  */
-async function downloadFile(url, destPath) {
+async function downloadFile(url, destPath, { retries = 4 } = {}) {
   console.log(`⬇️  Downloading: ${url}`);
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await downloadFileOnce(url, destPath);
+      return;
+    } catch (error) {
+      // Clean up any partial file before retrying.
+      try {
+        fs.unlinkSync(destPath);
+      } catch {}
+
+      if (attempt === retries) {
+        throw new Error(
+          `Failed to download after ${retries} attempts: ${url} (${error.message})`,
+        );
+      }
+
+      const delayMs = 1000 * attempt;
+      console.warn(
+        `  ⚠️  Download attempt ${attempt}/${retries} failed (${error.message}). Retrying in ${delayMs}ms...`,
+      );
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+}
+
+/**
+ * Perform a single download attempt.
+ * Follows redirects, validates the HTTP status, handles stream errors, and
+ * enforces an inactivity timeout so a stalled connection cannot silently hang
+ * the build (which would otherwise let the Node process exit 0 mid-build).
+ */
+function downloadFileOnce(url, destPath, redirectsLeft = 5) {
+  const IDLE_TIMEOUT_MS = 60000;
+
   return new Promise((resolve, reject) => {
-    const file = createWriteStream(destPath);
-    https
-      .get(url, (response) => {
-        if (response.statusCode === 302 || response.statusCode === 301) {
-          // Follow redirect
-          https
-            .get(response.headers.location, (redirectResponse) => {
-              redirectResponse.pipe(file);
-              file.on("finish", () => {
-                file.close();
-                resolve();
-              });
-            })
-            .on("error", reject);
-        } else {
-          response.pipe(file);
-          file.on("finish", () => {
-            file.close();
-            resolve();
-          });
+    const request = https.get(url, (response) => {
+      const status = response.statusCode ?? 0;
+
+      // Follow any redirect status code.
+      if (status >= 300 && status < 400 && response.headers.location) {
+        response.resume(); // drain the redirect body
+        if (redirectsLeft <= 0) {
+          reject(new Error(`Too many redirects for ${url}`));
+          return;
         }
-      })
-      .on("error", (err) => {
-        try {
-          fs.unlinkSync(destPath);
-        } catch {}
-        reject(err);
+        const nextUrl = new URL(response.headers.location, url).toString();
+        resolve(downloadFileOnce(nextUrl, destPath, redirectsLeft - 1));
+        return;
+      }
+
+      if (status < 200 || status >= 300) {
+        response.resume();
+        reject(new Error(`Unexpected HTTP status ${status} for ${url}`));
+        return;
+      }
+
+      const file = createWriteStream(destPath);
+
+      // Reject (rather than silently hang) if the connection stalls.
+      response.setTimeout(IDLE_TIMEOUT_MS, () => {
+        request.destroy(new Error(`Idle timeout after ${IDLE_TIMEOUT_MS}ms`));
       });
+
+      const fail = (err) => {
+        file.destroy();
+        reject(err);
+      };
+
+      response.on("error", fail);
+      file.on("error", fail);
+      file.on("finish", () => file.close(() => resolve()));
+
+      response.pipe(file);
+    });
+
+    request.on("error", reject);
+    request.setTimeout(IDLE_TIMEOUT_MS, () => {
+      request.destroy(
+        new Error(`Connection timeout after ${IDLE_TIMEOUT_MS}ms`),
+      );
+    });
   });
 }
 
