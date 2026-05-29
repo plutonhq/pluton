@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.4](https://github.com/plutonhq/pluton/compare/pluton-v0.16.3...pluton-v0.16.4) (2026-05-29)
+
+
+### Bug Fixes
+
+* resolves broken build mechanism ([4b76616](https://github.com/plutonhq/pluton/commit/4b766169844913df1fc9d0e36e5e4a5e28dd8179))
+
 ## [0.16.3](https://github.com/plutonhq/pluton/compare/pluton-v0.16.2...pluton-v0.16.3) (2026-05-29)
 
 
