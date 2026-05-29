@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.2](https://github.com/plutonhq/pluton/compare/pluton-v0.16.1...pluton-v0.16.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* resolves long running backup freeze issue ([3705ded](https://github.com/plutonhq/pluton/commit/3705ded8c47145fd08b627798cb88d8938421257))
+* update status styles to include inProgress state in Plans list ([e3c0bc4](https://github.com/plutonhq/pluton/commit/e3c0bc4c6fbde94a35634bbbeca4ac6bc8fa683f))
+
 ## [0.16.1](https://github.com/plutonhq/pluton/compare/pluton-v0.16.0...pluton-v0.16.1) (2026-05-12)
 
 
