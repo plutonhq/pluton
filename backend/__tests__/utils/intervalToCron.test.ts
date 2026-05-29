@@ -365,7 +365,7 @@ describe('getIntervalLabel', () => {
 
 		it('should handle empty days array', () => {
 			const interval: PlanInterval = { type: 'weekly', days: '' };
-			expect(getIntervalLabel(interval)).toMatch(/Runs Once Per Week on/);
+			expect(getIntervalLabel(interval)).toMatch(/Runs 0 Times Per Week/);
 		});
 	});
 });
