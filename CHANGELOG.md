@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.3](https://github.com/plutonhq/pluton/compare/pluton-v0.16.2...pluton-v0.16.3) (2026-05-29)
+
+
+### Bug Fixes
+
+* resolves bug that prevents updating plan with x days interval ([88e1a90](https://github.com/plutonhq/pluton/commit/88e1a90059bbdccd8bd9e61856a861dc5cb5b732))
+* resolves minor UI issues ([5b9043d](https://github.com/plutonhq/pluton/commit/5b9043dfb10bdb7cdab24e14eaf3ba04e1768787))
+
 ## [0.16.2](https://github.com/plutonhq/pluton/compare/pluton-v0.16.1...pluton-v0.16.2) (2026-05-27)
 
 
