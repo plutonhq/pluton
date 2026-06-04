@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.5](https://github.com/plutonhq/pluton/compare/pluton-v0.16.4...pluton-v0.16.5) (2026-05-29)
+
+
+### Build System
+
+* fix issue that caused the rclone archive extraction to fail. ([fac65e4](https://github.com/plutonhq/pluton/commit/fac65e476d6e9abe0a9254bcf8372d76b8cca751))
+* fix silent download failure ([8fec462](https://github.com/plutonhq/pluton/commit/8fec462fffbd0783837f079aab2b43ee0a1cb059))
+* throw error on dangling restic/rclone downloads ([c1b7511](https://github.com/plutonhq/pluton/commit/c1b7511f5f2151305aed317c25a39eb0467f5546))
+
 ## [0.16.4](https://github.com/plutonhq/pluton/compare/pluton-v0.16.3...pluton-v0.16.4) (2026-05-29)
 
 
