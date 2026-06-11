@@ -15,9 +15,9 @@ export function planIntervalName(interval: PlanInterval): string {
       case 'days':
          return `Every Few Days`;
       case 'hours':
-         return `Every ${interval.hours}`;
+         return `Every ${interval.hours} hrs`;
       case 'minutes':
-         return `Every ${interval.minutes}`;
+         return `Every ${interval.minutes} mins`;
       default:
          return '';
    }
