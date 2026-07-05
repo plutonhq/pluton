@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.1](https://github.com/plutonhq/pluton/compare/pluton-v0.17.0...pluton-v0.17.1) (2026-07-05)
+
+
+### Bug Fixes
+
+* resolve Cloudflare R2 storage creation issue ([4598e0f](https://github.com/plutonhq/pluton/commit/4598e0f8eb8942d98dd719f2b6bffa014b2741c3))
+
 ## [0.17.0](https://github.com/plutonhq/pluton/compare/pluton-v0.16.6...pluton-v0.17.0) (2026-06-15)
 
 
