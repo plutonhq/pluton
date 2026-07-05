@@ -9,8 +9,8 @@ const config: Config = {
 	// Limit workers to prevent OOM and recycle workers that accumulate memory.
 	// A fixed cap (not a core-percentage) keeps concurrent ts-jest compilation
 	// from exhausting native/zone memory on high-core machines.
-	maxWorkers: 4,
-	workerIdleMemoryLimit: '512MB',
+	maxWorkers: process.env.CI ? 2 : 4,
+	workerIdleMemoryLimit: '2048MB',
 
 	// Explicitly define the transform using ts-jest
 	transform: {
