@@ -147,6 +147,29 @@ describe('SettingsService', () => {
 			title: 'Pluton',
 			integration: { smtp: { server: 'smtp.example.com', connected: false } },
 		} as AppSettings;
+		// The settings already persisted in the DB, which the validate flow must preserve.
+		const mockStoredAppSettings = {
+			title: 'My Backup Server',
+			description: 'Pluton backup for your data.',
+			theme: 'dark',
+			admin_email: 'admin@example.com',
+			integration: {},
+			totp: { enabled: true, secret: 'encrypted-secret', recoveryCodes: ['abc123'] },
+			reporting: {
+				emails: ['reports@example.com'],
+				time: '23:00',
+				daily: { enabled: true },
+				weekly: { enabled: false },
+				monthly: { enabled: false },
+			},
+		} as AppSettings;
+
+		beforeEach(() => {
+			mockSettingsStore.getById.mockResolvedValue({
+				id: settingsId,
+				settings: mockStoredAppSettings,
+			} as any);
+		});
 
 		it('should validate, send email, and update connection status to true', async () => {
 			// First update returns the settings, second one confirms connection status update
@@ -207,6 +230,74 @@ describe('SettingsService', () => {
 			).rejects.toThrow('Failed to update settings');
 
 			// Ensure no email was attempted
+			expect(mockSmtpChannel.send).not.toHaveBeenCalled();
+		});
+
+		it('should preserve all other settings fields when writing the integration', async () => {
+			mockSettingsStore.update.mockResolvedValue({
+				id: settingsId,
+				settings: mockReturnedAppSettings,
+			} as any);
+			mockSmtpChannel.send.mockResolvedValue({ success: true, result: 'Email sent' });
+
+			await settingsService.validateIntegration(settingsId, 'smtp', testPayload, {
+				...mockIntegrationSettings,
+			});
+
+			// `update` replaces the whole blob, so the first write must carry the stored fields
+			// through — otherwise testing an integration silently wipes 2FA, reporting, etc.
+			const [, firstWrite] = mockSettingsStore.update.mock.calls[0];
+			expect(firstWrite).toMatchObject({
+				title: 'My Backup Server',
+				description: 'Pluton backup for your data.',
+				theme: 'dark',
+				admin_email: 'admin@example.com',
+				totp: { enabled: true, secret: 'encrypted-secret', recoveryCodes: ['abc123'] },
+				reporting: {
+					emails: ['reports@example.com'],
+					time: '23:00',
+					daily: { enabled: true },
+				},
+			});
+			// ...while still applying the integration under test
+			expect(firstWrite.integration.smtp).toMatchObject({ server: 'smtp.example.com' });
+		});
+
+		it('should preserve integrations other than the one being tested', async () => {
+			mockSettingsStore.getById.mockResolvedValue({
+				id: settingsId,
+				settings: {
+					...mockStoredAppSettings,
+					integration: {
+						ntfy: { authType: 'token', authToken: 'existing-token', connected: true },
+					},
+				},
+			} as any);
+			mockSettingsStore.update.mockResolvedValue({
+				id: settingsId,
+				settings: mockReturnedAppSettings,
+			} as any);
+			mockSmtpChannel.send.mockResolvedValue({ success: true, result: 'Email sent' });
+
+			await settingsService.validateIntegration(settingsId, 'smtp', testPayload, {
+				...mockIntegrationSettings,
+			});
+
+			const [, firstWrite] = mockSettingsStore.update.mock.calls[0];
+			expect(firstWrite.integration.ntfy).toMatchObject({ authToken: 'existing-token' });
+			expect(firstWrite.integration.smtp).toMatchObject({ server: 'smtp.example.com' });
+		});
+
+		it('should throw if the settings record does not exist', async () => {
+			mockSettingsStore.getById.mockResolvedValue(null);
+
+			await expect(
+				settingsService.validateIntegration(settingsId, 'smtp', testPayload, {
+					...mockIntegrationSettings,
+				})
+			).rejects.toThrow('Settings not found');
+
+			expect(mockSettingsStore.update).not.toHaveBeenCalled();
 			expect(mockSmtpChannel.send).not.toHaveBeenCalled();
 		});
 

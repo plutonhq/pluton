@@ -75,16 +75,23 @@ export class SettingsService {
 			throw new AppError(400, `Integration settings for ${type} are missing.`);
 		}
 
+		const currentSettings = await this.settingsStore.getById(id);
+		if (!currentSettings?.settings) {
+			throw new NotFoundError('Settings not found');
+		}
+
 		const encryptedIntegration =
 			this.notificationChannelResolver.encryptSecrets(integrationSettings);
 		try {
 			// First Update the Integration Settings with the provided config
 			const updatedSettings = await this.settingsStore.update(id, {
+				...currentSettings.settings,
 				integration: {
+					...currentSettings.settings.integration,
 					...integrationSettings,
 					[integrationType]: encryptedIntegration[integrationType],
 				},
-			} as AppSettings);
+			});
 			if (!updatedSettings) {
 				throw new AppError(500, 'Failed to update settings');
 			}
