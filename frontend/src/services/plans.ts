@@ -1,7 +1,11 @@
+import { mutationResponse } from '../utils/httpResponse';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { API_URL } from '../utils/constants';
 import { NewPlanSettings, Plan, PlanAddRunSettings, PlanNotification } from '../@types/plans';
+import { historyApiQuery } from '../utils/backupHistory';
+import type { HistoryPage, HistoryState } from '../utils/backupHistory';
+import { hasPendingMirrors } from '../utils/replication';
 
 type BackupRunConfig = {
    skipDryRun?: boolean;
@@ -39,6 +43,7 @@ export async function getSinglePlan(id: string) {
       throw new Error('ID Not Provided.');
    }
    const url = new URL(`${API_URL}/plans/${id}`);
+   url.searchParams.set('backupHistory', 'summary');
 
    const res = await fetch(url.toString(), {
       method: 'GET',
@@ -60,6 +65,29 @@ export function useGetPlan(id: string) {
       refetchOnMount: true,
       retry: false,
       staleTime: 0,
+   });
+}
+
+export function useBackupHistory(id: string, state: HistoryState, enabled = true) {
+   return useQuery({
+      // Existing plan mutations/progress invalidations also refresh the current page.
+      queryKey: ['plan', id, 'backupHistory', state],
+      queryFn: async ({ signal }): Promise<HistoryPage<Plan['backups'][number]>> => {
+         const response = await fetch(`${API_URL}/plans/${encodeURIComponent(id)}/backups?${historyApiQuery(state)}`, {
+            credentials: 'include',
+            signal,
+         });
+         const data = await response.json();
+         if (!response.ok || !data.success) throw new Error(data.error || 'Could not load backup history.');
+         return data.result;
+      },
+      enabled,
+      retry: false,
+      placeholderData: (previous) => previous,
+      refetchInterval(query) {
+         if (query.state.error) return false;
+         return hasPendingMirrors(query.state.data?.items || []) ? 5000 : false;
+      },
    });
 }
 
@@ -145,7 +173,6 @@ export function useGetDownloadLogs() {
 // Create New Plan
 export async function createPlan({ newPlan, runSettings }: { newPlan: NewPlanSettings; runSettings: PlanAddRunSettings }) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
-   console.log('newPlan :', newPlan);
    const res = await fetch(`${API_URL}/plans`, {
       method: 'POST',
       credentials: 'include',
@@ -163,9 +190,8 @@ export function useCreatePlan() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: createPlan,
-      onSuccess: (res) => {
+      onSuccess: () => {
          // TODO: Should Display a Notification Bubble.
-         console.log('# Plan Created! :', res);
          queryClient.invalidateQueries({ queryKey: ['plans'] });
       },
    });
@@ -174,7 +200,6 @@ export function useCreatePlan() {
 // UpdatePlan
 export async function updatePlan(updatePayload: { id: string; data: Partial<Plan> }) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
-   console.log('newPlan :', updatePayload);
    const res = await fetch(`${API_URL}/plans/${updatePayload.id}`, {
       method: 'PUT',
       credentials: 'include',
@@ -182,7 +207,6 @@ export async function updatePlan(updatePayload: { id: string; data: Partial<Plan
       body: JSON.stringify({ plan: updatePayload.data }),
    });
    const data = await res.json();
-   console.log('data :', data);
    if (!data.success) {
       throw new Error(data.error);
    }
@@ -195,7 +219,6 @@ export function useUpdatePlan() {
       mutationFn: updatePlan,
       onSuccess: (res) => {
          // TODO: Should Display a Notification Bubble.
-         console.log('# Plan Updated! :', res);
          const planID = res?.result?.id;
          if (planID) {
             queryClient.invalidateQueries({ queryKey: ['plan', planID] });
@@ -214,26 +237,26 @@ export type DeletePlanResult = {
    message: string;
    unremovedPaths?: UnremovedStoragePath[];
    unremovedReason?: string;
+   storageDisposition?: {
+      status: 'retained_intentionally' | 'cleanup_failed' | 'retained_by_request' | 'removed';
+      paths: UnremovedStoragePath[];
+   };
 };
 
 export async function deletePlan({ id, removeRemoteData }: { id: string; removeRemoteData: boolean }): Promise<DeletePlanResult> {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
-   const res = await fetch(`${API_URL}/plans/${id}?removeData=${removeRemoteData}`, {
+   return mutationResponse<DeletePlanResult>(`${API_URL}/plans/${encodeURIComponent(id)}?removeData=${removeRemoteData}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: header,
-   });
-   const data = await res.json();
-   if (!data.success) {
-      throw new Error(data.error);
-   }
-   return data;
+   }, { allowNoContent: true, allowAccepted: false });
 }
 
 export function useDeletePlan() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: deletePlan,
+      retry: false,
       onSuccess: (res, variables) => {
          console.log('# Plan Removed! :', res);
          // Drop the deleted plan's query, or it keeps refetching a record that now 404s.
@@ -328,22 +351,18 @@ export function useResumePlan() {
 // Prune Backup Plan
 export async function prunePlan(id: string) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
-   const res = await fetch(`${API_URL}/plans/${id}/action/prune`, {
+   return mutationResponse<{ success: boolean; message?: string }>(`${API_URL}/plans/${encodeURIComponent(id)}/action/prune`, {
       method: 'POST',
       credentials: 'include',
       headers: header,
-   });
-   const data = await res.json();
-   if (!data.success) {
-      throw new Error(data.error);
-   }
-   return data;
+   }, { allowNoContent: true, allowAccepted: false });
 }
 
 export function usePrunePlan() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: prunePlan,
+      retry: false,
       onError: (error: Error) => {
          console.log('error :', error?.message);
          toast.error(error.message || `Error Removing Old Backups.`);
@@ -426,23 +445,19 @@ export async function deleteReplicationStorage({
    replicationId?: string;
 }) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
-   const res = await fetch(`${API_URL}/plans/${planID}/action/delete-replication-storage`, {
+   return mutationResponse<{ success: boolean; message?: string }>(`${API_URL}/plans/${encodeURIComponent(planID)}/action/delete-replication-storage`, {
       method: 'POST',
       credentials: 'include',
       headers: header,
       body: JSON.stringify({ storageID, storagePath, removeData, replicationId }),
-   });
-   const data = await res.json();
-   if (!data.success) {
-      throw new Error(data.error);
-   }
-   return data;
+   }, { allowNoContent: true, allowAccepted: false });
 }
 
 export function useDeleteReplicationStorage() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: deleteReplicationStorage,
+      retry: false,
       onError: (error: Error) => {
          console.log('error :', error?.message);
          toast.error(error.message || `Error removing replication storage.`);
@@ -521,7 +536,6 @@ export async function sendTestNotificationRequest(payload: {
    notificationChannel: 'webhook' | 'slack' | 'discord';
    channelSettings: PlanNotification['webhook'] | PlanNotification['slack'] | PlanNotification['discord'];
 }) {
-   console.log('payload :', payload);
    const headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
    const res = await fetch(`${API_URL}/plans/${payload.planId}/action/test-notification`, {
       method: 'POST',

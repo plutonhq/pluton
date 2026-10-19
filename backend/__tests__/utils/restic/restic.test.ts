@@ -1,4 +1,7 @@
 import { EventEmitter } from 'events';
+import fs from 'fs';
+import path from 'path';
+import { rootCertificates } from 'tls';
 
 // Mock modules BEFORE importing the function under test
 jest.mock('child_process');
@@ -69,6 +72,39 @@ describe('runResticCommand', () => {
 
 		process.env.ENCRYPTION_KEY = 'test-encryption-key';
 		process.env.LOCALAPPDATA = '/mock/localappdata';
+	});
+
+	it('passes operator CA trust to restic and its inherited rclone transport without TLS bypass', async () => {
+		process.env.PLUTON_STORAGE_CA_FILE = path.resolve('operator-storage-ca.pem');
+		const stat = jest
+			.spyOn(fs, 'lstatSync')
+			.mockReturnValue({
+				isFile: () => true,
+				isSymbolicLink: () => false,
+				size: rootCertificates[0].length,
+				mode: 0o600,
+			} as any);
+		const read = jest.spyOn(fs, 'readFileSync').mockReturnValue(rootCertificates[0]);
+		try {
+			const promise = runResticCommand([
+				'-r',
+				'rclone:mirror_01:fixture-bucket/pluton/plan-01',
+				'snapshots',
+			]);
+			mockProcess.emit('close', 0);
+			await promise;
+			const environment = mockSpawn.mock.calls[0][2]?.env;
+			expect(environment).toMatchObject({
+				SSL_CERT_FILE: process.env.PLUTON_STORAGE_CA_FILE,
+				RCLONE_CA_CERT: process.env.PLUTON_STORAGE_CA_FILE,
+			});
+			expect(environment?.RCLONE_NO_CHECK_CERTIFICATE).toBeUndefined();
+			expect(mockSpawn.mock.calls[0][1]).not.toContain('--insecure-tls');
+		} finally {
+			delete process.env.PLUTON_STORAGE_CA_FILE;
+			stat.mockRestore();
+			read.mockRestore();
+		}
 	});
 
 	afterEach(() => {
@@ -478,6 +514,29 @@ describe('runResticCommand', () => {
 			expect.any(Array),
 			expect.any(Object)
 		);
+	});
+
+	describe('command timeout', () => {
+		beforeEach(() => jest.useFakeTimers());
+		afterEach(() => jest.useRealTimers());
+
+		it('kills the whole process tree when a command reaches its deadline', async () => {
+			const promise = runResticCommand(
+				['unlock', '-r', 'rclone:test:repo'],
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				{ timeout: 120_000 }
+			);
+			const settled = expect(promise).rejects.toMatchObject({ timedOut: true });
+
+			await jest.advanceTimersByTimeAsync(120_000);
+
+			await settled;
+			expect(mockKillProcessTree).toHaveBeenCalledWith(mockProcess, 'SIGKILL');
+		});
 	});
 
 	describe('stall watchdog', () => {

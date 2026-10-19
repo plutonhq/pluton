@@ -4,9 +4,34 @@ import { configService } from '../services/ConfigService';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { SettingsService } from '../services/SettingsService';
+import crypto from 'crypto';
+import { parseWebOrigins, requestWebOrigin, webCookieOptions } from '../utils/webOrigins';
 
 export class UserController {
 	constructor(private settingsService: SettingsService) {}
+	private async issueLogin(req: Request, res: Response, user: string) {
+		const origin = requestWebOrigin(req, parseWebOrigins(configService.config));
+		if (!origin) {
+			res.status(403).json({ success: false, error: 'Unapproved web origin.' });
+			return;
+		}
+		if (req.session?.regenerate) {
+			await new Promise<void>((resolve, reject) =>
+				req.session.regenerate(error => (error ? reject(error) : resolve()))
+			);
+			req.session.webOrigin = origin;
+		}
+		const sessionDuration = configService.config.SESSION_DURATION || 7;
+		const token = jwt.sign({ user, webOrigin: origin }, configService.config.SECRET, {
+			expiresIn: `${sessionDuration}d`,
+			jwtid: crypto.randomBytes(16).toString('hex'),
+		});
+		res.cookie('token', token, {
+			...webCookieOptions(origin),
+			maxAge: sessionDuration * 24 * 60 * 60 * 1000,
+		});
+		res.status(200).json({ success: true, error: null });
+	}
 	async validateUser(req: Request, res: Response): Promise<void> {
 		res.status(200).json({ success: true });
 	}
@@ -21,19 +46,7 @@ export class UserController {
 		const theUserName = configService.config.USER_NAME;
 
 		if (username === theUserName && configService.verifyPassword(password)) {
-			// Express way of setting cookies
-			const sessionDuration = configService.config.SESSION_DURATION || 7;
-			const token = jwt.sign({ user: theUserName }, configService.config.SECRET, {
-				expiresIn: `${sessionDuration}d`,
-			});
-			res.cookie('token', token, {
-				httpOnly: true,
-				sameSite: 'lax',
-				maxAge: sessionDuration * 24 * 60 * 60 * 1000,
-				secure: configService.config.APP_URL?.startsWith('https'),
-			});
-
-			res.status(200).json({ success: true, error: null });
+			await this.issueLogin(req, res, theUserName);
 			return;
 		}
 
@@ -84,31 +97,25 @@ export class UserController {
 				return;
 			}
 
-			// 5. Code is valid! Proceed with login
-			// (The JWT generation and cookie setting logic from your original loginUser method goes here)
-			const sessionDuration = configService.config.SESSION_DURATION || 7;
-			const token = jwt.sign({ user: 'admin' }, configService.config.SECRET, {
-				expiresIn: `${sessionDuration}d`,
-			});
-
-			res.cookie('token', token, {
-				httpOnly: true,
-				sameSite: 'lax',
-				maxAge: sessionDuration * 24 * 60 * 60 * 1000,
-				secure: configService.config.APP_URL?.startsWith('https'),
-			});
-			res.status(200).json({ success: true, error: null });
-		} catch (error) {
-			console.error('Error during 2FA verification:', error);
+			await this.issueLogin(req, res, 'admin');
+		} catch {
+			console.error('2FA verification failed. Private error details were not logged.');
 			res.status(500).json({ success: false, error: 'An error occurred during verification.' });
 		}
 	}
 
 	async logoutUser(req: Request, res: Response): Promise<void> {
-		res.clearCookie('token', {
-			httpOnly: true,
-			sameSite: 'lax',
-		});
+		const origin = requestWebOrigin(req, parseWebOrigins(configService.config));
+		if (!origin) {
+			res.status(403).json({ success: false, error: 'Unapproved web origin.' });
+			return;
+		}
+		if (req.session?.destroy)
+			await new Promise<void>((resolve, reject) =>
+				req.session.destroy(error => (error ? reject(error) : resolve()))
+			);
+		res.clearCookie('token', webCookieOptions(origin));
+		res.clearCookie('connect.sid', webCookieOptions(origin));
 
 		res.status(200).json({
 			success: true,

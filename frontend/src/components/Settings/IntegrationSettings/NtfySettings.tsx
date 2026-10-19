@@ -33,7 +33,7 @@ const NtfySettings = ({ settingsID, settings, onUpdate }: NtfySettingsProps) => 
 
       const newErrors = { authToken: '' };
 
-      if (!ntfySettings?.authToken) {
+      if (!ntfySettings?.authToken && !ntfySettings?.authTokenConfigured) {
          newErrors.authToken = 'Required';
       }
       setErrorFields(newErrors);

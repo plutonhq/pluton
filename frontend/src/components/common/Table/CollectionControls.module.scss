@@ -1,0 +1,38 @@
+.toolbar {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: end;
+   gap: 12px;
+   margin: 16px 0;
+   color: var(--content-text-color);
+   label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-width: 100%;
+   }
+   input,
+   select {
+      box-sizing: border-box;
+      max-width: 100%;
+      min-height: 38px;
+      padding: 7px 10px;
+      border: 1px solid var(--field-line-color);
+      border-radius: 6px;
+      background: var(--field-bg);
+      color: var(--content-text-color);
+      font: inherit;
+   }
+   input:focus-visible,
+   select:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+   }
+}
+@media (max-width: 600px) {
+   .toolbar label,
+   .toolbar input,
+   .toolbar select {
+      width: 100%;
+   }
+}

@@ -14,6 +14,7 @@ interface StorageAuthSettingsProps {
    authTypes: string[];
    errors: Record<string, string>;
    currentAuthType: string;
+   configuredFields?: string[];
    onUpdate: (newSettings: StorageAuthSettingsProps['settings']) => void;
    onAuthTypeChange: (authType: string) => void;
 }
@@ -29,6 +30,7 @@ const StorageAuthSettings = ({
    errors,
    onUpdate,
    onAuthTypeChange,
+   configuredFields,
 }: StorageAuthSettingsProps) => {
    const [showAdvanced, setShowAdvanced] = useState(true);
    const [showOAuthDoc, setShowOAuthDoc] = useState(false);
@@ -156,6 +158,7 @@ const StorageAuthSettings = ({
                   settings={settings}
                   onUpdate={(newSettings) => onUpdate(newSettings)}
                   errors={errors}
+                  configuredFields={configuredFields}
                />
 
                {currentAuthType === 'oauth' && isDesktop && oauthStatus === 'idle' && (

@@ -11,7 +11,7 @@
          font-size: 10px;
       }
       &.filterBtnActive {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
    }
    .dropdown {
@@ -46,7 +46,7 @@
          button:nth-child(2) {
             padding: 6px 10px;
             background: var(--primary-color-light);
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
             line-height: 1em;
             height: fit-content;
             border-radius: 4px;
@@ -58,7 +58,7 @@
             }
          }
          button:hover {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
          }
       }
    }

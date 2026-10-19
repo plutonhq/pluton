@@ -106,11 +106,11 @@
                }
 
                &.selectedItem {
-                  color: var(--field-bg);
+                  color: var(--primary-text-color);
                   background: var(--primary-color);
                }
 
-               &:hover {
+               &:hover:not(.selectedItem):not(.disabledItem) {
                   background: var(--background-color);
                   color: inherit;
                }

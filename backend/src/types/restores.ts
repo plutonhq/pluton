@@ -31,6 +31,9 @@ export interface RestoreConfig {
 	replicationId?: string;
 	sources?: string[];
 	fromStorage?: boolean; // Reads the selected files from the live storage for sync plans
+	/** Set by the server only for Phase 4 internal staged recovery records. */
+	stagingOnly?: boolean;
+	snapshotId?: string;
 }
 
 export interface RestoreStats {

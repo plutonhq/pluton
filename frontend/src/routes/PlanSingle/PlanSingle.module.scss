@@ -8,18 +8,20 @@
 }
 
 .planError {
-   border: 1px solid #f3cfcf;
+   border: 1px solid var(--error-bg-color-active);
    padding-top: 0;
    cursor: pointer;
    transition: all 0.12s linear;
    &:hover {
-      background-color: #f3cfcf;
+      background-color: var(--error-bg-color-active);
    }
 }
 
 .planActions {
    position: relative;
    display: flex;
+   flex-wrap: wrap;
+   gap: 6px;
    .actionBtn {
       display: flex;
       align-items: center;
@@ -45,7 +47,7 @@
 
          &:hover {
             background-color: var(--primary-color-light);
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
          }
       }
    }
@@ -58,15 +60,20 @@
    border-radius: 7px;
    box-sizing: border-box;
    background-color: var(--content-background-color);
-   color: var(--content-text-color-light);
-   box-shadow: 0 0 15px var(--content-shadow-color);
+   color: var(--content-text-color);
+   box-shadow: var(--card-shadow);
+   border: 1px solid var(--line-color);
    min-height: 200px;
    margin-top: 20px;
 }
 
 .actionBtn {
+   border-radius: 6px;
+   font-size: 0.8125rem;
+   min-height: 36px;
    &:hover {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
+      background: var(--surface-hover);
    }
    &.actionBtnHighlight {
       font-weight: 600;

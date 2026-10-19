@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { toast } from 'react-toastify';
 import { useGetPlan, usePausePlan, usePerformBackup, useResumePlan } from '../services/plans';
 import { Plan } from '../@types/plans';
@@ -38,6 +38,7 @@ export const usePlanSingleActions = (): {
 
    const { id } = useParams();
    const navigate = useNavigate();
+   const [searchParams] = useSearchParams();
 
    const performBackupMutation = usePerformBackup();
    const pauseMutation = usePausePlan();
@@ -110,7 +111,9 @@ export const usePlanSingleActions = (): {
                   autoClose: 3000,
                });
                if (!isSync && !notStarted) {
-                  navigate(`/plan/${plan.id}?pendingbackup=1`);
+                  const next = new URLSearchParams(searchParams);
+                  next.set('pendingbackup', '1');
+                  navigate(`/plan/${plan.id}?${next}`);
                }
             },
             onError: (error: any) => {

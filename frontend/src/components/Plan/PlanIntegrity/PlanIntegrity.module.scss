@@ -60,7 +60,7 @@
          padding: 4px 12px;
          line-break: anywhere;
          &:nth-child(even) {
-            background: rgba(0, 0, 0, 0.03);
+            background: var(--primary-color-lighter);
          }
       }
    }
@@ -109,7 +109,7 @@
    margin: 15px 5px;
    box-sizing: border-box;
    border-radius: 6px;
-   border-color: var(--primary-color-mid) #aaacff;
+   border-color: var(--primary-color-mid);
    background: var(--background-color);
 
    button {

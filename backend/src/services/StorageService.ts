@@ -18,6 +18,15 @@ import { BaseSystemManager } from '../managers/BaseSystemManager';
 import { configService } from './ConfigService';
 import { AppError, NotFoundError } from '../utils/AppError';
 import {
+	decryptStorageCredentials,
+	isHcpMode,
+	isS3Storage,
+	publicStorage,
+	S3_SECRET_FIELDS,
+	splitStorageSecrets,
+	validateHcpConfiguration,
+} from '../utils/storageSecurity';
+import {
 	spawnRcloneAuthorize,
 	RcloneAuthSession,
 	RcloneAuthSessionStatus,
@@ -64,7 +73,8 @@ export class StorageService {
 	}
 
 	async getStorages(): Promise<Storage[] | null> {
-		return await this.storageStore.getAll(true, true);
+		const storages = await this.storageStore.getAll(true, true);
+		return storages?.map(storage => publicStorage(storage)) || null;
 	}
 
 	async getStorage(
@@ -86,8 +96,21 @@ export class StorageService {
 					}
 				});
 			}
+			if (isS3Storage(storage.type)) {
+				for (const key of S3_SECRET_FIELDS)
+					if (!decryptedCreds[key] && storage.settings?.[key])
+						decryptedCreds[key] = String(storage.settings[key]);
+			}
 			const authTypes = providers[storage.type as string].authTypes;
-			return { ...storage, credentials: decryptedCreds, authTypes };
+			return {
+				...publicStorage(storage, decryptedCreds),
+				credentials: isS3Storage(storage.type)
+					? Object.fromEntries(
+							Object.entries(decryptedCreds).filter(([key]) => !S3_SECRET_FIELDS.has(key))
+						)
+					: decryptedCreds,
+				authTypes,
+			};
 		} catch (error: any) {
 			throw new AppError(
 				500,
@@ -224,8 +247,25 @@ export class StorageService {
 				throw new AppError(400, 'Invalid storage configuration provided. Check required fields.');
 			}
 
+			const normalized = splitStorageSecrets(
+				parsedStorageData.type,
+				parsedStorageData.credentials || {},
+				parsedStorageData.settings || {}
+			);
+			parsedStorageData = { ...parsedStorageData, ...normalized };
 			const { type, name, authType, credentials, settings, tags } = parsedStorageData;
+			validateHcpConfiguration(credentials as Record<string, string>, settings || {});
 			const storageName = (name || '').trim();
+			if (isHcpMode(settings)) {
+				if (!/^[a-zA-Z0-9_-]+$/.test(storageName))
+					throw new AppError(
+						400,
+						'HCP storage names may contain only letters, numbers, underscores and hyphens.'
+					);
+				const existing = await this.storageStore.getAll();
+				if (existing?.some(storage => storage.name.toLowerCase() === storageName.toLowerCase()))
+					throw new AppError(409, 'A storage with this remote name already exists.');
+			}
 			// Create the remote storage with rclone
 			const remoteResult = await this.storageManager.createRemote(
 				type as string,
@@ -258,7 +298,7 @@ export class StorageService {
 				authType: authType as string,
 				tags: tags as string[],
 			});
-			return newStorage;
+			return newStorage ? publicStorage(newStorage) : null;
 		} catch (error: any) {
 			if (error instanceof AppError) {
 				throw error;
@@ -284,9 +324,43 @@ export class StorageService {
 				console.error('Error parsing storage data:', error);
 				throw new AppError(400, 'Invalid storage data provided');
 			}
+			if (isS3Storage(existingStorage.type)) {
+				const previous = decryptStorageCredentials(existingStorage);
+				const normalized = splitStorageSecrets(
+					existingStorage.type,
+					parsedStorageData.credentials || {},
+					{ ...(existingStorage.settings || {}), ...(parsedStorageData.settings || {}) }
+				);
+				for (const key of S3_SECRET_FIELDS) {
+					if (!normalized.credentials[key] && previous[key])
+						normalized.credentials[key] = previous[key];
+				}
+				const credentials = { ...previous, ...normalized.credentials };
+				if (isHcpMode(existingStorage.settings) && !isHcpMode(normalized.settings))
+					throw new AppError(
+						409,
+						'HCP protected storage mode cannot be disabled by an ordinary edit.'
+					);
+				validateHcpConfiguration(credentials, normalized.settings);
+				parsedStorageData = { ...parsedStorageData, credentials, settings: normalized.settings };
+			}
 			const { authType, credentials, settings, tags } = parsedStorageData;
+			const cryptrForBinding = new Cryptr(configService.config.SECRET as string);
+			const nextCredentials = Object.fromEntries(
+				Object.entries(credentials || {}).map(([key, value]) => [
+					key,
+					cryptrForBinding.encrypt(String(value)),
+				])
+			);
+			this.storageStore.assertManagedReplicationStorageEditable(id, {
+				...existingStorage,
+				settings: settings || existingStorage.settings,
+				credentials: nextCredentials,
+			});
 			// Update remote settings of all the sources first
-			const devicesWithStorage = await this.resolveStorageSources(existingStorage.id);
+			const devicesWithStorage = (await this.resolveStorageSources(existingStorage.id)).filter(
+				sourceId => !isHcpMode(settings) || sourceId === 'main'
+			);
 			const deviceUpdateResult: Record<
 				string,
 				{
@@ -312,15 +386,19 @@ export class StorageService {
 
 				// If old creds and new creds are same, no need to send them
 				const credsDifferent =
-					JSON.stringify(decryptedOldCred) !== JSON.stringify(credentials) ? true : false;
+					JSON.stringify(decryptedOldCred) !== JSON.stringify(credentials) || isHcpMode(settings);
 
 				const deviceUpdatePromises = devicesWithStorage.map(async sourceId => {
 					const strategy = this.getSystemStrategy(sourceId);
+					const protectedType = isHcpMode(settings) || isHcpMode(existingStorage.settings)
+						? { _pluton_storage_type: existingStorage.type }
+						: {};
 					const updateRes = await strategy.updateRemoteStorage(existingStorage.name, {
-						new: { ...settings, ...(credsDifferent ? credentials : {}) },
+						new: { ...settings, ...(credsDifferent ? credentials : {}), ...protectedType },
 						old: {
 							...(existingStorage.settings || {}),
 							...(decryptedOldCred && credsDifferent ? decryptedOldCred : {}),
+							...protectedType,
 						},
 					});
 					deviceUpdateResult[sourceId] = updateRes;
@@ -345,7 +423,10 @@ export class StorageService {
 				tags: tags as string[],
 			});
 
-			return { storage: updatedStorage, devicesUpdated: deviceUpdateResult };
+			return {
+				storage: updatedStorage ? publicStorage(updatedStorage) : null,
+				devicesUpdated: deviceUpdateResult,
+			};
 		} catch (error: any) {
 			if (error instanceof AppError) {
 				throw error;
@@ -380,6 +461,7 @@ export class StorageService {
 			if (!storage) {
 				throw new NotFoundError('Storage not found');
 			}
+			this.storageStore.assertManagedReplicationStorageEditable(id);
 
 			const storagePlans = await this.planStore.getStoragePlans(id);
 			const replicationPlans = await this.storageStore.getReplicationPlans(id);

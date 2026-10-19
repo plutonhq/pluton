@@ -53,7 +53,7 @@ const StorageProviderSelect = ({
          <div className={`${classes.dropdown} ${showDropDown ? classes.dropdownOpen : ''} ${disabled ? classes.dropdownDisabled : ''}`}>
             {selectedItem && (
                <div className={classes.docLink}>
-                  <a href={`https://docs.usepluton.com/docs/${selectedItem.doc}`} target="_blank" rel="noopener noreferrer">
+                  <a href={selectedItem.value === 'sftp' ? '/docs/storage/sftp' : selectedItem.value === 's3' ? '/docs/storage/s3' : '/docs/storage'}>
                      <Icon type="link" size={12} /> {selectedItem.label} Setup Guide
                   </a>
                </div>

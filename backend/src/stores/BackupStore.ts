@@ -1,8 +1,32 @@
-import { eq } from 'drizzle-orm';
+import { and, desc, eq, gte, lt } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
 import { DatabaseType } from '../db';
 import { Backup, NewBackup, backups } from '../db/schema/backups';
 import { BackupMirror } from '../types/backups';
+import { mergeRemoteProgress, type RemoteProgressEvent } from '../utils/remoteBackupProgress';
+import type { BackupHistoryQuery } from '../utils/backupHistoryQuery';
+
+// Explicit projection: never hydrate source/storage configuration or credentials
+// just to render history. Shared with the bounded plan-header summary.
+export const backupHistoryColumns = {
+	id: true,
+	title: true,
+	description: true,
+	status: true,
+	inProgress: true,
+	errorMsg: true,
+	download: true,
+	createdAt: true,
+	started: true,
+	ended: true,
+	completionStats: true,
+	taskStats: true,
+	mirrors: true,
+} as const;
+
+// This is the Date column's existing ended -> started fallback (created for old
+// rows missing both). Keep this expression identical to migration 0013.
+export const backupHistoryDate = sql<number>`coalesce(${backups.ended}, ${backups.started}, ${backups.createdAt})`;
 
 /**
  * BackupStore is a class for managing backup records in the database.
@@ -33,6 +57,45 @@ export class BackupStore {
 		return backup || null;
 	}
 
+	async getHistoryPage(planId: string, query: BackupHistoryQuery) {
+		const where = and(
+			eq(backups.planId, planId),
+			sql`coalesce(${backups.inProgress}, 0) = 0`,
+			query.from === undefined ? undefined : gte(backupHistoryDate, query.from),
+			query.until === undefined ? undefined : lt(backupHistoryDate, query.until)
+		);
+		// Synchronous SQLite transaction: count and page share one read snapshot.
+		return this.db.transaction(tx => {
+			const total = tx
+				.select({ count: sql<number>`count(*)` })
+				.from(backups)
+				.where(where)
+				.get()!.count;
+			const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
+			const page = Math.min(query.page, totalPages);
+			const offset = (page - 1) * query.pageSize;
+			const items = tx.query.backups
+				.findMany({
+					where,
+					columns: backupHistoryColumns,
+					orderBy: [desc(backupHistoryDate), desc(backups.id)],
+					limit: query.pageSize,
+					offset,
+				})
+				.sync();
+			return {
+				items,
+				total,
+				page,
+				pageSize: query.pageSize,
+				totalPages,
+				hasPrevious: page > 1,
+				hasNext: page < totalPages,
+				timeZone: query.timeZone,
+			};
+		});
+	}
+
 	async create(backupData: NewBackup): Promise<Backup | null> {
 		const result = await this.db
 			.insert(backups)
@@ -50,6 +113,30 @@ export class BackupStore {
 			.returning();
 
 		return result[0] || null;
+	}
+
+	async updateRemoteProgress(
+		id: string,
+		planId: string,
+		commandId: string,
+		attempt: number,
+		sequence: number,
+		event: RemoteProgressEvent
+	): Promise<Backup | null> {
+		return this.db.transaction(tx => {
+			const current = tx.select().from(backups).where(eq(backups.id, id)).get();
+			if (!current || current.planId !== planId || current.sourceId === 'main') return null;
+			const update = mergeRemoteProgress(current, commandId, attempt, sequence, event);
+			if (!update) return null;
+			return (
+				tx
+					.update(backups)
+					.set({ ...update, updatedAt: sql`(unixepoch())` })
+					.where(eq(backups.id, id))
+					.returning()
+					.get() || null
+			);
+		});
 	}
 
 	async updateMirrorStatus(

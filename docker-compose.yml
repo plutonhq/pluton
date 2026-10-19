@@ -1,6 +1,8 @@
 services:
   pluton:
-    image: plutonhq/pluton:latest
+    # Existing release-asset path. New VM deployments use deploy/compose.yml
+    # with the source-built GHCR image and an explicit immutable version.
+    image: "plutonhq/pluton:${PLUTON_VERSION:?Set PLUTON_VERSION to an explicit release version}"
     # Uncomment below to build locally instead of pulling from Docker Hub
     # build:
     #   context: .

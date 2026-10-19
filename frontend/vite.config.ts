@@ -80,6 +80,8 @@ export default defineConfig(({ mode }) => {
 
             // Caching strategies (powered by Workbox)
             workbox: {
+               // Docs have their own static entry and must not receive the React 18 app shell.
+               navigateFallbackDenylist: [/^\/docs(?:\/|$)/],
                // This will cache all your assets (JS, CSS, images, fonts)
                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
             },

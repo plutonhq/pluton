@@ -200,7 +200,6 @@ export class BackupNotification {
 				body: pushContent.body,
 				priority: pushContent.priority,
 				tags: `${pushContent.emoji ? `${pushContent.emoji}, ` : ''}${pushTags}`,
-				icon: 'https://pluton.b-cdn.net/logo.png',
 				markdown: 'yes',
 				actions:
 					pushContent.buttonText && pushContent.buttonUrl

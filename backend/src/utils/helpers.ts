@@ -81,12 +81,13 @@ export const safeCompare = (a: string, b: string): boolean => {
  *
  * Accepted values:
  *   - "true"/"false"           -> boolean
- *   - a number (e.g. "1")      -> trust that many hops (recommended: the count
- *                                 of proxies in front of Pluton)
+ *   - a number (e.g. "1")      -> trust that many hops (unsafe with mixed-length
+ *                                 proxy/direct-LAN paths unless independently restricted)
  *   - IP / subnet list         -> passed through as a comma-separated string
  *
- * Prefer a hop count over "true": trusting all proxies lets a client spoof
- * X-Forwarded-For and defeat the auth/setup rate limiters.
+ * Prefer reviewed last-hop peer addresses/subnets protected by firewall rules.
+ * Neither "true" nor a blind hop count is safe for simultaneous proxy/direct access:
+ * a shorter client path can spoof forwarding metadata and defeat rate limits.
  */
 export function parseTrustProxy(value: string): boolean | number | string[] {
 	const trimmed = value.trim();

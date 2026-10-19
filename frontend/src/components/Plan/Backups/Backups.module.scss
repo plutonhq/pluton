@@ -80,8 +80,8 @@
                & > .downloadLabel {
                   padding: 1px 4px;
                   padding-right: 6px;
-                  background: #e0eaff;
-                  color: #7e90c5;
+                  background: var(--primary-color-light);
+                  color: var(--primary-color-foreground);
                   border-radius: 12px;
                   margin-left: 5px;
                   font-size: 0.6875rem;
@@ -101,12 +101,6 @@
                   }
                }
             }
-            &.snapOptsBtn {
-               min-width: unset;
-               button {
-                  color: var(--icon-color);
-               }
-            }
          }
          .changes {
             display: flex;
@@ -117,13 +111,13 @@
                right: -3px;
             }
             .changesNew {
-               color: cornflowerblue;
+               color: var(--primary-color-foreground);
             }
             .changesModified {
-               color: darkseagreen;
+               color: var(--success-text-color);
             }
             .changesRemoved {
-               color: indianred;
+               color: var(--error-text-color);
             }
          }
          .target {
@@ -139,33 +133,6 @@
                text-decoration: underline;
                text-decoration-style: dashed;
                cursor: pointer;
-            }
-         }
-         .settings {
-            position: absolute;
-            z-index: 99;
-            top: 35px;
-            right: 15px;
-            display: flex;
-            flex-direction: column;
-            justify-content: left;
-            width: max-content;
-            text-align: left;
-            align-items: center;
-            background: var(--content-background-color);
-            border: 1px solid var(--line-color);
-            border-radius: 6px;
-            padding: 0;
-            min-width: unset;
-            button {
-               padding: 6px 10px;
-               width: 100%;
-               text-align: left;
-               color: var(--content-text-color-light);
-               &:hover {
-                  background-color: var(--primary-color-light);
-                  color: var(--primary-color);
-               }
             }
          }
          &.backupsTableRowActive {
@@ -249,13 +216,105 @@
    }
 }
 
-@media only screen and (max-width: 768px) {
-   .backupsTable {
-      overflow: auto;
-      max-width: 80vw;
-      .backupsTableHead,
-      .backupsTableContent {
-         width: 760px;
+// One shared column definition keeps headings and row values aligned. Horizontal
+// scrolling is confined to the table on narrow viewports, not the whole page.
+.backupsTable {
+   container: backup-rows / inline-size;
+   box-sizing: border-box;
+   overflow-x: auto;
+   max-width: 100%;
+   font-size: 0.8125rem;
+   font-variant-numeric: tabular-nums;
+   color: var(--content-text-color);
+   .backupsTableHead,
+   .backupsTableContent .backupsTableRow {
+      display: grid;
+      // Keep data tracks compact; give Date the reclaimed action-column space
+      // while retaining a full-sized button close to the table's right edge.
+      grid-template-columns: minmax(180px, 220px) minmax(148px, 156px) 80px minmax(90px, 104px) 124px minmax(180px, 260px) 56px;
+      justify-content: space-between;
+      column-gap: 4px;
+      padding-inline: 8px;
+      box-sizing: border-box;
+      align-items: center;
+      & > div,
+      & > div:nth-child(1),
+      & > div:last-child {
+         width: auto;
+         min-width: 0;
+         padding: 12px 10px;
+         box-sizing: border-box;
+         overflow-wrap: anywhere;
+         text-align: left;
       }
+      & > div:nth-child(3),
+      & > div:nth-child(4),
+      & > div:nth-child(5) {
+         text-align: right;
+      }
+      & > div:nth-child(6) {
+         text-align: center;
+      }
+      & > div:last-child,
+      & > .snapOptsBtn {
+         padding: 8px;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+      }
+   }
+   .backupsTableHead {
+      background: var(--surface-muted);
+      & > div {
+         // Retain the existing two-line heading height when Snapshot Size now
+         // fits on one line. Vertical row density is not part of this change.
+         min-height: calc(3em + 24px);
+         display: grid;
+         align-content: center;
+      }
+   }
+   .backupsTableContent .backupsTableRow {
+      border-bottom: 1px solid var(--line-color);
+      &:last-child {
+         border-bottom: 0;
+      }
+      &:hover,
+      &:focus-within {
+         background: var(--surface-muted);
+      }
+      &:focus-within .editIcon {
+         visibility: visible;
+         opacity: 1;
+      }
+      .changes {
+         justify-content: flex-end;
+      }
+      time {
+         display: block;
+         text-align: inherit;
+      }
+   }
+}
+@container backup-rows (max-width: 897px) {
+   .backupsTable .backupsTableHead,
+   .backupsTable .backupsTableContent .backupsTableRow {
+      grid-template-columns: 160px 148px 80px 90px 124px minmax(156px, 220px) 56px;
+      padding-inline: 8px;
+      column-gap: 0;
+   }
+   .backupsTable .backupsTableHead,
+   .backupsTable .backupsTableContent {
+      min-width: 830px;
+      width: 100%;
+   }
+}
+@media (max-width: 768px) {
+   .backupsTable .backupsTableHead,
+   .backupsTable .backupsTableContent .backupsTableRow {
+      grid-template-columns: 160px 148px 80px 90px 124px minmax(156px, 220px) 60px;
+   }
+   .backupsTable .backupsTableHead,
+   .backupsTable .backupsTableContent {
+      min-width: 834px;
    }
 }

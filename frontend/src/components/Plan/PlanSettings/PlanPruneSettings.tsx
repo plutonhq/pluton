@@ -103,7 +103,7 @@ const PlanPruneSettings = ({ plan, onUpdate }: PlanPruneSettingsProps) => {
          {pruneSettings.policy === 'custom' && (
             <div className={classes.field}>
                <label className={classes.label}>Advanced Policy Settings</label>
-               <small className={classes.helperText} style={{ marginBottom: '15px', display: 'block', color: 'var(--text-muted)' }}>
+               <small className={classes.helperText} style={{ marginBottom: '15px', display: 'block', color: 'var(--content-text-color-light)' }}>
                   A backup is kept if it matches <strong>ANY</strong> of the checked rules below.
                </small>
 

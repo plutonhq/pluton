@@ -16,13 +16,14 @@
          (function () {
             function getInitialTheme() {
                // 1. Check for a user's explicit choice in localStorage
-               const storedTheme = window.localStorage.getItem('theme');
-               if (storedTheme) {
-                  return storedTheme;
-               }
+               var storedTheme;
+               try {
+                  storedTheme = window.localStorage.getItem('themeSetting') || window.localStorage.getItem('theme');
+               } catch (_) {}
+               if (storedTheme === 'light' || storedTheme === 'dark') return storedTheme;
                // 2. Check for their OS preference
-               const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-               if (prefersDark.matches) {
+               const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+               if (prefersDark && prefersDark.matches) {
                   return 'dark';
                }
                // 3. Default to light

@@ -1,4 +1,5 @@
 import Icon from '../Icon/Icon';
+import { useEffect, useRef } from 'react';
 import Modal from '../Modal/Modal';
 import classes from './ActionModal.module.scss';
 
@@ -37,8 +38,24 @@ const ActionModal = ({
    disablePortal = false,
    width = '400px',
 }: ActionModalProps) => {
+   const submitting = useRef(false);
+   const pending = useRef(!!primaryAction?.isPending);
+   pending.current = !!primaryAction?.isPending;
+   useEffect(() => {
+      if (!primaryAction?.isPending) submitting.current = false;
+   }, [primaryAction?.isPending]);
+   const submit = (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (submitting.current || pending.current) return;
+      submitting.current = true;
+      try {
+         primaryAction?.action(event);
+      } finally {
+         // Some guarded actions intentionally do not start a mutation.
+         setTimeout(() => { if (!pending.current) submitting.current = false; }, 0);
+      }
+   };
    return (
-      <Modal title={title} closeModal={closeModal} classNames={classNames} disablePortal={disablePortal} width={width}>
+      <Modal title={title} closeModal={closeModal} closeDisabled={!!primaryAction?.isPending} classNames={classNames} disablePortal={disablePortal} width={width}>
          <div>
             {primaryAction?.isPending && (
                <div className={classes.loader}>
@@ -48,7 +65,7 @@ const ActionModal = ({
          </div>
          <div>{message}</div>
          {successMessage && <div className={classes.success}>{successMessage}</div>}
-         {errorMessage && <div className={classes.error}>{errorMessage}</div>}
+         {errorMessage && <div className={classes.error} role="alert">{errorMessage}</div>}
          <div className={classes.actions}>
             <button disabled={primaryAction?.isPending} onClick={secondaryAction?.action || closeModal} type="button">
                {secondaryAction?.title || 'Cancel'}
@@ -57,7 +74,7 @@ const ActionModal = ({
                <button
                   className={primaryAction.type === 'danger' ? classes.dangerBtn : ''}
                   disabled={primaryAction.isPending}
-                  onClick={primaryAction.action}
+                  onClick={submit}
                   type="button"
                >
                   {primaryAction.icon && <Icon type={primaryAction.icon} size={13} />} {primaryAction.title}

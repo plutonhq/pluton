@@ -28,7 +28,7 @@
       text-transform: capitalize;
       &.inProgress {
          background-color: var(--primary-color-lighter);
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
       &.hasCompleted {
          background-color: var(--success-bg-color);
@@ -85,12 +85,12 @@
             color: var(--content-text-color);
             cursor: pointer;
             &:hover {
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
             }
          }
       }
       .icon {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
       &.error {
          .icon {
@@ -135,7 +135,7 @@
       &.retrying {
          border-top: 2px solid var(--primary-color-mid);
          .action {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
             font-weight: 600;
          }
       }
@@ -151,7 +151,7 @@
             color: var(--warning-text-color);
          }
          .icon {
-            color: var(--warning-button-color);
+            color: var(--warning-text-color);
          }
       }
    }
@@ -236,7 +236,7 @@
    }
    &.mirror_running {
       background-color: var(--primary-color-lighter);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
    &.mirror_completed {
       background-color: var(--success-bg-color);
@@ -261,4 +261,26 @@
    color: var(--error-button-color);
    max-height: 400px;
    overflow: auto;
+}
+.statistics {
+   color: var(--content-text-color);
+   background: var(--field-bg);
+   padding: 16px;
+   margin-bottom: 20px;
+   border-radius: 8px;
+   h3 {
+      margin: 0 0 12px;
+   }
+   dl {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+   }
+   dd {
+      margin: 4px 0 0;
+      font-weight: 600;
+   }
+   p {
+      line-height: 1.6;
+   }
 }

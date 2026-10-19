@@ -20,6 +20,7 @@ export async function validateAuth() {
    const setupPending = res.headers.get('x-setup-pending') === '1';
 
    (window as any).plutonVersion = appVersion || 'unknown';
+   (window as any).plutonRevision = res.headers.get('x-app-revision') || '';
    (window as any).plutonServerOS = serverOS || 'unknown';
    (window as any).plutonInstallType = installType;
    (window as any).plutonSetupPending = setupPending;

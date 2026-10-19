@@ -67,7 +67,7 @@
    position: relative;
 
    :global(.checkMark) {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       position: absolute;
       top: 5px;
       right: 5px;
@@ -102,7 +102,7 @@
    position: relative;
 
    :global(.checkMark) {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       position: absolute;
       top: 5px;
       right: 5px;
@@ -202,9 +202,9 @@
       }
       &.weekDayActive {
          background-color: var(--primary-color-light);
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
          span {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
          }
       }
    }
@@ -232,7 +232,7 @@
       cursor: pointer;
       color: var(--content-text-color);
       &.advancedTabActive {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
          border: 1px solid var(--line-color);
          border-radius: 4px 4px 0 0;
          border-bottom: 1px solid var(--content-background-color);
@@ -254,7 +254,7 @@
    box-sizing: border-box;
 
    &:hover {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
    &.advancedButtonActive {
       border-radius: 6px 6px 0 0;
@@ -268,7 +268,7 @@
    justify-content: space-between;
    padding: 15px;
    padding-left: 30px;
-   border-top: 1px solid var(--content-shadow-color);
+   border-top: 1px solid var(--line-color);
 }
 
 .summary {
@@ -348,7 +348,7 @@
    }
    .addScriptButton {
       background-color: var(--primary-color-light);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       cursor: pointer;
       font-size: 15px;
       font-weight: 600;
@@ -360,7 +360,7 @@
       padding: 0;
       margin-left: 10px;
       &:hover {
-         color: var(--primary-color-light);
+         color: var(--primary-text-color);
          background-color: var(--primary-color);
       }
    }
@@ -389,7 +389,7 @@
             button {
                color: var(--icon-color);
                &:hover {
-                  color: var(--primary-color);
+                  color: var(--primary-color-foreground);
                }
                &:disabled {
                   opacity: 0.4;
@@ -456,7 +456,7 @@
             }
             &.hasTimeOutSettings {
                & > button {
-                  color: var(--primary-color);
+                  color: var(--primary-color-foreground);
                }
             }
          }
@@ -470,7 +470,7 @@
             background: var(--content-background-color);
             z-index: 99;
             right: -80px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.07);
+            box-shadow: 0 0 20px var(--modal-shadow-color);
          }
       }
    }
@@ -509,7 +509,7 @@
    .testNotificationButton {
       padding: 6px 12px;
       background-color: var(--primary-color-light);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       font-weight: 600;
       font-size: 0.9em;
       border-radius: 4px;
@@ -540,7 +540,7 @@
 
             &:hover {
                background-color: var(--primary-color-light);
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
             }
          }
       }

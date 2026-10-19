@@ -42,7 +42,7 @@ const PlanProgress = ({ plan, isBackupPending, isRestorePending, activeBackups, 
                         type={'backup'}
                         item={backup}
                         sourceId={plan.sourceId || ''}
-                        sourceType={'main'}
+                        sourceType={plan.sourceType || 'device'}
                         planId={plan.id}
                      />
                   ))}
@@ -72,7 +72,7 @@ const PlanProgress = ({ plan, isBackupPending, isRestorePending, activeBackups, 
                         type={'restore'}
                         item={restore}
                         sourceId={plan.sourceId || ''}
-                        sourceType={'main'}
+                        sourceType={plan.sourceType || 'device'}
                         planId={plan.id}
                      />
                   ))}

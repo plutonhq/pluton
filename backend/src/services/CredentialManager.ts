@@ -1,12 +1,14 @@
 import fs from 'fs';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import Database from 'better-sqlite3';
 import path from 'path';
 import { appPaths } from '../utils/AppPaths';
 import {
 	readEncryptionKeyFromEnvFile,
 	writeEncryptionKeyToEnvFile,
 	applyStrictPermissions,
+	encEnvFileExists,
 } from '../utils/envFileHelpers';
 
 const BCRYPT_SALT_ROUNDS = 10;
@@ -28,22 +30,45 @@ class CredentialManager {
 		return this.keysPath;
 	}
 
+	public validatePersistedEncryptionKey(supplied?: string): string | null {
+		const saved = readEncryptionKeyFromEnvFile(this.dataDir);
+		if (encEnvFileExists(this.dataDir) && !saved)
+			throw new Error(
+				'Persisted ENCRYPTION_KEY is unreadable or invalid. Restore the matching private key file; startup will not replace it.'
+			);
+		if (saved && supplied && saved !== supplied)
+			throw new Error(
+				'Configured ENCRYPTION_KEY conflicts with the persisted key. Startup will not rotate it.'
+			);
+		return saved;
+	}
+
 	public readKeysFile(): Record<string, any> {
 		try {
-			if (fs.existsSync(this.keysPath)) {
-				return JSON.parse(fs.readFileSync(this.keysPath, 'utf-8'));
-			}
-		} catch {
-			// Ignore read errors
+			const content: unknown = JSON.parse(fs.readFileSync(this.keysPath, 'utf-8'));
+			if (!content || typeof content !== 'object' || Array.isArray(content)) throw new Error();
+			return content as Record<string, any>;
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {};
+			// A damaged/unreadable existing key file is not a fresh installation.
+			// Never include parser text (which may quote a secret), or regenerate keys.
+			throw new Error(
+				'Persisted credentials are unreadable or invalid. Restore the matching private key file before restarting.'
+			);
 		}
-		return {};
 	}
 
 	public writeKeysFile(content: Record<string, any>): void {
 		const dir = path.dirname(this.keysPath);
 		if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-		fs.writeFileSync(this.keysPath, JSON.stringify(content, null, 2), { mode: 0o600 });
-		applyStrictPermissions(this.keysPath);
+		const temporary = path.join(dir, `.keys-${crypto.randomBytes(12).toString('hex')}.tmp`);
+		try {
+			fs.writeFileSync(temporary, JSON.stringify(content, null, 2), { flag: 'wx', mode: 0o600 });
+			applyStrictPermissions(temporary);
+			fs.renameSync(temporary, this.keysPath);
+		} finally {
+			fs.rmSync(temporary, { force: true });
+		}
 	}
 
 	// ---------------------------------------------------------------------------
@@ -55,6 +80,47 @@ class CredentialManager {
 		envApiKey?: string
 	): { SECRET: string; APIKEY: string } {
 		const keysFileContent = this.readKeysFile();
+		if (!fs.existsSync(this.keysPath)) {
+			const databasePath = path.join(this.dataDir, 'db', 'pluton.db');
+			if (fs.existsSync(databasePath)) {
+				let initialized = true;
+				try {
+					const control = new Database(databasePath, { readonly: true, fileMustExist: true });
+					try {
+						control.pragma('query_only = ON');
+						initialized = !!control
+							.prepare(
+								"SELECT 1 FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' LIMIT 1"
+							)
+							.get();
+					} finally {
+						control.close();
+					}
+				} catch {
+					/* An unreadable existing control database is not a fresh installation. */
+				}
+				if (initialized)
+					throw new Error(
+						'Persisted credentials are missing from an initialized data volume. Restore the matching private key file before restarting.'
+					);
+			}
+		}
+		for (const [name, supplied] of [
+			['SECRET', envSecret],
+			['APIKEY', envApiKey],
+		] as const) {
+			const existing = keysFileContent[name];
+			if (existing !== undefined && (typeof existing !== 'string' || !existing))
+				throw new Error(`Persisted ${name} is invalid. Restore the matching private key file.`);
+			if (existing && supplied && existing !== supplied)
+				throw new Error(
+					`Configured ${name} conflicts with persisted credentials. Startup will not rotate or overwrite it.`
+				);
+		}
+		if (fs.existsSync(this.keysPath) && !keysFileContent.SECRET)
+			throw new Error(
+				'Persisted SECRET is missing. Restore the matching private key file; do not generate a replacement.'
+			);
 
 		const finalSecret =
 			envSecret || keysFileContent.SECRET || crypto.randomBytes(32).toString('hex');
@@ -69,8 +135,10 @@ class CredentialManager {
 					APIKEY: finalApiKey,
 				});
 				console.log(`[CredentialManager] Secrets updated in ${this.keysPath}`);
-			} catch (error) {
-				console.error(`[CredentialManager] Failed to save secrets to keys.json: ${error}`);
+			} catch {
+				throw new Error(
+					'Private credential persistence failed. Startup cannot continue with unpersisted keys.'
+				);
 			}
 		}
 
@@ -106,9 +174,7 @@ class CredentialManager {
 				this.writeKeysFile({ ...keysFileContent, PASSWORD_HASH: hash });
 				console.log('[CredentialManager] Password hash stored in keys.json');
 			} catch (error) {
-				console.error(
-					`[CredentialManager] Failed to save password hash to keys.json: ${error}`
-				);
+				console.error(`[CredentialManager] Failed to save password hash to keys.json: ${error}`);
 			}
 			return hash;
 		}
@@ -132,9 +198,7 @@ class CredentialManager {
 			this.writeKeysFile(newContent);
 			console.log('[CredentialManager] Password hash updated in keys.json');
 		} catch (error) {
-			console.error(
-				`[CredentialManager] Failed to save password hash to keys.json: ${error}`
-			);
+			console.error(`[CredentialManager] Failed to save password hash to keys.json: ${error}`);
 		}
 
 		return hash;
@@ -161,7 +225,7 @@ class CredentialManager {
 		config?: Record<string, any>;
 	}> {
 		// --- Step 1: Try loading ENCRYPTION_KEY from pluton.enc.env ---
-		let encryptionKey = readEncryptionKeyFromEnvFile(this.dataDir);
+		let encryptionKey = this.validatePersistedEncryptionKey();
 
 		// --- Step 2: If no env file, try migrating from keyring (legacy) ---
 		if (!encryptionKey) {
@@ -188,9 +252,7 @@ class CredentialManager {
 									...keysFileContent,
 									USER_NAME: credentials.USER_NAME,
 								});
-								console.log(
-									'[CredentialManager] Migrated USER_NAME from keyring to keys.json'
-								);
+								console.log('[CredentialManager] Migrated USER_NAME from keyring to keys.json');
 							} catch (error) {
 								console.error(
 									`[CredentialManager] Failed to migrate USER_NAME to keys.json: ${error}`

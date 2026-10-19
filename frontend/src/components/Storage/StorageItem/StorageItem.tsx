@@ -30,6 +30,7 @@ const StorageItem = ({ storage, layout }: StorageItemProps) => {
    const Browser = useComponentOverride('StorageFileBrowser', StorageFileBrowser);
 
    const removeStorage = () => {
+      if (deleteStorageMutation.isPending) return;
       deleteStorageMutation.mutate(storage.id, {
          onError: (error: Error) => {
             console.log('error :', error?.message);
@@ -74,6 +75,7 @@ const StorageItem = ({ storage, layout }: StorageItemProps) => {
             </div>
             <button
                className={classes.browseBtn}
+               aria-label={`Browse storage ${name}`}
                onClick={() => setShowBrowser(true)}
                data-tooltip-id="appTooltip"
                data-tooltip-content="Browse Files"
@@ -83,6 +85,8 @@ const StorageItem = ({ storage, layout }: StorageItemProps) => {
             </button>
             <button
                className={`${classes.moreBtn} ${showSettings ? classes.moreBtnActive : ''}`}
+               aria-label={`Storage actions for ${name}`}
+               aria-expanded={showSettings}
                onClick={() => setShowSettings(!showSettings)}
                disabled={isLocalStorage}
             >
@@ -163,6 +167,7 @@ const StorageItem = ({ storage, layout }: StorageItemProps) => {
                title={`Remove Storage`}
                message={<>{`Are you sure you want to delete this Storage?`}</>}
                closeModal={() => setShowDeleteModal(false)}
+               errorMessage={deleteStorageMutation.error?.message}
                primaryAction={{
                   title: `Yes, Remove Storage`,
                   type: 'danger',

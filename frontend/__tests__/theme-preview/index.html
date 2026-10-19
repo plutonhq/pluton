@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8" />
+      <title>Pluton synthetic theme preview</title>
+   </head>
+   <body style="margin: 0; background: #777">
+      <div style="padding: 6px; background: #eee; color: #333; font: 14px sans-serif">
+         Synthetic fixtures only ·
+         <button onclick="document.querySelector('iframe').style.width='100%'">Desktop viewport</button>
+         <button onclick="document.querySelector('iframe').style.width='1366px'">1366px</button>
+         <button onclick="document.querySelector('iframe').style.width='1440px'">1440px</button>
+         <button onclick="document.querySelector('iframe').style.width='1920px'">1920px</button>
+         <button onclick="document.querySelector('iframe').style.width='640px'">Narrow viewport (640px)</button>
+         <button onclick="document.querySelector('iframe').style.width='390px'">Mobile viewport (390px)</button>
+      </div>
+      <iframe
+         title="Theme preview"
+         src="/__tests__/theme-preview/app.html"
+         style="display: block; width: 100%; height: calc(100vh - 38px); border: 0; margin: auto"
+      ></iframe>
+   </body>
+</html>

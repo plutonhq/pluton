@@ -9,6 +9,17 @@
 
 .appContainer {
    width: var(--container-width);
-   padding-top: 6%;
+   max-width: 100%;
+   min-width: 0;
+   padding-top: 32px;
    display: flex;
+}
+
+@media (max-width: 768px) {
+   .app {
+      padding: 0 16px 64px;
+   }
+   .appContainer {
+      padding-top: 20px;
+   }
 }

@@ -1,9 +1,9 @@
 #!/bin/bash
 # Pluton Server Remote Uninstallation Script
-# Usage: curl -sSL https://dl.usepluton.com/server/scripts/uninstall.sh | sudo bash
+# Historical local uninstaller; review its destructive options before use.
 #
 # For non-interactive uninstall with data removal:
-#   curl -sSL https://dl.usepluton.com/server/scripts/uninstall.sh | sudo bash -s -- --remove-data --non-interactive
+#   sudo bash uninstall.sh --remove-data --non-interactive
 
 set -e
 
@@ -40,7 +40,7 @@ print_banner() {
 
 # Print usage
 print_usage() {
-    echo "Usage: curl -sSL https://dl.usepluton.com/server/scripts/uninstall.sh | sudo bash -s -- [OPTIONS]"
+    echo "Usage: sudo bash uninstall.sh [OPTIONS]"
     echo ""
     echo "Options:"
     echo "  --remove-data        Remove all data including backups and database"
@@ -49,10 +49,10 @@ print_usage() {
     echo ""
     echo "Examples:"
     echo "  Interactive uninstall:"
-    echo "    curl -sSL https://dl.usepluton.com/server/scripts/uninstall.sh | sudo bash"
+    echo "    sudo bash uninstall.sh"
     echo ""
     echo "  Remove everything without prompts:"
-    echo "    curl -sSL https://dl.usepluton.com/server/scripts/uninstall.sh | sudo bash -s -- --remove-data --non-interactive"
+    echo "    sudo bash uninstall.sh --remove-data --non-interactive"
 }
 
 # Parse command line arguments

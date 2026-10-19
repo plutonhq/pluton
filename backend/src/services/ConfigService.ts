@@ -4,8 +4,9 @@ import { appPaths } from '../utils/AppPaths';
 import path from 'path';
 import { requiresDesktopSetup } from '../utils/installHelpers';
 import { isCliCommandInvocation } from '../utils/cliCommands';
-import { readEncryptionKeyFromEnvFile, verifyFilePermissions } from '../utils/envFileHelpers';
+import { verifyFilePermissions } from '../utils/envFileHelpers';
 import { credentialManager } from './CredentialManager';
+import { parseWebOrigins, WebOriginConfigError } from '../utils/webOrigins';
 
 // Schema for the .env config file (with optional sensitive fields for setup mode)
 const baseConfigSchema = z.object({
@@ -13,6 +14,7 @@ const baseConfigSchema = z.object({
 	NODE_ENV: z.enum(['development', 'production', 'test']).default('production'),
 	SERVER_PORT: z.coerce.number().int().positive().default(5173),
 	APP_URL: z.string().default('http://localhost:5173'),
+	APP_ALLOWED_ORIGINS: z.string().optional(),
 	APP_TITLE: z.string().min(1).default('Pluton'),
 	MAX_CONCURRENT_BACKUPS: z.coerce.number().int().positive().default(2),
 	LICENSE_KEY: z.string().optional(),
@@ -24,6 +26,21 @@ const baseConfigSchema = z.object({
 
 	// Reverse proxy: value passed to Express's `trust proxy` setting.
 	TRUST_PROXY: z.string().optional(),
+
+	// Agent control plane. HTTPS is required unless this explicit server-side
+	// exception is set for a trusted LAN pilot.
+	ALLOW_INSECURE_AGENT_HTTP: z
+		.preprocess(
+			value =>
+				typeof value === 'string' && ['true', 'false', '1', '0'].includes(value)
+					? value === 'true' || value === '1'
+					: value,
+			z.boolean()
+		)
+		.default(false)
+		.optional(),
+	AGENT_SERVER_URL: z.string().optional(),
+	AGENT_OFFLINE_TIMEOUT_SECONDS: z.coerce.number().int().positive().default(90).optional(),
 
 	// Security (optional in setup mode)
 	ENCRYPTION_KEY: z
@@ -57,6 +74,7 @@ const userConfigSchema = baseConfigSchema
 	.pick({
 		APP_TITLE: true,
 		APP_URL: true,
+		APP_ALLOWED_ORIGINS: true,
 		MAX_CONCURRENT_BACKUPS: true,
 		SESSION_DURATION: true,
 		SERVER_PORT: true,
@@ -128,9 +146,10 @@ class ConfigService {
 		}
 
 		// 1b. Load ENCRYPTION_KEY from pluton.enc.env if not already in process env
-		const dataDir = appPaths.getDataDir();
+		const envFileKey = credentialManager.validatePersistedEncryptionKey(
+			normalizedEnv.ENCRYPTION_KEY
+		);
 		if (!normalizedEnv.ENCRYPTION_KEY) {
-			const envFileKey = readEncryptionKeyFromEnvFile(dataDir);
 			if (envFileKey) {
 				normalizedEnv.ENCRYPTION_KEY = envFileKey;
 				console.log('[ConfigService] Loaded ENCRYPTION_KEY from pluton.enc.env');
@@ -146,6 +165,8 @@ class ConfigService {
 			if (fs.existsSync(configPath)) {
 				const fileContent = fs.readFileSync(configPath, 'utf-8');
 				const parsedJson = JSON.parse(fileContent);
+				// A broken origin policy must not silently fall back to a more permissive one.
+				parseWebOrigins({ ...envConfig, ...parsedJson });
 
 				// Security validation: Check if config.json contains sensitive fields
 				const sensitiveFields = ['ENCRYPTION_KEY', 'USER_NAME', 'USER_PASSWORD'];
@@ -169,9 +190,21 @@ class ConfigService {
 				console.log(`[ConfigService] No config.json found at ${configPath}`);
 			}
 		} catch (error) {
+			if (error instanceof WebOriginConfigError) throw error;
 			console.log(
-				`[ConfigService] Could not load or parse config.json at ${configPath}. Using defaults. Error: ${error}`
+				'[ConfigService] Could not read or validate config.json; using defaults. Configuration values were not logged.'
 			);
+		}
+
+		// Validate operator web/agent URL policy before any secret generation or persistence.
+		const webPolicy = parseWebOrigins({ ...envConfig, ...fileConfig });
+		if (envConfig.AGENT_SERVER_URL) {
+			const agentOrigin = parseWebOrigins({ APP_URL: envConfig.AGENT_SERVER_URL }).canonical;
+			if (agentOrigin.startsWith('http:') && envConfig.ALLOW_INSECURE_AGENT_HTTP !== true)
+				throw new Error(
+					'HTTP AGENT_SERVER_URL requires the explicit trusted-LAN Agent transport exception.'
+				);
+			envConfig.AGENT_SERVER_URL = agentOrigin;
 		}
 
 		// 3. Load or Generate System Secrets
@@ -184,6 +217,7 @@ class ConfigService {
 		const mergedConfig = {
 			...envConfig,
 			...fileConfig,
+			APP_URL: webPolicy.canonical,
 			SECRET: secrets.SECRET, // System secrets fill in the gaps
 			APIKEY: secrets.APIKEY,
 			PASSWORD_HASH: passwordHash,

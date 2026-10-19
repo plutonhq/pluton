@@ -2,13 +2,14 @@
    display: flex;
    flex-direction: row;
    align-items: center;
-   padding: 10px;
-   margin-bottom: 20px;
+   padding: 16px;
+   margin-bottom: 12px;
    gap: 10px;
    border-radius: 7px;
    background-color: var(--content-background-color);
    color: var(--content-text-color-light);
-   box-shadow: 0 0 15px var(--content-shadow-color);
+   box-shadow: var(--card-shadow);
+   border: 1px solid var(--line-color);
    position: relative;
    transition: all 0.2s linear;
    &:hover {
@@ -20,6 +21,7 @@
 }
 
 .leftContent {
+   min-width: 0;
    flex-basis: 40%;
    display: flex;
    flex-direction: row;
@@ -51,6 +53,8 @@
 }
 
 .content {
+   min-width: 0;
+   overflow-wrap: anywhere;
    display: flex;
    flex-direction: column;
    cursor: pointer;
@@ -58,7 +62,7 @@
    &:hover {
       color: inherit;
       h4 {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
    }
 }
@@ -67,6 +71,7 @@
    display: flex;
    flex-direction: row;
    h4 {
+      font-size: 0.875rem;
       margin: 0;
       margin-bottom: 2px;
       color: var(--content-text-color);
@@ -82,7 +87,7 @@
 }
 
 .info {
-   margin-right: 30px;
+   margin-right: 16px;
    display: flex;
    align-items: center;
    :global(.icon) {
@@ -97,12 +102,14 @@
 }
 
 .moreBtn {
+   min-width: 34px;
+   min-height: 34px;
    color: var(--content-text-color-light);
    padding: 3px 6px;
    border-radius: 4px;
    &.moreBtnActive {
       background-color: var(--primary-color-light);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
 }
 
@@ -113,7 +120,7 @@
    cursor: pointer;
    &:hover {
       background-color: var(--primary-color-light);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
 }
 
@@ -138,7 +145,7 @@
       color: var(--content-text-color-light);
       &:hover {
          background-color: var(--primary-color-light);
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
    }
 }

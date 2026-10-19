@@ -1,0 +1,114 @@
+.panel {
+   width: 100%;
+   min-width: 0;
+   color: var(--content-text-color);
+   h3,
+   h4 {
+      color: var(--content-title-color);
+   }
+   p {
+      line-height: 1.5;
+   }
+   label {
+      display: flex;
+      gap: 8px;
+      flex-direction: column;
+      font-weight: 500;
+   }
+   input,
+   select {
+      background: var(--field-bg);
+      color: var(--content-text-color);
+      border: 1px solid var(--line-color);
+      border-radius: 5px;
+      padding: 9px;
+      min-width: 0;
+   }
+   input[type='checkbox'] {
+      accent-color: var(--primary-color);
+      width: auto;
+   }
+   button {
+      padding: 9px 14px;
+      border: 1px solid var(--line-color);
+      border-radius: 5px;
+      color: var(--content-text-color);
+      background: var(--content-background-color);
+      cursor: pointer;
+   }
+   button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+   }
+   button[type='submit'] {
+      background: var(--primary-color);
+      color: var(--primary-text-color);
+   }
+   button:focus-visible,
+   input:focus-visible,
+   select:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+   }
+   fieldset {
+      min-width: 0;
+      border: 1px solid var(--line-color);
+      border-radius: 6px;
+      padding: 15px;
+      margin: 15px 0;
+   }
+   [role='alert'] {
+      color: var(--error-text-color, var(--content-text-color));
+   }
+}
+.grid {
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 14px;
+}
+.choices {
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 10px;
+   label {
+      flex-direction: row;
+      align-items: flex-start;
+   }
+}
+.actions {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 8px;
+   margin: 14px 0;
+   align-items: center;
+}
+.card {
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   padding: 15px;
+   margin: 12px 0;
+}
+.history {
+   overflow-x: auto;
+   table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+   }
+   th,
+   td {
+      text-align: left;
+      padding: 10px;
+      border-bottom: 1px solid var(--line-color);
+      vertical-align: top;
+   }
+   td {
+      overflow-wrap: anywhere;
+   }
+}
+@media (max-width: 700px) {
+   .grid,
+   .choices {
+      grid-template-columns: 1fr;
+   }
+}

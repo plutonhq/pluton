@@ -3,10 +3,14 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "pluton",
+      "package-name": "",
       "changelog-path": "CHANGELOG.md",
+      "versioning": "prerelease",
+      "prerelease-type": "alpha",
+      "prerelease": true,
       "bump-minor-pre-major": true,
-      "component": "pluton",
+      "component": "",
+      "include-component-in-tag": false,
       "draft": true
     }
   },

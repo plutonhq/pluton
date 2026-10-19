@@ -13,13 +13,13 @@
    h3 {
       display: flex;
       align-items: center;
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       font-size: 1.25rem;
       text-transform: uppercase;
       font-weight: 900;
       span:nth-child(1) {
          display: flex;
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
       span:nth-child(2) {
          margin-left: 5px;
@@ -48,7 +48,7 @@
 
    p {
       margin: 0;
-      color: var(--content-text-muted-color);
+      color: var(--content-text-color-light);
       font-size: 0.875rem;
       line-height: 1.5;
    }
@@ -85,7 +85,7 @@
       &:focus {
          outline: none;
          border-color: var(--primary-color);
-         box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+         box-shadow: 0 0 0 3px var(--primary-color-light);
       }
    }
 
@@ -99,7 +99,7 @@
    .inputHint {
       margin-top: 6px;
       font-size: 0.75rem;
-      color: var(--content-text-muted-color);
+      color: var(--content-text-color-light);
    }
 }
 
@@ -160,7 +160,7 @@
 
    p {
       margin: 0;
-      color: var(--content-text-muted-color);
+      color: var(--content-text-color-light);
       font-size: 0.8125rem;
       line-height: 1.5;
    }

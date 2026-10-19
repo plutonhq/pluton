@@ -9,7 +9,16 @@ import { configService } from '../../services/ConfigService';
 import { NotificationChannel } from '../NotificationChannel';
 
 export class NotificationChannelResolver {
-	static secretFields: string[] = ['smtp.password', 'ntfy.authToken'];
+	static secretFields: string[] = [
+		'smtp.password',
+		'ntfy.authToken',
+		'sendgrid.apiKey',
+		'mailgun.apiKey',
+		'brevo.apiKey',
+		'resend.apiKey',
+		'awsSes.accessKeyId',
+		'awsSes.secretAccessKey',
+	];
 
 	static async getChannel(channelType: IntegrationTypes = 'smtp'): Promise<NotificationChannel> {
 		const settingsStore = new SettingsStore(db);
@@ -59,7 +68,7 @@ export class NotificationChannelResolver {
 					setNestedValue(integrationDecrypted, fieldPath, decryptedValue);
 				} catch (error) {
 					// Handle decryption errors (e.g., if value is not encrypted)
-					console.warn(`Failed to decrypt field ${fieldPath}:`, error);
+					console.warn('Stored integration credential could not be decrypted.');
 				}
 			}
 		});

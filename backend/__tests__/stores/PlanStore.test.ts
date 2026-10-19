@@ -1,6 +1,10 @@
 import { PlanStore } from '../../src/stores/PlanStore';
 import { DatabaseType } from '../../src/db';
-import { NewPlan, Plan } from '../../src/db/schema/plans';
+import { NewPlan, Plan, plans } from '../../src/db/schema/plans';
+import {
+	remotePlanDatabaseCredentials,
+	remotePlanDatabaseEntryCredentials,
+} from '../../src/db/schema/remotePlanCredentials';
 import { PlanFull } from '../../src/types/plans';
 
 // Mock the configService to provide a consistent secret for encryption/decryption tests
@@ -57,15 +61,19 @@ describe('PlanStore', () => {
 			returning: jest.fn(),
 		};
 		const deleteQueryBuilder = {
-			where: jest.fn(),
+			where: jest.fn().mockReturnThis(),
+			run: jest.fn(),
 		};
 		const selectQueryBuilder = {
 			from: jest.fn().mockReturnThis(),
 			where: jest.fn().mockReturnThis(),
+			get: jest.fn(),
 			limit: jest.fn(),
 		};
 
 		mockDb = {
+			$client: { prepare: jest.fn(() => ({ get: () => undefined })) },
+			get: jest.fn(),
 			query: {
 				plans: {
 					findMany: jest.fn(),
@@ -83,6 +91,7 @@ describe('PlanStore', () => {
 			delete: jest.fn().mockReturnValue(deleteQueryBuilder),
 			select: jest.fn().mockReturnValue(selectQueryBuilder),
 		};
+		mockDb.transaction = jest.fn((callback: (db: any) => any) => callback(mockDb));
 
 		planStore = new PlanStore(mockDb as DatabaseType);
 	});
@@ -153,6 +162,52 @@ describe('PlanStore', () => {
 	});
 
 	describe('handleBackupStats', () => {
+		it('uses remote completion counts and the exact snapshot ID for active rows', () => {
+			const snapshotId = 'a'.repeat(64);
+			const row = {
+				id: 'backup-remote',
+				taskStats: null,
+				completionStats: {
+					snapshot_id: snapshotId,
+					total_files_processed: 14,
+					total_bytes_processed: 1234,
+				},
+			};
+			const result = planStore.handleBackupStats(
+				'backup',
+				[row] as any,
+				{
+					size: 1234,
+					snapshots: [snapshotId],
+				},
+				true
+			);
+			expect(result[0]).toMatchObject({ active: true, totalFiles: 14, totalSize: 1234 });
+			expect(
+				planStore.handleBackupStats(
+					'backup',
+					[row] as any,
+					{
+						size: 1234,
+						snapshots: ['b'.repeat(64)],
+					},
+					true
+				)[0].active
+			).toBe(false);
+		});
+		it('preserves local task/dry-run statistics, including an intentional zero', () => {
+			const row = {
+				id: 'backup-local',
+				taskStats: { total_files_processed: 0, total_bytes_processed: 0 },
+				completionStats: { total_files_processed: 3, total_bytes_processed: 7 },
+			};
+			expect(
+				planStore.handleBackupStats('backup', [row] as any, {
+					size: 7,
+					snapshots: ['backup-local'],
+				})[0]
+			).toMatchObject({ active: true, totalFiles: 0, totalSize: 0 });
+		});
 		it('should correctly calculate derived stats for each backup', () => {
 			// Arrange
 			const backups = [
@@ -299,7 +354,7 @@ describe('PlanStore', () => {
 					},
 				},
 			};
-			mockDb.insert().returning.mockResolvedValue([newPlanData]);
+			mockDb.insert().returning.mockReturnValue({ all: () => [newPlanData] });
 
 			// Act
 			await planStore.create(newPlanData);
@@ -319,7 +374,7 @@ describe('PlanStore', () => {
 		it('should update only allowed fields', async () => {
 			// Arrange
 			const updates = { title: 'New Title', isActive: false, id: 'should-not-be-updated' };
-			mockDb.update().returning.mockResolvedValue([{}]);
+			mockDb.update().returning.mockReturnValue({ all: () => [{}] });
 
 			// Act
 			await planStore.update('plan-1', updates);
@@ -336,7 +391,7 @@ describe('PlanStore', () => {
 			const updates = {
 				settings: { scripts: { onBackupStart: [{ id: 's1', scriptPath: '/scripts/backup.sh' }] } },
 			};
-			mockDb.update().returning.mockResolvedValue([{}]);
+			mockDb.update().returning.mockReturnValue({ all: () => [{}] });
 
 			// Act
 			await planStore.update('plan-1', updates as any);
@@ -350,13 +405,19 @@ describe('PlanStore', () => {
 	describe('delete', () => {
 		it('should return true if a plan is deleted', async () => {
 			// Arrange
-			mockDb.delete().where.mockResolvedValue({ changes: 1 });
+			mockDb.delete().run.mockReturnValue({ changes: 1 });
 
 			// Act
 			const result = await planStore.delete('plan-1');
 
 			// Assert
 			expect(result).toBe(true);
+			expect(mockDb.transaction).toHaveBeenCalledTimes(1);
+			// Credential erasure and plan deletion share the same transaction.
+			expect(mockDb.delete).toHaveBeenCalledTimes(4); // includes Arrange's builder lookup
+			expect(mockDb.delete).toHaveBeenNthCalledWith(2, remotePlanDatabaseEntryCredentials);
+			expect(mockDb.delete).toHaveBeenNthCalledWith(3, remotePlanDatabaseCredentials);
+			expect(mockDb.delete).toHaveBeenNthCalledWith(4, plans);
 		});
 	});
 

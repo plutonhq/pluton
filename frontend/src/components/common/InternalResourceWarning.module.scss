@@ -1,0 +1,33 @@
+.panel {
+   margin: 14px 0;
+   padding: 14px;
+   color: var(--content-text-color);
+   background: var(--surface-muted);
+   border: 1px solid var(--line-color);
+   border-inline-start-width: 4px;
+   border-radius: 6px;
+   overflow-wrap: anywhere;
+}
+.status {
+   min-height: 3.2em;
+}
+.metrics {
+   display: grid;
+   grid-template-columns: minmax(140px, 1fr) minmax(0, 1.5fr);
+   gap: 6px 14px;
+   font-size: 0.875rem;
+   dt {
+      font-weight: 600;
+   }
+   dd {
+      margin: 0;
+   }
+}
+@media (max-width: 540px) {
+   .metrics {
+      grid-template-columns: 1fr;
+      dd {
+         margin-bottom: 6px;
+      }
+   }
+}

@@ -9,6 +9,11 @@
 
 set -e
 
+# Historical CDN installer is not the supported installation path for this fork.
+# Fail before downloads, temporary files, service changes or credential handling.
+printf '%s\n' 'This upstream CDN installer is disabled. Use the source-built Docker deployment documented at /docs/deployment/docker.' >&2
+exit 1
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

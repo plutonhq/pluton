@@ -1,0 +1,16 @@
+# Optional application connection only. Database targets start separately via operator.cjs.
+# Apply alongside EXISTING overrides; do not replace /data or any repository/staging mount.
+services:
+  pluton:
+    # Explicit opt-in protection for the application. Review capacity before applying this overlay.
+    mem_limit: 1536m
+    memswap_limit: 1536m
+    pids_limit: 256
+    networks: [default, internal-recovery]
+    volumes:
+      - /etc/pluton-internal/public:/run/pluton-internal-recovery:ro
+      - /var/lib/pluton-internal-requests:/run/pluton-internal-requests
+networks:
+  internal-recovery:
+    external: true
+    name: pluton-internal-recovery

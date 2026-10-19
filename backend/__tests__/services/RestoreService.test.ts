@@ -55,6 +55,114 @@ describe('RestoreService', () => {
 		);
 	});
 
+	describe('remote internal staged recovery routing', () => {
+		let recovery: any;
+		const stagedConfig = {
+			target: '',
+			overwrite: 'never' as const,
+			includes: [],
+			excludes: [],
+			delete: false,
+		};
+		beforeEach(() => {
+			recovery = {
+				preview: jest.fn(),
+				restore: jest.fn(),
+				stats: jest.fn(),
+				progress: jest.fn(),
+				cancel: jest.fn(),
+			};
+			restoreService = new RestoreService(
+				mockRestoreManager,
+				mockPlanStore,
+				mockBackupStore,
+				mockRestoreStore,
+				mockStorageStore,
+				recovery
+			);
+			mockBackupStore.getById.mockResolvedValue({
+				id: 'backup-01',
+				sourceId: 'app-01',
+				sourceType: 'device',
+				method: 'backup',
+			} as any);
+		});
+		it('passes the expected plan binding to remote preview and restore, without the local manager', async () => {
+			recovery.preview.mockResolvedValue({ stats: { files_restored: 1 }, files: [] });
+			recovery.restore.mockResolvedValue('a'.repeat(24));
+			await expect(
+				restoreService.dryRestoreBackup('backup-01', stagedConfig, 'plan-01')
+			).resolves.toMatchObject({ stats: { files_restored: 1 } });
+			await expect(
+				restoreService.restoreBackup('backup-01', stagedConfig, 'plan-01')
+			).resolves.toBe('a'.repeat(24));
+			expect(recovery.preview).toHaveBeenCalledWith('backup-01', stagedConfig, 'plan-01');
+			expect(recovery.restore).toHaveBeenCalledWith('backup-01', stagedConfig, 'plan-01');
+			expect(mockRestoreStrategy.restoreSnapshot).not.toHaveBeenCalled();
+			expect(mockRestoreStrategy.getRestoreSnapshotStats).not.toHaveBeenCalled();
+			expect(mockStorageStore.getById).not.toHaveBeenCalled();
+		});
+		it.each([
+			['getRestoreStats', 'stats'],
+			['getRestoreProgress', 'progress'],
+			['cancelRestore', 'cancel'],
+		])(
+			'routes %s using the persisted staging marker, even though the executing source is main',
+			async (method, handler) => {
+				const row = {
+					id: 'a'.repeat(24),
+					sourceId: 'main',
+					sourceType: 'device',
+					method: 'backup',
+					config: { stagingOnly: true },
+					inProgress: true,
+				} as any;
+				mockRestoreStore.getById.mockResolvedValue(row);
+				recovery[handler].mockResolvedValue({ success: true });
+				await expect((restoreService as any)[method](row.id)).resolves.toEqual({ success: true });
+				expect(recovery[handler]).toHaveBeenCalledWith(row);
+				expect(mockRestoreStrategy.getRestoreProgress).not.toHaveBeenCalled();
+				expect(mockRestoreStrategy.getRestoreStats).not.toHaveBeenCalled();
+				expect(mockRestoreStrategy.cancelSnapshotRestore).not.toHaveBeenCalled();
+			}
+		);
+		it('does not delete a running staged restore record', async () => {
+			mockRestoreStore.getById.mockResolvedValue({
+				id: 'a'.repeat(24),
+				config: { stagingOnly: true },
+				inProgress: true,
+			} as any);
+			await expect(restoreService.deleteRestore('a'.repeat(24))).rejects.toMatchObject({
+				statusCode: 409,
+			});
+			expect(mockRestoreStore.delete).not.toHaveBeenCalled();
+		});
+		it('leaves unsupported remote sync restore on the existing strategy', async () => {
+			mockBackupStore.getById.mockResolvedValue({
+				id: 'backup-01',
+				planId: 'plan-01',
+				sourceId: 'app-01',
+				sourceType: 'device',
+				method: 'sync',
+				storageId: 'local',
+			} as any);
+			mockPlanStore.getById.mockResolvedValue({
+				method: 'sync',
+				sourceType: 'device',
+				settings: { performance: {} },
+				sourceConfig: { includes: [] },
+			} as any);
+			await expect(
+				restoreService.dryRestoreBackup('backup-01', stagedConfig, 'plan-01')
+			).rejects.toThrow('REMOTE_CAPABILITY_NOT_IMPLEMENTED');
+			await expect(
+				restoreService.restoreBackup('backup-01', stagedConfig, 'plan-01')
+			).rejects.toThrow('REMOTE_CAPABILITY_NOT_IMPLEMENTED');
+			expect(recovery.preview).not.toHaveBeenCalled();
+			expect(recovery.restore).not.toHaveBeenCalled();
+		});
+	});
+
 	// ---------------------------
 	// Tests for getting all restores
 	// ---------------------------

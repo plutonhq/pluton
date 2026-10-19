@@ -39,7 +39,6 @@ export async function updateSettings(updatePayload: { id: string; settings: Reco
       body: JSON.stringify(updatePayload),
    });
    const data = await res.json();
-   console.log('data :', data);
    if (!data.success) {
       throw new Error(data.error);
    }
@@ -50,8 +49,7 @@ export function useUpdateSettings() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: updateSettings,
-      onSuccess: (res) => {
-         console.log('# Settings Updated! :', res);
+      onSuccess: () => {
          queryClient.invalidateQueries({ queryKey: ['settings'] });
          queryClient.invalidateQueries({ queryKey: ['selfBackupStatus'] });
          queryClient.invalidateQueries({ queryKey: ['selfBackupBackups'] });
@@ -283,7 +281,6 @@ export async function validateIntegration(updatePayload: {
       body: JSON.stringify(updatePayload),
    });
    const data = await res.json();
-   console.log('data :', data);
    if (!data.success) {
       throw new Error(data.error);
    }
@@ -294,9 +291,8 @@ export function useValidateIntegration() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: validateIntegration,
-      onSuccess: (res) => {
+      onSuccess: () => {
          queryClient.invalidateQueries({ queryKey: ['settings'] });
-         console.log('# Settings Updated! :', res);
       },
    });
 }
@@ -373,12 +369,6 @@ export async function setupTwoFactorAuth(id: number) {
 export function useSetupTwoFactorAuth() {
    return useMutation({
       mutationFn: setupTwoFactorAuth,
-      onSuccess: (res) => {
-         console.log('# 2FA setup data fetched successfully! :', res);
-      },
-      onError: (res) => {
-         console.log('# 2FA setup data fetch failed! :', res);
-      },
    });
 }
 export async function verifyTwoFactorAuth({ code, id }: { code: string; id: number }) {
@@ -401,12 +391,6 @@ export async function verifyTwoFactorAuth({ code, id }: { code: string; id: numb
 export function useVerifyTwoFactorAuth() {
    return useMutation({
       mutationFn: verifyTwoFactorAuth,
-      onSuccess: (res) => {
-         console.log('# 2FA verification successful! :', res);
-      },
-      onError: (res) => {
-         console.log('# 2FA verification failed! :', res);
-      },
    });
 }
 
@@ -431,12 +415,8 @@ export function useVerifyTwoFactorOTP() {
    const navigate = useNavigate();
    return useMutation({
       mutationFn: verifyTwoFactorOTP,
-      onSuccess: (res) => {
-         console.log('# 2FA verification successful! :', res);
+      onSuccess: () => {
          navigate('/');
-      },
-      onError: (res) => {
-         console.log('# 2FA verification failed! :', res);
       },
    });
 }

@@ -4,57 +4,53 @@ import Icon from '../../common/Icon/Icon';
 import classes from './MirrorStatusBadge.module.scss';
 import MirrorDetails from './MirrorDetails';
 import { PlanReplicationSettings } from '../../../@types';
+import { mirrorSummary } from '../../../utils/replication';
 
 interface MirrorStatusBadgeProps {
    mirrors: BackupMirror[];
    planId: string;
    backupId: string;
    replicationSettings?: PlanReplicationSettings;
+   managedAgent?: boolean;
 }
 
-const MirrorStatusBadge = ({ mirrors, planId, backupId, replicationSettings }: MirrorStatusBadgeProps) => {
+const MirrorStatusBadge = ({ mirrors, planId, backupId, replicationSettings, managedAgent }: MirrorStatusBadgeProps) => {
    const [showMirrorDetails, setShowMirrorDetails] = useState(false);
-   if (!mirrors || mirrors.length === 0) return null;
-
-   const completed = mirrors.filter((m) => m.status === 'completed').length;
-   const failed = mirrors.filter((m) => m.status === 'failed').length;
-   const inProgress = mirrors.filter((m) => m.status === 'started' || m.status === 'pending').length;
-   const total = mirrors.length;
+   const expected = replicationSettings?.enabled ? replicationSettings.storages.length : mirrors.length;
+   if (!mirrors.length && !expected) return null;
+   const summary = mirrorSummary(mirrors, expected);
 
    let badgeClass = classes.badge;
-   let label: string;
-
-   if (inProgress > 0) {
+   if (summary.state === 'pending') {
       badgeClass += ` ${classes.badgeProgress}`;
-      label = 'Replicating...';
-   } else if (failed === total) {
+   } else if (summary.state === 'failed') {
       badgeClass += ` ${classes.badgeFailed}`;
-      label = 'Replication failed';
-   } else if (failed > 0) {
-      badgeClass += ` ${classes.badgePartial}`;
-      label = `${completed}/${total} mirrors`;
    } else {
       badgeClass += ` ${classes.badgeSuccess}`;
-      label = `${total} mirror${total > 1 ? 's' : ''}`;
    }
 
    return (
       <>
-         <span
+         <button
+            type="button"
             className={badgeClass}
-            data-tooltip-id="htmlToolTip"
+            aria-label={summary.label}
+            title={summary.label}
+            data-tooltip-id="appTooltip"
             data-tooltip-place="top"
-            data-tooltip-html={`<div>${label}</div>`}
+            data-tooltip-content={summary.label}
             onClick={() => setShowMirrorDetails(true)}
          >
             <Icon type={'mirrors'} size={13} />
-         </span>
+            {summary.incomplete && <span>Redundancy incomplete</span>}
+         </button>
          {showMirrorDetails && (
             <MirrorDetails
                mirrors={mirrors}
                planId={planId}
                backupId={backupId}
                replicationSettings={replicationSettings}
+               managedAgent={managedAgent}
                close={() => setShowMirrorDetails(false)}
             />
          )}

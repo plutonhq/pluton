@@ -1,0 +1,44 @@
+# syntax=docker/dockerfile:1.7
+# Optional client-only Oracle MySQL worker. linux/amd64 is the reviewed platform.
+# No server packages, Pluton data, application environment, repository tools or secrets.
+FROM node:24.16.0-bookworm-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736c476489d09f560a203 AS build
+RUN corepack enable && corepack prepare pnpm@10.20.0 --activate
+WORKDIR /workspace
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY scripts ./scripts
+COPY backend ./backend
+COPY frontend/package.json ./frontend/package.json
+COPY agent/package.json ./agent/package.json
+COPY documentation/package.json ./documentation/package.json
+RUN pnpm install --filter @plutonhq/core-backend --frozen-lockfile --ignore-scripts
+RUN node scripts/build-mysql-recovery-worker.mjs
+
+FROM node:24.16.0-bookworm-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736c476489d09f560a203 AS production
+ARG VCS_REF=unknown
+ARG IMAGE_SOURCE=unknown
+LABEL org.opencontainers.image.source="${IMAGE_SOURCE}" org.opencontainers.image.revision="${VCS_REF}" org.opencontainers.image.title="Pluton optional Oracle MySQL recovery worker"
+# Oracle signed InRelease -> signed Packages SHA-256 -> exact reviewed package bytes.
+# Do not bypass an expired/missing signature. A changed key/version requires review.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && curl --proto '=https' --tlsv1.2 -fsSL https://repo.mysql.com/RPM-GPG-KEY-mysql-2025 -o /tmp/mysql-key.asc \
+    && test "$(gpg --show-keys --with-colons /tmp/mysql-key.asc | awk -F: '$1=="pub" {n++} END {print n}')" = 1 \
+    && test "$(gpg --show-keys --with-colons /tmp/mysql-key.asc | awk -F: '$1=="fpr" {print $10; exit}')" = BCA43417C3B485DD128EC6D4B7B3B788A8D3785C \
+    && gpg --dearmor --output /usr/share/keyrings/mysql-community.gpg /tmp/mysql-key.asc \
+    && printf '%s\n' 'deb [arch=amd64 signed-by=/usr/share/keyrings/mysql-community.gpg] https://repo.mysql.com/apt/debian/ bookworm mysql-8.4-lts' > /etc/apt/sources.list.d/mysql-community.list \
+    && apt-get update \
+    && apt-get install -y --download-only --no-install-recommends mysql-community-client-core=8.4.11-1debian12 mysql-community-client-plugins=8.4.11-1debian12 \
+    && printf '%s\n' '19c6e1d38f95fa77ebb675c01c0b3c50554026adc5ed0c114cee2a72520c2fea  /var/cache/apt/archives/mysql-community-client-core_8.4.11-1debian12_amd64.deb' '95b66f6ba68e2b064e175fa7368ae6d6d52919b92b7d69e6b48d949af642eb07  /var/cache/apt/archives/mysql-community-client-plugins_8.4.11-1debian12_amd64.deb' | sha256sum -c - \
+    && apt-get install -y --no-download --no-install-recommends mysql-community-client-core=8.4.11-1debian12 mysql-community-client-plugins=8.4.11-1debian12 \
+    && apt-get purge -y curl gnupg && apt-get autoremove -y \
+    && rm -f /tmp/mysql-key.asc && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* \
+    && groupadd -g 10001 pluton && useradd -u 10001 -g 10001 -M -s /usr/sbin/nologin pluton \
+    && mkdir -p /run/pluton-mysql-worker && chown 10001:10001 /run/pluton-mysql-worker && chmod 0700 /run/pluton-mysql-worker
+WORKDIR /app
+COPY LICENSE ./LICENSE
+COPY --from=build /workspace/mysql-worker-dist/worker.mjs ./worker.mjs
+COPY --from=build /workspace/backend/node_modules/zod/LICENSE ./licenses/zod.LICENSE
+COPY scripts/verify-mysql-recovery-worker.mjs ./verify.mjs
+ENV NODE_ENV=production
+USER 10001:10001
+RUN node ./verify.mjs
+CMD ["node", "/app/worker.mjs"]

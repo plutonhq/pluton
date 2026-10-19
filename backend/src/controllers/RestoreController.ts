@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { RestoreService } from '../services/RestoreService';
+import { AppError } from '../utils/AppError';
 
 type RestorePayload = {
 	backupId: string;
@@ -90,22 +91,26 @@ export class RestoreController {
 			return;
 		}
 		try {
-			const restoreResult = await this.restoreService.dryRestoreBackup(restorePayload.backupId, {
-				target: restorePayload.target,
-				overwrite: restorePayload.overwrite as any,
-				includes: restorePayload.includes || [],
-				excludes: restorePayload.excludes || [],
-				delete: restorePayload.delete || false,
-				storageId: restorePayload.storageId || undefined,
-				replicationId: restorePayload.replicationId || undefined,
-				fromStorage: restorePayload.fromStorage || false,
-			});
+			const restoreResult = await this.restoreService.dryRestoreBackup(
+				restorePayload.backupId,
+				{
+					target: restorePayload.target,
+					overwrite: restorePayload.overwrite as any,
+					includes: restorePayload.includes || [],
+					excludes: restorePayload.excludes || [],
+					delete: restorePayload.delete || false,
+					storageId: restorePayload.storageId || undefined,
+					replicationId: restorePayload.replicationId || undefined,
+					fromStorage: restorePayload.fromStorage || false,
+				},
+				restorePayload.planId
+			);
 			res.status(200).json({
 				success: true,
 				result: restoreResult,
 			});
 		} catch (error: any) {
-			res.status(500).json({
+			res.status(error instanceof AppError ? error.statusCode : 500).json({
 				success: false,
 				error: 'Failed to perform dry restore. ' + (error.message || ''),
 			});
@@ -123,25 +128,29 @@ export class RestoreController {
 			return;
 		}
 		try {
-			const restoreResult = await this.restoreService.restoreBackup(restorePayload.backupId, {
-				target: restorePayload.target,
-				overwrite: restorePayload.overwrite as any,
-				includes: restorePayload.includes || [],
-				excludes: restorePayload.excludes || [],
-				delete: restorePayload.delete || false,
-				storageId: restorePayload.storageId || undefined,
-				replicationId: restorePayload.replicationId || undefined,
-				fromStorage: restorePayload.fromStorage || false,
-			});
+			const restoreResult = await this.restoreService.restoreBackup(
+				restorePayload.backupId,
+				{
+					target: restorePayload.target,
+					overwrite: restorePayload.overwrite as any,
+					includes: restorePayload.includes || [],
+					excludes: restorePayload.excludes || [],
+					delete: restorePayload.delete || false,
+					storageId: restorePayload.storageId || undefined,
+					replicationId: restorePayload.replicationId || undefined,
+					fromStorage: restorePayload.fromStorage || false,
+				},
+				restorePayload.planId
+			);
 
 			res.status(200).json({
 				success: true,
 				result: restoreResult,
 			});
 		} catch (error: any) {
-			res.status(500).json({
+			res.status(error instanceof AppError ? error.statusCode : 500).json({
 				success: false,
-				error: 'Failed to restore backup',
+				error: error instanceof AppError ? error.message : 'Failed to restore backup',
 			});
 		}
 	}

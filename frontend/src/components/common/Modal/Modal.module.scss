@@ -16,13 +16,15 @@
       background: var(--content-background-color);
       color: var(--content-text-color);
       border-radius: 8px;
-      border: 1px solid var(--content-shadow-color);
+      border: 1px solid var(--line-color);
       margin: 0 auto;
       left: 0;
       right: 0;
       top: 20%;
       padding: 20px;
       box-sizing: border-box;
+      max-height: min(80vh, calc(100dvh - 32px));
+      overflow-y: auto;
       box-shadow: 0 0 20px var(--modal-shadow-color);
       word-break: break-word;
       transform: translateY(-30px);
@@ -38,6 +40,8 @@
 
       h3 {
          margin-top: 0;
+         padding-right: 32px;
+         font-size: 1.0625rem;
          color: var(--content-text-color);
       }
    }
@@ -71,6 +75,50 @@
             opacity: 1;
          }
       }
+   }
+}
+
+// Recovery/restore dialogs opt into one stable scroll plane. Live status changes
+// must not switch the legacy height threshold or recenter the whole dialog.
+.modal.stableLayout {
+   display: flex;
+   justify-content: center;
+   align-items: flex-start;
+   padding: 4dvh 16px;
+   box-sizing: border-box;
+   overflow: hidden;
+   .modalContent {
+      position: relative;
+      top: auto;
+      left: auto;
+      right: auto;
+      margin: 0;
+      height: min(800px, 92dvh);
+      max-height: 92dvh;
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      > h3 {
+         flex: 0 0 auto;
+      }
+   }
+   .modalChildren {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      scrollbar-gutter: stable;
+      overflow-anchor: none;
+      > * {
+         max-height: none;
+         overflow: visible;
+      }
+   }
+}
+@media (prefers-reduced-motion: reduce) {
+   .modal.stableLayout,
+   .modal.stableLayout .modalContent {
+      transition: none;
    }
 }
 

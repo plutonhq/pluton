@@ -44,6 +44,7 @@ const DeviceItem = ({ device, layout }: DeviceItemProps) => {
                         {name}
                         {id === 'main' && <span className={`label in_progress ${classes.mainLabel}`}>Main</span>}{' '}
                         {status === 'pending' && <span className={`label error ${classes.mainLabel}`}>Agent not Installed</span>}
+                        {status === 'revoked' && <span className={`label error ${classes.mainLabel}`}>Revoked</span>}
                      </h4>
                   </div>
                   <div className={classes.type}>{type}</div>
@@ -63,7 +64,12 @@ const DeviceItem = ({ device, layout }: DeviceItemProps) => {
                   <Icon type="logo" size={13} /> <i>{agentVersion ? 'v' + agentVersion : 'latest'}</i>
                </div>
             )}
-            <button className={`${classes.moreBtn} ${showSettings ? classes.moreBtnActive : ''}`} onClick={() => setShowSettings(!showSettings)}>
+            <button
+               aria-label={`Source actions for ${name}`}
+               aria-expanded={showSettings}
+               className={`${classes.moreBtn} ${showSettings ? classes.moreBtnActive : ''}`}
+               onClick={() => setShowSettings(!showSettings)}
+            >
                <Icon type="dots-vertical" size={14} />
             </button>
             {showSettings && (

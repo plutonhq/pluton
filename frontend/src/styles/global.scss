@@ -6,7 +6,7 @@
    line-height: 1.5;
    font-weight: 400;
    font-size: 16px;
-   color-scheme: light dark;
+   color-scheme: light;
 
    font-synthesis: none;
    text-rendering: optimizeLegibility;
@@ -14,48 +14,55 @@
    -moz-osx-font-smoothing: grayscale;
    --container-width: 1200px;
    --border-radius: 12px;
-   --line-color: #f1f2fd;
-   --line-active-color: #cccdd3;
-   --field-line-color: #e0e1ef;
+   --line-color: #dcdfea;
+   --line-active-color: #73778a;
+   --field-line-color: #888c9e;
    --primary-color: #575aff;
    --primary-color-mid: #aaacff;
    --primary-hover-color: #373af3;
+   // Accent foreground is separate from the unchanged brand/button fill.
+   --primary-color-foreground: #494bdc;
    --primary-color-light: #eeeffd;
    --primary-color-lighter: #f6f7ff;
    --primary-text-color: #fff;
-   --background-color: #f5f8ff;
-   --background-text-color: #8485a3;
-   --background-text-color-dark: #7f7f7f;
+   --background-color: #f5f7fc;
+   --background-text-color: #71717a;
+   --background-text-color-dark: #71717a;
    --content-background-color: #fff;
    --content-shadow-color: #e9effe;
    --content-title-color: #444;
    --content-subtitle-color: #666;
    --content-text-color: #525252;
-   --content-text-color-light: #8b8b8b;
-   --nav-color: #b7baca;
-   --content-font-size: 13px;
+   --content-text-color-light: #6b6b75;
+   --nav-color: #737382;
+   --content-font-size: 14px;
+   --surface-muted: #f7f8fc;
+   --surface-hover: #eeeffd;
+   --card-shadow: 0 2px 10px rgba(28, 39, 77, 0.04);
+   --progress-fill: #087b6c;
+   --progress-text: #ffffff;
 
    --error-bg-color: #ffecec;
-   --error-bg-active: #f45959;
+   --error-bg-active: #b54444;
    --error-active-text: #fff;
    --error-bg-color-active: #ffd4d4;
    --error-text-color: #8d2f2f;
-   --error-button-color: #dd6b6b;
+   --error-button-color: #b54444;
 
    --success-bg-color: #dcfffa;
    --success-bg-color-active: #b4fdf2;
-   --success-text-color: #06ba9f;
-   --success-label: #84e8d0;
+   --success-text-color: #067565;
+   --success-label: var(--success-text-color);
 
    --warning-bg-color: #fff6e4;
-   --warning-button-color: #df9a07;
-   --warning-text-color: #b97f03;
+   --warning-button-color: #805500;
+   --warning-text-color: #805500;
 
    --modal-bg: #ffffffa8;
    --modal-shadow-color: rgba(0, 0, 0, 0.06);
    --modal-shadow-color-light: rgba(255, 255, 255, 0.6);
    --field-bg: #fff;
-   --icon-color: #aaa;
+   --icon-color: #737382;
    --scrollbar-color: #ddd;
 
    --toastify-toast-min-height: 34px;
@@ -68,26 +75,31 @@
 /* ========= DARK THEME ============= */
 /* ================================== */
 [data-theme='dark'] {
-   --line-color: #292929;
-   --line-active-color: #444444;
-   --field-line-color: #373737;
+   color-scheme: dark;
+   --line-color: #3c3e47;
+   --line-active-color: #aaacff;
+   --field-line-color: #6c6f7b;
+   --primary-color-foreground: #aaacff;
    --primary-color-light: #212235;
    --primary-color-lighter: #1a1a1e;
    --primary-text-color: #fff;
-   --background-color: #141414;
-   --content-background-color: #1c1c1c;
-   --field-bg: #1e1e1e;
+   --background-color: #14161d;
+   --content-background-color: #1c1f29;
+   --field-bg: #202430;
+   --surface-muted: #222631;
+   --surface-hover: #25273f;
+   --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
    --text-primary: #e1e1e1;
    --text-secondary: #c0c0c0;
-   --text-light: #888888;
+   --text-light: #a2a2ae;
    --content-title-color: var(--text-primary);
    --content-subtitle-color: var(--text-secondary);
    --content-text-color: var(--text-secondary);
    --content-text-color-light: var(--text-light);
    --background-text-color: var(--text-light);
    --background-text-color-dark: #999999;
-   --nav-color: #888888;
-   --icon-color: #888888;
+   --nav-color: #a2a2ae;
+   --icon-color: #a2a2ae;
    --scrollbar-color: #444444;
    --shadow-color: rgba(0, 0, 0, 0.2);
    --modal-bg: #000000a8;
@@ -97,8 +109,14 @@
    --light-grey: #292929;
 
    --error-bg-color: #342424;
-   --error-bg-color-active: #774141;
-   --success-label: #3bc1a1;
+   --error-bg-color-active: #693939;
+   --error-text-color: #f2aaaa;
+   --success-bg-color: #173830;
+   --success-bg-color-active: #214f43;
+   --success-text-color: #8addc6;
+   --success-label: var(--success-text-color);
+   --warning-bg-color: #3a301d;
+   --warning-text-color: #efc875;
 }
 
 #root {
@@ -108,11 +126,11 @@
 
 a {
    font-weight: 500;
-   color: #646cff;
+   color: var(--primary-color-foreground);
    text-decoration: inherit;
 }
 a:hover {
-   color: #535bf2;
+   color: var(--primary-color-foreground);
 }
 
 button,
@@ -120,6 +138,39 @@ input,
 select,
 textarea {
    font-family: inherit;
+   color: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+   color: var(--content-text-color-light);
+   opacity: 1;
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+   accent-color: var(--primary-color);
+}
+
+select,
+textarea {
+   background-color: var(--field-bg);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+   outline: 2px solid var(--line-active-color) !important;
+   outline-offset: 2px;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+   cursor: not-allowed;
 }
 
 body {
@@ -142,7 +193,7 @@ button {
    background-color: transparent;
    border: none;
    cursor: pointer;
-   font-size: 0.75rem;
+   font-size: 0.8125rem;
    &.notAllowed {
       cursor: not-allowed;
    }
@@ -195,7 +246,7 @@ button {
    box-shadow: 0 0 15px var(--content-shadow-color);
 
    button {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       padding: 0;
       font-weight: 600;
    }
@@ -207,9 +258,9 @@ button {
 }
 
 .modalError {
-   background-color: #c1434321;
-   color: #dd6b6b;
-   border: 1px solid #c1434321;
+   background-color: var(--error-bg-color);
+   color: var(--error-text-color);
+   border: 1px solid var(--error-bg-color-active);
    padding: 7px;
    margin-top: 8px;
    border-radius: 4px;
@@ -246,18 +297,18 @@ button {
 
 // Labels
 .label {
-   font-size: 0.6875rem;
+   font-size: 0.75rem;
    // line-height: 14px;
    font-weight: 400;
    padding: 2px 10px;
    border-radius: 20px;
-   color: #fff;
+   color: var(--content-text-color);
    margin-left: 5px;
    margin-right: 5px;
 
    &.in_progress {
       background-color: var(--primary-color-light);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
    &.warn {
       background-color: var(--warning-bg-color);
@@ -265,11 +316,11 @@ button {
    }
    &.error {
       background-color: var(--error-bg-color);
-      color: var(--error-button-color);
+      color: var(--error-text-color);
    }
    &.success {
-      background-color: rgb(220 255 250);
-      color: rgb(6 186 159);
+      background-color: var(--success-bg-color);
+      color: var(--success-text-color);
    }
    &.disabled {
       background-color: var(--line-color);
@@ -351,16 +402,39 @@ i.pipe {
    z-index: 999999999 !important;
 }
 
+.react-tooltip {
+   --rt-color-dark: var(--content-title-color);
+   --rt-color-white: var(--content-background-color);
+}
+
 .Toastify__toast-icon {
    width: 18px;
 }
+.Toastify__toast-theme--light,
 .Toastify__toast-theme--dark {
-   background: var(--modal-shadow-color);
+   background: var(--content-background-color);
+   color: var(--content-text-color);
+   border: 1px solid var(--line-color);
+}
+
+.Toastify__close-button {
+   color: var(--content-text-color);
 }
 
 @keyframes shimmer {
    100% {
       transform: translateX(100%);
+   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+   *,
+   *::before,
+   *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
    }
 }
 

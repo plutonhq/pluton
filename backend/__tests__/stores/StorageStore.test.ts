@@ -39,6 +39,7 @@ describe('StorageStore', () => {
 	beforeEach(() => {
 		// Create a deeply mocked database object
 		mockDb = {
+			$client: { prepare: jest.fn(() => ({ get: () => undefined })) },
 			query: {
 				storages: {
 					findMany: jest.fn(),
@@ -56,6 +57,7 @@ describe('StorageStore', () => {
 			where: jest.fn().mockReturnThis(),
 			delete: jest.fn().mockReturnThis(),
 		} as any;
+		mockDb.transaction = jest.fn((callback: (db: any) => any) => callback(mockDb));
 
 		storageStore = new StorageStore(mockDb);
 	});
@@ -210,7 +212,7 @@ describe('StorageStore', () => {
 			const storageId = 'storage-1';
 			const updates = { name: 'Updated S3 Bucket' };
 			const updatedStorage = { ...mockStorages[0], ...updates };
-			(mockDb.returning as jest.Mock).mockResolvedValue([updatedStorage]);
+			(mockDb.returning as jest.Mock).mockReturnValue({ all: () => [updatedStorage] });
 
 			// Act
 			const result = await storageStore.update(storageId, updates);
@@ -333,6 +335,14 @@ describe('StorageStore', () => {
 			const result = await storageStore.getReplicationPlanSources('storage-1');
 
 			expect(result).toEqual([]);
+		});
+		it('never distributes server-side managed mirror credentials to the source Agent', async () => {
+			mockDb.query.plans.findMany.mockResolvedValue([
+				{ ...replicationPlan('plan-managed', 'app-01', 'storage-1'), sourceType: 'device' },
+				{ ...replicationPlan('plan-local', 'main', 'storage-1'), sourceType: 'device' },
+			]);
+			expect(await storageStore.getReplicationPlanSources('storage-1')).toEqual(['main']);
+			expect(await storageStore.getReplicationPlans('storage-1')).toHaveLength(2);
 		});
 	});
 });

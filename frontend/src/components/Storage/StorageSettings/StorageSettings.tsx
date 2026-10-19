@@ -14,10 +14,11 @@ type StorageSettingsProps = {
    fields: storageOptionField[];
    settings: Record<string, string | number | boolean>;
    errors?: Record<string, string>;
+   configuredFields?: string[];
    onUpdate: (newSettings: StorageSettingsProps['settings']) => void;
 };
 
-const StorageSettings = ({ fields, onUpdate, settings, errors = {} }: StorageSettingsProps) => {
+const StorageSettings = ({ fields, onUpdate, settings, errors = {}, configuredFields = [] }: StorageSettingsProps) => {
    const [customFieldsActive, setCustomFieldsActive] = useState<Record<string, boolean>>({});
 
    // Initialize the custom fields state when settings change
@@ -40,8 +41,9 @@ const StorageSettings = ({ fields, onUpdate, settings, errors = {} }: StorageSet
             if (!shouldDisplayStorageField(field, settings, fields)) {
                return null;
             }
-            const hint = field.description + '\n' + (field.default ? `Default: ${field.default}` : '');
-            const fieldLabel = field.label + (field.required ? '*' : '');
+            const retained = configuredFields.includes(field.value);
+            const hint = field.description + '\n' + (field.default ? `Default: ${field.default}` : '') + (retained ? '\nConfigured. Leave blank to keep the existing value.' : '');
+            const fieldLabel = field.label + (field.required && !retained ? '*' : '');
             if (field.fieldType === 'bool') {
                return (
                   <div key={field.value} className={classes.field}>
@@ -59,6 +61,7 @@ const StorageSettings = ({ fields, onUpdate, settings, errors = {} }: StorageSet
             if (field.fieldType === 'password') {
                return (
                   <div key={field.value} className={classes.field}>
+                     {retained && <p>Configured. Leave blank to keep the existing value.</p>}
                      <PasswordField
                         label={fieldLabel}
                         inline={true}

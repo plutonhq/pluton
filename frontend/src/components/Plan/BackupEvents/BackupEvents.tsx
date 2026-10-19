@@ -2,7 +2,8 @@ import Icon from '../../common/Icon/Icon';
 import SidePanel from '../../common/SidePanel/SidePanel';
 import { getBackupEventActionMessage, getRestoreEventActionMessage } from '../../../utils/progressHelpers';
 import classes from './BackupEvents.module.scss';
-import { BackupProgressData, ReplicationProgressData } from '../../../@types/backups';
+import { BackupProgressData, ReplicationProgressData, BackupCompletionStats } from '../../../@types/backups';
+import BackupStatistics from './BackupStatistics';
 import { useGetBackupProgressOnce } from '../../../services/backups';
 import { useGetRestoreProgressOnce } from '../../../services/restores';
 import { useMemo, useState } from 'react';
@@ -17,10 +18,11 @@ interface BackupEventsProps {
    type?: 'backup' | 'restore';
    inProgress?: boolean;
    progressData?: BackupProgressData | null;
+   completionStats?: BackupCompletionStats | null;
    close: () => void;
 }
 
-const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inProgress, progressData, close }: BackupEventsProps) => {
+const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inProgress, progressData, completionStats, close }: BackupEventsProps) => {
    const [showError, setShowError] = useState<false | string>(false);
    const { data: fetchedProgressData, isLoading } =
       type === 'backup'
@@ -29,7 +31,6 @@ const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inPro
 
    const progressDataToUse: BackupProgressData | null = progressData || fetchedProgressData;
 
-   console.log('progressDataToUse :', progressDataToUse);
    const hasFinished = useMemo(() => {
       if (!progressDataToUse || !progressDataToUse.events) return '';
       let finishedEvent = '';
@@ -48,6 +49,7 @@ const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inPro
    return (
       <SidePanel title={`${type}-${id} Events`} width="1000px" icon={<Icon type={'logs'} size={18} />} footer={<></>} close={close}>
          <div className={classes.backupEventsContainer}>
+            {completionStats && type === 'backup' && <BackupStatistics stats={completionStats} />}
             <div className={classes.header}>
                <div
                   title="Status"

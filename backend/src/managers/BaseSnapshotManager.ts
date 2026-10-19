@@ -124,7 +124,8 @@ export class BaseSnapshotManager extends EventEmitter {
 					encryption,
 				});
 				if (!success || typeof result === 'string') {
-					continue;
+					if (!success && result === 'Snapshot Not Found') continue;
+					throw new Error('Snapshot lookup failed; removal could not be verified.');
 				}
 				const snapshotId = result.id;
 

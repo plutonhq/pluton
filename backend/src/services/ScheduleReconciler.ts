@@ -28,7 +28,11 @@ export class ScheduleReconciler {
 		const schedulesMap = await this.localAgent.cronManager.getSchedules();
 		const scheduledIds = new Set(schedulesMap.keys());
 
-		const orphansRemoved = await this.removeOrphanedSchedules(scheduledIds, dbPlanIds);
+		const orphansRemoved = await this.removeOrphanedSchedules(
+			schedulesMap,
+			scheduledIds,
+			dbPlanIds
+		);
 
 		let schedulesAdded = 0;
 		for (const [planId, plan] of dbPlanMap) {
@@ -60,12 +64,18 @@ export class ScheduleReconciler {
 	}
 
 	protected async removeOrphanedSchedules(
+		schedulesMap: Map<string, { type: string }[]>,
 		scheduledIds: Set<string>,
 		dbPlanIds: Set<string>
 	): Promise<number> {
 		let orphansRemoved = 0;
 
 		for (const scheduledId of scheduledIds) {
+			// Remote filesystem schedules are reconciled by RemoteBackupService after
+			// this local-manager pass. Never reinterpret them as local job-queue work.
+			if (schedulesMap.get(scheduledId)?.some(schedule => schedule.type === 'remote-backup')) {
+				continue;
+			}
 			if (!dbPlanIds.has(scheduledId)) {
 				try {
 					await this.localAgent.cronManager.removeSchedule(scheduledId);

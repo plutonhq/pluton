@@ -142,7 +142,7 @@ const SelfBackupSettings = ({ settings, settingsID, onUpdate }: SelfBackupSettin
                   {status?.enabled && <span className={`${classes.statusText} ${statusView.className}`}>{statusView.text}</span>}
                   {!isRunning && status?.lastError && (
                      <span className={classes.erroHint} data-tooltip-id="htmlToolTip" data-tooltip-place="top" data-tooltip-html={status.lastError}>
-                        <Icon type={'error-circle-filled'} color="#ff8888" size={16} />
+                        <Icon type={'error-circle-filled'} color="var(--error-text-color)" size={16} />
                      </span>
                   )}
                </div>

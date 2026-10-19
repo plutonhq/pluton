@@ -20,7 +20,14 @@ jest.mock('path');
 jest.mock('systeminformation');
 jest.mock('../../src/utils/versions');
 jest.mock('../../src/managers/BaseStorageManager');
-jest.mock('../../src/services/ConfigService');
+jest.mock('../../src/services/ConfigService', () => ({
+	configService: {
+		config: {},
+		isSetupPending: jest.fn(),
+		reload: jest.fn(),
+		initialize: jest.fn(),
+	},
+}));
 jest.mock('../../src/managers/SecurityKeyManager');
 
 // Mock fs.mkdirSync before AppPaths is imported

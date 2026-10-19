@@ -18,7 +18,7 @@
    position: fixed;
    background: var(--content-background-color);
    color: var(--content-text-color);
-   border: 1px solid var(--content-shadow-color);
+   border: 1px solid var(--line-color);
    right: 0;
    top: 0;
    box-sizing: border-box;
@@ -52,7 +52,7 @@
    display: flex;
    align-items: center;
    justify-content: center;
-   border-bottom: 1px solid var(--content-shadow-color);
+   border-bottom: 1px solid var(--line-color);
    .headerContent {
       width: 100%;
       display: flex;
@@ -140,7 +140,7 @@
    position: relative;
 
    :global(.checkMark) {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       position: absolute;
       top: 5px;
       right: 5px;
@@ -206,7 +206,7 @@
    justify-content: space-between;
    padding: 15px;
    padding-left: 30px;
-   border-top: 1px solid var(--content-shadow-color);
+   border-top: 1px solid var(--line-color);
    min-height: 40px;
 }
 

@@ -1,4 +1,5 @@
 export interface BackupCompletionStats {
+	sourcePaths?: string[];
 	message_type: string;
 	files_new: number;
 	files_changed: number;
@@ -14,6 +15,11 @@ export interface BackupCompletionStats {
 	total_bytes_processed: number;
 	total_duration: number;
 	snapshot_id: string;
+	lifecycle?: {
+		warnings: import('./remoteLifecycle').LifecycleWarning[];
+		database?: { path: string; bytes: number; sha256: string };
+		databases?: import('./remoteLifecycle').DatabaseArtifact[];
+	};
 }
 
 export interface BackupTaskStats {
@@ -36,6 +42,15 @@ export interface BackupTaskStats {
 }
 
 export interface BackupProgressStats {
+	backupStage?: string;
+	remoteCommandId?: string;
+	remoteAttempt?: number;
+	remoteEventSequence?: number;
+	databaseId?: string;
+	databaseEngine?: string;
+	databaseOrdinal?: number;
+	databaseCount?: number;
+	lifecycleStage?: string;
 	bytesProcessed: number;
 	filesProcessed: number;
 	total_files_processed: number;
@@ -94,6 +109,11 @@ export interface BackupMirror {
 	ended?: number;
 	error?: string;
 	size?: number;
+	sourceSnapshotId?: string;
+	snapshotId?: string | null;
+	attempts?: number;
+	lastErrorCode?: string | null;
+	verifiedAt?: number | null;
 }
 
 export type BackupRunConfig = {

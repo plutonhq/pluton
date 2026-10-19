@@ -1,6 +1,8 @@
 import { toast } from 'react-toastify';
 import { NewPlanSettings, PlanInterval } from '../@types/plans';
 import { isValidEmail } from './helpers';
+import { remoteLifecycleValidation } from './remoteLifecycle';
+import { replicationSettingsError } from './replication';
 
 export function planIntervalName(interval: PlanInterval): string {
    switch (interval.type) {
@@ -44,6 +46,13 @@ export function planIntervalAgeName(age: string) {
 }
 
 export function isPlanSettingsValid(newPlan: NewPlanSettings, step: number | false = false): boolean {
+   if (step === 4 || step === false) {
+      const error = remoteLifecycleValidation(newPlan.settings.remoteLifecycle);
+      if (error) {
+         toast.error(error);
+         return false;
+      }
+   }
    if ((step === 1 || step === false) && !newPlan.title) {
       toast.error(`Plan Title is required`);
       return false;
@@ -53,6 +62,15 @@ export function isPlanSettingsValid(newPlan: NewPlanSettings, step: number | fal
       return false;
    }
    if (step === 2 || step === false) {
+      const replicationError = replicationSettingsError(
+         newPlan.settings.replication,
+         { storageId: newPlan.storage.id, storagePath: newPlan.storagePath },
+         newPlan.sourceType === 'device' && newPlan.sourceId !== 'main',
+      );
+      if (replicationError) {
+         toast.error(replicationError);
+         return false;
+      }
       if (newPlan.sourceType === 'storage') {
          if (!newPlan.sourceId) {
             toast.error(`Source Storage is required`);
@@ -66,6 +84,17 @@ export function isPlanSettingsValid(newPlan: NewPlanSettings, step: number | fal
       if (newPlan.sourceConfig.includes.length === 0) {
          toast.error(`Sources are required`);
          return false;
+      }
+      if (newPlan.sourceType === 'device' && newPlan.sourceId !== 'main') {
+         const remoteSource = newPlan.sourceConfig.includes[0]?.trim() || '';
+         if (!remoteSource.startsWith('/') || remoteSource.includes('..')) {
+            toast.error(`Remote source must be one safe absolute Linux path`);
+            return false;
+         }
+         if (!newPlan.storagePath?.trim()) {
+            toast.error(`Remote backup destination path is required`);
+            return false;
+         }
       }
       if (newPlan.storage.id === 'local' && newPlan.storagePath === '') {
          toast.error(`Storage Path is required`);

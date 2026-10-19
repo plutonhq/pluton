@@ -9,13 +9,35 @@ const mockGetConfigDir = jest.fn() as jest.MockedFunction<() => string>;
 const mockGetDataDir = jest.fn() as jest.MockedFunction<() => string>;
 const mockGetEncEnvFilePath = jest.fn() as jest.MockedFunction<() => string>;
 const mockDotenvConfig = jest.fn();
+// Model private key-file IO separately from config.json. A generic config-file
+// response is not a valid keys.json or encryption-key file, especially fail-closed.
+const mockPrivateFiles = new Map<string, string>();
+const privatePath = (value: unknown) =>
+	/(?:keys\.json|\.keys-[^\\/]+\.tmp|pluton\.enc\.env|pluton\.db)$/.test(String(value));
 
 // Mock fs module
 jest.mock('fs', () => ({
 	...jest.requireActual<typeof fs>('fs'),
-	existsSync: mockExistsSync,
-	readFileSync: mockReadFileSync,
-	writeFileSync: mockWriteFileSync,
+	existsSync: (file: unknown) =>
+		privatePath(file) ? mockPrivateFiles.has(String(file)) : mockExistsSync(file as any),
+	readFileSync: (file: unknown, options: any) => {
+		if (!privatePath(file)) return mockReadFileSync(file as any, options);
+		if (mockPrivateFiles.has(String(file))) return mockPrivateFiles.get(String(file));
+		throw Object.assign(new Error('synthetic file missing'), { code: 'ENOENT' });
+	},
+	writeFileSync: (file: unknown, content: any, options: any) => {
+		if (privatePath(file)) mockPrivateFiles.set(String(file), String(content));
+		return mockWriteFileSync(file, content, options);
+	},
+	renameSync: (source: unknown, target: unknown) => {
+		if (privatePath(target)) {
+			mockPrivateFiles.set(String(target), mockPrivateFiles.get(String(source))!);
+			mockPrivateFiles.delete(String(source));
+		}
+	},
+	rmSync: (file: unknown) => {
+		if (privatePath(file)) mockPrivateFiles.delete(String(file));
+	},
 	mkdirSync: mockMkdirSync,
 }));
 
@@ -77,6 +99,7 @@ describe('ConfigService', () => {
 		mockGetConfigDir.mockReset();
 		mockGetDataDir.mockReset();
 		mockGetEncEnvFilePath.mockReset();
+		mockPrivateFiles.clear();
 
 		// Mock appPaths to return a predictable directory
 		mockGetConfigDir.mockReturnValue('/fake/config/dir');
@@ -162,6 +185,78 @@ describe('ConfigService', () => {
 		expect(mockExit).not.toHaveBeenCalled();
 	});
 
+	it('validates dual origins after persistent config precedence without rewriting canonical URLs into a list', async () => {
+		process.env = { ...validBaseEnv, NODE_ENV: 'production', APP_URL: 'http://192.0.2.10:5173' };
+		mockExistsSync.mockReturnValue(true);
+		mockReadFileSync.mockReturnValue(
+			JSON.stringify({
+				APP_URL: 'https://pluton.example.internal',
+				APP_ALLOWED_ORIGINS: 'https://pluton.example.internal,http://192.0.2.10:5173',
+			})
+		);
+		const { configService } = await import('../../src/services/ConfigService');
+		expect(configService.config.APP_URL).toBe('https://pluton.example.internal');
+		expect(configService.config.APP_ALLOWED_ORIGINS).toBe(
+			'https://pluton.example.internal,http://192.0.2.10:5173'
+		);
+	});
+	it.each([
+		'*',
+		'https://user:synthetic-never-echo@pluton.example.internal',
+		'https://pluton.example.internal/path',
+		'https://pluton.example.internal,https://pluton.example.internal:443',
+	])('rejects unsafe origin config at startup BEFORE generating secrets (%s)', async value => {
+		process.env = { ...validBaseEnv, NODE_ENV: 'production', APP_ALLOWED_ORIGINS: value };
+		mockExistsSync.mockReturnValue(false);
+		await expect(import('../../src/services/ConfigService')).rejects.toThrow(
+			'Invalid APP_URL or APP_ALLOWED_ORIGINS'
+		);
+		expect(mockWriteFileSync).not.toHaveBeenCalled();
+		expect(mockConsoleError.mock.calls.flat().join(' ')).not.toContain('synthetic-never-echo');
+	});
+	it('does not silently ignore an invalid persistent origin override', async () => {
+		process.env = { ...validBaseEnv, NODE_ENV: 'production' };
+		mockExistsSync.mockReturnValue(true);
+		mockReadFileSync.mockReturnValue(JSON.stringify({ APP_ALLOWED_ORIGINS: '*' }));
+		await expect(import('../../src/services/ConfigService')).rejects.toThrow(
+			'Invalid APP_URL or APP_ALLOWED_ORIGINS'
+		);
+		expect(mockWriteFileSync).not.toHaveBeenCalled();
+	});
+	it('keeps a distinct private Agent instruction URL only with the existing explicit HTTP exception', async () => {
+		process.env = {
+			...validBaseEnv,
+			NODE_ENV: 'production',
+			APP_URL: 'https://pluton.example.internal',
+			AGENT_SERVER_URL: 'http://192.0.2.10:5173',
+			ALLOW_INSECURE_AGENT_HTTP: 'true',
+		};
+		mockExistsSync.mockReturnValue(false);
+		const { configService } = await import('../../src/services/ConfigService');
+		expect(configService.config.AGENT_SERVER_URL).toBe('http://192.0.2.10:5173');
+		expect(configService.config.APP_URL).toBe('https://pluton.example.internal');
+	});
+	it('does not authorize HTTP Agent transport by setting a browser origin or Agent URL', async () => {
+		process.env = {
+			...validBaseEnv,
+			NODE_ENV: 'production',
+			AGENT_SERVER_URL: 'http://192.0.2.10:5173',
+		};
+		mockExistsSync.mockReturnValue(false);
+		await expect(import('../../src/services/ConfigService')).rejects.toThrow(
+			'explicit trusted-LAN Agent transport exception'
+		);
+		expect(mockWriteFileSync).not.toHaveBeenCalled();
+	});
+	it.each(['false', '0'])(
+		'does not coerce the explicit HTTP Agent exception %s into true',
+		async value => {
+			process.env = { ...validBaseEnv, NODE_ENV: 'production', ALLOW_INSECURE_AGENT_HTTP: value };
+			mockExistsSync.mockReturnValue(false);
+			const { configService } = await import('../../src/services/ConfigService');
+			expect(configService.config.ALLOW_INSECURE_AGENT_HTTP).toBe(false);
+		}
+	);
 	it('should exit the process if required environment variables are missing', async () => {
 		// Arrange: Deliberately omit a required variable
 		process.env = {
@@ -282,7 +377,7 @@ describe('ConfigService', () => {
 		expect(config.APP_TITLE).toBe('From Env');
 		expect(mockExit).not.toHaveBeenCalled();
 		expect(mockConsoleLog).toHaveBeenCalledWith(
-			expect.stringContaining('Could not load or parse config.json')
+			expect.stringContaining('Could not read or validate config.json')
 		);
 	});
 

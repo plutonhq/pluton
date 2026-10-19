@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+@source '../node_modules/fumadocs-ui/dist';
+
+/* This stylesheet is loaded only by the separate /docs document. */
+@theme {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+:root {
+  --fd-layout-width: 1440px;
+}
+:focus-visible {
+  outline-offset: 3px;
+}
+.pluton-footer {
+  padding: 1.5rem 1rem;
+  font-size: 0.8rem;
+  color: var(--color-fd-muted-foreground);
+}
+.pluton-footer a:hover {
+  color: var(--color-fd-foreground);
+}

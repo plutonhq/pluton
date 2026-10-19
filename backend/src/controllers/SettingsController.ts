@@ -76,7 +76,6 @@ export class SettingsController {
 
 	async validateIntegration(req: Request, res: Response): Promise<void> {
 		if (!req.body.settingsID || !req.body.type || !req.body.settings || !req.body.test) {
-			console.log('req.body :', req.body);
 			res.status(400).json({
 				success: false,
 				error: 'Integration Payload Missing.',
@@ -168,6 +167,7 @@ export class SettingsController {
 				await this.settingsService.setupTwoFactorAuth();
 
 			// SECURELY store the secret on the server in the user's session.
+			if (res.locals?.webOrigin) req.session.webOrigin = res.locals.webOrigin;
 			req.session.totpSecret = tempSecret;
 
 			// Send only the visual parts to the client.

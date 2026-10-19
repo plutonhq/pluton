@@ -1,0 +1,24 @@
+{
+  "name": "@plutonhq/pluton-agent",
+  "version": "0.1.0",
+  "description": "Outbound-only control-plane agent for the Pluton community fork",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "pluton-agent": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "tsc -p tsconfig.json && node --test dist/*.test.js",
+    "start": "node dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.10",
+    "typescript": "^5.9.3"
+  }
+}

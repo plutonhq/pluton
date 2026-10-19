@@ -17,7 +17,7 @@
    position: absolute;
    background: var(--content-background-color);
    color: var(--content-text-color);
-   border: 1px solid var(--content-shadow-color);
+   border: 1px solid var(--line-color);
    right: 0;
    top: 0;
    box-sizing: border-box;
@@ -29,7 +29,7 @@
    align-items: center;
    justify-content: space-between;
    padding: 20px;
-   border-bottom: 1px solid var(--content-shadow-color);
+   border-bottom: 1px solid var(--line-color);
    h3 {
       font-size: 1rem;
       margin: 0;
@@ -51,7 +51,7 @@
    padding: 10px 15px;
    padding-bottom: 5px;
    box-sizing: border-box;
-   border-bottom: 1px solid var(--content-shadow-color);
+   border-bottom: 1px solid var(--line-color);
    background: var(--background-color);
    ul {
       margin: 0;
@@ -65,7 +65,7 @@
          position: absolute;
          width: calc(100% - 60px);
          height: 2px;
-         background-color: var(--content-shadow-color);
+         background-color: var(--line-color);
          z-index: 0;
          top: 12px;
          left: 25px;
@@ -91,7 +91,7 @@
             height: 20px;
             font-size: 0.75rem;
             border-radius: 50%;
-            background-color: var(--content-shadow-color);
+            background-color: var(--line-color);
             text-align: center;
             box-sizing: border-box;
          }
@@ -101,13 +101,14 @@
                color: var(--primary-text-color);
             }
             i {
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
                font-weight: 600;
             }
          }
          &.stepPassed {
             & > span {
                background-color: var(--primary-color);
+               color: var(--primary-text-color);
             }
          }
       }
@@ -141,7 +142,7 @@
             cursor: pointer;
             color: var(--icon-color);
             &:hover {
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
             }
          }
 
@@ -155,7 +156,7 @@
          button {
             font-size: inherit;
             background: var(--background-color);
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
             border-radius: 3px;
          }
       }
@@ -231,7 +232,7 @@
    justify-content: space-between;
    padding: 15px;
    padding-left: 30px;
-   border-top: 1px solid var(--content-shadow-color);
+   border-top: 1px solid var(--line-color);
    gap: 10px;
    .backButton {
       color: var(--content-text-color-light);
@@ -294,7 +295,7 @@
       background: var(--content-background-color);
       color: var(--content-text-color);
       border-radius: 8px;
-      border: 1px solid var(--content-shadow-color);
+      border: 1px solid var(--line-color);
       margin: 0 auto;
       left: 0;
       right: 0;
@@ -367,10 +368,10 @@
          }
          &.checkboxOptionActive {
             h5 {
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
             }
             span {
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
             }
          }
          &:hover {

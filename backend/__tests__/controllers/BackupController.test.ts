@@ -87,7 +87,7 @@ describe('BackupController', () => {
 			expect(mockStatus).toHaveBeenCalledWith(500);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: false,
-				error: 'Failed to get Downloaded file. Download failed',
+				error: 'Failed to get Downloaded file.',
 			});
 		});
 	});
@@ -119,7 +119,8 @@ describe('BackupController', () => {
 
 			expect(mockBackupService.generateBackupDownload).toHaveBeenCalledWith(
 				'backup-123',
-				undefined
+				undefined,
+				expect.any(AbortSignal)
 			);
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({
@@ -140,7 +141,7 @@ describe('BackupController', () => {
 			expect(mockStatus).toHaveBeenCalledWith(500);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: false,
-				error: 'Failed to generate Download Link. Generation failed',
+				error: 'Failed to generate Download Link.',
 			});
 		});
 	});

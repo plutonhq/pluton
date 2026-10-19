@@ -32,7 +32,7 @@
    display: flex;
    gap: 6px;
    .confirmBtn {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       background-color: var(--primary-color-light);
       font-size: 0.7rem;
       display: flex;
@@ -43,7 +43,7 @@
       transition: all 0.12s linear;
       &:hover:not(:disabled) {
          background-color: var(--primary-color);
-         color: var(--primary-color-light);
+         color: var(--primary-text-color);
       }
       &:disabled {
          opacity: 0.6;
@@ -68,7 +68,7 @@
       button {
          color: var(--icon-color);
          &:hover {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
          }
          &:disabled {
             opacity: 0.4;
@@ -93,7 +93,7 @@
    transition: all 0.12s linear;
    &:hover {
       border-color: var(--primary-color);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       background-color: var(--primary-color-light);
    }
 }

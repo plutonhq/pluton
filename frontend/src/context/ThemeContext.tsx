@@ -1,10 +1,10 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-
-type ThemeSetting = 'light' | 'dark' | 'auto';
-type AppliedTheme = 'light' | 'dark';
+import { createContext, useContext, useState, useLayoutEffect, ReactNode, useCallback } from 'react';
+import { readThemeSetting, persistThemeSetting, resolveTheme } from '../utils/theme';
+import type { ThemeSetting, AppliedTheme } from '../utils/theme';
 
 type ThemeContextType = {
    theme: AppliedTheme;
+   themeSetting: ThemeSetting;
    setTheme: (themeSetting: ThemeSetting) => void;
 };
 
@@ -15,26 +15,28 @@ const getInitialThemeSetting = (): ThemeSetting => {
    if (typeof window === 'undefined') {
       return 'auto';
    }
-   const storedTheme = window.localStorage.getItem('themeSetting');
-   if (storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'auto') {
-      return storedTheme;
+   try {
+      return readThemeSetting(window.localStorage);
+   } catch {
+      return 'auto';
    }
-   return 'auto'; // Default to 'auto'
 };
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
    // Initialize state directly from localStorage
    const [themeSetting, setThemeSetting] = useState<ThemeSetting>(getInitialThemeSetting);
-   const [appliedTheme, setAppliedTheme] = useState<AppliedTheme>('light');
+   const [appliedTheme, setAppliedTheme] = useState<AppliedTheme>(() =>
+      resolveTheme(getInitialThemeSetting(), typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-color-scheme: dark)').matches),
+   );
 
    // This effect applies the theme to the DOM and listens for system changes
-   useEffect(() => {
+   useLayoutEffect(() => {
       const applyTheme = (t: AppliedTheme) => {
          document.documentElement.setAttribute('data-theme', t);
          setAppliedTheme(t);
       };
 
-      if (themeSetting === 'auto') {
+      if (themeSetting === 'auto' && window.matchMedia) {
          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
          applyTheme(mediaQuery.matches ? 'dark' : 'light');
 
@@ -45,18 +47,22 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
          mediaQuery.addEventListener('change', handleChange);
          return () => mediaQuery.removeEventListener('change', handleChange);
       } else {
-         applyTheme(themeSetting);
+         applyTheme(resolveTheme(themeSetting, false));
       }
    }, [themeSetting]);
 
    // This is the function that will be exposed to other components
    const handleSetTheme = useCallback((newSetting: ThemeSetting) => {
       // Persist the user's *choice* to localStorage
-      localStorage.setItem('themeSetting', newSetting);
+      try {
+         persistThemeSetting(localStorage, newSetting);
+      } catch {
+         /* Browser storage may be disabled. */
+      }
       setThemeSetting(newSetting);
    }, []);
 
-   return <ThemeContext.Provider value={{ theme: appliedTheme, setTheme: handleSetTheme }}>{children}</ThemeContext.Provider>;
+   return <ThemeContext.Provider value={{ theme: appliedTheme, themeSetting, setTheme: handleSetTheme }}>{children}</ThemeContext.Provider>;
 };
 
 export const useTheme = () => {

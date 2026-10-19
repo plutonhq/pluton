@@ -1,0 +1,306 @@
+.filters {
+   container: backup-history-filter / inline-size;
+   padding: 10px 12px;
+   margin: 8px 0;
+   border: 1px solid var(--line-color);
+   border-radius: 8px;
+   background: var(--surface-muted);
+   color: var(--content-text-color);
+   font-size: 0.8125rem;
+   button,
+   input,
+   select,
+   summary {
+      padding: 0 9px;
+      height: 36px;
+      border: 1px solid var(--field-line-color);
+      border-radius: 6px;
+      background: var(--field-bg);
+      color: var(--content-text-color);
+      font-size: inherit;
+      box-sizing: border-box;
+      line-height: 1.25;
+   }
+   button:hover,
+   button[aria-pressed='true'] {
+      background: var(--primary-color-light);
+      color: var(--primary-color-foreground);
+   }
+   button[aria-pressed='true'] {
+      border-color: var(--primary-color);
+      font-weight: 600;
+   }
+   input {
+      width: 100%;
+      min-width: 134px;
+      max-width: 300px;
+      flex: 1;
+   }
+   .apply {
+      background: var(--primary-color);
+      color: var(--primary-text-color);
+      border-color: var(--primary-color);
+   }
+   .apply:hover {
+      background: var(--primary-hover-color);
+      color: var(--primary-text-color);
+   }
+}
+.toolbar,
+.presets,
+.dates,
+.dateField,
+.zoneGroup,
+.actions {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+}
+.toolbar {
+   position: relative;
+   display: grid;
+   grid-template-columns: max-content minmax(174px, 1fr) minmax(164px, 1fr) minmax(140px, 0.9fr) max-content max-content max-content;
+   gap: 10px;
+}
+.dates,
+.zoneGroup {
+   display: contents;
+}
+.dateField {
+   min-width: 0;
+   gap: 6px;
+   color: var(--content-text-color-light);
+}
+.presets {
+   gap: 4px;
+   flex-shrink: 0;
+   button {
+      white-space: nowrap;
+   }
+}
+.zone {
+   min-width: 0;
+}
+.zone select {
+   width: 100%;
+   max-width: 280px;
+}
+.actions {
+   margin-left: 0;
+   gap: 6px;
+}
+.inlineState {
+   white-space: nowrap;
+   font-size: 0.75rem;
+   color: var(--content-text-color-light);
+   &[data-dirty='true'] {
+      color: var(--warning-text-color);
+   }
+}
+.srOnly {
+   position: absolute;
+   width: 1px;
+   height: 1px;
+   padding: 0;
+   margin: -1px;
+   overflow: hidden;
+   clip-path: inset(50%);
+   white-space: nowrap;
+   border: 0;
+}
+.help {
+   position: relative;
+   flex-shrink: 0;
+   summary {
+      display: grid;
+      place-content: center;
+      width: 36px;
+      list-style: none;
+      cursor: pointer;
+      color: var(--content-text-color-light);
+      &::-webkit-details-marker {
+         display: none;
+      }
+      &:focus-visible {
+         outline: 2px solid var(--line-active-color);
+         outline-offset: 2px;
+      }
+   }
+   &[open] summary {
+      color: var(--primary-color-foreground);
+      border-color: var(--primary-color);
+   }
+}
+.helpText {
+   position: absolute;
+   z-index: 10;
+   right: 0;
+   top: 100%;
+   width: min(290px, 70cqi);
+   box-sizing: border-box;
+   margin: 6px 0 0;
+   padding: 12px;
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   background: var(--content-background-color);
+   color: var(--content-text-color);
+   box-shadow: var(--card-shadow);
+   line-height: 1.5;
+   overflow-wrap: anywhere;
+   & > strong,
+   & > span {
+      display: block;
+   }
+   & > span {
+      margin-top: 8px;
+   }
+}
+.hint {
+   color: var(--content-text-color-light);
+   font-size: 0.75rem;
+   line-height: 1.4;
+   margin: 5px 0 0;
+   overflow-wrap: anywhere;
+   // Keep the full applied state available to assistive technology. Desktop
+   // shows a compact indicator and exposes the same detail through Info.
+   position: absolute;
+   width: 1px;
+   height: 1px;
+   padding: 0;
+   margin: -1px;
+   overflow: hidden;
+   clip-path: inset(50%);
+   white-space: nowrap;
+}
+.error {
+   color: var(--error-text-color);
+   margin: 8px 0 0;
+}
+.results {
+   position: relative;
+   min-height: 260px;
+}
+.loading,
+.message {
+   padding: 40px 16px;
+   text-align: center;
+   color: var(--content-text-color-light);
+}
+.loading {
+   background: var(--surface-muted);
+   min-height: 200px;
+   border-radius: 6px;
+   display: grid;
+   place-content: center;
+}
+.message button {
+   color: var(--primary-color-foreground);
+   text-decoration: underline;
+}
+@container backup-history-filter (max-width: 1000px) {
+   .toolbar {
+      grid-template-columns: minmax(174px, 1fr) minmax(164px, 1fr) minmax(140px, 0.9fr) max-content max-content max-content;
+   }
+   .presets {
+      grid-column: 1 / -1;
+   }
+   .filters input,
+   .zone select {
+      max-width: none;
+   }
+   .hint {
+      position: static;
+      width: auto;
+      height: auto;
+      margin: 5px 0 0;
+      overflow: visible;
+      clip-path: none;
+      white-space: normal;
+   }
+}
+@container backup-history-filter (max-width: 700px) {
+   .toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+   }
+   .presets,
+   .dates {
+      grid-column: 1 / -1;
+   }
+   .presets {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+   }
+   .dateField {
+      flex: 1;
+      min-width: 0;
+      align-items: stretch;
+      flex-direction: column;
+      gap: 4px;
+   }
+   .dates,
+   .zoneGroup {
+      display: flex;
+   }
+   .filters input {
+      // The label becomes a column here; do not let desktop flex sizing shrink
+      // the date input's touch height along that new main axis.
+      flex: none;
+   }
+   .filters input,
+   .zone,
+   .zone select {
+      width: 100%;
+      min-width: 0;
+   }
+   .filters button,
+   .filters input,
+   .filters select,
+   .help summary {
+      height: 42px;
+   }
+   .zoneGroup {
+      min-width: 0;
+      gap: 6px;
+   }
+   .zone {
+      flex: 1;
+      width: auto;
+   }
+   .help {
+      position: static;
+      summary {
+         width: 42px;
+      }
+   }
+   .helpText {
+      // Anchor to the toolbar on mobile, so a narrow icon cannot push it offscreen.
+      right: 0;
+      width: min(320px, 100%);
+   }
+}
+@container backup-history-filter (max-width: 330px) {
+   .toolbar {
+      grid-template-columns: minmax(0, 1fr);
+   }
+   .presets,
+   .dates {
+      grid-column: 1;
+   }
+   .actions {
+      margin-left: 0;
+      button {
+         flex: 1;
+      }
+   }
+}
+@container backup-history-filter (max-width: 250px) {
+   .presets {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+   }
+   .dates {
+      flex-direction: column;
+      align-items: stretch;
+   }
+}

@@ -1,0 +1,50 @@
+.requestActivity,
+.progress {
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   padding: 12px;
+   margin: 12px 0;
+   color: var(--content-text-color);
+   background: var(--surface-muted);
+   min-height: 108px;
+   box-sizing: border-box;
+   [role='status'] {
+      min-height: 2.6em;
+      line-height: 1.3;
+   }
+}
+.requestActivity {
+   position: sticky;
+   top: 0;
+   z-index: 1;
+   min-height: 108px;
+}
+.track {
+   height: 10px;
+   margin: 6px 0;
+   progress {
+      display: block;
+      width: 100%;
+      height: 8px;
+      accent-color: var(--primary-color);
+   }
+}
+.caption {
+   font-size: 0.8125rem;
+   line-height: 1.4;
+   min-height: 1.4em;
+}
+.elapsed {
+   display: block;
+   font-variant-numeric: tabular-nums;
+   font-size: 0.8125rem;
+   span {
+      display: inline-block;
+      min-width: 8ch;
+   }
+}
+@media (prefers-reduced-motion: reduce) {
+   .track progress {
+      animation: none;
+   }
+}

@@ -16,10 +16,10 @@
             color: var(--icon-color);
          }
          &.tabActive {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
             background-color: var(--primary-color-light);
             span {
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
             }
          }
       }

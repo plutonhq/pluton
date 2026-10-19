@@ -9,19 +9,19 @@ const StatusLabel = ({ status, hasError }: StatusLabelProps) => {
    if (status === 'completed') {
       return (
          <div>
-            <Icon type={'check-circle-filled'} size={15} color="#06ba9f" /> Complete{hasError && '*'}
+            <Icon type={'check-circle-filled'} size={15} color="var(--success-text-color)" /> Complete{hasError && '*'}
          </div>
       );
    } else if (status === 'cancelled') {
       return (
          <div>
-            <Icon type={'close-circle'} size={15} color="#bbb" /> Cancelled
+            <Icon type={'close-circle'} size={15} color="var(--icon-color)" /> Cancelled
          </div>
       );
    } else if (status === 'failed') {
       return (
          <div>
-            <Icon type={'error-circle-filled'} size={15} color="#ff7070" /> Failed
+            <Icon type={'error-circle-filled'} size={15} color="var(--error-text-color)" /> Failed
          </div>
       );
    } else if (status === 'started' || status === 'retrying') {

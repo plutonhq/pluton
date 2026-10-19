@@ -1,0 +1,57 @@
+# Optional AFTER persistent-restore + automatic-recovery. Same worker/IPC service,
+# not a second controller. May follow the existing Custom worker overlay; that
+# overlay's CA and egress are retained, never silently removed.
+# Config must explicitly enable Internal; mixed policies must fit its 128 MiB cap.
+services:
+  pluton:
+    depends_on:
+      mysql-recovery-worker:
+        condition: service_started
+    environment:
+      PLUTON_MYSQL_WORKER: enabled
+    volumes:
+      - pluton-mysql-ipc:/run/pluton-mysql-worker:ro
+  mysql-recovery-worker:
+    image: ${PLUTON_MYSQL_WORKER_IMAGE_REF:?Set a reviewed worker image by digest}
+    user: "10001:10001"
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: !override [no-new-privileges:true]
+    pids_limit: 64
+    # Root operator creates targets only on these isolated, preexisting networks.
+    # Keep the existing Custom egress network when Custom is also configured.
+    networks:
+      persistent-restores: {}
+      automatic-tests: {}
+    # The default Internal SQL budget is 128 MiB; staging + native client + Node
+    # fit this dedicated bound. This overlay is not for >128 MiB Custom imports.
+    mem_limit: 384m
+    memswap_limit: 384m
+    cpus: 0.5
+    tmpfs: !override
+      - /tmp:rw,noexec,nosuid,nodev,uid=10001,gid=10001,mode=700,size=160m
+    volumes:
+      - pluton-mysql-ipc:/run/pluton-mysql-worker
+      - type: bind
+        source: ${PLUTON_MYSQL_WORKER_CONFIG:?Set root-approved worker policy JSON}
+        target: /run/pluton-mysql-config/target.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /etc/pluton-automatic-recovery/mysql-public
+        target: /run/pluton-mysql-internal
+        read_only: true
+        bind:
+          create_host_path: false
+volumes:
+  pluton-mysql-ipc:
+networks:
+  persistent-restores:
+    external: true
+    name: pluton-persistent-restores
+  automatic-tests:
+    external: true
+    name: pluton-automatic-tests

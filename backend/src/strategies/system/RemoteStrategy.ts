@@ -70,7 +70,6 @@ export class RemoteStrategy implements SystemStrategy {
 		storageName: string,
 		settings: { old: Record<string, any>; new: Record<string, any> }
 	): Promise<{ success: boolean; result: string }> {
-		console.log('UPDATE_REMOTE_STORAGE :', storageName, settings);
 		return await this.publishCommand('UPDATE_REMOTE_STORAGE', { storageName, settings });
 	}
 	async removeRemoteStorage(storageName: string): Promise<{ success: boolean; result: string }> {
@@ -81,8 +80,11 @@ export class RemoteStrategy implements SystemStrategy {
 		action: string,
 		payload: any
 	): Promise<{ success: boolean; result: any }> {
-		return new Promise((resolve, reject) => {
-			resolve({ success: true, result: null });
+		void action;
+		void payload;
+		return Promise.resolve({
+			success: false,
+			result: 'REMOTE_CAPABILITY_NOT_IMPLEMENTED',
 		});
 	}
 }

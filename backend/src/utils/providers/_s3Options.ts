@@ -99,7 +99,7 @@ const s3Options = [
 	{
 		label: 'SSE-C Key',
 		value: 'sse_customer_key',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description:
@@ -110,7 +110,7 @@ const s3Options = [
 	{
 		label: 'SSE-C Key (Base64 Encoded)',
 		value: 'sse_customer_key_base64',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description:
@@ -121,7 +121,7 @@ const s3Options = [
 	{
 		label: 'SSE-C Key (MD5 checksum)',
 		value: 'sse_customer_key_md5',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description:
@@ -203,7 +203,7 @@ const s3Options = [
 	{
 		label: 'Session Token',
 		value: 'session_token',
-		fieldType: 'string',
+		fieldType: 'password',
 		required: false,
 		default: '',
 		description: 'An AWS session token.',

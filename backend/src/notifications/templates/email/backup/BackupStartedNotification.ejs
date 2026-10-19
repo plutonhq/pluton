@@ -11,24 +11,14 @@
 				<tr class="backupSummary_title">
 					<td style="text-align: left">
 						<i class="img-icon">
-							<img
-								width="14"
-								height="14"
-								src="https://pluton.b-cdn.net/email/uploading.png"
-								style="vertical-align: middle"
-							/>
+
 						</i>
 						<strong>Backing Up <%= plan.sourceConfig.includes.length || 0 %> sources</strong>
 					</td>
 					<td style="text-align: left"></td>
 					<td style="text-align: right">
 						<i class="img-icon"
-							><img
-								width="12"
-								height="12"
-								src="https://pluton.b-cdn.net/email/hourglass.png"
-								style="vertical-align: middle"
-						/></i>
+							></i>
 						<strong>In Progress</strong>
 					</td>
 				</tr>
@@ -59,8 +49,7 @@
 			<tr class="backupSummary_date">
 				<td style="text-align: left">
 					<i class="img-icon"
-						><img width="14" height="14" src="https://pluton.b-cdn.net/email/clock.png"
-					/></i>
+						></i>
 					Started At:
 				</td>
 				<td style="text-align: right"><%= startDate %></td>
@@ -68,8 +57,7 @@
 			<tr class="backupSummary_date">
 				<td style="text-align: left">
 					<i class="img-icon"
-						><img width="14" height="14" src="https://pluton.b-cdn.net/email/check.png"
-					/></i>
+						></i>
 					Completed At:
 				</td>
 				<td style="text-align: right">In Progress</td>
@@ -100,7 +88,7 @@
 														<p class="backupDetailsValue">
 															<%= formatBytes(stats?.total_bytes_processed || 0) %>
 														</p>
-														<p class="backupDetailsLabel">Backup Size</p>
+														<p class="backupDetailsLabel">Logical Snapshot Size (EST.)</p>
 													</td>
 													<td width="50%" class="backupDetailsStat">
 														<p class="backupDetailsValue">
@@ -125,21 +113,20 @@
 												<tr>
 													<td width="33.33%" class="backupDetailsChange">
 														<p class="backupDetailsValue">
-															<%= formatNumberToK((stats?.files_new || 0) + (stats?.dirs_new || 0))
+															<%= formatNumberToK(stats?.files_new || 0)
 															%>
 														</p>
 														<p class="backupDetailsLabel">New</p>
 													</td>
 													<td width="33.33%" class="backupDetailsChange">
 														<p class="backupDetailsValue">
-															<%= formatNumberToK((stats?.files_changed || 0) + (stats?.dirs_changed
-															|| 0)) %>
+															<%= formatNumberToK(stats?.files_changed || 0) %>
 														</p>
 														<p class="backupDetailsLabel">Modified</p>
 													</td>
 													<td width="33.33%" class="backupDetailsChange">
-														<p class="backupDetailsValue">0</p>
-														<p class="backupDetailsLabel">Removed</p>
+														<p class="backupDetailsValue">Not measured</p>
+														<p class="backupDetailsLabel">Deleted Files</p>
 													</td>
 												</tr>
 											</table>

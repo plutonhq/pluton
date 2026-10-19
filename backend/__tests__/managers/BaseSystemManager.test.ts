@@ -338,7 +338,9 @@ describe('BaseSystemManager', () => {
 	describe('getBrowsePath', () => {
 		it('without givenPath returns drives with stats and fallback on stat error', async () => {
 			const manager = new BaseSystemManager();
-			readFileMock.mockResolvedValue('root:x:0:0:root:/root:/bin/bash\nalice:x:1000:1000::/home/alice:/bin/bash\n');
+			readFileMock.mockResolvedValue(
+				'root:x:0:0:root:/root:/bin/bash\nalice:x:1000:1000::/home/alice:/bin/bash\n'
+			);
 			const drivesResult = {
 				success: true,
 				result: [
@@ -372,7 +374,9 @@ describe('BaseSystemManager', () => {
 
 		it('with givenPath lists directory contents sorted with directories first', async () => {
 			const manager = new BaseSystemManager();
-			readFileMock.mockResolvedValue('root:x:0:0:root:/root:/bin/bash\nalice:x:1000:1000::/home/alice:/bin/bash\n');
+			readFileMock.mockResolvedValue(
+				'root:x:0:0:root:/root:/bin/bash\nalice:x:1000:1000::/home/alice:/bin/bash\n'
+			);
 			// Dirents
 			readdirMock.mockResolvedValue([
 				{ name: 'b', isDirectory: () => true },
@@ -415,6 +419,16 @@ describe('BaseSystemManager', () => {
 	});
 
 	describe('updateRestic / updateRclone', () => {
+		it('fails closed without downloading/executing upstream updater scripts', async () => {
+			const manager = new BaseSystemManager();
+			for (const result of [await manager.updateRestic(), await manager.updateRclone()]) {
+				expect(result.success).toBe(false);
+				expect(result.result).toContain('/docs/deployment/updates');
+			}
+			expect(httpsGetMock).not.toHaveBeenCalled();
+			expect(createWriteStreamMock).not.toHaveBeenCalled();
+			expect(mkdtempMock).not.toHaveBeenCalled();
+		});
 		it('returns success with new version string', async () => {
 			const manager = new BaseSystemManager();
 			// Stub private method

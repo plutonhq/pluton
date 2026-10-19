@@ -1425,6 +1425,28 @@ describe('BackupHandler', () => {
 			expect(statSpy).toHaveBeenCalledWith('C:\\path1');
 			expect(statSpy).toHaveBeenCalledWith('C:\\path2');
 		});
+
+		it('normalizes an include marker before validating the local source path', async () => {
+			jest.spyOn(os, 'freemem').mockReturnValue(1024 * 1024 * 1024);
+			const statSpy = jest.spyOn(fs.promises, 'stat').mockResolvedValue({} as any);
+			const sourcePath = '/pilot/source/auditdrive';
+			const optionsWithMarkedPath = {
+				...baseOptions,
+				sourceConfig: {
+					includes: [`ip#${sourcePath}`],
+					excludes: [],
+				},
+			};
+
+			const resticArgsAndEnv = handler.createResticBackupArgs(
+				'plan-1',
+				optionsWithMarkedPath as any
+			);
+			await handler.canRun(optionsWithMarkedPath, resticArgsAndEnv);
+
+			expect(statSpy).toHaveBeenCalledWith(sourcePath);
+			expect(statSpy).not.toHaveBeenCalledWith(`ip#${sourcePath}`);
+		});
 	});
 
 	describe('cancel - additional tests', () => {

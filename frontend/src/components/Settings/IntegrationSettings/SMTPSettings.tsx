@@ -86,6 +86,7 @@ const SMTPSettings = ({ settingsID, settings, onUpdate }: SMTPSettingsProps) => 
                label="SMTP Password"
                fieldValue={(smtpSettings?.password || '') as string}
                type="password"
+               placeholder={smtpSettings.passwordConfigured ? 'Saved privately — leave blank to keep' : ''}
                onUpdate={(val) => onUpdate({ ...smtpSettings, password: val })}
             />
          </div>

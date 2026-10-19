@@ -3,6 +3,7 @@ import { NewPlanReq, PlanAddRunSettings } from '../types/plans';
 import { BackupRunConfig } from '../types/backups';
 import { PlanService } from '../services/PlanService';
 import { AppError } from '../utils/AppError';
+import { RetainedRestoreDependencyError } from '../utils/retainedRestoreDependency';
 
 export class PlanController {
 	constructor(protected planService: PlanService) {}
@@ -29,7 +30,10 @@ export class PlanController {
 			return;
 		}
 		try {
-			const thePlan = await this.planService.getPlan(req.params.id, true);
+			const thePlan =
+				req.query.backupHistory === 'summary'
+					? await this.planService.getPlan(req.params.id, true, true)
+					: await this.planService.getPlan(req.params.id, true);
 			res.status(200).json({
 				success: true,
 				result: thePlan,
@@ -39,6 +43,20 @@ export class PlanController {
 			res.status(appError.statusCode || 500).json({
 				success: false,
 				error: appError?.message || 'Internal Server Error',
+			});
+		}
+	}
+
+	async getBackupHistory(req: Request, res: Response): Promise<void> {
+		try {
+			if (!req.params.id) throw new AppError(400, 'Plan ID is required');
+			const result = await this.planService.getBackupHistory(req.params.id, req.query);
+			res.setHeader('Cache-Control', 'private, no-store');
+			res.status(200).json({ success: true, result });
+		} catch (error) {
+			res.status(error instanceof AppError ? error.statusCode : 500).json({
+				success: false,
+				error: error instanceof AppError ? error.message : 'Could not load backup history.',
 			});
 		}
 	}
@@ -142,7 +160,7 @@ export class PlanController {
 				return;
 			}
 			const removeRemoteData = req.query.removeData === 'true';
-			const { unremovedPaths, unremovedReason } = await this.planService.deletePlan(
+			const { unremovedPaths, unremovedReason, storageDisposition } = await this.planService.deletePlan(
 				req.params.id,
 				removeRemoteData
 			);
@@ -151,12 +169,14 @@ export class PlanController {
 				message: 'Plan deleted successfully',
 				unremovedPaths,
 				unremovedReason,
+				storageDisposition,
 			});
 		} catch (error: unknown) {
 			const appError = error as AppError;
 			res.status(appError.statusCode || 500).json({
 				success: false,
 				error: appError?.message || 'Failed to delete plan',
+				...(error instanceof RetainedRestoreDependencyError && { code: error.code }),
 			});
 		}
 	}

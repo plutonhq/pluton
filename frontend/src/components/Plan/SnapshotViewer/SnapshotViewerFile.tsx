@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import Icon from '../../common/Icon/Icon';
 import FileIcon from '../../common/FileIcon/FileIcon';
-import { formatBytes, formatDateTime, proViewableFileFormats, proViewFileFormatObj, timeAgo } from '../../../utils/helpers';
+import { formatBytes, formatDateTime, timeAgo } from '../../../utils/helpers';
 import { FileItem } from '../../../@types/system';
 import classes from '../../common/SnapshotBrowser/SnapshotBrowser.module.scss';
 
@@ -26,7 +26,6 @@ const SnapshotViewerFile = ({
    onDirectoryClick,
    onRestore,
    renderFileActions,
-   showUpgradeModal,
 }: SnapshotViewerFileProps) => {
    if (!file) return null;
 
@@ -49,7 +48,6 @@ const SnapshotViewerFile = ({
    const fileName = typedFile.name || typedFile.path.split('/').pop() || '';
    const isDirectory = typedFile.isDirectory;
    const fileExtension = fileName.split('.').pop() || '';
-   const isPlayable = [...proViewFileFormatObj.audio, ...proViewFileFormatObj.video].includes(fileExtension);
 
    return (
       <div
@@ -71,29 +69,6 @@ const SnapshotViewerFile = ({
          {!isSync && (
             <div className={classes.fileActions}>
                {renderFileActions?.(typedFile, { fileExtension, isDirectory })}
-               {!renderFileActions && !isDirectory && proViewableFileFormats.includes(fileExtension) && (
-                  <button
-                     style={{ opacity: '0.4' }}
-                     onClick={(e) => {
-                        e.stopPropagation();
-                        showUpgradeModal?.();
-                     }}
-                  >
-                     <Icon type={isPlayable ? 'play' : 'eye'} size={16} />
-                  </button>
-               )}
-
-               {!renderFileActions && (
-                  <button
-                     style={{ opacity: '0.5' }}
-                     onClick={(e) => {
-                        e.stopPropagation();
-                        showUpgradeModal?.();
-                     }}
-                  >
-                     <Icon type={'download'} size={16} />
-                  </button>
-               )}
                <button
                   data-tooltip-id="htmlToolTip"
                   data-tooltip-place="top"

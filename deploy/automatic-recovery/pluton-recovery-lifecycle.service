@@ -1,0 +1,25 @@
+[Unit]
+Description=Pluton narrow automatic internal recovery operator
+Requires=docker.service pluton-recovery-anchors.service
+After=docker.service local-fs.target pluton-recovery-anchors.service
+ConditionPathExists=/etc/pluton-automatic-recovery/policy.json
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/node /opt/pluton-recovery-operator/deploy/automatic-recovery/operator.cjs tick
+TimeoutStartSec=240
+TimeoutStopSec=10
+KillMode=control-group
+# Mount units are owned by PID 1; the reconciler keeps its filesystem sandbox.
+PrivateTmp=true
+ProtectHome=true
+NoNewPrivileges=true
+# Keep these controls: direct service-side mounts cannot propagate to Docker.
+# The systemd storage driver verifies PID-1/operator/Docker mount identities.
+# Activation still requires the independent real quota/lifecycle acceptance gate.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=true
+

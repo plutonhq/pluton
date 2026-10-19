@@ -2,6 +2,8 @@ import nodemailer from 'nodemailer';
 import { BaseNotification } from '../BaseNotification';
 import { NotificationChannel } from '../NotificationChannel';
 import { SmtpSettings } from '../../types/settings';
+import { secureSmtpOptions } from './secureSmtp';
+import { z } from 'zod';
 
 export class SMTPChannel implements NotificationChannel {
 	private transporter!: nodemailer.Transporter;
@@ -15,25 +17,22 @@ export class SMTPChannel implements NotificationChannel {
 		const smtpConfig = this.smtpSettings;
 		const senderName = smtpConfig?.senderName || 'Pluton Backup';
 
-		// console.log('smtpConfig :', smtpConfig);/
+		const security = smtpConfig.security || (smtpConfig.port === 465 ? 'tls' : 'starttls');
+		if (
+			(security === 'plain' && !smtpConfig.trustedPlain) ||
+			Array.from(senderName).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127) ||
+			!z.email().safeParse(smtpConfig.senderEmail).success
+		)
+			throw new Error('Invalid SMTP configuration.');
 		this.transporter = nodemailer.createTransport({
-			host: smtpConfig.server,
-			port: smtpConfig.port,
-			secure: smtpConfig.port === 465,
-			requireTLS: false,
-			// debug: true,
-			// logger: true,
-			connectionTimeout: 15000,
-			greetingTimeout: 10000,
-			socketTimeout: 30000,
-			auth: {
-				user: smtpConfig.username,
-				pass: smtpConfig.password,
-			},
-			tls: {
-				// Disable certificate verification
-				rejectUnauthorized: false,
-			},
+			...secureSmtpOptions({
+				host: smtpConfig.server,
+				port: smtpConfig.port,
+				security,
+				username: smtpConfig.username,
+				password: smtpConfig.password,
+				timeoutMs: 15000,
+			}),
 			from: `${senderName} <${smtpConfig.senderEmail}>`,
 		});
 	}
@@ -62,10 +61,9 @@ export class SMTPChannel implements NotificationChannel {
 				result: `Email sent successfully to ${mailOptions.to}`,
 			};
 		} catch (error: any) {
-			console.error('Email Send Error:', error);
 			return {
 				success: false,
-				result: error?.message || 'Failed to send email',
+				result: 'SMTP delivery failed. Check authentication, TLS and relay configuration.',
 			};
 		}
 	}

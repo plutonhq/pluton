@@ -3,9 +3,9 @@
       padding: 8px 12px;
       border: 1px solid var(--field-line-color);
       border-radius: 6px;
-      background: transparent;
+      background: var(--field-bg);
       color: var(--content-text-color);
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
       width: 200px;
       box-sizing: border-box;
       transition: all 0.2s ease;

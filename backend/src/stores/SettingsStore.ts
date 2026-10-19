@@ -50,7 +50,10 @@ export class SettingsStore {
 			const processedSettings = await this.encryptIntegrationSecrets(updates);
 			if (processedSettings && processedSettings?.integration) {
 				updates.integration = processedSettings.integration;
-			}
+			} else
+				throw new Error(
+					'Integration credentials could not be encrypted; settings were not changed.'
+				);
 			updates.integration = this.setIntegrationConnectedStatus(updates.integration);
 		}
 		const result = await this.db
@@ -76,7 +79,7 @@ export class SettingsStore {
 				theSettings.integration = this.resolver.decryptSecrets(theSettings.integration);
 				return theSettings;
 			} catch (error: any) {
-				console.log('Error decrypting password:', error);
+				console.warn('Integration credentials could not be decrypted.');
 				return null;
 			}
 		}
@@ -90,7 +93,7 @@ export class SettingsStore {
 				theSettings.integration = this.resolver.encryptSecrets(theSettings.integration);
 				return theSettings;
 			} catch (error: any) {
-				console.log('Error encrypting password:', error);
+				console.warn('Integration credentials could not be encrypted.');
 				return false;
 			}
 		}

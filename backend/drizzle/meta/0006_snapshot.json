@@ -1,0 +1,1547 @@
+{
+	"version": "6",
+	"dialect": "sqlite",
+	"id": "2d399145-8113-4167-ba95-207cb4b4666c",
+	"prevId": "294eae85-df04-4d1a-9ada-3ca280b082bf",
+	"tables": {
+		"agent_commands": {
+			"name": "agent_commands",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"agent_id": {
+					"name": "agent_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"type": {
+					"name": "type",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"payload": {
+					"name": "payload",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"state": {
+					"name": "state",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'queued'"
+				},
+				"idempotency_key": {
+					"name": "idempotency_key",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"leased_at": {
+					"name": "leased_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"lease_owner": {
+					"name": "lease_owner",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"lease_expires_at": {
+					"name": "lease_expires_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"acknowledged_at": {
+					"name": "acknowledged_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"completed_at": {
+					"name": "completed_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"attempt_count": {
+					"name": "attempt_count",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": 0
+				},
+				"last_event_sequence": {
+					"name": "last_event_sequence",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": 0
+				},
+				"last_error": {
+					"name": "last_error",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {
+				"agent_commands_idempotency_key_idx": {
+					"name": "agent_commands_idempotency_key_idx",
+					"columns": ["idempotency_key"],
+					"isUnique": true
+				},
+				"agent_commands_agent_state_idx": {
+					"name": "agent_commands_agent_state_idx",
+					"columns": ["agent_id", "state", "created_at"],
+					"isUnique": false
+				},
+				"agent_commands_lease_expires_at_idx": {
+					"name": "agent_commands_lease_expires_at_idx",
+					"columns": ["lease_expires_at"],
+					"isUnique": false
+				}
+			},
+			"foreignKeys": {
+				"agent_commands_agent_id_agent_identities_agent_id_fk": {
+					"name": "agent_commands_agent_id_agent_identities_agent_id_fk",
+					"tableFrom": "agent_commands",
+					"tableTo": "agent_identities",
+					"columnsFrom": ["agent_id"],
+					"columnsTo": ["agent_id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"agent_enrollment_tokens": {
+			"name": "agent_enrollment_tokens",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"token_hash": {
+					"name": "token_hash",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"device_name": {
+					"name": "device_name",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"expires_at": {
+					"name": "expires_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"used_at": {
+					"name": "used_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"revoked_at": {
+					"name": "revoked_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {
+				"agent_enrollment_tokens_token_hash_idx": {
+					"name": "agent_enrollment_tokens_token_hash_idx",
+					"columns": ["token_hash"],
+					"isUnique": true
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"agent_identities": {
+			"name": "agent_identities",
+			"columns": {
+				"agent_id": {
+					"name": "agent_id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"device_id": {
+					"name": "device_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"encrypted_secret": {
+					"name": "encrypted_secret",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"hostname": {
+					"name": "hostname",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"os": {
+					"name": "os",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"architecture": {
+					"name": "architecture",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"agent_version": {
+					"name": "agent_version",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"restic_version": {
+					"name": "restic_version",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"rclone_version": {
+					"name": "rclone_version",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"capabilities": {
+					"name": "capabilities",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"last_seen": {
+					"name": "last_seen",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"revoked_at": {
+					"name": "revoked_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {
+				"agent_identities_device_id_unique": {
+					"name": "agent_identities_device_id_unique",
+					"columns": ["device_id"],
+					"isUnique": true
+				},
+				"agent_identities_device_id_idx": {
+					"name": "agent_identities_device_id_idx",
+					"columns": ["device_id"],
+					"isUnique": false
+				}
+			},
+			"foreignKeys": {
+				"agent_identities_device_id_devices_id_fk": {
+					"name": "agent_identities_device_id_devices_id_fk",
+					"tableFrom": "agent_identities",
+					"tableTo": "devices",
+					"columnsFrom": ["device_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"agent_request_nonces": {
+			"name": "agent_request_nonces",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"agent_id": {
+					"name": "agent_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"nonce_hash": {
+					"name": "nonce_hash",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"expires_at": {
+					"name": "expires_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				}
+			},
+			"indexes": {
+				"agent_request_nonces_agent_nonce_idx": {
+					"name": "agent_request_nonces_agent_nonce_idx",
+					"columns": ["agent_id", "nonce_hash"],
+					"isUnique": true
+				},
+				"agent_request_nonces_expires_at_idx": {
+					"name": "agent_request_nonces_expires_at_idx",
+					"columns": ["expires_at"],
+					"isUnique": false
+				}
+			},
+			"foreignKeys": {
+				"agent_request_nonces_agent_id_agent_identities_agent_id_fk": {
+					"name": "agent_request_nonces_agent_id_agent_identities_agent_id_fk",
+					"tableFrom": "agent_request_nonces",
+					"tableTo": "agent_identities",
+					"columnsFrom": ["agent_id"],
+					"columnsTo": ["agent_id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"backups": {
+			"name": "backups",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"title": {
+					"name": "title",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"description": {
+					"name": "description",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"started_at": {
+					"name": "started_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"ended_at": {
+					"name": "ended_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"in_progress": {
+					"name": "in_progress",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"success": {
+					"name": "success",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"active": {
+					"name": "active",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false,
+					"default": true
+				},
+				"status": {
+					"name": "status",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"error_msg": {
+					"name": "error_msg",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"plan_id": {
+					"name": "plan_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"storage_id": {
+					"name": "storage_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"storage_path": {
+					"name": "storage_path",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"source_id": {
+					"name": "source_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"method": {
+					"name": "method",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"source_type": {
+					"name": "source_type",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'device'"
+				},
+				"source_config": {
+					"name": "source_config",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"encryption": {
+					"name": "encryption",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false,
+					"default": true
+				},
+				"compression": {
+					"name": "compression",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false,
+					"default": false
+				},
+				"download": {
+					"name": "download",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"task_stats": {
+					"name": "task_stats",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"progress_stats": {
+					"name": "progress_stats",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"completion_stats": {
+					"name": "completion_stats",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"mirrors": {
+					"name": "mirrors",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"backups_plan_id_plans_id_fk": {
+					"name": "backups_plan_id_plans_id_fk",
+					"tableFrom": "backups",
+					"tableTo": "plans",
+					"columnsFrom": ["plan_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				},
+				"backups_storage_id_storages_id_fk": {
+					"name": "backups_storage_id_storages_id_fk",
+					"tableFrom": "backups",
+					"tableTo": "storages",
+					"columnsFrom": ["storage_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"devices": {
+			"name": "devices",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"name": {
+					"name": "name",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"type": {
+					"name": "type",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'device'"
+				},
+				"ip": {
+					"name": "ip",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"host": {
+					"name": "host",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"port": {
+					"name": "port",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"key": {
+					"name": "key",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"agent_id": {
+					"name": "agent_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"versions": {
+					"name": "versions",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"hostname": {
+					"name": "hostname",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"os": {
+					"name": "os",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"platform": {
+					"name": "platform",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"metrics": {
+					"name": "metrics",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"status": {
+					"name": "status",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"tags": {
+					"name": "tags",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"last_seen": {
+					"name": "last_seen",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"settings": {
+					"name": "settings",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {
+				"devices_agent_id_unique": {
+					"name": "devices_agent_id_unique",
+					"columns": ["agent_id"],
+					"isUnique": true
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"legacy_repositories": {
+			"name": "legacy_repositories",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"display_name": {
+					"name": "display_name",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"repository_path": {
+					"name": "repository_path",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"backend": {
+					"name": "backend",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'local'"
+				},
+				"encrypted_password": {
+					"name": "encrypted_password",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"is_read_only": {
+					"name": "is_read_only",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": true
+				},
+				"validation_status": {
+					"name": "validation_status",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'unknown'"
+				},
+				"last_validated_at": {
+					"name": "last_validated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"legacy_restore_jobs": {
+			"name": "legacy_restore_jobs",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"repository_id": {
+					"name": "repository_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"snapshot_id": {
+					"name": "snapshot_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"selected_paths": {
+					"name": "selected_paths",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"staging_path": {
+					"name": "staging_path",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"status": {
+					"name": "status",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'queued'"
+				},
+				"error_msg": {
+					"name": "error_msg",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"restored_file_count": {
+					"name": "restored_file_count",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"restored_bytes": {
+					"name": "restored_bytes",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"started_at": {
+					"name": "started_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"completed_at": {
+					"name": "completed_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {
+				"legacy_restore_jobs_repository_id_idx": {
+					"name": "legacy_restore_jobs_repository_id_idx",
+					"columns": ["repository_id"],
+					"isUnique": false
+				}
+			},
+			"foreignKeys": {
+				"legacy_restore_jobs_repository_id_legacy_repositories_id_fk": {
+					"name": "legacy_restore_jobs_repository_id_legacy_repositories_id_fk",
+					"tableFrom": "legacy_restore_jobs",
+					"tableTo": "legacy_repositories",
+					"columnsFrom": ["repository_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"plans": {
+			"name": "plans",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"title": {
+					"name": "title",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"description": {
+					"name": "description",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"active": {
+					"name": "active",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": true
+				},
+				"in_progress": {
+					"name": "in_progress",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"storage_id": {
+					"name": "storage_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"storage_path": {
+					"name": "storage_path",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"source_id": {
+					"name": "source_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"source_type": {
+					"name": "source_type",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'device'"
+				},
+				"source_config": {
+					"name": "source_config",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"verified": {
+					"name": "verified",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"last_backup_time": {
+					"name": "last_backup_time",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"method": {
+					"name": "method",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'backup'"
+				},
+				"tags": {
+					"name": "tags",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"settings": {
+					"name": "settings",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"stats": {
+					"name": "stats",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"plans_storage_id_storages_id_fk": {
+					"name": "plans_storage_id_storages_id_fk",
+					"tableFrom": "plans",
+					"tableTo": "storages",
+					"columnsFrom": ["storage_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"remote_managed_repositories": {
+			"name": "remote_managed_repositories",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"plan_id": {
+					"name": "plan_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"agent_id": {
+					"name": "agent_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"storage_id": {
+					"name": "storage_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"storage_path": {
+					"name": "storage_path",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"encrypted_password": {
+					"name": "encrypted_password",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"initialized_at": {
+					"name": "initialized_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {
+				"remote_managed_repositories_plan_id_idx": {
+					"name": "remote_managed_repositories_plan_id_idx",
+					"columns": ["plan_id"],
+					"isUnique": true
+				},
+				"remote_managed_repositories_agent_id_idx": {
+					"name": "remote_managed_repositories_agent_id_idx",
+					"columns": ["agent_id"],
+					"isUnique": false
+				}
+			},
+			"foreignKeys": {
+				"remote_managed_repositories_plan_id_plans_id_fk": {
+					"name": "remote_managed_repositories_plan_id_plans_id_fk",
+					"tableFrom": "remote_managed_repositories",
+					"tableTo": "plans",
+					"columnsFrom": ["plan_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				},
+				"remote_managed_repositories_agent_id_agent_identities_agent_id_fk": {
+					"name": "remote_managed_repositories_agent_id_agent_identities_agent_id_fk",
+					"tableFrom": "remote_managed_repositories",
+					"tableTo": "agent_identities",
+					"columnsFrom": ["agent_id"],
+					"columnsTo": ["agent_id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				},
+				"remote_managed_repositories_storage_id_storages_id_fk": {
+					"name": "remote_managed_repositories_storage_id_storages_id_fk",
+					"tableFrom": "remote_managed_repositories",
+					"tableTo": "storages",
+					"columnsFrom": ["storage_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"restores": {
+			"name": "restores",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"started_at": {
+					"name": "started_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"ended_at": {
+					"name": "ended_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"in_progress": {
+					"name": "in_progress",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"status": {
+					"name": "status",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"error_msg": {
+					"name": "error_msg",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"backup_id": {
+					"name": "backup_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"plan_id": {
+					"name": "plan_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"storage_id": {
+					"name": "storage_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"source_id": {
+					"name": "source_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"source_type": {
+					"name": "source_type",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'device'"
+				},
+				"config": {
+					"name": "config",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"method": {
+					"name": "method",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "'backup'"
+				},
+				"task_stats": {
+					"name": "task_stats",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"progress_stats": {
+					"name": "progress_stats",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"completion_stats": {
+					"name": "completion_stats",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"restores_backup_id_backups_id_fk": {
+					"name": "restores_backup_id_backups_id_fk",
+					"tableFrom": "restores",
+					"tableTo": "backups",
+					"columnsFrom": ["backup_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				},
+				"restores_plan_id_plans_id_fk": {
+					"name": "restores_plan_id_plans_id_fk",
+					"tableFrom": "restores",
+					"tableTo": "plans",
+					"columnsFrom": ["plan_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				},
+				"restores_storage_id_storages_id_fk": {
+					"name": "restores_storage_id_storages_id_fk",
+					"tableFrom": "restores",
+					"tableTo": "storages",
+					"columnsFrom": ["storage_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"settings": {
+			"name": "settings",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "integer",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": true
+				},
+				"settings": {
+					"name": "settings",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"updated_by": {
+					"name": "updated_by",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"version": {
+					"name": "version",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false,
+					"default": 1
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"storages": {
+			"name": "storages",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"name": {
+					"name": "name",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"type": {
+					"name": "type",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"default_path": {
+					"name": "default_path",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false,
+					"default": "'/'"
+				},
+				"settings": {
+					"name": "settings",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"credentials": {
+					"name": "credentials",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"authType": {
+					"name": "authType",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"tags": {
+					"name": "tags",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(unixepoch())"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		}
+	},
+	"views": {},
+	"enums": {},
+	"_meta": {
+		"schemas": {},
+		"tables": {},
+		"columns": {}
+	},
+	"internal": {
+		"indexes": {}
+	}
+}

@@ -16,7 +16,7 @@
    border: 1px solid transparent;
    &:hover {
       border: 1px solid var(--primary-color-mid);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
 }
 

@@ -211,29 +211,7 @@ export const compareVersions = (current: string, latest: string) => {
    return false;
 };
 
-export const getUpdateDocLink = (isPRO?: boolean) => {
-   const installType = (window as any).plutonInstallType || 'unknown';
-   console.log('installType :', installType);
-   if (installType === 'binary') {
-      if (isPRO) {
-         return 'https://docs.usepluton.com/docs/pluton-pro/install-pluton-pro-desktop#updating';
-      }
-      return 'https://docs.usepluton.com/docs/getting-started/install-pluton-desktop#updating';
-   }
-   if (installType === 'server') {
-      if (isPRO) {
-         return 'https://docs.usepluton.com/docs/pluton-pro/install-pluton-pro-linux-server#updating';
-      }
-      return 'https://docs.usepluton.com/docs/getting-started/install-pluton-linux-server#updating-pluton';
-   }
-   if (installType === 'docker') {
-      if (isPRO) {
-         return 'https://docs.usepluton.com/docs/pluton-pro/deploy-pluton-pro-docker#updating';
-      }
-      return 'https://docs.usepluton.com/docs/getting-started/deploy-docker#quick-reference';
-   }
-   return 'https://github.com/plutonhq/pluton/releases/latest';
-};
+export const getUpdateDocLink = (_isPRO?: boolean) => '/docs/deployment/updates';
 
 export const isServerEdition = (distro: string, platform: string): boolean => {
    // Check Windows Server editions

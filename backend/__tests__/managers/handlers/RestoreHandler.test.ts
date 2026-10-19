@@ -4,6 +4,7 @@ const mockGetSnapshotByTag = jest.fn();
 const mockGenerateResticRepoPath = jest.fn();
 const mockResticPathToWindows = jest.fn();
 const mockTrackProcess = jest.fn();
+const mockUntrackProcess = jest.fn();
 const mockKillProcess = jest.fn();
 const mockInitialize = jest.fn();
 const mockInitializeProgress = jest.fn();
@@ -29,6 +30,7 @@ jest.mock('../../../src/utils/restic/helpers', () => ({
 jest.mock('../../../src/managers/ProcessManager', () => ({
 	processManager: {
 		trackProcess: (...args: any[]) => mockTrackProcess(...args),
+		untrackProcess: (...args: any[]) => mockUntrackProcess(...args),
 		killProcess: (...args: any[]) => mockKillProcess(...args),
 	},
 }));
@@ -388,7 +390,7 @@ describe('RestoreHandler', () => {
 			jest.useFakeTimers();
 
 			// Do NOT emit the event - we want to test timeout behavior
-			const waitPromise = handler['waitForRestoreCreation']('backup-1');
+			const waitPromise = handler['waitForRestoreCreation']('backup-1', 'restore-1');
 
 			// Advance timers past the 30s timeout
 			jest.advanceTimersByTime(30001);
@@ -397,6 +399,19 @@ describe('RestoreHandler', () => {
 				'Timeout: Did not receive restore_created confirmation for backup: backup-1'
 			);
 
+			jest.useRealTimers();
+		});
+
+		it('ignores confirmation for a different restore', async () => {
+			jest.useFakeTimers();
+			const waitPromise = handler['waitForRestoreCreation']('backup-1', 'restore-1');
+
+			emitter.emit('restoreCreated', { backupId: 'backup-1', restoreId: 'other-restore' });
+			jest.advanceTimersByTime(30001);
+
+			await expect(waitPromise).rejects.toThrow(
+				'Timeout: Did not receive restore_created confirmation for backup: backup-1'
+			);
 			jest.useRealTimers();
 		});
 	});
@@ -1018,6 +1033,49 @@ describe('RestoreHandler', () => {
 				call => call[0] && call[0].includes('unlock')
 			);
 			expect(unlockCall).toBeDefined();
+		});
+	});
+
+	describe('unlockStaleLocks', () => {
+		it('bounds and tracks the unlock process', async () => {
+			await handler['unlockStaleLocks']('plan-1', 'restore-1', {
+				storageName: 'test-storage',
+				storagePath: 'backups/test',
+				encryption: false,
+			});
+
+			const unlockCall = mockRunResticCommand.mock.calls.find(call => call[0]?.includes('unlock'));
+			expect(unlockCall).toBeDefined();
+			expect(unlockCall).toEqual([
+				['unlock', '-r', 'rclone:test-storage:backups/test'],
+				{ RESTIC_PASSWORD: '' },
+				undefined,
+				undefined,
+				undefined,
+				expect.any(Function),
+				{ timeout: 120_000, stallTimeout: 60_000 },
+			]);
+
+			const onProcess = unlockCall![5] as (process: unknown) => void;
+			onProcess({});
+			expect(mockTrackProcess).toHaveBeenCalledWith('restore-restore-1', expect.anything());
+			expect(mockUntrackProcess).toHaveBeenCalledWith('restore-restore-1');
+		});
+
+		it('continues to the restore phase after a bounded unlock failure', async () => {
+			mockRunResticCommand.mockRejectedValueOnce(
+				Object.assign(new Error('Restic command timed out after 120000ms'), { timedOut: true })
+			);
+
+			await expect(
+				handler['unlockStaleLocks']('plan-1', 'restore-1', {
+					storageName: 'test-storage',
+					storagePath: 'backups/test',
+					encryption: false,
+				})
+			).resolves.toBeUndefined();
+
+			expect(mockUntrackProcess).toHaveBeenCalledWith('restore-restore-1');
 		});
 	});
 

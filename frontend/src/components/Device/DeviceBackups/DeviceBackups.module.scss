@@ -77,7 +77,7 @@
                a {
                   color: inherit;
                   &:hover {
-                     color: var(--primary-color);
+                     color: var(--primary-color-foreground);
                   }
                }
             }
@@ -104,7 +104,7 @@
             a {
                color: inherit;
                &:hover {
-                  color: var(--primary-color);
+                  color: var(--primary-color-foreground);
                }
             }
          }

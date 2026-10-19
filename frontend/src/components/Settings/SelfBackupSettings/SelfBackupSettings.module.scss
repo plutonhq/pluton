@@ -65,7 +65,7 @@
 
    &:hover {
       border-color: var(--primary-color-mid);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
 
    &:disabled {
@@ -178,7 +178,7 @@
 
    &:hover {
       border-color: var(--primary-color-mid);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
 
    &:disabled {

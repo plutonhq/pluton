@@ -1,0 +1,58 @@
+.lifecycle {
+   h3 {
+      margin: 20px 0 12px;
+   }
+   p {
+      line-height: 1.6;
+      margin: 12px 0;
+   }
+   label {
+      display: block;
+      font-size: 13px;
+   }
+   input:not([type='checkbox']),
+   select,
+   textarea {
+      box-sizing: border-box;
+      width: 100%;
+      display: block;
+      margin-top: 7px;
+      padding: 9px;
+      border: 1px solid var(--field-line-color);
+      border-radius: 5px;
+      background: var(--field-bg);
+      color: var(--content-text-color);
+   }
+}
+.grid {
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 18px;
+   margin-top: 18px;
+}
+.hook {
+   margin: 18px 0;
+}
+.card {
+   border: 1px solid var(--line-color);
+   background: var(--content-background-color);
+   border-radius: 7px;
+   padding: 16px;
+   margin: 18px 0;
+   h4 {
+      margin: 0 0 12px;
+   }
+}
+.actions {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 10px;
+   button:disabled {
+      color: var(--content-text-color-light);
+   }
+}
+@media (max-width: 650px) {
+   .grid {
+      grid-template-columns: 1fr;
+   }
+}

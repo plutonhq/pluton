@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pluton Documentation</title>
+    <script>
+      // Apply the existing app preference before styles/React load, without changing it.
+      try {
+        var preference = localStorage.getItem('themeSetting');
+        var mode = preference === 'light' || preference === 'dark' ? preference : 'system';
+        localStorage.setItem('pluton-docs-theme', mode);
+        var dark = mode === 'dark' || (mode === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        sessionStorage.removeItem('pluton-docs-document-redirect');
+      } catch (_) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

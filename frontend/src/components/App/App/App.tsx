@@ -9,6 +9,7 @@ import classes from './App.module.scss';
 import { useTheme } from '../../../context/ThemeContext';
 import { usePwaAutoUpdate } from '../../../hooks/usePwaAutoUpdate';
 import { useGetSettings } from '../../../services/settings';
+import { validThemeSetting } from '../../../utils/theme';
 
 function App() {
    console.log('API_URL :', API_URL);
@@ -19,14 +20,18 @@ function App() {
    useEffect(() => {
       const savedTheme = settingsData?.result?.settings?.theme;
 
-      // If a theme is saved on the backend, ensure our local state matches.
+      // Seed an existing installation's preference once. An explicit browser
+      // choice (including System) must not be overwritten on refresh/refocus.
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'auto')) {
-         const currentLocalSetting = localStorage.getItem('themeSetting');
+         let currentLocalSetting;
+         try {
+            currentLocalSetting = localStorage.getItem('themeSetting') || localStorage.getItem('theme');
+         } catch {
+            /* Restricted browser storage. */
+         }
 
-         // If the backend setting is different from what's in localStorage, update it.
-         if (savedTheme !== currentLocalSetting) {
-            console.log('Syncing theme from backend:', savedTheme);
-            setTheme(savedTheme); // This will update context and localStorage.
+         if (!validThemeSetting(currentLocalSetting)) {
+            setTheme(savedTheme);
          }
       }
    }, [settingsData, setTheme]);

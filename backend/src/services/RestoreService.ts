@@ -7,6 +7,8 @@ import { StorageStore } from '../stores/StorageStore';
 import { BaseRestoreManager } from '../managers/BaseRestoreManager';
 import { RestoreConfig, RestoreOptions } from '../types/restores';
 import { normalizeStorageName } from '../utils/helpers';
+import { RemoteBackupService } from './RemoteBackupService';
+import { RemoteRepositoryRecoveryService } from './RemoteRepositoryRecoveryService';
 
 /**
  * A class for managing restore operations.
@@ -17,7 +19,8 @@ export class RestoreService {
 		protected planStore: PlanStore,
 		protected backupStore: BackupStore,
 		protected restoreStore: RestoreStore,
-		protected storageStore: StorageStore
+		protected storageStore: StorageStore,
+		private readonly remoteRecovery?: RemoteRepositoryRecoveryService
 	) {}
 
 	getRestoreStrategy(deviceId: string, method: string, sourceType?: string): RestoreStrategy {
@@ -43,6 +46,7 @@ export class RestoreService {
 		if (!restore) {
 			throw new NotFoundError('Restore not found');
 		}
+		if (restore.config?.stagingOnly) return this.requireRecovery().stats(restore);
 		const strategy = this.getRestoreStrategy(restore.sourceId, restore.method, restore.sourceType);
 		const statsRes = await strategy.getRestoreStats(restore.planId as string, restoreId);
 
@@ -54,11 +58,17 @@ export class RestoreService {
 		if (!restore) {
 			throw new NotFoundError('Restore not found');
 		}
+		if (restore.config?.stagingOnly && restore.inProgress)
+			throw new AppError(409, 'Stop the staged restore before removing its record.');
 
 		await this.restoreStore.delete(restoreId);
 	}
 
-	async dryRestoreBackup(backupId: string, restoreConfig: RestoreConfig) {
+	async dryRestoreBackup(backupId: string, restoreConfig: RestoreConfig, expectedPlanId?: string) {
+		const remote = await this.backupStore.getById(backupId);
+		if (remote?.method === 'backup' && RemoteBackupService.isRemoteFilesystemPlan(remote)) {
+			return this.requireRecovery().preview(backupId, restoreConfig, expectedPlanId);
+		}
 		try {
 			const backup = await this.backupStore.getById(backupId);
 			if (!backup) {
@@ -124,7 +134,11 @@ export class RestoreService {
 		}
 	}
 
-	async restoreBackup(backupId: string, restoreConfig: RestoreConfig) {
+	async restoreBackup(backupId: string, restoreConfig: RestoreConfig, expectedPlanId?: string) {
+		const remote = await this.backupStore.getById(backupId);
+		if (remote?.method === 'backup' && RemoteBackupService.isRemoteFilesystemPlan(remote)) {
+			return this.requireRecovery().restore(backupId, restoreConfig, expectedPlanId);
+		}
 		try {
 			const backup = await this.backupStore.getById(backupId);
 			if (!backup) {
@@ -192,6 +206,7 @@ export class RestoreService {
 		if (!restore) {
 			throw new NotFoundError('Restore not found');
 		}
+		if (restore.config?.stagingOnly) return this.requireRecovery().cancel(restore);
 		const strategy = this.getRestoreStrategy(
 			restore.sourceId as string,
 			restore.method,
@@ -211,6 +226,7 @@ export class RestoreService {
 		if (!restore) {
 			throw new NotFoundError('Restore not found');
 		}
+		if (restore.config?.stagingOnly) return this.requireRecovery().progress(restore);
 		const strategy = this.getRestoreStrategy(
 			restore.sourceId as string,
 			restore.method,
@@ -221,6 +237,11 @@ export class RestoreService {
 			throw new Error((progressResult.result as string) || 'Failed to get Restore Progress');
 		}
 		return progressResult.result;
+	}
+
+	private requireRecovery(): RemoteRepositoryRecoveryService {
+		if (!this.remoteRecovery) throw new AppError(501, 'REMOTE_CAPABILITY_NOT_IMPLEMENTED');
+		return this.remoteRecovery;
 	}
 
 	async getStorageName(storageId: string): Promise<string> {

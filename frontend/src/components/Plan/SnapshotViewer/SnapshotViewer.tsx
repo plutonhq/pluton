@@ -19,13 +19,13 @@ import { useSnapshotDatabase } from '../../common/SnapshotBrowser/hooks/useSnaps
 import { useSnapshotNavigation } from '../../common/SnapshotBrowser/hooks/useSnapshotNavigation';
 import { useSnapshotSort } from '../../common/SnapshotBrowser/hooks/useSnapshotSort';
 import classes from '../../common/SnapshotBrowser/SnapshotBrowser.module.scss';
-import Upgrade from '../../Upgrade/Upgrade';
 
 interface SnapshotViewerProps {
    files: FileItem[];
    backup: Backup;
    planId: string;
    isSync?: boolean;
+   stagingOnly?: boolean;
    mirrors?: BackupMirror[];
    onClose: () => void;
    replicationId?: string;
@@ -50,6 +50,7 @@ const SnapshotViewer = ({
    backup,
    planId,
    isSync = false,
+   stagingOnly = false,
    mirrors,
    onClose,
    replicationId,
@@ -65,7 +66,6 @@ const SnapshotViewer = ({
    const [showRestoreModal, setShowRestoreModal] = useState<FileItem | false>(false);
    const [selectedReplicationId, setSelectedReplicationId] = useState<string | undefined>(replicationId);
    const [currentFiles, setCurrentFiles] = useState<FileItem[]>(files);
-   const [showUpgrade, setShowUpgrade] = useState<boolean>(false);
    const fileListRef = useRef<HTMLDivElement | null>(null);
    const navigate = useNavigate();
 
@@ -170,7 +170,7 @@ const SnapshotViewer = ({
             planId,
             target: '',
             includes: [path],
-            overwrite: 'always',
+            overwrite: stagingOnly ? 'never' : 'always',
             deleteOption: false,
             replicationId: selectedReplicationId,
          },
@@ -179,7 +179,7 @@ const SnapshotViewer = ({
                toast.success('Restoration Process Started..', { autoClose: 5000 });
                const targetPlanId = variables?.planId;
                if (targetPlanId) {
-                  navigate(`/plan/${targetPlanId}?pendingrestore=1`);
+                  navigate(`/plan/${targetPlanId}${stagingOnly ? '' : '?pendingrestore=1'}`);
                }
                onClose();
             },
@@ -211,12 +211,11 @@ const SnapshotViewer = ({
                onGoUp={handleGoUp}
                onDirectoryClick={handleDirectoryClick}
                onRestore={(file) => setShowRestoreModal(file)}
-               renderFileActions={renderFileActions}
-               showUpgradeModal={() => setShowUpgrade(true)}
+               renderFileActions={stagingOnly ? () => null : renderFileActions}
             />
          );
       },
-      [currentDirectoryFiles, isSync, gridColumns, handleGoUp, handleDirectoryClick, renderFileActions],
+      [currentDirectoryFiles, isSync, stagingOnly, gridColumns, handleGoUp, handleDirectoryClick, renderFileActions],
    );
 
    // Error state
@@ -325,7 +324,11 @@ const SnapshotViewer = ({
                         {showRestoreModal.isDirectory ? <Icon type={'fm-directory'} size={16} /> : <FileIcon filename={showRestoreModal.path} />}{' '}
                         {showRestoreModal.path}
                      </p>
-                     <p>This action will overwrite the existing file/directory with the same name in the source.</p>
+                     <p>
+                        {stagingOnly
+                           ? 'This restores into a new private staging workspace on the Pluton server. The remote source is never modified.'
+                           : 'This action will overwrite the existing file/directory with the same name in the source.'}
+                     </p>
                   </>
                }
                closeModal={() => setShowRestoreModal(false)}
@@ -340,7 +343,6 @@ const SnapshotViewer = ({
          )}
 
          {children}
-         {showUpgrade && <Upgrade focus="snapshot" onClose={() => setShowUpgrade(false)} />}
       </div>
    );
 };

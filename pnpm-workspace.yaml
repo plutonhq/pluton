@@ -1,8 +1,62 @@
 packages:
   - 'backend'
   - 'frontend'
+  - 'agent'
+  - 'documentation'
   - '../pluton/backend'
   - '../pluton/frontend'
+
+# Router declarations import React types. Keep React 18 application and React 19
+# documentation peer contexts separate instead of hoisting one ambient type set.
+packageExtensions:
+  '@tanstack/react-query@*':
+    peerDependencies:
+      '@types/react': '>=18'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+  '@tanstack/react-query-devtools@*':
+    peerDependencies:
+      '@types/react': '>=18'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+  '@tanstack/react-query-persist-client@*':
+    peerDependencies:
+      '@types/react': '>=18'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+  react-chartjs-2@*:
+    peerDependencies:
+      '@types/react': '>=18'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+  react-toastify@*:
+    peerDependencies:
+      '@types/react': '>=18'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+  react-tooltip@*:
+    peerDependencies:
+      '@types/react': '>=18'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+  next-themes@*:
+    peerDependencies:
+      '@types/react': '>=18'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+  react-router@7.13.0:
+    peerDependencies:
+      '@types/react': '>=18'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
 onlyBuiltDependencies:
   - '@parcel/watcher'

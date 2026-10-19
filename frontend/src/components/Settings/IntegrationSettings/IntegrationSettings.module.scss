@@ -14,7 +14,7 @@
          font-weight: 500;
          cursor: pointer;
          &.tabActive {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
             background: var(--background-color);
          }
       }
@@ -25,7 +25,7 @@
       position: relative;
    }
    .validateBtn {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       background: var(--background-color);
       padding: 10px;
       border-radius: 6px;

@@ -10,6 +10,7 @@ import { StorageStore } from '../stores/StorageStore';
 import { providers } from '../utils/providers';
 import { configService } from './ConfigService';
 import { AppError } from '../utils/AppError';
+import { AgentService, type AgentPublic } from './AgentService';
 
 export class DeviceService {
 	protected connectedDeviceIds: Set<string> | undefined;
@@ -18,7 +19,8 @@ export class DeviceService {
 		protected localSystemManager: BaseSystemManager,
 		protected deviceStore: DeviceStore,
 		protected planStore: PlanStore,
-		protected storageStore: StorageStore
+		protected storageStore: StorageStore,
+		private readonly agentService?: AgentService
 	) {}
 
 	getSystemStrategy(deviceId: string): SystemStrategy {
@@ -29,15 +31,10 @@ export class DeviceService {
 	/**
 	 * Retrieves all devices.
 	 */
-	async getDevices(): Promise<(Device & { connected: boolean })[] | null> {
+	async getDevices(): Promise<(Device & { connected: boolean; isRemote?: boolean; agent?: AgentPublic | null })[] | null> {
 		const allDevices = await this.deviceStore.getAll();
-
-		return (
-			allDevices?.map(device => ({
-				...device,
-				connected: this.connectedDeviceIds?.has(device.id) || false,
-			})) || null
-		);
+		if (!allDevices) return null;
+		return Promise.all(allDevices.map(device => this.decorateDevice(device)));
 	}
 
 	/**
@@ -47,7 +44,7 @@ export class DeviceService {
 		id: string,
 		getMetrics: boolean
 	): Promise<{
-		device: (Device & { connected: boolean }) | null;
+		device: (Device & { connected: boolean; isRemote?: boolean; agent?: AgentPublic | null }) | null;
 		metrics: DeviceMetrics | null;
 		plans: Record<string, any>[];
 		storages: { id: string; name: string; type: string; storageTypeName: string }[];
@@ -57,10 +54,7 @@ export class DeviceService {
 			throw new Error('Device not found.');
 		}
 
-		const device = {
-			...deviceRaw,
-			connected: this.connectedDeviceIds?.has(deviceRaw.id) || false,
-		};
+		const device = await this.decorateDevice(deviceRaw);
 
 		// Get Device Plans
 		const plans = await this.planStore.getDevicePlans(id);
@@ -293,5 +287,27 @@ export class DeviceService {
 		}
 
 		return response.result;
+	}
+
+	private async decorateDevice(device: Device): Promise<Device & { connected: boolean; isRemote?: boolean; agent?: AgentPublic | null }> {
+		if (!this.agentService) {
+			return {
+				...device,
+				connected: this.connectedDeviceIds?.has(device.id) || false,
+			};
+		}
+
+		const agent = device.id === 'main' ? null : await this.agentService.getPublicAgent(device.id);
+		return {
+			...device,
+			isRemote: device.id !== 'main',
+			agent,
+			connected: agent ? agent.status === 'online' : this.connectedDeviceIds?.has(device.id) || false,
+			status: agent?.status || device.status,
+			lastSeen: agent?.lastSeen || device.lastSeen,
+			versions: agent
+				? { agent: agent.agentVersion, restic: agent.resticVersion || '', rclone: agent.rcloneVersion || '' }
+				: device.versions,
+		};
 	}
 }

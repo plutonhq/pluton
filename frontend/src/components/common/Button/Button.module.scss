@@ -31,9 +31,9 @@
 
 .button--secondary {
    background-color: var(--primary-color-light);
-   color: var(--primary-color);
+   color: var(--primary-color-foreground);
    &:hover {
-      color: var(--primary-color-light);
+      color: var(--primary-text-color);
       background-color: var(--primary-color);
    }
 }
@@ -51,6 +51,12 @@
    background-color: var(--error-button-color);
    color: var(--primary-text-color);
    &:hover {
-      background-color: var(--error-text-color);
+      filter: brightness(0.9);
    }
+}
+
+.button:disabled {
+   background-color: var(--line-color);
+   color: var(--content-text-color-light);
+   filter: none;
 }

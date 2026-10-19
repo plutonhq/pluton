@@ -1,0 +1,66 @@
+# Operator-only profiles. No default service starts a database; never use `up` without a named profile/service.
+services:
+  internal-mariadb:
+    profiles: [mariadb]
+    platform: linux/amd64
+    image: mariadb:11.8.8@sha256:24e76fcec8c003a0362d0dd53f4806e7e79458d7fdeaf47437760e19496f5a9c
+    user: "999:999"
+    hostname: internal-mariadb
+    restart: "no"
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    cpus: 1.0
+    mem_limit: 2g
+    memswap_limit: 2g
+    pids_limit: 128
+    entrypoint: [/bin/bash, /opt/pluton-internal/bootstrap.sh, mariadb]
+    labels:
+      org.pluton.internal.installation: ${PLUTON_INTERNAL_INSTALLATION:?Operator activation required}
+      org.pluton.internal.activation: ${PLUTON_INTERNAL_ACTIVATION:?Operator activation required}
+      org.pluton.internal.engine: mariadb
+    networks: [internal-recovery]
+    volumes:
+      - /etc/pluton-internal/bootstrap.sh:/opt/pluton-internal/bootstrap.sh:ro
+      - /etc/pluton-internal/engines/mariadb:/run/pluton-internal-bootstrap:ro
+      - internal-recovery-lock:/run/pluton-internal-lock
+    tmpfs:
+      - /var/lib/mysql:rw,noexec,nosuid,nodev,uid=999,gid=999,mode=700,size=2g
+      - /tmp:rw,noexec,nosuid,nodev,uid=999,gid=999,mode=700,size=128m
+  internal-postgresql:
+    profiles: [postgresql]
+    platform: linux/amd64
+    image: postgres:18.6-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c
+    user: "999:999"
+    hostname: internal-postgresql
+    restart: "no"
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    cpus: 1.0
+    mem_limit: 2g
+    memswap_limit: 2g
+    pids_limit: 128
+    entrypoint: [/bin/bash, /opt/pluton-internal/bootstrap.sh, postgresql]
+    labels:
+      org.pluton.internal.installation: ${PLUTON_INTERNAL_INSTALLATION:?Operator activation required}
+      org.pluton.internal.activation: ${PLUTON_INTERNAL_ACTIVATION:?Operator activation required}
+      org.pluton.internal.engine: postgresql
+    networks: [internal-recovery]
+    volumes:
+      - /etc/pluton-internal/bootstrap.sh:/opt/pluton-internal/bootstrap.sh:ro
+      - /etc/pluton-internal/engines/postgresql:/run/pluton-internal-bootstrap:ro
+      - internal-recovery-lock:/run/pluton-internal-lock
+    tmpfs:
+      - /var/lib/postgresql:rw,noexec,nosuid,nodev,uid=999,gid=999,mode=700,size=2g
+      - /tmp:rw,noexec,nosuid,nodev,uid=999,gid=999,mode=700,size=128m
+networks:
+  internal-recovery:
+    external: true
+    name: pluton-internal-recovery
+volumes:
+  internal-recovery-lock:
+    external: true
+    name: pluton-internal-recovery-lock

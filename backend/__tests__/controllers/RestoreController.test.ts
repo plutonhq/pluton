@@ -246,16 +246,20 @@ describe('RestoreController', () => {
 
 			await restoreController.performDryRestore(mockRequest as Request, mockResponse as Response);
 
-			expect(mockRestoreService.dryRestoreBackup).toHaveBeenCalledWith('backup-1', {
-				target: '/restore/path',
-				overwrite: 'always',
-				includes: ['file1.txt'],
-				excludes: ['*.tmp'],
-				delete: false,
-				storageId: undefined,
-				replicationId: undefined,
-				fromStorage: false,
-			});
+			expect(mockRestoreService.dryRestoreBackup).toHaveBeenCalledWith(
+				'backup-1',
+				{
+					target: '/restore/path',
+					overwrite: 'always',
+					includes: ['file1.txt'],
+					excludes: ['*.tmp'],
+					delete: false,
+					storageId: undefined,
+					replicationId: undefined,
+					fromStorage: false,
+				},
+				'plan-1'
+			);
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: true,
@@ -274,16 +278,20 @@ describe('RestoreController', () => {
 
 			await restoreController.performDryRestore(mockRequest as Request, mockResponse as Response);
 
-			expect(mockRestoreService.dryRestoreBackup).toHaveBeenCalledWith('backup-1', {
-				target: '/restore/path',
-				overwrite: undefined,
-				includes: [],
-				excludes: [],
-				delete: false,
-				storageId: undefined,
-				replicationId: undefined,
-				fromStorage: false,
-			});
+			expect(mockRestoreService.dryRestoreBackup).toHaveBeenCalledWith(
+				'backup-1',
+				{
+					target: '/restore/path',
+					overwrite: undefined,
+					includes: [],
+					excludes: [],
+					delete: false,
+					storageId: undefined,
+					replicationId: undefined,
+					fromStorage: false,
+				},
+				'plan-1'
+			);
 		});
 
 		it('should return 500 if service throws an error', async () => {
@@ -331,16 +339,20 @@ describe('RestoreController', () => {
 
 			await restoreController.performRestore(mockRequest as Request, mockResponse as Response);
 
-			expect(mockRestoreService.restoreBackup).toHaveBeenCalledWith('backup-1', {
-				target: '/restore/path',
-				overwrite: 'if-newer',
-				includes: [],
-				excludes: [],
-				delete: false,
-				storageId: undefined,
-				replicationId: undefined,
-				fromStorage: false,
-			});
+			expect(mockRestoreService.restoreBackup).toHaveBeenCalledWith(
+				'backup-1',
+				{
+					target: '/restore/path',
+					overwrite: 'if-newer',
+					includes: [],
+					excludes: [],
+					delete: false,
+					storageId: undefined,
+					replicationId: undefined,
+					fromStorage: false,
+				},
+				'plan-1'
+			);
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: true,

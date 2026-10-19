@@ -1,0 +1,81 @@
+.content {
+   display: flex;
+   flex-direction: column;
+   gap: 16px;
+   color: var(--content-text-color-light);
+   font-size: 0.8rem;
+   p {
+      margin: 0;
+      line-height: 1.5;
+   }
+}
+
+.warning {
+   color: var(--warning-text-color, var(--content-text-color));
+}
+.error {
+   color: var(--error-text-color);
+}
+.label {
+   color: var(--content-title-color);
+   font-size: 0.75rem;
+   font-weight: 600;
+}
+.quickWarning {
+   color: var(--warning-text-color, var(--content-text-color));
+   font-size: 0.72rem;
+}
+.token,
+.command {
+   display: block;
+   overflow-wrap: anywhere;
+   white-space: pre-wrap;
+   padding: 12px;
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   background: var(--background-color);
+   color: var(--content-text-color);
+   line-height: 1.5;
+}
+.help {
+   font-size: 0.72rem;
+}
+.copyAction {
+   display: flex;
+   justify-content: flex-end;
+   margin-top: -8px;
+}
+.actions {
+   display: flex;
+   justify-content: flex-end;
+   gap: 10px;
+   margin-top: 4px;
+}
+
+.installOptions {
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 16px;
+}
+
+.installOption {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   min-width: 0;
+   padding: 14px;
+   border: 1px solid var(--line-color);
+   border-radius: 8px;
+}
+
+.installTitle {
+   margin: 0;
+   color: var(--content-title-color);
+   font-size: 0.75rem;
+}
+
+@media only screen and (max-width: 760px) {
+   .installOptions {
+      grid-template-columns: 1fr;
+   }
+}

@@ -32,10 +32,11 @@ const Restores = ({
    const deleteRestoreMutation = useDeleteRestore();
 
    const removeRestore = (restore: RestoreSlim) => {
+      if (deleteRestoreMutation.isPending) return;
       console.log('remove :', restore.id);
       deleteRestoreMutation.mutate(restore.id, {
-         onError: () => {
-            toast.error(`Failed to Remove Restore Entry`);
+         onError: (error: Error) => {
+            toast.error(error.message || `No reliable response for restore removal. Refresh and check its status before trying again.`);
          },
          onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['plan', planId] });
@@ -127,6 +128,7 @@ const Restores = ({
                   </>
                }
                closeModal={() => !deleteRestoreMutation.isPending && setShowDeleteModal(false)}
+               errorMessage={deleteRestoreMutation.error?.message}
                width="400px"
                primaryAction={{
                   title: 'Yes, Remove Restore',

@@ -1,0 +1,73 @@
+.panel {
+   color: var(--content-text-color);
+   background: var(--content-background-color);
+   line-height: 1.6;
+   overflow-wrap: anywhere;
+   padding: 14px;
+   label {
+      display: block;
+      margin: 14px 0;
+   }
+   select,
+   input:not([type='checkbox']) {
+      color: var(--content-text-color);
+      background: var(--field-bg);
+      border: 1px solid var(--field-line-color);
+      border-radius: 5px;
+      padding: 8px;
+      max-width: 100%;
+   }
+   select {
+      display: block;
+      width: 100%;
+   }
+   button,
+   a.action {
+      color: var(--content-text-color);
+      background: var(--field-bg);
+      border: 1px solid var(--field-line-color);
+      border-radius: 5px;
+      padding: 8px 14px;
+      margin: 5px;
+      cursor: pointer;
+      &:disabled {
+         opacity: 0.5;
+         cursor: not-allowed;
+      }
+   }
+   code {
+      white-space: pre-wrap;
+      font-size: 12px;
+   }
+   th,
+   td {
+      padding: 9px;
+      text-align: left;
+      border-bottom: 1px solid var(--line-color);
+   }
+   table {
+      width: 100%;
+      border-collapse: collapse;
+   }
+   h4 {
+      margin: 16px 0 6px;
+   }
+}
+.wizard {
+   max-height: 72vh;
+   overflow-y: auto;
+}
+.grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+   gap: 16px;
+}
+.card {
+   border: 1px solid var(--line-color);
+   padding: 14px;
+   margin: 12px 0;
+   border-radius: 6px;
+}
+.scroll {
+   overflow-x: auto;
+}

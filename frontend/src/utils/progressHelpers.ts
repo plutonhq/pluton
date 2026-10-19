@@ -1,6 +1,9 @@
 import { BackupProgressData } from '../@types/backups';
+import { remoteProgressView } from './remoteProgress';
 
 export function generateBackupProgressMessage(progressData: BackupProgressData | null): string {
+   const remote = remoteProgressView(progressData);
+   if (remote) return `${remote.message}${remote.attempt > 1 ? ` (attempt ${remote.attempt})` : ''}`;
    if (!progressData?.events?.length) {
       return 'Initializing...';
    }

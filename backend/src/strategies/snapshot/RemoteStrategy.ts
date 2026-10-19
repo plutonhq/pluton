@@ -44,8 +44,8 @@ export class RemoteStrategy implements SnapshotStrategy {
 	}
 
 	publishCommand(action: string, payload: any): Promise<{ success: boolean; result: any }> {
-		return new Promise((resolve, reject) => {
-			resolve({ success: true, result: null });
-		});
+		void action;
+		void payload;
+		return Promise.resolve({ success: false, result: 'REMOTE_CAPABILITY_NOT_IMPLEMENTED' });
 	}
 }

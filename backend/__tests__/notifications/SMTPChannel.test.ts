@@ -72,16 +72,23 @@ describe('SMTPChannel', () => {
 				host: 'smtp.example.com',
 				port: 587,
 				secure: false,
-				requireTLS: false,
+				requireTLS: true,
+				ignoreTLS: false,
 				connectionTimeout: 15000,
-				greetingTimeout: 10000,
-				socketTimeout: 30000,
+				greetingTimeout: 15000,
+				socketTimeout: 15000,
+				logger: false,
+				debug: false,
+				disableFileAccess: true,
+				disableUrlAccess: true,
 				auth: {
 					user: 'user@example.com',
 					pass: 'password123',
 				},
 				tls: {
-					rejectUnauthorized: false,
+					rejectUnauthorized: true,
+					minVersion: 'TLSv1.2',
+					servername: 'smtp.example.com',
 				},
 				from: 'Test Sender <sender@example.com>',
 			});
@@ -114,14 +121,14 @@ describe('SMTPChannel', () => {
 			);
 		});
 
-		it('should disable certificate verification', async () => {
+		it('must verify certificates and require STARTTLS rather than silently downgrade', async () => {
 			await smtpChannel.initialize();
 
 			expect(nodemailer.createTransport).toHaveBeenCalledWith(
 				expect.objectContaining({
-					tls: {
-						rejectUnauthorized: false,
-					},
+					requireTLS: true,
+					ignoreTLS: false,
+					tls: { rejectUnauthorized: true, minVersion: 'TLSv1.2', servername: 'smtp.example.com' },
 				})
 			);
 		});
@@ -185,7 +192,7 @@ describe('SMTPChannel', () => {
 
 			expect(result).toEqual({
 				success: false,
-				result: 'Connection failed',
+				result: 'SMTP delivery failed. Check authentication, TLS and relay configuration.',
 			});
 		});
 
@@ -199,7 +206,7 @@ describe('SMTPChannel', () => {
 
 			expect(result).toEqual({
 				success: false,
-				result: 'Failed to send email',
+				result: 'SMTP delivery failed. Check authentication, TLS and relay configuration.',
 			});
 		});
 
@@ -276,7 +283,10 @@ describe('SMTPChannel', () => {
 			const result = await smtpChannel.send(notification, options);
 
 			expect(result.success).toBe(false);
-			expect(result.result).toContain('Invalid login');
+			expect(result.result).toBe(
+				'SMTP delivery failed. Check authentication, TLS and relay configuration.'
+			);
+			expect(result.result).not.toContain('Invalid login');
 		});
 
 		it('should handle connection timeout', async () => {
@@ -288,7 +298,10 @@ describe('SMTPChannel', () => {
 			const result = await smtpChannel.send(notification, options);
 
 			expect(result.success).toBe(false);
-			expect(result.result).toContain('Connection timeout');
+			expect(result.result).toBe(
+				'SMTP delivery failed. Check authentication, TLS and relay configuration.'
+			);
+			expect(result.result).not.toContain('Connection timeout');
 		});
 
 		it('should handle invalid recipient errors', async () => {
@@ -300,7 +313,10 @@ describe('SMTPChannel', () => {
 			const result = await smtpChannel.send(notification, options);
 
 			expect(result.success).toBe(false);
-			expect(result.result).toContain('Invalid recipient');
+			expect(result.result).toBe(
+				'SMTP delivery failed. Check authentication, TLS and relay configuration.'
+			);
+			expect(result.result).not.toContain('Invalid recipient');
 		});
 	});
 });

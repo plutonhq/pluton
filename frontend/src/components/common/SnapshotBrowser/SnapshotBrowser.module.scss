@@ -226,7 +226,7 @@
             border-radius: 50%;
          }
          &:hover {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
          }
       }
    }
@@ -249,7 +249,7 @@
          color: var(--icon-color);
          transition: all 0.12s linear;
          &:hover {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
          }
       }
    }
@@ -281,17 +281,17 @@
    justify-content: center;
    height: 400px;
    gap: 16px;
-   color: var(--text-muted);
+   color: var(--content-text-color-light);
 
    small {
-      color: var(--text-muted);
+      color: var(--content-text-color-light);
       opacity: 0.8;
    }
 }
 
 .errorState button {
    padding: 8px 16px;
-   background: var(--primary);
+   background: var(--primary-color);
    color: white;
    border: none;
    border-radius: 4px;

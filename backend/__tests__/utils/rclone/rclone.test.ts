@@ -1,6 +1,9 @@
 import { EventEmitter } from 'events';
 import { spawn } from 'child_process';
 import os from 'os';
+import fs from 'fs';
+import path from 'path';
+import { rootCertificates } from 'tls';
 
 jest.mock('child_process');
 jest.mock('os');
@@ -21,7 +24,7 @@ jest.mock('../../../src/utils/AppPaths', () => ({
 	},
 }));
 
-import { runRcloneCommand } from '../../../src/utils/rclone/rclone';
+import { runRcloneCommand, runRcloneCommandWithProgress } from '../../../src/utils/rclone/rclone';
 import { getBinaryPath } from '../../../src/utils/binaryPathResolver';
 import { getRcloneConfigPath } from '../../../src/utils/rclone/helpers';
 
@@ -77,6 +80,53 @@ describe('runRcloneCommand', () => {
 				RCLONE_CONFIG_PASS: 'test-encryption-key',
 			}),
 		});
+	});
+
+	it('preserves exact file stdout and redacts a credential split across diagnostic chunks', async () => {
+		const environment = { RCLONE_CONFIG_MIRROR_01_SECRET_ACCESS_KEY: 'synthetic-secret' };
+		const promise = runRcloneCommand(
+			['cat', 'mirror_01:fixture-bucket/pluton/file.sql'],
+			environment
+		);
+		mockProcess.stdout.emit('data', Buffer.from('content synthetic-secret bytes'));
+		mockProcess.emit('close', 0);
+		expect(await promise).toBe('content synthetic-secret bytes');
+		const stderr = jest.fn();
+		const running = runRcloneCommandWithProgress(
+			['copyto', 'source', 'mirror_01:fixture-bucket/pluton/file'],
+			{ env: environment, onStderr: stderr }
+		);
+		mockProcess.stderr.emit('data', Buffer.from('denied synthetic-'));
+		mockProcess.stderr.emit('data', Buffer.from('secret\n'));
+		mockProcess.emit('close', 1);
+		await expect(running.promise).rejects.toThrow('denied [redacted]');
+		expect(stderr.mock.calls.map(call => call[0]).join('')).toBe('denied [redacted]\n');
+	});
+
+	it('passes validated operator CA trust to the actual child process without TLS bypass', async () => {
+		process.env.PLUTON_STORAGE_CA_FILE = path.resolve('operator-storage-ca.pem');
+		const stat = jest.spyOn(fs, 'lstatSync').mockReturnValue({
+			isFile: () => true,
+			isSymbolicLink: () => false,
+			size: rootCertificates[0].length,
+			mode: 0o600,
+		} as any);
+		const read = jest.spyOn(fs, 'readFileSync').mockReturnValue(rootCertificates[0]);
+		try {
+			const promise = runRcloneCommand(['lsd', 'mirror_01:fixture-bucket']);
+			mockProcess.emit('close', 0);
+			await promise;
+			const environment = (spawn as jest.Mock).mock.calls[0][2].env;
+			expect(environment).toMatchObject({
+				SSL_CERT_FILE: process.env.PLUTON_STORAGE_CA_FILE,
+				RCLONE_CA_CERT: process.env.PLUTON_STORAGE_CA_FILE,
+			});
+			expect(environment.RCLONE_NO_CHECK_CERTIFICATE).toBeUndefined();
+		} finally {
+			delete process.env.PLUTON_STORAGE_CA_FILE;
+			stat.mockRestore();
+			read.mockRestore();
+		}
 	});
 
 	it('should return stderr output when stdout is empty', async () => {

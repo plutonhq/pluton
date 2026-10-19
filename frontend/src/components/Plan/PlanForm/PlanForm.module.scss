@@ -33,7 +33,7 @@
             }
             &.stepCurrent {
                background-color: var(--content-background-color);
-               border: 1px solid var(--content-shadow-color);
+               border: 1px solid var(--line-color);
                border-bottom: none;
             }
             & > span {

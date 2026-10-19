@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Icon from '../../common/Icon/Icon';
 import classes from './PlanSettings.module.scss';
 import PlanNotificationSettings from './PlanNotificationSettings';
@@ -10,6 +10,9 @@ import { isMobile } from '../../../utils/helpers';
 import Select from '../../common/form/Select/Select';
 import PlanScriptsSettings from './PlanScriptsSettings';
 import { Device } from '../../../@types/devices';
+import PlanRemoteLifecycleSettings from './PlanRemoteLifecycleSettings';
+import RecoverySettings from '../RecoveryTesting/RecoverySettings';
+import ManagedPlanNotifications from './ManagedPlanNotifications';
 
 interface PlanAdvancedSettingsProps {
    plan: NewPlanSettings;
@@ -19,11 +22,27 @@ interface PlanAdvancedSettingsProps {
    isEditing: boolean;
    runSettings?: PlanAddRunSettings;
    setRunSettings?: (runSettings: PlanAddRunSettings) => void;
+   allowScripts?: boolean;
 }
 
-const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing, runSettings, setRunSettings }: PlanAdvancedSettingsProps) => {
+const PlanAdvancedSettings = ({
+   plan,
+   appSettings,
+   device,
+   onUpdate,
+   isEditing,
+   runSettings,
+   setRunSettings,
+   allowScripts = true,
+}: PlanAdvancedSettingsProps) => {
    const [advancedTab, setAdvancedTab] = useState('General');
    const settings = plan.settings;
+   const remoteLifecycle = plan.sourceType === 'device' && plan.sourceId !== 'main';
+
+   useEffect(() => {
+      if (!allowScripts && advancedTab === 'Scripts') setAdvancedTab('General');
+   }, [allowScripts, advancedTab]);
+
    const integrationTypes = useMemo(() => {
       const types: string[] = [];
       if (appSettings?.integration) {
@@ -47,6 +66,10 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing, 
                   { label: 'Performance', value: 'Performance', icon: 'performance' },
                   { label: 'Notification', value: 'Notification', icon: 'notification' },
                   { label: 'Misc.', value: 'Misc', icon: 'settings-alt' },
+                  ...(remoteLifecycle ? [{ label: 'Database & Hooks', value: 'Lifecycle', icon: 'cli' as const }] : []),
+                  ...(remoteLifecycle && plan.method === 'backup'
+                     ? [{ label: 'Recovery Testing', value: 'Recovery', icon: 'restore' as const }]
+                     : []),
                ]}
                fieldValue={advancedTab}
                full={true}
@@ -67,9 +90,21 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing, 
                   <li onClick={() => setAdvancedTab('Notification')} className={advancedTab === 'Notification' ? classes.advancedTabActive : ''}>
                      <Icon size={13} type="notification" /> Notification
                   </li>
-                  <li onClick={() => setAdvancedTab('Scripts')} className={advancedTab === 'Scripts' ? classes.advancedTabActive : ''}>
-                     <Icon size={13} type="cli" /> Scripts
-                  </li>
+                  {allowScripts && (
+                     <li onClick={() => setAdvancedTab('Scripts')} className={advancedTab === 'Scripts' ? classes.advancedTabActive : ''}>
+                        <Icon size={13} type="cli" /> Scripts
+                     </li>
+                  )}
+                  {remoteLifecycle && (
+                     <li onClick={() => setAdvancedTab('Lifecycle')} className={advancedTab === 'Lifecycle' ? classes.advancedTabActive : ''}>
+                        <Icon size={13} type="cli" /> Database & Hooks
+                     </li>
+                  )}
+                  {remoteLifecycle && plan.method === 'backup' && (
+                     <li onClick={() => setAdvancedTab('Recovery')} className={advancedTab === 'Recovery' ? classes.advancedTabActive : ''}>
+                        <Icon type="restore" size={13} /> Recovery Testing
+                     </li>
+                  )}
                   <li onClick={() => setAdvancedTab('Misc')} className={advancedTab === 'Misc' ? classes.advancedTabActive : ''}>
                      <Icon size={14} type="settings-alt" /> Misc.
                   </li>
@@ -77,6 +112,20 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing, 
             </>
          )}
          <div className={classes.advancedTabContent}>
+            {remoteLifecycle && plan.method === 'backup' && advancedTab === 'Recovery' && (
+               <RecoverySettings planId={isEditing ? plan.id : undefined} />
+            )}
+            {remoteLifecycle && advancedTab === 'Lifecycle' && (
+               <PlanRemoteLifecycleSettings
+                  value={settings.remoteLifecycle}
+                  onUpdate={(value) =>
+                     onUpdate({
+                        ...plan,
+                        settings: { ...settings, remoteLifecycle: value },
+                     })
+                  }
+               />
+            )}
             {advancedTab === 'General' && (
                <PlanGeneralSettings
                   settings={settings}
@@ -87,14 +136,20 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing, 
                />
             )}
             {advancedTab === 'Notification' && (
-               <PlanNotificationSettings
-                  types={integrationTypes}
-                  planID={plan.id}
-                  isSync={plan.method === 'sync'}
-                  admin_email={appSettings?.admin_email}
-                  notificationSettings={plan.settings?.notification || {}}
-                  onUpdate={(notification) => onUpdate({ ...plan, settings: { ...settings, notification } })}
-               />
+               <>
+                  <ManagedPlanNotifications planId={isEditing ? plan.id : undefined} />
+                  <details>
+                     <summary>Existing community notification settings (separate delivery path)</summary>
+                     <PlanNotificationSettings
+                        types={integrationTypes}
+                        planID={plan.id}
+                        isSync={plan.method === 'sync'}
+                        admin_email={appSettings?.admin_email}
+                        notificationSettings={plan.settings?.notification || {}}
+                        onUpdate={(notification) => onUpdate({ ...plan, settings: { ...settings, notification } })}
+                     />
+                  </details>
+               </>
             )}
             {/* {advancedTab === 'Prune' && (
                <PlanPruneSettings plan={plan} onUpdate={(prune) => onUpdate({ ...plan, settings: { ...settings, prune } })} />
@@ -108,7 +163,7 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing, 
                   <TagsInput fieldValue={plan.tags || []} onUpdate={(val) => onUpdate({ ...plan, tags: val })} />
                </div>
             )}
-            {advancedTab === 'Scripts' && (
+            {allowScripts && advancedTab === 'Scripts' && (
                <PlanScriptsSettings
                   settings={plan.settings?.scripts || {}}
                   platform={device?.platform || undefined}

@@ -13,6 +13,7 @@ export interface Storage {
    tags: string[];
    settings: Record<string, string | boolean | number>;
    credentials: Record<string, string | boolean | number>;
+   credentialsConfigured?: string[];
    createdAt: string;
 }
 

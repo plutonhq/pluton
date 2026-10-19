@@ -1,4 +1,4 @@
 export const FEATURES = {
    basicBackup: true,
-   newDevices: import.meta.env.VITE_PRO_VERSION === 'true',
+   newDevices: true, // Public outbound-polling Remote Agent, not a licensing gate.
 };

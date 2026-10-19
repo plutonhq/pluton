@@ -188,6 +188,26 @@ describe('BaseSnapshotManager', () => {
 				stats: { primary: null, mirrors: {} },
 			});
 		});
+
+		it('does not reinterpret a failed repository lookup as an already absent snapshot', async () => {
+			(getSnapshotByTag as jest.Mock).mockResolvedValue({
+				success: false,
+				result: 'Snapshot Not Found. Access denied',
+			});
+			const result = await new BaseSnapshotManager().removeSnapshot('plan-1', 'backup-1', options);
+			expect(result.success).toBe(false);
+			expect(runResticCommand).not.toHaveBeenCalled();
+		});
+
+		it('reports failure if a verified snapshot cannot be forgotten', async () => {
+			(getSnapshotByTag as jest.Mock).mockResolvedValue({
+				success: true,
+				result: { id: 'snap-a' },
+			});
+			(runResticCommand as jest.Mock).mockRejectedValue(new Error('Repository locked'));
+			const result = await new BaseSnapshotManager().removeSnapshot('plan-1', 'backup-1', options);
+			expect(result.success).toBe(false);
+		});
 	});
 
 	describe('getSnapshotFiles', () => {

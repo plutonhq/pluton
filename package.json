@@ -1,9 +1,12 @@
 {
   "name": "pluton",
-  "version": "0.20.0",
+  "version": "0.18.0-alpha.1",
   "description": "Pluton - Open Source Backup Software",
   "license": "Apache-2.0",
   "scripts": {
+    "test:release": "node --test scripts/__tests__/releasePlease.test.cjs",
+    "test:docs": "pnpm --filter @plutonhq/core-frontend test:docs",
+    "test:fumadocs": "pnpm --filter @plutonhq/documentation test",
     "prepare": "pnpm run setup:hooks",
     "setup:hooks": "node ./scripts/setup-git-hooks.js",
     "build": "turbo run build",
@@ -43,6 +46,8 @@
   "packageManager": "pnpm@10.20.0",
   "workspaces": [
     "backend",
-    "frontend"
+    "frontend",
+    "agent",
+    "documentation"
   ]
 }

@@ -19,6 +19,7 @@ jest.mock('../../src/services/ConfigService', () => ({
 			USER_PASSWORD: 'testpass',
 			SECRET: 'test-secret',
 			SESSION_DURATION: 7,
+			APP_URL: 'http://localhost:5173',
 		},
 		verifyPassword: (...args: any[]) => mockVerifyPassword(...args),
 		hashAndStorePassword: (...args: any[]) => mockHashAndStorePassword(...args),
@@ -81,13 +82,20 @@ describe('User Routes', () => {
 
 			const response = await request(app)
 				.post('/api/user/login')
+				.set('Host', 'localhost:5173')
+				.set('Origin', 'http://localhost:5173')
 				.send({ username: 'testuser', password: 'testpass' });
 
 			expect(response.status).toBe(200);
 			expect(response.body).toEqual({ success: true, error: null });
-			expect(jwt.sign).toHaveBeenCalledWith({ user: 'testuser' }, 'test-secret', {
-				expiresIn: '7d',
-			});
+			expect(jwt.sign).toHaveBeenCalledWith(
+				{ user: 'testuser', webOrigin: 'http://localhost:5173' },
+				'test-secret',
+				{
+					expiresIn: '7d',
+					jwtid: expect.stringMatching(/^[a-f0-9]{32}$/),
+				}
+			);
 		});
 	});
 
@@ -154,6 +162,8 @@ describe('User Routes', () => {
 
 			const response = await request(app)
 				.post('/api/user/logout')
+				.set('Host', 'localhost:5173')
+				.set('Origin', 'http://localhost:5173')
 				.set('Cookie', ['token=valid-token']);
 
 			expect(response.status).toBe(200);

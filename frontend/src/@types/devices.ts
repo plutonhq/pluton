@@ -35,6 +35,25 @@ export interface Device {
    tags: string[];
    metrics: DeviceMetrics | null;
    settings: DeviceSettings | null;
+   agent?: AgentInfo | null;
+}
+
+export interface AgentInfo {
+   agentId: string;
+   deviceId: string;
+   status: 'online' | 'offline' | 'revoked';
+   hostname: string;
+   os: string;
+   architecture: string;
+   agentVersion: string;
+   resticVersion: string | null;
+   rcloneVersion: string | null;
+   capabilities: {
+      filesystemRootsConfigured?: boolean;
+      commandTypes?: string[];
+   };
+   lastSeen: string | null;
+   createdAt: string;
 }
 
 export interface DeviceMetrics {

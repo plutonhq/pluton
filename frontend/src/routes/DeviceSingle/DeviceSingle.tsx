@@ -9,12 +9,13 @@ import classes from './DeviceSingle.module.scss';
 import NotFound from '../../components/common/NotFound/NotFound';
 import DeviceBackups from '../../components/Device/DeviceBackups/DeviceBackups';
 import { DevicePlan, DeviceStorage } from '../../@types/devices';
+import AgentStatus from '../../components/Device/AgentStatus/AgentStatus';
 
 const DeviceSingle = () => {
    const { id } = useParams();
    const [showEditModal, setShowEditModal] = useState(false);
    const { data, isLoading, error: DeviceError } = useGetDevice(id as string);
-   const { data: metricsData } = useGetSystemMetrics(id as string);
+   const { data: metricsData } = useGetSystemMetrics(id as string, id === 'main');
 
    console.log('DeviceError :', DeviceError, (DeviceError as Error & { status?: number })?.status);
 
@@ -75,6 +76,7 @@ const DeviceSingle = () => {
                <>
                   <DeviceBackups plans={devicePlans} storages={deviceStorages} />
                   {metrics?.system && <DeviceInfo metrics={metrics} isRefetching={false} />}
+                  {device?.agent && <AgentStatus deviceId={device.id} agent={device.agent} />}
                </>
             )}
          </div>

@@ -104,7 +104,6 @@ const AddStorage = ({ close }: AddStorageProps) => {
             });
          }
       });
-      console.log('storageCredentials :', storageCredentials);
    }, [storageTitle, storageType, storageCredentials]);
 
    const addStorage = () => {
@@ -141,7 +140,6 @@ const AddStorage = ({ close }: AddStorageProps) => {
       if (!storageType) {
          errors['storageType'] = 'Required';
       }
-      console.log('storageType :', storageType, currentAuthType, storageCredentials);
       console.log('errors :', errors);
 
       if (Object.keys(errors).length === 0) {
@@ -153,15 +151,13 @@ const AddStorage = ({ close }: AddStorageProps) => {
             authType: currentAuthType,
             tags: storageTags,
          };
-         console.log('payload :', storagePayload);
 
          addStorageMutation.mutate(storagePayload, {
             onError: (error: Error) => {
                console.log('error :', error?.message);
                toast.error(error.message || `Error Adding Storage!`);
             },
-            onSuccess: (data: any) => {
-               console.log('Success :', data);
+            onSuccess: () => {
                toast.success(`Successfully Added Storage!`, { autoClose: 5000 });
                close();
             },

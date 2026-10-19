@@ -17,6 +17,7 @@ import ActionModal from '../../common/ActionModal/ActionModal';
 import { useCancelRestore, useGetRestoreProgress } from '../../../services/restores';
 import BackupEvents from '../BackupEvents/BackupEvents';
 import { ReplicationProgressData } from '../../../@types/backups';
+import { remoteProgressView } from '../../../utils/remoteProgress';
 
 interface BackupProgressProps {
    item: Backup | RestoreSlim;
@@ -34,15 +35,16 @@ const BackupProgress = ({ item, sourceId, sourceType, planId, type = 'backup' }:
    const cancelBackupMutation = useCancelBackup();
 
    const { id, started } = item;
-   const { data: progressData } =
+   const { data: progressData, error: progressError, retryProgress, isFetching: checkingProgress } =
       type === 'backup' ? useGetBackupProgress({ id, sourceId, sourceType, planId }) : useGetRestoreProgress({ id, sourceId, sourceType, planId });
 
    const resticData = extractResticData(progressData);
+   const remoteView = type === 'backup' ? remoteProgressView(progressData) : null;
    const progressMessage = type === 'backup' ? generateBackupProgressMessage(progressData) : generateRestoreProgressMessage(progressData);
 
    // Check if DryRun progress tracking phase
    const actualBackupStarted = progressData?.events?.find((e: any) => e.action === 'BACKUP_OPERATION_START' && e.resticData);
-   const isDryRun = type === 'backup' && !actualBackupStarted;
+   const isDryRun = type === 'backup' && !remoteView && !actualBackupStarted;
 
    // Extract progress values from restic data or use defaults
    const {
@@ -135,6 +137,10 @@ const BackupProgress = ({ item, sourceId, sourceType, planId, type = 'backup' }:
 
    return (
       <div key={item.id} className={classes.backup}>
+         {progressError && <div role="status">
+            <p>{progressError.message} Automatic checks pause after repeated errors. This does not stop the actual operation.</p>
+            <button type="button" disabled={checkingProgress} onClick={retryProgress}>Retry progress checks (server cooldown still applies)</button>
+         </div>}
          <div key={item.id} className={classes.backupProgress}>
             <div className={classes.backupIcon}>
                <Icon type="loading" size={24} />
@@ -176,21 +182,35 @@ const BackupProgress = ({ item, sourceId, sourceType, planId, type = 'backup' }:
                <div className={classes.ProgressStats}>
                   <div className={classes.ProgressStatsLeft}>
                      <span>
-                        {filesProcessed} / {totalFiles} Files
+                        {filesProcessed.toLocaleString('en-US')}
+                        {totalFiles > 0 ? ` / ${totalFiles.toLocaleString('en-US')}` : ''} {type === 'restore' ? 'regular files' : 'Files (Restic)'}
                      </span>
                      <i></i>
                      <span>
-                        {formatBytes(bytesProcessed)} / {formatBytes(totalBytes)}
+                        {formatBytes(bytesProcessed)}
+                        {totalBytes > 0 ? ` / ${formatBytes(totalBytes)}` : ''}
                      </span>
                   </div>
-                  <div className={classes.ProgressStatsRight}>{type !== 'restore' && <>Remaining: {formatSeconds(seconds_remaining)}</>}</div>
+                  <div className={classes.ProgressStatsRight}>
+                     {type !== 'restore' && !remoteView && <>Remaining: {formatSeconds(seconds_remaining)}</>}
+                     {remoteView?.indeterminate && 'Actual counters; total may still be scanning'}
+                  </div>
                </div>
                <div className={classes.progressBar}>
                   <div
-                     className={`${classes.progressBarFill} ${progressPercent > 3 ? classes.progressBarFilled : ''} ${isDryRun ? classes.progressBarDryRun : ''}`}
-                     style={{ width: progressPercent + '%' }}
+                     role="progressbar"
+                     aria-label={progressMessage}
+                     aria-valuenow={remoteView && !remoteView.completed ? undefined : progressPercent}
+                     className={`${classes.progressBarFill} ${progressPercent > 3 ? classes.progressBarFilled : ''} ${isDryRun ? classes.progressBarDryRun : ''} ${remoteView?.indeterminate ? classes.progressIndeterminate : ''}`}
+                     style={{ width: remoteView?.indeterminate ? undefined : progressPercent + '%' }}
                   >
-                     <span>{progressPercent}%</span>
+                     <span>
+                        {remoteView && !remoteView.completed
+                           ? remoteView.indeterminate
+                              ? 'In progress'
+                              : remoteView.message
+                           : `${progressPercent}%`}
+                     </span>
                   </div>
                </div>
             </div>

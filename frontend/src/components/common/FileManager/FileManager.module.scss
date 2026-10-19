@@ -27,7 +27,7 @@
 
       &:hover {
          background: var(--light-grey);
-         color: var(--content-color);
+         color: var(--content-text-color);
       }
 
       &:disabled {
@@ -70,7 +70,7 @@
       border-radius: 0;
       color: inherit;
       &:hover {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
          text-decoration: underline;
       }
    }
@@ -128,9 +128,9 @@
       background: var(--light-grey);
    }
    &.selected {
-      background-color: var(--background-color);
+      background-color: var(--primary-color-light);
       .fileName button {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
          opacity: 1;
       }
    }
@@ -171,13 +171,13 @@
 }
 
 .selected {
-   background: #e6f7ff;
+   background: var(--primary-color-light);
 }
 
 .loading {
    padding: 24px;
    text-align: center;
-   color: #666;
+   color: var(--content-text-color-light);
 }
 
 @media only screen and (max-width: 768px) {

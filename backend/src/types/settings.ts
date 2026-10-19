@@ -1,4 +1,7 @@
 export interface SmtpSettings {
+	security?: 'plain' | 'starttls' | 'tls';
+	trustedPlain?: boolean;
+	passwordConfigured?: boolean;
 	server: string;
 	port: number;
 	username: string;

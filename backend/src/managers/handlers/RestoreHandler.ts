@@ -27,6 +27,11 @@ import {
 } from '../../utils/linuxHelper';
 import { checkDestinationSpace } from '../../utils/checkDestinationSpace';
 
+// Unlock is metadata cleanup. It should complete quickly; bound it so a
+// stalled repository transport cannot hold the restore job indefinitely.
+const RESTIC_UNLOCK_TIMEOUT_MS = 120_000;
+const RESTIC_UNLOCK_STALL_TIMEOUT_MS = 60_000;
+
 export class RestoreHandler {
 	private runningRestores = new Set<string>();
 	private cancelledRestores = new Set<string>();
@@ -233,7 +238,7 @@ export class RestoreHandler {
 		});
 
 		// Wait for DB record creation
-		await this.waitForRestoreCreation(backupId);
+		await this.waitForRestoreCreation(backupId, restoreId);
 
 		// Run pre-flight checks
 		await this.updateProgress(planId, restoreId, 'pre-restore', 'PRE_RESTORE_CHECKS_START', false);
@@ -256,7 +261,7 @@ export class RestoreHandler {
 			'PRE_RESTORE_UNLOCK_STALE_LOCKS',
 			false
 		);
-		await this.unlockStaleLocks(planId, {
+		await this.unlockStaleLocks(planId, restoreId, {
 			storageName: options.storageName,
 			storagePath: options.storagePath,
 			encryption: options.encryption,
@@ -471,7 +476,7 @@ export class RestoreHandler {
 	/**
 	 * Waits for the `restoreCreated` event to ensure the DB record exists.
 	 */
-	private waitForRestoreCreation(backupId: string): Promise<void> {
+	private waitForRestoreCreation(backupId: string, restoreId: string): Promise<void> {
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {
 				this.emitter.removeListener('restoreCreated', onRestoreCreated);
@@ -481,7 +486,7 @@ export class RestoreHandler {
 			}, 30000);
 
 			const onRestoreCreated = (data: { backupId: string; restoreId: string }) => {
-				if (data.backupId === backupId) {
+				if (data.backupId === backupId && data.restoreId === restoreId) {
 					clearTimeout(timeout);
 					this.emitter.removeListener('restoreCreated', onRestoreCreated);
 					resolve();
@@ -738,20 +743,33 @@ export class RestoreHandler {
 	 */
 	private async unlockStaleLocks(
 		planId: string,
+		restoreId: string,
 		options: { storageName: string; storagePath: string; encryption: boolean }
 	): Promise<void> {
 		if (options.storageName && options.storagePath) {
+			const processId = `restore-${restoreId}`;
 			try {
 				const repoPath = generateResticRepoPath(options.storageName, options.storagePath || '');
 				const repoPassword = options.encryption ? configService.config.ENCRYPTION_KEY : '';
 
-				await runResticCommand(['unlock', '-r', repoPath], {
-					RESTIC_PASSWORD: repoPassword,
-				});
+				await runResticCommand(
+					['unlock', '-r', repoPath],
+					{ RESTIC_PASSWORD: repoPassword },
+					undefined,
+					undefined,
+					undefined,
+					process => processManager.trackProcess(processId, process),
+					{
+						timeout: RESTIC_UNLOCK_TIMEOUT_MS,
+						stallTimeout: RESTIC_UNLOCK_STALL_TIMEOUT_MS,
+					}
+				);
 			} catch (error: any) {
 				console.warn(
-					`[BackupHandler]: Failed to unlock stale locks for plan: ${planId}. Error:  ${error.message}`
+					`[RestoreHandler]: Failed to unlock stale locks for plan: ${planId}. Error:  ${error.message}`
 				);
+			} finally {
+				processManager.untrackProcess(processId);
 			}
 		}
 	}

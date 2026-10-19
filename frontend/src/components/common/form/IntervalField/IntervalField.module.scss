@@ -38,9 +38,9 @@
             }
             &.weekDayActive {
                background-color: var(--primary-color-light);
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
                span {
-                  color: var(--primary-color);
+                  color: var(--primary-color-foreground);
                }
             }
          }

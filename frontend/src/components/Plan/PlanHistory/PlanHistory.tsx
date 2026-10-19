@@ -9,6 +9,8 @@ interface PlanHistoryProps {
 }
 const PlanHistory = ({ planId, history, itemsCount = 10 }: PlanHistoryProps) => {
    const emptySlots = history.length < itemsCount ? itemsCount - history.length : 0;
+   const displayed = history.slice(0, itemsCount);
+   const outcomeLabel = `Recent ${displayed.length} backup attempts: ${displayed.filter((item) => item.status === 'completed').length} completed, ${displayed.filter((item) => item.status === 'failed').length} failed, ${displayed.filter((item) => item.status === 'cancelled').length} cancelled, ${displayed.filter((item) => item.inProgress).length} in progress.`;
    const statusVals = {
       completed: '✔️ Completed',
       failed: '❌ Failed',
@@ -28,7 +30,7 @@ const PlanHistory = ({ planId, history, itemsCount = 10 }: PlanHistoryProps) => 
    };
 
    return (
-      <div className={`${classes.history} ${itemsCount > 10 ? classes.historyFull : ''}`}>
+      <div className={`${classes.history} ${itemsCount > 10 ? classes.historyFull : ''}`} role="img" aria-label={outcomeLabel}>
          {emptySlots > 0 &&
             [...Array(emptySlots)].map((_, i) => (
                <div
@@ -40,8 +42,7 @@ const PlanHistory = ({ planId, history, itemsCount = 10 }: PlanHistoryProps) => 
                ></div>
             ))}
 
-         {history
-            .slice(0, itemsCount)
+         {displayed
             .sort((a, b) => (b.inProgress ? 1 : 0) - (a.inProgress ? 1 : 0))
             .map((h, i) => {
                const duration = !h.inProgress && (h.duration || (h.ended ? (new Date(h.ended).getTime() - new Date(h.started).getTime()) / 1000 : 0));

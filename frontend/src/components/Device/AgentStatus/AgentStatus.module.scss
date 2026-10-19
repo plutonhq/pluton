@@ -1,0 +1,69 @@
+.agentStatus {
+   width: 100%;
+   box-sizing: border-box;
+   margin-top: 30px;
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   padding: 20px;
+}
+.titleRow {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   gap: 12px;
+}
+.titleRow h3 {
+   margin: 0;
+   color: var(--content-title-color);
+   font-size: 0.9rem;
+}
+.status {
+   border-radius: 999px;
+   padding: 3px 9px;
+   font-size: 0.67rem;
+   font-weight: 700;
+}
+.online {
+   background: var(--success-bg-color);
+   color: var(--success-text-color);
+}
+.offline {
+   background: var(--line-color);
+   color: var(--content-text-color-light);
+}
+.revoked {
+   background: var(--error-bg-active);
+   color: var(--error-active-text);
+}
+.details {
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 14px 20px;
+   margin: 20px 0;
+}
+.details div {
+   min-width: 0;
+}
+.details dt {
+   color: var(--icon-color);
+   font-size: 0.68rem;
+   margin-bottom: 3px;
+}
+.details dd {
+   margin: 0;
+   color: var(--content-text-color);
+   font-size: 0.76rem;
+   overflow-wrap: anywhere;
+}
+.monospace {
+   font-family: monospace;
+}
+.error {
+   color: var(--error-text-color);
+   font-size: 0.76rem;
+}
+@media only screen and (max-width: 768px) {
+   .details {
+      grid-template-columns: 1fr;
+   }
+}

@@ -163,5 +163,19 @@ describe('ProcessManager', () => {
 		it('should not throw when no processes are tracked', () => {
 			expect(() => processManager.killAll()).not.toThrow();
 		});
+
+		it('force-stops newly tracked recovery cleanup groups at the shutdown deadline', () => {
+			const initial = createMockProcess() as unknown as ChildProcess;
+			const cleanup = createMockProcess() as unknown as ChildProcess;
+			processManager.trackProcess('recovery-import', initial);
+			processManager.killAll();
+			processManager.trackProcess('recovery-cleanup', cleanup);
+
+			processManager.killAll('SIGKILL');
+
+			expect(mockKillProcessTree).toHaveBeenCalledWith(initial, 'SIGTERM');
+			expect(mockKillProcessTree).toHaveBeenCalledWith(cleanup, 'SIGKILL');
+			expect(processManager.getProcess('recovery-cleanup')).toBeUndefined();
+		});
 	});
 });

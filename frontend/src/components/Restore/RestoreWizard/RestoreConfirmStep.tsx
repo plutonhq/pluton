@@ -11,12 +11,25 @@ interface RestoreConfirmStepProps {
    settings: RestoreSettings;
    stats: RestoredItemsStats | null;
    method: string;
+   stagingOnly?: boolean;
    snapshotsStats: { total_files: number; total_bytes: number };
+   selectionCounts?: { files: number; directories: number; entries: number; totalEntries: number; otherEntries?: number };
    goBack: () => void;
    close: () => void;
 }
 
-const RestoreConfirmStep = ({ backupId, planId, settings, stats, snapshotsStats, method, goBack, close }: RestoreConfirmStepProps) => {
+const RestoreConfirmStep = ({
+   backupId,
+   planId,
+   settings,
+   stats,
+   snapshotsStats,
+   selectionCounts,
+   method,
+   stagingOnly = false,
+   goBack,
+   close,
+}: RestoreConfirmStepProps) => {
    const restoreMutation = useRestoreBackup();
    const navigate = useNavigate();
    const restoreStats = stats;
@@ -42,7 +55,9 @@ const RestoreConfirmStep = ({ backupId, planId, settings, stats, snapshotsStats,
                toast.success(`Restore Started`, { autoClose: 5000 });
                const targetPlanId = variables?.planId;
                if (targetPlanId) {
-                  navigate(`/plan/${targetPlanId}?pendingrestore=1`);
+                  // Staged restores already have a persisted record, even if
+                  // a small restore finishes before the next progress poll.
+                  navigate(`/plan/${targetPlanId}${stagingOnly ? '' : '?pendingrestore=1'}`);
                }
                close();
             },
@@ -56,7 +71,16 @@ const RestoreConfirmStep = ({ backupId, planId, settings, stats, snapshotsStats,
             {!restoreMutation.isSuccess && (
                <div className={classes.restoreConfirm}>
                   <p>
-                     {restoreStats ? (
+                     {selectionCounts ? (
+                        <strong>
+                           {selectionCounts.files.toLocaleString('en-US')} files + {selectionCounts.directories.toLocaleString('en-US')} directories
+                           selected ({selectionCounts.entries.toLocaleString('en-US')} entries; snapshot total:{' '}
+                           {selectionCounts.totalEntries.toLocaleString('en-US')} entries)
+                           {selectionCounts.otherEntries
+                              ? ` · ${selectionCounts.otherEntries} other entries (unsupported by remote staged restore)`
+                              : ''}
+                        </strong>
+                     ) : restoreStats ? (
                         <strong>
                            {restoreStats?.files_restored}
                            {!isSync ? `/${snapshotsStats.total_files} files` : ''}
@@ -66,7 +90,13 @@ const RestoreConfirmStep = ({ backupId, planId, settings, stats, snapshotsStats,
                      )}{' '}
                      will be restored to{' '}
                      <strong>
-                        {settings.type === 'original' ? (isSync ? 'the original source path' : 'their original source paths') : `"${settings.path}"`}
+                        {stagingOnly
+                           ? `a new internal server staging workspace${settings.type === 'custom' ? ` (subfolder: ${settings.path})` : ''}`
+                           : settings.type === 'original'
+                             ? isSync
+                                ? 'the original source path'
+                                : 'their original source paths'
+                             : `"${settings.path}"`}
                      </strong>
                      . Are you sure you want to proceed with the Restore?
                   </p>
@@ -89,7 +119,7 @@ const RestoreConfirmStep = ({ backupId, planId, settings, stats, snapshotsStats,
             )}
             {restoreMutation.isError && (
                <div className={classes.restoreError}>
-                  <Icon type="error" size={14} color="red" /> {restoreMutation.error?.message || 'Failed to Generate Preview'}
+                  <Icon type="error" size={14} color="var(--error-text-color)" /> {restoreMutation.error?.message || 'Failed to Generate Preview'}
                </div>
             )}
          </div>

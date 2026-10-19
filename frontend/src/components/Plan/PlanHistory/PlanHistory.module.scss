@@ -10,9 +10,17 @@
    }
 
    &.historyFull {
-      flex-wrap: wrap;
-      height: 50px;
+      display: grid;
+      grid-template-columns: repeat(30, minmax(0, 1fr));
+      grid-auto-rows: 12px;
+      height: auto;
+      min-height: 44px;
+      gap: 4px;
       padding-top: 10px;
+      & > div {
+         width: auto;
+         min-width: 0;
+      }
    }
 }
 
@@ -23,21 +31,20 @@
    background-color: var(--success-label);
 }
 .historyItemFailed {
-   background-color: #e88b84;
+   background-color: var(--error-button-color);
 }
 .historyItemCancelled {
-   background-color: #aaa;
+   background-color: var(--icon-color);
 }
 .historyItemPending {
-   background-color: #e8e184;
+   background-color: var(--warning-text-color);
 }
 
 @media only screen and (max-width: 768px) {
    .history.historyFull {
-      height: 160px;
-      gap: 8px;
+      gap: 3px;
       & > div {
-         width: 20px;
+         width: auto;
          border-radius: 2px;
       }
    }

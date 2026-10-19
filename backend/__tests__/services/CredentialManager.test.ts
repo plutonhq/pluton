@@ -64,11 +64,12 @@ describe('CredentialManager', () => {
 			expect(cm.readKeysFile()).toEqual({ SECRET: 'abc', APIKEY: 'xyz' });
 		});
 
-		it('should return empty object when file contains invalid JSON', () => {
+		it('fails closed without disclosing or replacing malformed persisted credentials', () => {
 			fs.writeFileSync(keysPath, 'not valid json!!!');
 			const { CredentialManager } = loadModule();
 			const cm = new CredentialManager();
-			expect(cm.readKeysFile()).toEqual({});
+			expect(() => cm.readKeysFile()).toThrow('Persisted credentials are unreadable');
+			expect(fs.readFileSync(keysPath, 'utf8')).toBe('not valid json!!!');
 		});
 	});
 
@@ -110,6 +111,63 @@ describe('CredentialManager', () => {
 	// ── loadOrGenerateSecrets ──────────────────────────────────────────────────
 
 	describe('loadOrGenerateSecrets', () => {
+		it('healthy encryption key is reused; conflicts and damaged key files fail without overwrite', () => {
+			const file = path.join(tmpDir, 'pluton.enc.env');
+			const { CredentialManager } = loadModule();
+			const manager = new CredentialManager();
+			fs.writeFileSync(file, 'ENCRYPTION_KEY=test-only-stable-encryption-key\n');
+			expect(manager.validatePersistedEncryptionKey('test-only-stable-encryption-key')).toBe(
+				'test-only-stable-encryption-key'
+			);
+			expect(() => manager.validatePersistedEncryptionKey('test-only-different')).toThrow(
+				'conflicts'
+			);
+			expect(fs.readFileSync(file, 'utf8')).toBe(
+				'ENCRYPTION_KEY=test-only-stable-encryption-key\n'
+			);
+			fs.writeFileSync(file, '# synthetic damaged file');
+			expect(() => manager.validatePersistedEncryptionKey()).toThrow('unreadable or invalid');
+			expect(fs.readFileSync(file, 'utf8')).toBe('# synthetic damaged file');
+		});
+		it.each(['{}', '[]', '{"SECRET":null}', '{"SECRET":""}'])(
+			'does not regenerate a damaged/missing persisted key: %s',
+			content => {
+				fs.writeFileSync(keysPath, content);
+				const { CredentialManager } = loadModule();
+				expect(() => new CredentialManager().loadOrGenerateSecrets()).toThrow();
+				expect(fs.readFileSync(keysPath, 'utf8')).toBe(content);
+			}
+		);
+		it('refuses missing keys on an initialized control volume, including unreadable database', () => {
+			fs.mkdirSync(path.join(tmpDir, 'db'));
+			fs.writeFileSync(path.join(tmpDir, 'db', 'pluton.db'), 'synthetic damaged database');
+			const { CredentialManager } = loadModule();
+			expect(() => new CredentialManager().loadOrGenerateSecrets()).toThrow(
+				'initialized data volume'
+			);
+			expect(fs.existsSync(keysPath)).toBe(false);
+		});
+		it('an atomic persistence failure preserves the old key bytes and removes private temp files', () => {
+			const original = JSON.stringify({
+				SECRET: 'test-only-stable-master',
+				APIKEY: 'test-only-api',
+				DB_CIPHER: 'unchanged-test-cipher',
+			});
+			fs.writeFileSync(keysPath, original);
+			const { CredentialManager } = loadModule();
+			const rename = jest.spyOn(fs, 'renameSync').mockImplementation(() => {
+				throw new Error('synthetic rename denied');
+			});
+			try {
+				expect(() =>
+					new CredentialManager().writeKeysFile({ SECRET: 'test-only-replacement' })
+				).toThrow();
+			} finally {
+				rename.mockRestore();
+			}
+			expect(fs.readFileSync(keysPath, 'utf8')).toBe(original);
+			expect(fs.readdirSync(tmpDir)).toEqual(['keys.json']);
+		});
 		it('should use env-provided secret and apikey', () => {
 			const { CredentialManager } = loadModule();
 			const cm = new CredentialManager();
@@ -140,13 +198,15 @@ describe('CredentialManager', () => {
 			expect(result.APIKEY.length).toBeGreaterThan(0);
 		});
 
-		it('should prefer env over file values', () => {
+		it('refuses implicit rotation through conflicting environment values', () => {
 			fs.writeFileSync(keysPath, JSON.stringify({ SECRET: 'file', APIKEY: 'file' }));
 			const { CredentialManager } = loadModule();
 			const cm = new CredentialManager();
-			const result = cm.loadOrGenerateSecrets('env', undefined);
-			expect(result.SECRET).toBe('env');
-			expect(result.APIKEY).toBe('file');
+			expect(() => cm.loadOrGenerateSecrets('env', undefined)).toThrow('conflicts');
+			expect(JSON.parse(fs.readFileSync(keysPath, 'utf8'))).toEqual({
+				SECRET: 'file',
+				APIKEY: 'file',
+			});
 		});
 
 		it('should not rewrite keys.json if values have not changed', () => {
@@ -165,11 +225,11 @@ describe('CredentialManager', () => {
 			fs.writeFileSync(keysPath, JSON.stringify({ PASSWORD_HASH: 'existing-hash', SECRET: 'old' }));
 			const { CredentialManager } = loadModule();
 			const cm = new CredentialManager();
-			cm.loadOrGenerateSecrets('new-secret', 'new-api');
+			cm.loadOrGenerateSecrets('old', 'new-api');
 
 			const content = JSON.parse(fs.readFileSync(keysPath, 'utf-8'));
 			expect(content.PASSWORD_HASH).toBe('existing-hash');
-			expect(content.SECRET).toBe('new-secret');
+			expect(content.SECRET).toBe('old');
 			expect(content.APIKEY).toBe('new-api');
 		});
 	});

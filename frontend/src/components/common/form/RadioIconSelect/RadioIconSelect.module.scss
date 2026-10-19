@@ -50,7 +50,7 @@
    position: relative;
 
    :global(.checkMark) {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       position: absolute;
       top: 5px;
       right: 5px;

@@ -11,6 +11,7 @@ import { Backup } from '../../..';
 interface RestoreSettingsStepProps {
    backupId: string;
    deviceId: string;
+   stagingOnly?: boolean;
    settings: RestoreSettings;
    mirrors?: Backup['mirrors'];
    primaryStorage: { id: string; type: string; name: string };
@@ -19,7 +20,16 @@ interface RestoreSettingsStepProps {
    close: () => void;
 }
 
-const RestoreSettingsStep = ({ settings, mirrors = [], primaryStorage, updateSettings, goNext, close, deviceId }: RestoreSettingsStepProps) => {
+const RestoreSettingsStep = ({
+   settings,
+   mirrors = [],
+   primaryStorage,
+   stagingOnly = false,
+   updateSettings,
+   goNext,
+   close,
+   deviceId,
+}: RestoreSettingsStepProps) => {
    const [showFileManager, setShowFileManager] = useState(false);
    const [showCustomPathError, setShowCustomPathError] = useState(false);
 
@@ -30,6 +40,53 @@ const RestoreSettingsStep = ({ settings, mirrors = [], primaryStorage, updateSet
          setShowCustomPathError(true);
       }
    };
+
+   if (stagingOnly) {
+      return (
+         <div className={classes.stepContent}>
+            <div className={classes.step}>
+               <p>Restore into a new private workspace on the Pluton server. This does not restore to the remote agent or original source.</p>
+               <div className={classes.settingBlock}>
+                  <Select
+                     label="Staging destination"
+                     options={[
+                        { label: 'New internal staging workspace', value: 'original' },
+                        { label: 'Custom subfolder inside new staging workspace', value: 'custom' },
+                     ]}
+                     fieldValue={settings.type}
+                     full
+                     onUpdate={(value) => updateSettings({ ...settings, type: value as 'original' | 'custom' })}
+                  />
+               </div>
+               {settings.type === 'custom' && (
+                  <div className={classes.settingBlock}>
+                     <Input
+                        label="Relative staging subfolder"
+                        placeholder="recovery/check"
+                        fieldValue={settings.path}
+                        full
+                        onUpdate={(value) => {
+                           updateSettings({ ...settings, path: value });
+                           setShowCustomPathError(false);
+                        }}
+                     />
+                     {showCustomPathError && <p>Enter a relative subfolder, not an absolute server or source path.</p>}
+                  </div>
+               )}
+               <p>Never overwrite. No deletion. Only regular files and directories are supported; repository contents remain unchanged.</p>
+            </div>
+            <div className={classes.footer}>
+               <div className={classes.footerLeft}></div>
+               <div className={classes.footerRight}>
+                  <button onClick={close}>Cancel</button>
+                  <button onClick={gotoPreviewStep}>
+                     Next: Select Files to Restore <Icon type="arrow-right" size={14} />
+                  </button>
+               </div>
+            </div>
+         </div>
+      );
+   }
 
    return (
       <div className={classes.stepContent}>

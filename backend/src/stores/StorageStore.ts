@@ -4,12 +4,71 @@ import { DatabaseType } from '../db';
 import { Storage, NewStorage, storages, StorageFull } from '../db/schema/storages';
 import { providers } from '../utils/providers';
 import { PlanChildItem, PlanBackupSettings, ReplicationPlanItem } from '../types/plans';
+import { AppError } from '../utils/AppError';
+import { canonicalS3RepositoryIdentity } from '../utils/storageSecurity';
+import { assertStorageUpdateReplicaIsolation } from '../utils/managedReplicationPolicy';
 
 /**
  * StorageStore is a class for managing storage records in the database.
  */
 export class StorageStore {
 	constructor(private db: DatabaseType) {}
+
+	/** Check before publishing a remote configuration; database triggers also guard races. */
+	assertManagedReplicationStorageEditable(storageId: string, next?: Storage): void {
+		const sqlite = this.db.$client;
+		if (
+			!sqlite
+				.prepare(
+					"SELECT 1 FROM sqlite_master WHERE type='table' AND name='managed_replication_jobs'"
+				)
+				.get()
+		)
+			return;
+		if (
+			sqlite
+				.prepare(
+					"SELECT 1 FROM managed_replication_jobs WHERE (source_storage_id=? OR destination_storage_id=?) AND status IN ('pending','running','uncertain') LIMIT 1"
+				)
+				.get(storageId, storageId)
+		) {
+			throw new AppError(
+				409,
+				'Storage is reserved by pending, running or uncertain managed replication. Finish reconciliation before editing it.'
+			);
+		}
+		if (
+			!next &&
+			sqlite
+				.prepare(
+					'SELECT 1 FROM managed_replication_destinations WHERE destination_storage_id=? LIMIT 1'
+				)
+				.get(storageId)
+		)
+			throw new AppError(
+				409,
+				'Storage still identifies an owned or retained managed repository. Retain its storage configuration.'
+			);
+		if (next) {
+			assertStorageUpdateReplicaIsolation(sqlite, storageId, next);
+			const destinations = sqlite
+				.prepare(
+					'SELECT destination_storage_path,destination_authority,destination_prefix FROM managed_replication_destinations WHERE destination_storage_id=?'
+				)
+				.all(storageId) as Array<any>;
+			for (const destination of destinations) {
+				const identity = canonicalS3RepositoryIdentity(next, destination.destination_storage_path);
+				if (
+					identity.authority !== destination.destination_authority ||
+					identity.prefix !== destination.destination_prefix
+				)
+					throw new AppError(
+						409,
+						'Storage endpoint/bucket is bound to an owned managed repository. Detach and retain it before using a different storage.'
+					);
+			}
+		}
+	}
 
 	async getAll(full: boolean = false, hideCreds: boolean = false): Promise<Storage[] | null> {
 		const storages = await this.db.query.storages.findMany({
@@ -147,7 +206,9 @@ export class StorageStore {
 	 * These devices hold an rclone config entry for it and need it re-pushed on edit.
 	 */
 	async getReplicationPlanSources(storageId: string): Promise<string[]> {
-		const map = await this.getReplicationPlansForStorages([storageId]);
+		// Managed Agent replication runs on the server. Never distribute its
+		// destination credentials to an Agent merely because it owns a plan.
+		const map = await this.getReplicationPlansForStorages([storageId], true);
 		const plans = map.get(storageId) || [];
 		return [...new Set(plans.map(plan => plan.sourceId).filter(Boolean))];
 	}
@@ -157,7 +218,8 @@ export class StorageStore {
 	 * Used to accurately count all plans associated with a storage.
 	 */
 	private async getReplicationPlansForStorages(
-		storageIds: string[]
+		storageIds: string[],
+		excludeManagedAgents = false
 	): Promise<Map<string, ReplicationPlanItem[]>> {
 		const result = new Map<string, ReplicationPlanItem[]>();
 		if (storageIds.length === 0) return result;
@@ -174,10 +236,13 @@ export class StorageStore {
 				settings: true,
 				storageId: true,
 				sourceId: true,
+				sourceType: true,
 			},
 		});
 
 		for (const plan of allPlans) {
+			if (excludeManagedAgents && plan.sourceType === 'device' && plan.sourceId !== 'main')
+				continue;
 			const settings = plan.settings as PlanBackupSettings;
 			if (settings?.replication?.enabled && settings.replication.storages?.length > 0) {
 				for (const repStorage of settings.replication.storages) {
@@ -220,13 +285,13 @@ export class StorageStore {
 	}
 
 	async update(id: string, updates: Partial<NewStorage>): Promise<Storage | null> {
-		const result = await this.db
-			.update(storages)
-			.set({ ...updates, updatedAt: sql`(unixepoch())` })
-			.where(eq(storages.id, id))
-			.returning();
-
-		return result[0] || null;
+		return this.db.transaction(tx => {
+			const next = assertStorageUpdateReplicaIsolation(this.db.$client, id, updates);
+			if (next) this.assertManagedReplicationStorageEditable(id, next);
+			const result = tx.update(storages).set({ ...updates, updatedAt: sql`(unixepoch())` })
+				.where(eq(storages.id, id)).returning().all();
+			return result[0] || null;
+		}, { behavior: 'immediate' });
 	}
 
 	async delete(id: string): Promise<boolean> {

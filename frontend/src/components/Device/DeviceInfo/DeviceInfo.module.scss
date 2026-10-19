@@ -20,7 +20,7 @@
    justify-content: center;
    border-radius: 50%;
    background-color: var(--background-color);
-   color: var(--primary-color);
+   color: var(--primary-color-foreground);
 }
 
 .deviceInfo {
@@ -49,7 +49,7 @@
          border: 1px solid var(--line-color);
          color: var(--content-title-color);
          border-radius: 4px;
-         font-size: 0.6875rem;
+         font-size: 0.75rem;
          font-weight: 600;
          width: max-content;
          position: relative;
@@ -77,17 +77,16 @@
             gap: 2px;
             color: var(--content-text-color);
             font-weight: 600;
-            font-size: 0.625rem;
+            font-size: 0.8125rem;
+            min-width: 0;
             span:nth-child(1) {
-               font-size: 0.625rem;
+               font-size: 0.75rem;
                color: var(--icon-color);
             }
             span:nth-child(2) {
                display: block;
-               width: 90%;
-               white-space: nowrap;
-               overflow: hidden;
-               text-overflow: ellipsis;
+               width: 100%;
+               overflow-wrap: anywhere;
             }
          }
       }
@@ -98,7 +97,7 @@
    color: var(--icon-color);
    background-color: var(--line-color);
    font-style: normal;
-   font-size: 0.6rem;
+   font-size: 0.75rem;
    padding: 2px 6px;
    border-radius: 6px;
    margin-left: 2px;
@@ -111,7 +110,7 @@
 }
 .progressBar {
    width: 100%;
-   height: 10px;
+   height: 16px;
    border-radius: 4px;
    margin-top: 3px;
    background-color: var(--line-color);
@@ -119,16 +118,16 @@
    .progressBarFill {
       height: 100%;
       border-radius: 4px;
-      background-color: turquoise;
+      background-color: var(--progress-fill);
       position: relative;
       transition: all 0.2s linear;
       min-width: 12%;
       span {
          font-weight: 600;
-         font-size: 0.625rem;
-         line-height: 1.1em;
+         font-size: 0.75rem;
+         line-height: 16px;
          position: absolute;
-         color: #fff !important;
+         color: var(--progress-text) !important;
          right: 5px;
       }
    }
@@ -147,7 +146,7 @@
       border: 1px solid var(--line-color);
       color: var(--content-title-color);
       border-radius: 4px;
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       font-weight: 600;
       width: max-content;
       position: relative;
@@ -158,6 +157,8 @@
    }
    .contentBlock {
       width: calc(100% - 50px);
+      min-width: 0;
+      overflow-wrap: anywhere;
    }
    .componentContent {
       width: 100%;
@@ -174,15 +175,13 @@
       padding: 20px;
       border-radius: 6px;
       box-sizing: border-box;
-      font-size: 0.7rem;
+      font-size: 0.8125rem;
       align-items: center;
       position: relative;
       h4 {
          margin: 0;
          color: var(--content-title-color);
-         white-space: nowrap;
-         overflow: hidden;
-         text-overflow: ellipsis;
+         overflow-wrap: anywhere;
       }
       .blockLabel {
          position: absolute;
@@ -198,7 +197,7 @@
       .widget {
          width: 100%;
          .infoBlock .infoBlockRight {
-            width: 190px;
+            width: 100%;
          }
       }
    }

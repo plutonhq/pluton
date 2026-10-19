@@ -1,0 +1,12 @@
+**
+!deploy/
+!deploy/persistent-restore/
+!deploy/persistent-restore/storage.cjs
+!deploy/persistent-restore/operator.cjs
+!deploy/persistent-restore/bootstrap.sh
+!backend/
+!backend/__tests__/
+!backend/__tests__/integration/
+!backend/__tests__/integration/persistentStorage.smoke.cjs
+!backend/__tests__/integration/persistentNative.smoke.cjs
+!backend/__tests__/integration/persistentNative.app.mjs

@@ -1,6 +1,10 @@
+import { mutationResponse } from '../utils/httpResponse';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { API_URL } from '../utils/constants';
+import { startNativeBackupDownload } from '../utils/backupDownload';
+import { useMemo } from 'react';
+import { progressPollingFor, fetchProgress, progressFinished } from '../utils/progressPolling';
 
 const notifiedBackupProgress = new Set<string>();
 
@@ -24,6 +28,7 @@ export function useDownloadBackup() {
    return useMutation({
       mutationFn: generateBackupDownload,
       onSuccess: (res, payload) => {
+         if (res.result?.streaming === true) startNativeBackupDownload(API_URL, payload.backupId);
          console.log('res :', payload, res);
          queryClient.invalidateQueries({ queryKey: ['plan', payload.planId] });
       },
@@ -86,22 +91,17 @@ export function useGetBackupDownload() {
 
 // Cancel Download
 export async function cancelBackupDownload({ backupId }: { backupId: string; planId: string }) {
-   const res = await fetch(`${API_URL}/backups/${backupId}/action/download`, {
+   return mutationResponse<{ success: boolean; message?: string }>(`${API_URL}/backups/${encodeURIComponent(backupId)}/action/download`, {
       method: 'DELETE',
       credentials: 'include',
       // headers: header,
-   });
-   // Check if response is ok
-   const data = await res.json();
-   if (!data.success) {
-      throw new Error(data.error);
-   }
-   return data;
+   }, { allowNoContent: true, allowAccepted: false });
 }
 export function useCancelBackupDownload() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: cancelBackupDownload,
+      retry: false,
       onSuccess: (res, payload) => {
          console.log('res :', payload, res);
          queryClient.invalidateQueries({ queryKey: ['plan', payload.planId] });
@@ -112,21 +112,17 @@ export function useCancelBackupDownload() {
 // Remove Backup
 export async function deleteBackup(id: string) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
-   const res = await fetch(`${API_URL}/backups/${id}`, {
+   return mutationResponse<{ success: boolean; message?: string }>(`${API_URL}/backups/${encodeURIComponent(id)}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: header,
-   });
-   const data = await res.json();
-   if (!data.success) {
-      throw new Error(data.error);
-   }
-   return data;
+   }, { allowNoContent: true, allowAccepted: false });
 }
 
 export function useDeleteBackup() {
    return useMutation({
       mutationFn: deleteBackup,
+      retry: false,
       onSuccess: (res) => {
          console.log('# Backup Removed! :', res);
       },
@@ -134,50 +130,41 @@ export function useDeleteBackup() {
 }
 
 // Get Backup Progress
-export async function getBackupProgress({ id, sourceId, sourceType, planId }: { id: string; sourceId: string; sourceType: string; planId: string }) {
-   const url = new URL(`${API_URL}/backups/${id}/progress?sourceId=${sourceId}&sourceType=${sourceType}&planId=${planId}`);
-
-   const res = await fetch(url.toString(), {
-      method: 'GET',
-      credentials: 'include',
-   });
-   const data = await res.json();
-   return data;
+export async function getBackupProgress({ id, sourceId, sourceType, planId }: { id: string; sourceId: string; sourceType: string; planId: string }, signal?: AbortSignal) {
+   const url = new URL(`${API_URL}/backups/${encodeURIComponent(id)}/progress`);
+   url.search = new URLSearchParams({ sourceId, sourceType, planId }).toString();
+   return fetchProgress(url, signal);
 }
 
 export function useGetBackupProgress(payload: { id: string; sourceId: string; sourceType: string; planId: string }) {
    const queryClient = useQueryClient();
-   return useQuery({
+   const { id, sourceId, sourceType, planId } = payload;
+   const polling = useMemo(() => progressPollingFor(queryClient, ['progress-backup', id], (signal) => getBackupProgress({ id, sourceId, sourceType, planId }, signal)), [queryClient, id, sourceId, sourceType, planId]);
+   const query = useQuery({
       queryKey: ['progress-backup', payload.id],
-      queryFn: () => getBackupProgress(payload),
-      refetchOnMount: true,
-      retry: false,
+      ...polling,
       refetchInterval(query) {
-         // Only refetch if the browser tab is active
-         // if (document.hidden) return false;
-
-         // console.log('query :', query.state?.data);
          const progressData = query.state?.data;
-
-         // Check if backup is finished by looking for a "finished" phase event
-         const isFinished = progressData?.events?.some((event: any) => event.phase === 'finished' && event.completed === true);
+         const isFinished = progressFinished(progressData);
 
          if (isFinished) {
             const planId = progressData?.planId || payload.planId;
             if (!notifiedBackupProgress.has(payload.id)) {
                notifiedBackupProgress.add(payload.id);
                if (planId) {
-                  console.log('Invalidate Plan and Reload It :', planId);
                   queryClient.invalidateQueries({ queryKey: ['plan', planId] });
                }
-               toast.success('Process Complete!');
+               if (progressData?.status === 'cancelled') toast.info('Backup cancelled.');
+               else if (progressData?.status === 'failed' || progressData?.success === false) toast.error('Backup failed. Review the backup details.');
+               else toast.success('Process Complete!');
             }
             return false;
          }
 
-         return 1000;
+         return polling.refetchInterval();
       },
    });
+   return { ...query, retryProgress: () => { if (polling.resume()) void query.refetch(); } };
 }
 
 export function useGetBackupProgressOnce(payload: { id: string; sourceId: string; sourceType: string; planId: string }) {
@@ -276,24 +263,21 @@ export function useBrowseSnapshot() {
 // Retry Failed Replications
 export async function retryFailedReplications({ backupId, replicationId }: { backupId: string; planId: string; replicationId: string }) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
-   const res = await fetch(`${API_URL}/backups/${backupId}/action/replication-retry?replicationId=${replicationId}`, {
+   const url = new URL(`${API_URL}/backups/${encodeURIComponent(backupId)}/action/replication-retry`);
+   url.searchParams.set('replicationId', replicationId);
+   return mutationResponse<{ success: boolean; result?: string }>(url, {
       method: 'POST',
       credentials: 'include',
       headers: header,
    });
-   const data = await res.json();
-   if (!data.success) {
-      throw new Error(data.error);
-   }
-   return data;
 }
 
 export function useRetryFailedReplications() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: retryFailedReplications,
-      onSuccess: (res, payload) => {
-         console.log('res :', payload, res);
+      retry: false,
+      onSuccess: (_res, payload) => {
          queryClient.invalidateQueries({ queryKey: ['plan', payload.planId] });
       },
    });

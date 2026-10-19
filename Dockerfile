@@ -5,7 +5,7 @@
 FROM debian:bookworm-slim
 
 ARG TARGETARCH
-ARG APP_VERSION=0.0.1
+ARG APP_VERSION=unknown
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

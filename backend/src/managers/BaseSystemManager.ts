@@ -1,17 +1,14 @@
 import os from 'os';
 import { execSync } from 'child_process';
-import { chmod, readFile, readdir, stat, mkdtemp, rm } from 'fs/promises';
-import { createWriteStream } from 'fs';
+import { readFile, readdir, stat } from 'fs/promises';
 import path from 'path';
 import si from 'systeminformation';
-import https from 'https';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import { getRcloneVersion, getResticVersion } from '../utils/versions';
 // import { defaultDockerInfo } from '../utils/docker';
 import { DeviceSettings, DiscoveredFilesystem, LsblkDevice, LsblkOutput } from '../types/devices';
 import { BaseStorageManager } from './BaseStorageManager';
-import { runCommand } from '../utils/runCommand';
 import { appPaths } from '../utils/AppPaths';
 import {
 	saveGeneralDeviceSettings,
@@ -732,63 +729,10 @@ export class BaseSystemManager {
 	}
 
 	private async executeUpdateScript(binaryName: 'restic' | 'rclone'): Promise<string> {
-		const workerBaseURL = 'https://dl.usepluton.com';
-		const licenseKey = process.env.LICENSE_KEY || 'no-license'; // Assuming license key is in env
-
-		// 1. Detect OS and set script details
-		const isWindows = os.platform() === 'win32';
-		const scriptName = isWindows ? `update-${binaryName}.ps1` : `update-${binaryName}.sh`;
-		const shellCmd = isWindows ? 'powershell.exe' : '/bin/bash';
-		const shellArgs = isWindows ? ['-ExecutionPolicy', 'Bypass', '-File'] : [];
-
-		// 2. Construct the script URL
-		const scriptURL = `${workerBaseURL}/dependencies/scripts/${scriptName}?license=${licenseKey}`;
-
-		// 3. Download the script to a temporary file
-		const tempDir = await mkdtemp(path.join(appPaths.getTempDir(), 'pluton-updater-'));
-		const tempScriptPath = path.join(tempDir, scriptName);
-
-		try {
-			await new Promise<void>((resolve, reject) => {
-				const file = createWriteStream(tempScriptPath);
-				https
-					.get(scriptURL, response => {
-						if (response.statusCode !== 200) {
-							reject(new Error(`Failed to download script: Status Code ${response.statusCode}`));
-							return;
-						}
-						response.pipe(file);
-						file.on('finish', () => {
-							file.close();
-							resolve();
-						});
-					})
-					.on('error', err => {
-						reject(new Error(`Failed to download script: ${err.message}`));
-					});
-			});
-
-			// 4. Make the script executable on non-Windows systems
-			if (!isWindows) {
-				await chmod(tempScriptPath, 0o755);
-			}
-
-			// 5. Execute the script
-			const commandArgs = [shellCmd, ...shellArgs, tempScriptPath];
-			const output = await runCommand(commandArgs);
-
-			// 6. Parse output for new version
-			const match = output.match(/\[SUCCESS\] New version: (.*)/);
-			if (match && match[1]) {
-				return match[1].trim();
-			}
-
-			// Fallback to getting version directly if parsing fails
-			return binaryName === 'restic' ? getResticVersion() : getRcloneVersion();
-		} finally {
-			// 7. Clean up the temporary directory and its contents
-			await rm(tempDir, { recursive: true, force: true });
-		}
+		// Never download/execute unsigned upstream updater scripts or send license keys in URLs.
+		throw new Error(
+			`Automatic ${binaryName} updates are unavailable in this self-hosted build. Use a reviewed immutable image or the pinned agent installer. See /docs/deployment/updates.`
+		);
 	}
 
 	async isServerEdition(osData: si.Systeminformation.OsData): Promise<boolean> {

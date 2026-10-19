@@ -1,0 +1,47 @@
+# Explicit opt-in AFTER reviewed host operator installation and quota acceptance.
+# Apply alongside compose.persistent-restore.yml AND every existing deployment overlay.
+# Host installation creates these paths/networks. Do not let Compose create missing paths.
+services:
+  pluton:
+    # systemd orders cold boot after anchors + root reconciliation. Unlike
+    # unless-stopped, on-failure does not auto-start on Docker daemon startup.
+    restart: on-failure
+    environment:
+      PLUTON_AUTOMATIC_RECOVERY: enabled
+    networks:
+      default: {}
+      persistent-restores: {}
+      automatic-tests: {}
+    volumes:
+      - type: bind
+        source: /etc/pluton-automatic-recovery/public
+        target: /run/pluton-automatic-recovery
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /var/lib/pluton-automatic-recovery-requests
+        target: /run/pluton-automatic-recovery-requests
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /var/lib/pluton-automatic-recovery/disposable/app-view
+        target: /run/pluton-automatic-storage
+        read_only: true
+        bind:
+          create_host_path: false
+          propagation: rslave
+      - type: bind
+        source: /var/lib/pluton-persistent-restores/app-view
+        target: /run/pluton-persistent-storage
+        read_only: true
+        bind:
+          create_host_path: false
+          propagation: rslave
+networks:
+  persistent-restores:
+    external: true
+    name: pluton-persistent-restores
+  automatic-tests:
+    external: true
+    name: pluton-automatic-tests

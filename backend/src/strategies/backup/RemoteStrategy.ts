@@ -14,11 +14,11 @@ export class RemoteStrategy implements BackupStrategy {
 		options: Record<string, any>,
 		runSettings?: PlanAddRunSettings
 	) {
-		return { success: true, result: 'Backup created successfully' };
+		return this.publishCommand('CREATE_BACKUP', { planId, options, runSettings });
 	}
 
 	async updateBackup(planId: string, options: any) {
-		return { success: true, result: 'Backup updated successfully' };
+		return this.publishCommand('UPDATE_BACKUP', { planId, options });
 	}
 
 	async removeBackup(
@@ -88,8 +88,8 @@ export class RemoteStrategy implements BackupStrategy {
 	}
 
 	publishCommand(action: string, payload: any): Promise<{ success: boolean; result: any }> {
-		return new Promise((resolve, reject) => {
-			resolve({ success: true, result: null });
-		});
+		void action;
+		void payload;
+		return Promise.resolve({ success: false, result: 'REMOTE_CAPABILITY_NOT_IMPLEMENTED' });
 	}
 }

@@ -157,9 +157,9 @@ const PlanIntegrity = ({ planId, taskPending, verificationData, storage, replica
                            </span>
                            <span>
                               {backupHasError ? (
-                                 <Icon type="error-circle-filled" size={14} color="#ff4d4f" />
+                                 <Icon type="error-circle-filled" size={14} color="var(--error-text-color)" />
                               ) : (
-                                 <Icon type="check-circle-filled" size={14} color="#06ba9f" />
+                                 <Icon type="check-circle-filled" size={14} color="var(--success-text-color)" />
                               )}
                            </span>
                         </h4>

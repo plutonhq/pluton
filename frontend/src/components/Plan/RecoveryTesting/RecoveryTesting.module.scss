@@ -1,0 +1,88 @@
+.panel {
+   color: var(--content-text-color);
+   background: var(--content-background-color);
+   max-height: 72vh;
+   overflow: auto;
+   padding: 12px;
+   h3,
+   h4 {
+      margin: 18px 0 12px;
+   }
+   p {
+      line-height: 1.6;
+   }
+   label {
+      display: block;
+      margin: 12px 0;
+   }
+   input:not([type='checkbox']),
+   select {
+      box-sizing: border-box;
+      width: 100%;
+      margin: 6px 0;
+      padding: 8px;
+      color: var(--content-text-color);
+      background: var(--field-bg);
+      border: 1px solid var(--field-line-color);
+      border-radius: 4px;
+   }
+   button,
+   .button {
+      margin: 8px 8px 8px 0;
+      padding: 8px 12px;
+      color: var(--content-text-color);
+      background: var(--field-bg);
+      border: 1px solid var(--field-line-color);
+      border-radius: 4px;
+      cursor: pointer;
+      &:disabled {
+         opacity: 0.55;
+         cursor: not-allowed;
+      }
+   }
+   code {
+      overflow-wrap: anywhere;
+   }
+}
+.grid {
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 10px;
+}
+.card {
+   margin: 18px 0;
+   padding: 12px;
+   border: 1px solid var(--line-color);
+   border-radius: 5px;
+}
+.badge {
+   display: block;
+   margin: 5px 0;
+   color: var(--content-text-color);
+   font-size: 12px;
+}
+.summary {
+   margin: 16px 0;
+   padding: 12px;
+   border: 1px solid var(--line-color);
+   color: var(--content-text-color);
+   background: var(--surface-muted);
+   border-radius: 6px;
+   display: grid;
+   grid-template-columns: repeat(3, minmax(0, 1fr));
+   gap: 6px 18px;
+   font-size: 0.8125rem;
+   overflow-wrap: anywhere;
+}
+.detail {
+   display: grid;
+   gap: 8px;
+}
+@media (max-width: 650px) {
+   .grid {
+      grid-template-columns: 1fr;
+   }
+   .summary {
+      grid-template-columns: 1fr;
+   }
+}

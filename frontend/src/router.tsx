@@ -6,14 +6,16 @@ import { useAuth } from './services/users';
 import App from './components/App/App/App';
 import Settings from './routes/Settings/Settings';
 import Storages from './routes/Storages/Storages';
+import LegacyRepositories from './routes/LegacyRepositories/LegacyRepositories';
+import LegacyRepositoryDetail from './routes/LegacyRepositories/LegacyRepositoryDetail';
 import Sources from './routes/Sources/Sources';
 import PlanSingle from './routes/PlanSingle/PlanSingle';
 import DeviceSingle from './routes/DeviceSingle/DeviceSingle';
 import Footer from './components/App/Footer/Footer';
 import NotFoundRoute from './routes/NotFoundRoute/NotFoundRoute';
 import Icon from './components/common/Icon/Icon';
-import { useCheckLatestVersion } from './services';
-import { compareVersions } from './utils';
+import DocumentationRedirect from './docs/DocumentationRedirect';
+import DatabaseRestores from './routes/DatabaseRestores/DatabaseRestores';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
    const { data: authData, isLoading: authLoading } = useAuth();
@@ -35,9 +37,6 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function ProtectedLayout() {
    const { data: authData, isError: authError, isLoading: authLoading } = useAuth();
-   const { data } = useCheckLatestVersion();
-   const version = (window as any).plutonVersion || 'unknown';
-   const hasNewVersion = data?.result?.latestVersion && version !== 'dev' && compareVersions(version, data.result.latestVersion);
 
    if (authLoading) {
       return (
@@ -59,12 +58,10 @@ function ProtectedLayout() {
       return <Navigate to="/login" replace />;
    }
 
-   console.log('User data :', authData);
-
    return (
       <>
          <App />
-         <Footer version={authData?.appVersion || ''} latestVersion={hasNewVersion ? data?.result?.latestVersion : undefined} />
+         <Footer version={authData?.appVersion || ''} revision={(window as any).plutonRevision} />
       </>
    );
 }
@@ -72,11 +69,16 @@ function ProtectedLayout() {
 export function AppRoutes() {
    return (
       <Routes>
+         <Route path="/docs/*" element={<DocumentationRedirect />} />
          <Route path="/" element={<ProtectedLayout />}>
             <Route index element={<Plans />} />
             <Route path="settings" element={<Settings />} />
             <Route path="storages" element={<Storages />} />
+            <Route path="legacy-repositories" element={<LegacyRepositories />} />
+            <Route path="legacy-repositories/:id" element={<LegacyRepositoryDetail />} />
             <Route path="sources" element={<Sources />} />
+            <Route path="database-restores" element={<DatabaseRestores />} />
+            <Route path="database-restores/:id" element={<DatabaseRestores />} />
             <Route path={'device/:id'} element={<DeviceSingle />} />
             <Route path={'plan/:id'} element={<PlanSingle />} />
             <Route path="*" element={<NotFoundRoute />} />

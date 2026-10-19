@@ -87,12 +87,12 @@ const PlanSingle = () => {
                      )}
                      {!isActive && (
                         <span className="label warn">
-                           <Icon size={14} type={'pause'} color="#bf8d20" /> Paused
+                           <Icon size={14} type={'pause'} color="var(--warning-text-color)" /> Paused
                         </span>
                      )}
                      {verified?.hasError && (
                         <span className={`label error ${classes.planError}`} onClick={() => setShowIntegrityModal(true)}>
-                           <Icon size={14} type={'error-circle-filled'} color="#dd6b6b" /> Integrity Error
+                           <Icon size={14} type={'error-circle-filled'} color="var(--error-text-color)" /> Integrity Error
                         </span>
                      )}
                   </>
@@ -111,7 +111,12 @@ const PlanSingle = () => {
                         <button className={classes.actionBtn} onClick={() => setShowEditModal(true)}>
                            <Icon size={14} type="edit-settings" /> Edit
                         </button>
-                        <button className={`${classes.actionBtn} ${classes.actionMoreBtn}`} onClick={() => setShowMoreOptions(!showMoreOptions)}>
+                        <button
+                           aria-label="More plan actions"
+                           aria-expanded={showMoreOptions}
+                           className={`${classes.actionBtn} ${classes.actionMoreBtn}`}
+                           onClick={() => setShowMoreOptions(!showMoreOptions)}
+                        >
                            <Icon size={14} type="dots-vertical" />
                         </button>
 

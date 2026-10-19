@@ -113,13 +113,13 @@
 
                &.selectedItem {
                   background: var(--primary-color-light);
-                  color: var(--primary-hover-color);
+                  color: var(--primary-color-foreground);
                   span svg {
-                     color: var(--primary-hover-color);
+                     color: var(--primary-color-foreground);
                   }
                }
 
-               &:hover {
+               &:hover:not(.selectedItem) {
                   background: var(--background-color);
                   color: inherit;
                }

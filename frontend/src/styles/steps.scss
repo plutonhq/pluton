@@ -3,7 +3,7 @@
    padding: 10px 15px;
    padding-bottom: 5px;
    box-sizing: border-box;
-   border-bottom: 1px solid var(--content-shadow-color);
+   border-bottom: 1px solid var(--line-color);
    background: var(--background-color);
    ul {
       margin: 0;
@@ -17,7 +17,7 @@
          position: absolute;
          width: calc(100% - 60px);
          height: 2px;
-         background-color: var(--content-shadow-color);
+         background-color: var(--line-color);
          z-index: 0;
          top: 12px;
          left: 25px;
@@ -43,7 +43,7 @@
             height: 20px;
             font-size: 0.75rem;
             border-radius: 50%;
-            background-color: var(--content-shadow-color);
+            background-color: var(--line-color);
             text-align: center;
             box-sizing: border-box;
          }
@@ -53,13 +53,14 @@
                color: var(--primary-text-color);
             }
             i {
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
                font-weight: 600;
             }
          }
          &.stepPassed {
             & > span {
                background-color: var(--primary-color);
+               color: var(--primary-text-color);
             }
          }
       }

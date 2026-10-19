@@ -1,4 +1,3 @@
-import './types/process.d.ts';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { createApp } from './createApp';
@@ -97,7 +96,7 @@ if (isMainModule || isDevelopment) {
 			console.log('Setup pending - skipping initSetup. Complete setup via web interface.');
 		}
 
-		const { app } = await createApp();
+		const { app, shutdown } = await createApp();
 
 		const port = configService.config.SERVER_PORT || 5173;
 
@@ -127,13 +126,21 @@ if (isMainModule || isDevelopment) {
 			// Kill any restic/rclone children so a stop does not orphan them.
 			processManager.killAll();
 			const forceExit = setTimeout(() => {
+				// Phase 6 may start bounded DB cleanup after the initial abort.
+				// Do not orphan those groups when the shutdown deadline expires.
+				processManager.killAll('SIGKILL');
 				process.exit(1);
 			}, 30000);
-			server.close(() => {
-				console.log('HTTP server closed.');
-				clearTimeout(forceExit);
-				process.exit(0);
-			});
+			void Promise.all([shutdown(), new Promise<void>(resolve => server.close(() => resolve()))])
+				.then(() => {
+					console.log('HTTP server closed.');
+					clearTimeout(forceExit);
+					process.exit(0);
+				})
+				.catch(() => {
+					processManager.killAll('SIGKILL');
+					process.exit(1);
+				});
 		};
 
 		process.on('SIGINT', gracefulShutdown);

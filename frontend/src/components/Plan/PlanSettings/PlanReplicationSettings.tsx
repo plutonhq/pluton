@@ -9,6 +9,8 @@ import ActionModal from '../../common/ActionModal/ActionModal';
 import { useDeleteReplicationStorage } from '../../../services';
 import { toast } from 'react-toastify';
 import { nanoid } from 'nanoid';
+import { MAX_REPLICATION_DESTINATIONS, replicationSettingsError } from '../../../utils/replication';
+import DeleteDependencyNotice from '../../common/ActionModal/DeleteDependencyNotice';
 
 interface PlanReplicationSettingsProps {
    replication?: ReplicationSettings;
@@ -19,6 +21,7 @@ interface PlanReplicationSettingsProps {
    isEditing?: boolean;
    planID?: string;
    maxReplications?: number;
+   managedAgent?: boolean;
    onUpdate: (replication: ReplicationSettings) => void;
 }
 
@@ -27,8 +30,6 @@ const defaultReplication: ReplicationSettings = {
    concurrent: false,
    storages: [],
 };
-
-const MAX_REPLICATIONS = 2;
 
 const PlanReplicationSettings = ({
    replication,
@@ -39,6 +40,7 @@ const PlanReplicationSettings = ({
    isEditing = false,
    planID,
    maxReplications: maxReplicationsProp,
+   managedAgent = false,
    onUpdate,
 }: PlanReplicationSettingsProps) => {
    const [tempStorages, setTempStorages] = useState<PlanReplicationStorage[]>([]);
@@ -47,6 +49,8 @@ const PlanReplicationSettings = ({
 
    const deleteStorageMutation = useDeleteReplicationStorage();
    const settings = replication || defaultReplication;
+   const maxReplications = Math.min(MAX_REPLICATION_DESTINATIONS, maxReplicationsProp ?? MAX_REPLICATION_DESTINATIONS);
+   const validationError = replicationSettingsError(settings, { storageId: primaryStorageId, storagePath: primaryStoragePath || '' }, managedAgent);
 
    /** Check if a storage+path combination already exists in committed or temp storages */
    const isDuplicateStorage = useCallback(
@@ -75,11 +79,9 @@ const PlanReplicationSettings = ({
 
    const addReplicationStorage = () => {
       if (isEditing) {
-         const maxReplications = maxReplicationsProp ?? MAX_REPLICATIONS;
          if (settings.storages.length + tempStorages.length >= maxReplications) return;
          setTempStorages([...tempStorages, { replicationId: nanoid(), storageId: '', storagePath: '', storageType: '', addedAt: Date.now() }]);
       } else {
-         const maxReplications = maxReplicationsProp ?? MAX_REPLICATIONS;
          if (settings.storages.length >= maxReplications) return;
          onUpdate({
             ...settings,
@@ -98,7 +100,7 @@ const PlanReplicationSettings = ({
 
    const confirmAddStorage = (index: number) => {
       const storage = tempStorages[index];
-      if (!storage.storageId) return;
+      if (!storage.storageId || (managedAgent && !storage.storagePath.trim()) || settings.storages.length >= maxReplications) return;
       if (storage.storageId === primaryStorageId && storage.storagePath === primaryStoragePath) {
          toast.error('Cannot replicate to the same storage as the primary backup.');
          return;
@@ -127,13 +129,14 @@ const PlanReplicationSettings = ({
    };
 
    const removeReplicationStorage = () => {
+      if (deleteStorageMutation.isPending) return;
       if (typeof showRemoveModal === 'object' && planID) {
          const storageToRemove = showRemoveModal;
          deleteStorageMutation.mutate(
             {
                planID: planID,
                storageID: storageToRemove.storageId,
-               removeData: removeStorageData,
+               removeData: managedAgent ? false : removeStorageData,
                storagePath: storageToRemove.storagePath,
                replicationId: storageToRemove.replicationId,
             },
@@ -162,13 +165,18 @@ const PlanReplicationSettings = ({
          <div className={mirrorClasses.mirrorSection}>
             <Toggle
                label="Enable Replication"
-               description="Replicate backups to additional storage destinations for redundancy (3-2-1 backup strategy)"
+               description="Copy verified snapshots to up to two additional repositories. Primary backup success and replica success are tracked separately."
                fieldValue={settings.enabled}
                onUpdate={updateEnabled}
             />
 
             {settings.enabled && (
                <div className={mirrorClasses.mirrorSettings}>
+                  <p className={classes.fieldNotice}>
+                     Replication runs sequentially by default. Use a dedicated repository path for each destination.
+                     {managedAgent && ' The Pluton server performs the copy; the source Agent does not receive replica credentials.'}
+                  </p>
+                  {validationError && <p role="alert">{validationError}</p>}
                   {settings.storages.map((mirror, index) => (
                      <div key={mirror.addedAt || index} className={mirrorClasses.mirrorDestination}>
                         <div className={mirrorClasses.mirrorHeader}>
@@ -216,6 +224,8 @@ const PlanReplicationSettings = ({
                            storageId={mirror.storageId}
                            deviceId={deviceId}
                            excludeStorageIds={excludeStorageIds}
+                           allowedStorageTypes={managedAgent ? ['s3', 's3compatible'] : undefined}
+                           requirePath={managedAgent}
                            disabled={isEditing}
                            onUpdate={(s) => {
                               if (s.storage.id === primaryStorageId && s.path === primaryStoragePath) {
@@ -244,7 +254,7 @@ const PlanReplicationSettings = ({
                                  <button
                                     className={mirrorClasses.confirmBtn}
                                     onClick={() => confirmAddStorage(index)}
-                                    disabled={!tempStorage.storageId}
+                                    disabled={!tempStorage.storageId || (managedAgent && !tempStorage.storagePath.trim())}
                                     title={!tempStorage.storageId ? 'Select Storage Type to add the storage' : 'Confirm replication destination'}
                                  >
                                     <Icon type="check" size={11} /> Confirm
@@ -263,6 +273,8 @@ const PlanReplicationSettings = ({
                               storageId={tempStorage.storageId}
                               deviceId={deviceId}
                               excludeStorageIds={excludeStorageIds}
+                              allowedStorageTypes={managedAgent ? ['s3', 's3compatible'] : undefined}
+                              requirePath={managedAgent}
                               disabled={false}
                               onUpdate={(s) => {
                                  updateTempStorage(index, {
@@ -278,13 +290,14 @@ const PlanReplicationSettings = ({
                         </div>
                      ))}
 
-                  {settings.storages.length + (isEditing ? tempStorages.length : 0) < (maxReplicationsProp ?? MAX_REPLICATIONS) && (
+                  {settings.storages.length + (isEditing ? tempStorages.length : 0) < maxReplications && (
                      <button className={mirrorClasses.addMirrorBtn} onClick={addReplicationStorage}>
                         <Icon type="plus" size={12} /> + Add Replication Destination
                      </button>
                   )}
 
-                  {settings.storages.length > 1 && (
+                  {managedAgent && <p>Managed copies are serialized on the Pluton server to bound resource use.</p>}
+                  {settings.storages.length > 1 && !managedAgent && (
                      <div className={mirrorClasses.concurrentOption}>
                         <Toggle
                            label="Run replications concurrently"
@@ -300,16 +313,18 @@ const PlanReplicationSettings = ({
 
          {showRemoveModal && (
             <ActionModal
-               title="Remove Replication Storage"
+               title="Detach Replication Destination"
                message={
                   <div>
-                     <p>Are you sure you want to remove this Replication storage from this plan?</p>
-                     <Toggle
+                     <p>{managedAgent ? 'Detach this destination and retain its remote repository? Physical cleanup of managed replicas is unavailable in this release.' : 'Detach this destination from the plan? Its remote repository is retained unless you explicitly select cleanup below.'}</p>
+                     <p>Retained data is no longer updated by this plan. Cleanup requires an exact owned repository path; shared or uncertain scopes are refused.</p>
+                     {!managedAgent && <Toggle
                         fieldValue={removeStorageData}
+                        disabled={deleteStorageMutation.isPending}
                         onUpdate={() => setRemoveStorageData((prev) => !prev)}
-                        description={`Remove replicated data from the Storage`}
+                        description="Permanently delete this destination's owned repository data"
                         customClasses={classes.removeRemoteToggle}
-                     />
+                     />}
                   </div>
                }
                closeModal={() => {
@@ -320,10 +335,9 @@ const PlanReplicationSettings = ({
                   }
                }}
                width="400px"
-               errorMessage={deleteStorageMutation.isError && 'Error Removing Replication Storage!'}
-               successMessage={deleteStorageMutation.isSuccess && 'Removed Replication Storage Successfully!'}
+               errorMessage={deleteStorageMutation.error ? <DeleteDependencyNotice error={deleteStorageMutation.error} /> : undefined}
                primaryAction={{
-                  title: 'Yes, Remove Storage',
+                  title: removeStorageData ? 'Delete Owned Data and Detach' : 'Detach and Retain Data',
                   type: 'danger',
                   icon: 'trash',
                   isPending: deleteStorageMutation.isPending,

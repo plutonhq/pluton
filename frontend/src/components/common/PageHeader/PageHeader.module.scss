@@ -1,20 +1,26 @@
 .header {
    width: 100%;
-   max-height: 60px;
+   min-height: 48px;
    display: flex;
    justify-content: space-between;
    align-items: center;
+   gap: 12px;
+   flex-wrap: wrap;
 }
 
 .headerTitle {
    display: flex;
    align-items: center;
-   font-size: 1.125rem;
+   font-size: 1.25rem;
+   font-weight: 600;
+   color: var(--content-title-color);
+   min-width: 0;
+   overflow-wrap: anywhere;
    :global(.icon) {
       margin-right: 5px;
       position: relative;
       top: 3px;
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
 }
 
@@ -22,10 +28,12 @@
    display: flex;
    align-items: center;
    position: relative;
+   flex-wrap: wrap;
+   gap: 4px;
    button {
       padding: 10px;
       cursor: pointer;
-      color: var(--background-text-color);
+      color: var(--content-text-color);
       transition: all 0.2s linear;
 
       &:hover {

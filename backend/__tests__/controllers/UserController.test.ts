@@ -15,6 +15,7 @@ jest.mock('../../src/services/ConfigService', () => ({
 			USER_PASSWORD: 'testpass',
 			SECRET: 'test-secret',
 			SESSION_DURATION: 7,
+			APP_URL: 'http://localhost:5173',
 		},
 		verifyPassword: (...args: any[]) => mockVerifyPassword(...args),
 		hashAndStorePassword: (...args: any[]) => mockHashAndStorePassword(...args),
@@ -49,6 +50,7 @@ describe('UserController', () => {
 
 		mockRequest = {
 			body: {},
+			headers: { host: 'localhost:5173' },
 		};
 
 		userController = new UserController();
@@ -115,14 +117,16 @@ describe('UserController', () => {
 
 			await userController.loginUser(mockRequest as Request, mockResponse as Response);
 
-			expect(jwt.sign).toHaveBeenCalledWith({ user: 'testuser' }, 'test-secret', {
+			expect(jwt.sign).toHaveBeenCalledWith({ user: 'testuser', webOrigin: 'http://localhost:5173' }, 'test-secret', {
 				expiresIn: '7d',
+				jwtid: expect.stringMatching(/^[a-f0-9]{32}$/),
 			});
 			expect(mockCookie).toHaveBeenCalledWith('token', 'mock-token', {
 				httpOnly: true,
 				sameSite: 'lax',
 				maxAge: 7 * 24 * 60 * 60 * 1000,
-				secure: undefined,
+				secure: false,
+				path: '/',
 			});
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({ success: true, error: null });
@@ -142,7 +146,8 @@ describe('UserController', () => {
 				httpOnly: true,
 				sameSite: 'lax',
 				maxAge: 7 * 24 * 60 * 60 * 1000,
-				secure: undefined,
+				secure: false,
+				path: '/',
 			});
 
 			(configService.config as any).SESSION_DURATION = originalDuration;
@@ -156,6 +161,8 @@ describe('UserController', () => {
 			expect(mockClearCookie).toHaveBeenCalledWith('token', {
 				httpOnly: true,
 				sameSite: 'lax',
+				secure: false,
+				path: '/',
 			});
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({

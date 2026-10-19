@@ -1,5 +1,14 @@
 import { providers } from '../utils/providers';
 import { runRcloneCommand } from '../utils/rclone/rclone';
+import {
+	isS3Storage,
+	isHcpMode,
+	rcloneRemoteEnvironment,
+	S3_SECRET_FIELDS,
+	storageDiagnosticCode,
+	storageRcloneOptions,
+	validateHcpConfiguration,
+} from '../utils/storageSecurity';
 
 export class BaseStorageManager {
 	async createRemote(
@@ -9,6 +18,10 @@ export class BaseStorageManager {
 		credentials: Record<string, string>,
 		settings?: Record<string, string>
 	): Promise<any> {
+		if (isS3Storage(type) && isHcpMode(settings)) {
+			validateHcpConfiguration(credentials, settings || {});
+			return this.configureHcpRemote(name, type, credentials, settings || {}, false);
+		}
 		const provider = providers[type];
 		const bucketName = credentials?.bucket ? credentials.bucket.trim() : '';
 		if (!provider && type !== 'local') {
@@ -108,6 +121,15 @@ export class BaseStorageManager {
 		newSettings: Record<string, any>,
 		oldSettings: Record<string, any>
 	): Promise<any> {
+		if (isHcpMode(newSettings) || isHcpMode(oldSettings)) {
+			const options = { ...oldSettings, ...newSettings };
+			const type = String(options._pluton_storage_type || 's3compatible');
+			if (!isS3Storage(type)) throw new Error('Unsupported protected S3 storage type.');
+			validateHcpConfiguration(options, options);
+			const result = await this.configureHcpRemote(name, type, options, options, true);
+			if (!result.success) await this.configureHcpRemote(name, type, oldSettings, oldSettings, true);
+			return result;
+		}
 		// Filter out settings that need to be updated vs removed
 		// When a setting is in the config file and it is not provided on subsequent updates,
 		// its reset to default by rclone
@@ -148,6 +170,38 @@ export class BaseStorageManager {
 			return {
 				success: false,
 				result: error?.message || '',
+			};
+		}
+	}
+
+	private async configureHcpRemote(
+		name: string,
+		type: string,
+		credentials: Record<string, string>,
+		settings: Record<string, any>,
+		update: boolean
+	): Promise<any> {
+		const options = storageRcloneOptions(
+			{ type, credentials: null, settings },
+			credentials
+		);
+		const environment = rcloneRemoteEnvironment(name, options);
+		const args = ['config', update ? 'update' : 'create', name, ...(update ? [] : ['s3'])];
+		for (const [key, value] of Object.entries(options)) {
+			if (!S3_SECRET_FIELDS.has(key)) args.push(key, value);
+		}
+		// Explicitly clear any reversible legacy credential fields when enabling HCP mode.
+		if (update) for (const key of S3_SECRET_FIELDS) args.push(key, '');
+		args.push('--non-interactive');
+		try {
+			await runRcloneCommand(args);
+			await runRcloneCommand(['lsd', `${name}:${credentials.bucket}`], environment);
+			return { success: true, result: 'Existing S3 namespace verified.' };
+		} catch (error) {
+			if (!update) await runRcloneCommand(['config', 'delete', name]).catch(() => undefined);
+			return {
+				success: false,
+				result: `${storageDiagnosticCode(error)}: S3 namespace verification failed. Check endpoint, TLS trust and scoped credentials.`,
 			};
 		}
 	}

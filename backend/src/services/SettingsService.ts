@@ -19,6 +19,37 @@ import Cryptr from 'cryptr';
 import { configService } from './ConfigService';
 import { createHash, randomBytes } from 'crypto';
 
+function settingsView(row: Settings | null): Settings | null {
+	if (!row) return null;
+	const view = { ...row, settings: JSON.parse(JSON.stringify(row.settings)) } as Settings;
+	for (const field of NotificationChannelResolver.secretFields) {
+		const [type, key] = field.split('.');
+		const integration = (view.settings?.integration as any)?.[type];
+		if (integration && key in integration) {
+			integration[`${key}Configured`] = !!integration[key];
+			integration[key] = '';
+		}
+	}
+	if (view.settings?.totp)
+		view.settings.totp = { enabled: !!view.settings.totp.enabled } as AppSettings['totp'];
+	return view;
+}
+function preserveIntegrationSecrets(
+	submitted: AppSettings['integration'],
+	saved?: AppSettings['integration']
+) {
+	const result = JSON.parse(JSON.stringify(submitted));
+	for (const field of NotificationChannelResolver.secretFields) {
+		const [type, key] = field.split('.');
+		if (result[type]) {
+			if (!result[type][key] && (saved as any)?.[type]?.[key])
+				result[type][key] = (saved as any)[type][key];
+			delete result[type][`${key}Configured`];
+		}
+	}
+	return result as AppSettings['integration'];
+}
+
 /**
  * A class for managing settings operations.
  */
@@ -30,11 +61,11 @@ export class SettingsService {
 	) {}
 
 	async getMainSettings(): Promise<Settings | null> {
-		return await this.settingsStore.getFirst();
+		return settingsView(await this.settingsStore.getFirst());
 	}
 
 	async getSettings(id: number): Promise<Settings | null> {
-		return await this.settingsStore.getById(id);
+		return settingsView(await this.settingsStore.getById(id));
 	}
 
 	async updateSettings(id: number, settings: AppSettings): Promise<Settings | null> {
@@ -48,7 +79,6 @@ export class SettingsService {
 
 				parsedSettings = parsedSettingsEntry.settings as AppSettings;
 			} catch (error) {
-				console.error('Error parsing settings data:', error);
 				throw new AppError(400, 'Invalid settings data provided');
 			}
 
@@ -64,21 +94,28 @@ export class SettingsService {
 				}
 				parsedSettings.selfBackup = parsedSelfBackup.data;
 			}
+			if (parsedSettings.integration || parsedSettings.totp) {
+				const saved = await this.settingsStore.getById(id);
+				if (parsedSettings.integration)
+					parsedSettings.integration = preserveIntegrationSecrets(
+						parsedSettings.integration,
+						saved?.settings?.integration
+					);
+				// A public settings view is not authority to replace private 2FA state.
+				if (saved?.settings?.totp) parsedSettings.totp = saved.settings.totp;
+			}
 			const updatedSettings = await this.settingsStore.update(id, parsedSettings);
 
 			if (!updatedSettings) {
 				throw new AppError(500, 'Failed to update settings');
 			}
 
-			return updatedSettings;
+			return settingsView(updatedSettings);
 		} catch (error: any) {
 			if (error instanceof AppError) {
 				throw error; // Re-throw as is
 			}
-			throw new AppError(
-				500,
-				error?.message || 'An unexpected error occurred while updating settings.'
-			);
+			throw new AppError(500, 'An unexpected error occurred while updating settings.');
 		}
 	}
 
@@ -88,7 +125,7 @@ export class SettingsService {
 		test: { email?: string; url?: string },
 		settings: AppSettings['integration']
 	): Promise<boolean> {
-		const integrationSettings = settings;
+		let integrationSettings = settings;
 		const integrationType = type;
 
 		if (!integrationSettings[integrationType]) {
@@ -99,6 +136,10 @@ export class SettingsService {
 		if (!currentSettings?.settings) {
 			throw new NotFoundError('Settings not found');
 		}
+		integrationSettings = preserveIntegrationSecrets(
+			integrationSettings,
+			currentSettings.settings.integration
+		);
 
 		const encryptedIntegration =
 			this.notificationChannelResolver.encryptSecrets(integrationSettings);
@@ -125,12 +166,10 @@ export class SettingsService {
 				const senderChannel = await this.notificationChannelResolver.getChannel(integrationType);
 				sendRes = await senderChannel.send(notificationClass, {
 					url: test.url,
-					icon: 'https://pluton.b-cdn.net/logo.png',
 				});
 			} else {
 				const notificationClass = new TestEmailNotification({ integrationType, appTitle });
 				const senderChannel = await this.notificationChannelResolver.getChannel(integrationType);
-				console.log('senderChannel :', senderChannel);
 				sendRes = await senderChannel.send(notificationClass, {
 					emails: test.email,
 				});
@@ -147,15 +186,14 @@ export class SettingsService {
 			} else {
 				throw new AppError(
 					500,
-					`Failed to send test notification using ${integrationType}. Reason: ${sendRes.result}`
+					'Failed to send test notification. Check the saved channel and delivery configuration.'
 				);
 			}
 		} catch (error: unknown) {
+			if (error instanceof AppError) throw error;
 			throw new AppError(
 				500,
-				error instanceof Error
-					? error.message
-					: `Failed to send test notification using ${integrationType}.`
+				'Failed to send test notification. Check the saved channel and delivery configuration.'
 			);
 		}
 	}
@@ -318,17 +356,7 @@ export class SettingsService {
 	}
 
 	async checkLatestVersion() {
-		try {
-			const response = await fetch('https://api.github.com/repos/plutonhq/pluton/releases/latest');
-			if (!response.ok) {
-				throw new AppError(500, 'Failed to fetch latest version info');
-			}
-			const data = await response.json();
-			const latestVersion = data.tag_name ? data.tag_name.replace(/^pluton-v/, '') : 'Unknown';
-
-			return latestVersion;
-		} catch (error: any) {
-			throw new AppError(500, error?.message || 'Failed to check latest version');
-		}
+		// Compatibility endpoint only. No independently trusted fork update feed exists.
+		return null;
 	}
 }

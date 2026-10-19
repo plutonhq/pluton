@@ -57,7 +57,7 @@
       }
 
       &.selected {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
          background-color: var(--primary-color-light);
       }
    }

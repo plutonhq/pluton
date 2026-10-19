@@ -15,6 +15,8 @@ interface StoragePickerProps {
    disabled?: boolean;
    deviceId?: string;
    excludeStorageIds?: string[];
+   allowedStorageTypes?: string[];
+   requirePath?: boolean;
    disabledHint?: string;
    onUpdate: (val: { storage: storageItem; path: string }) => void;
 }
@@ -26,6 +28,8 @@ const StoragePicker = ({
    disabled = false,
    deviceId,
    excludeStorageIds,
+   allowedStorageTypes,
+   requirePath = false,
    disabledHint = "The destination path can't be changed after a plan is created.",
 }: StoragePickerProps) => {
    const [selectedStorage, setSelectedStorage] = useState<null | storageItem>();
@@ -33,6 +37,7 @@ const StoragePicker = ({
    const [showAddStorageModal, setShowAddStorageModal] = useState(false);
    const [path, setPath] = useState(() => storagePath);
    const isLocalStorage = selectedStorage?.type === 'local';
+   const pathIsRequired = requirePath || isLocalStorage;
    const hasBucketName = selectedStorage?.defaultPath && selectedStorage?.defaultPath !== '/';
    const fullPath = hasBucketName ? `${selectedStorage.defaultPath}${path ? `/${path}` : ''}` : path;
 
@@ -45,14 +50,14 @@ const StoragePicker = ({
 
    const storageOptions = useMemo(() => {
       const storageOpts = allStorages
-         .filter(({ id }) => !excludeStorageIds?.includes(id))
+         .filter(({ id, type }) => !excludeStorageIds?.includes(id) && (!allowedStorageTypes || allowedStorageTypes.includes(type)))
          .map(({ name, id, type }) => ({
             label: name,
             value: id.toString(),
             image: <img src={`/providers/${type}.png`} />,
          }));
       return storageOpts;
-   }, [allStorages, excludeStorageIds]);
+   }, [allStorages, excludeStorageIds, allowedStorageTypes]);
 
    // Clear the selection when the picked storage becomes excluded (e.g. the user
    // selected it as the source of the same plan).
@@ -146,8 +151,8 @@ const StoragePicker = ({
                      onUpdate={(val) => setPath(!isLocalStorage && val.startsWith('/') ? val.slice(1) : val)} //if the val starts with a slash remove it (only for remote storages, local paths need the leading slash)
                      placeholder={isLocalStorage ? 'Select a folder' : hasBucketName ? 'subfolder' : `folder-or-bucket/subfolder`}
                      full={true}
-                     required={!disabled && isLocalStorage}
-                     error={(!disabled && isLocalStorage && !path ? 'Required' : '') as string}
+                     required={!disabled && pathIsRequired}
+                     error={(!disabled && pathIsRequired && !path ? 'Required' : '') as string}
                   />
                   {selectedStorage?.type && !disabled && selectedStorage.type === 'local' && (
                      <button

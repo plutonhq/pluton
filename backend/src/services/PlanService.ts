@@ -18,6 +18,7 @@ import {
 	PlanNotification,
 	PlanNotificationType,
 	PlanStoragePath,
+	PlanStorageDisposition,
 } from '../types/plans';
 import { planLogger } from '../utils/logger';
 import { generateUID, normalizeStorageName } from '../utils/helpers';
@@ -33,6 +34,16 @@ import { sanitizeStoragePath } from '../utils/sanitizeStoragePath';
 import { BackupNotification } from '../notifications/BackupNotification';
 import { ScheduleReconciler } from './ScheduleReconciler';
 import { BackupRunConfig } from '../types/backups';
+import { RemoteBackupService } from './RemoteBackupService';
+import { prepareRemoteLifecycleCollection } from '../utils/remoteLifecycle';
+import type { DatabaseCredential } from '../types/remoteLifecycle';
+import { configService } from './ConfigService';
+import type { RecoveryTestStore } from '../stores/RecoveryTestStore';
+import { parseBackupHistoryQuery } from '../utils/backupHistoryQuery';
+import { assertStorageRemovalScope } from '../utils/storageRemovalScope';
+import { validateReplicationSettings } from '../utils/managedReplicationPolicy';
+import type { ManagedReplicationStore } from '../stores/ManagedReplicationStore';
+import { canonicalS3RepositoryIdentity, isS3Storage } from '../utils/storageSecurity';
 
 /**
  * PlanService is the central orchestrator for all business logic related to backup plans.
@@ -41,6 +52,7 @@ import { BackupRunConfig } from '../types/backups';
  */
 export class PlanService {
 	protected scheduleReconciler: ScheduleReconciler;
+	private readonly removingPlans = new Set<string>();
 
 	constructor(
 		protected localAgent: BaseBackupManager,
@@ -48,7 +60,10 @@ export class PlanService {
 		protected backupStore: BackupStore,
 		protected storageStore: StorageStore,
 		protected deviceStore: DeviceStore,
-		protected restoreStore: RestoreStore
+		protected restoreStore: RestoreStore,
+		private readonly remoteBackupService?: RemoteBackupService,
+		private readonly recoveryTests?: Pick<RecoveryTestStore, 'assertPlanRemovable'>,
+		private readonly managedReplications?: ManagedReplicationStore
 	) {
 		this.scheduleReconciler = new ScheduleReconciler(
 			this.localAgent,
@@ -64,12 +79,37 @@ export class PlanService {
 			: new LocalBackupStrategy(this.localAgent);
 	}
 
-	public async getPlan(planId: string, history: boolean = true): Promise<Plan | null> {
-		const result = await this.planStore.getById(planId, history);
+	public async getPlan(
+		planId: string,
+		history: boolean = true,
+		backupSummary = false
+	): Promise<Plan | null> {
+		const result = backupSummary
+			? await this.planStore.getById(planId, history, true)
+			: await this.planStore.getById(planId, history);
 		if (!result) {
 			throw new NotFoundError('Plan not found');
 		}
 		return result;
+	}
+
+	public async getBackupHistory(planId: string, input: unknown) {
+		const query = parseBackupHistoryQuery(input);
+		// Reuse the same authenticated administrative plan boundary. This public
+		// community schema has no per-user plan ownership/tenant field.
+		const plan = await this.planStore.getById(planId, false);
+		if (!plan) throw new NotFoundError('Plan not found');
+		const result = await this.backupStore.getHistoryPage(plan.id, query);
+		const items = this.planStore.handleBackupStats(
+			plan.method,
+			result.items,
+			plan.stats,
+			plan.sourceType === 'device' && plan.sourceId !== 'main'
+		);
+		return {
+			...result,
+			items: plan.settings?.replication ? this.planStore.handleBackupMirrors(plan, items) : items,
+		};
 	}
 
 	public async getAllPlans(history: boolean = true): Promise<Plan[] | null> {
@@ -106,6 +146,7 @@ export class PlanService {
 		} = planData;
 
 		// Get Storage Details
+		validateReplicationSettings(settings?.replication);
 		const planStorage: BackupPlanArgs['storage'] = await this.getStorageDetails(
 			planData.storage.id
 		);
@@ -177,6 +218,23 @@ export class PlanService {
 			settings,
 			tags,
 		};
+		let databaseCredential: DatabaseCredential[] | undefined;
+		if (settings?.remoteLifecycle !== undefined) {
+			if (!RemoteBackupService.isRemoteFilesystemPlan(newPlanData)) {
+				throw new AppError(
+					400,
+					'Database lifecycle is available only for remote managed backup plans.'
+				);
+			}
+			const prepared = prepareRemoteLifecycleCollection(
+				settings,
+				undefined,
+				[],
+				configService.config.SECRET
+			);
+			newPlanData.settings = prepared.settings;
+			databaseCredential = prepared.credentials;
+		}
 
 		// Validate the plan data using the schema
 		try {
@@ -186,8 +244,28 @@ export class PlanService {
 				sourceType: parsedPlanData.sourceType as SourceTypes,
 			};
 		} catch (error) {
-			console.error('Error parsing plan data:', error);
+			console.error('Plan data validation failed.');
 			throw error;
+		}
+
+		if (RemoteBackupService.isRemoteFilesystemPlan(newPlanData)) {
+			const remote = this.requireRemoteBackupService();
+			await remote.validatePlanCreation(newPlanData);
+			const createdPlan =
+				databaseCredential === undefined
+					? await this.planStore.create(newPlanData)
+					: await this.planStore.create(newPlanData, databaseCredential);
+			if (!createdPlan) throw new AppError(500, 'Failed to save the new remote backup plan.');
+			try {
+				await remote.createManagedPlan(createdPlan, runSettings);
+			} catch (error) {
+				// No repository data has been deleted or mutated; only the newly-created
+				// plan row is rolled back when scheduling/queueing cannot be prepared.
+				await this.planStore.delete(createdPlan.id);
+				throw error;
+			}
+			planLogger('create', planId).info('Remote filesystem backup plan created.');
+			return createdPlan;
 		}
 
 		// Create Backup Schedule
@@ -198,6 +276,10 @@ export class PlanService {
 			storage: planStorage,
 			cronExpression,
 		};
+		// Register the destination scope atomically before a schedule can execute.
+		// A concurrent managed reservation sees this row or this insert is refused.
+		const createdPlan = await this.planStore.create(newPlanData);
+		if (!createdPlan) throw new AppError(500, 'Failed to save the new plan to the database.');
 
 		try {
 			const strategy = this.getStrategy(newPlanData) as BackupStrategy;
@@ -206,15 +288,13 @@ export class PlanService {
 				throw new AppError(500, creationRes.result);
 			}
 		} catch (error: any) {
+			// Retain failed scheduling metadata: a partially installed schedule must
+			// keep its scope reserved until ordinary authorized removal resolves it.
+			await this.planStore.update(createdPlan.id, { isActive: false });
 			if (error instanceof AppError) {
 				throw error;
 			}
 			throw new AppError(500, error?.message || 'Error creating backup schedule');
-		}
-		// Save the plan to the database
-		const createdPlan = await this.planStore.create(newPlanData);
-		if (!createdPlan) {
-			throw new AppError(500, 'Failed to save the new plan to the database.');
 		}
 
 		planLogger('create', planId).info('Backup Plan created.');
@@ -226,9 +306,50 @@ export class PlanService {
 	 * Updates a plan's configuration and its underlying schedule.
 	 */
 	public async updatePlan(planId: string, planData: Partial<Plan>): Promise<Plan> {
+		validateReplicationSettings(planData.settings?.replication);
+		this.managedReplications?.assertPlanIdle(planId);
 		const currentPlan = await this.planStore.getById(planId);
 		if (!currentPlan) {
 			throw new NotFoundError('Plan not found.');
+		}
+		let databaseCredential: DatabaseCredential[] | undefined;
+		let previousCredential: DatabaseCredential[] = [];
+		const lifecycleSupplied =
+			!!planData.settings && Object.hasOwn(planData.settings, 'remoteLifecycle');
+		// Partial unrelated settings updates must not implicitly disable database backup.
+		// Disabling is an explicit version-2 empty collection (hooks may remain).
+		if (planData.settings) {
+			planData = { ...planData, settings: { ...currentPlan.settings, ...planData.settings } };
+		}
+		if (
+			lifecycleSupplied &&
+			planData.settings &&
+			(planData.settings.remoteLifecycle !== undefined ||
+				currentPlan.settings.remoteLifecycle !== undefined)
+		) {
+			if (await this.planStore.hasActiveBackups(planId))
+				throw new AppError(
+					409,
+					'Wait for the active backup to finish before changing lifecycle settings.'
+				);
+			if (!RemoteBackupService.isRemoteFilesystemPlan(currentPlan)) {
+				throw new AppError(
+					400,
+					'Database lifecycle is available only for remote managed backup plans.'
+				);
+			}
+			previousCredential = await this.planStore.getDatabaseCredentials(planId);
+			const prepared =
+				planData.settings.remoteLifecycle === undefined
+					? { settings: planData.settings, credentials: [] }
+					: prepareRemoteLifecycleCollection(
+							planData.settings,
+							currentPlan.settings.remoteLifecycle,
+							previousCredential,
+							configService.config.SECRET
+						);
+			planData = { ...planData, settings: prepared.settings };
+			databaseCredential = prepared.credentials;
 		}
 		let parsedPlanData;
 		try {
@@ -238,7 +359,7 @@ export class PlanService {
 				sourceType: (parsedData.sourceType || currentPlan.sourceType) as SourceTypes,
 			};
 		} catch (error) {
-			console.error('Error parsing plan data:', error);
+			console.error('Plan data validation failed.');
 			throw error;
 		}
 
@@ -283,6 +404,33 @@ export class PlanService {
 						? [await this.bakeStorageSourcePath(givenPath, currentPlan.sourceId)]
 						: currentPlan.sourceConfig.includes,
 				};
+			}
+		}
+
+		if (RemoteBackupService.isRemoteFilesystemPlan(currentPlan)) {
+			if (parsedPlanData.sourceId != null && parsedPlanData.sourceId !== currentPlan.sourceId) {
+				throw new AppError(400, 'The remote source device cannot be changed after creation.');
+			}
+			const remote = this.requireRemoteBackupService();
+			const candidate = { ...currentPlan, ...parsedPlanData } as Plan;
+			await remote.validatePlanCreation(candidate as NewPlan);
+			const updated =
+				databaseCredential === undefined
+					? await this.planStore.update(planId, parsedPlanData as Partial<Plan>)
+					: await this.planStore.update(
+							planId,
+							parsedPlanData as Partial<Plan>,
+							databaseCredential
+						);
+			if (!updated) throw new AppError(500, 'Failed to update remote backup plan.');
+			try {
+				await remote.updateManagedPlan(updated);
+				planLogger('update', planId).info('Remote filesystem backup plan updated.');
+				return updated;
+			} catch (error) {
+				if (databaseCredential === undefined) await this.planStore.update(planId, currentPlan);
+				else await this.planStore.update(planId, currentPlan, previousCredential);
+				throw error;
 			}
 		}
 
@@ -338,13 +486,85 @@ export class PlanService {
 		deleted: boolean;
 		unremovedPaths: PlanStoragePath[];
 		unremovedReason: string;
+		storageDisposition: PlanStorageDisposition;
 	}> {
+		if (this.removingPlans.has(planId))
+			throw new AppError(409, 'Plan removal is already in progress.');
+		this.removingPlans.add(planId);
+		let release = () => {};
+		try {
+			release = this.planStore.beginSourceRemoval({ planId });
+			return await this.removePlan(planId, removeRemoteData);
+		} finally {
+			release();
+			this.removingPlans.delete(planId);
+		}
+	}
+
+	private async removePlan(planId: string, removeRemoteData: boolean) {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError('Plan not found.');
+		this.planStore.assertNoRetainedDatabaseRestores({ planId });
+		this.managedReplications?.assertPlanIdle(planId);
+		if (
+			(await this.planStore.hasActiveBackups(planId)) ||
+			(await this.planStore.hasActiveRestore(planId))
+		)
+			throw new AppError(
+				409,
+				'Wait for active backups and restores to finish before removing this plan.'
+			);
 		const storageName = plan.storage?.name || '';
-
+		if (RemoteBackupService.isRemoteFilesystemPlan(plan)) {
+			await this.recoveryTests?.assertPlanRemovable(planId);
+			const remote = this.requireRemoteBackupService();
+			const replicaBindings = [
+				...(plan.settings.replication?.storages || []),
+				...(this.managedReplications?.listDestinations() || [])
+					.filter(destination => destination.planId === planId)
+					.map(destination => ({
+						storageId: destination.destinationStorageId,
+						storagePath: destination.destinationStoragePath,
+					})),
+			];
+			const replicaStorages = replicaBindings.length
+				? await this.storageStore.getByIds([...new Set(replicaBindings.map(item => item.storageId))])
+				: [];
+			const replicaPaths = [...new Map(replicaBindings.map(replica => [
+				`${replica.storageId}:${replica.storagePath}`,
+				{
+					storageName: replicaStorages?.find(storage => storage.id === replica.storageId)?.name || 'retained replica',
+					storagePath: replica.storagePath,
+				},
+			])).values()];
+			const retained = await remote.removeManagedPlan(plan);
+			const deleted = await this.planStore.delete(planId, true);
+			if (!deleted) throw new AppError(500, 'Failed to delete remote backup plan.');
+			this.managedReplications?.detach(planId);
+			return {
+				deleted,
+				unremovedPaths: [
+					{ storageName: storageName || 'remote', storagePath: retained.storagePath },
+					...replicaPaths,
+				],
+				unremovedReason:
+					'Managed remote repository data was retained; this phase never deletes remote repositories.',
+				storageDisposition: {
+					status: 'retained_intentionally' as const,
+					paths: [
+						{ storageName: storageName || 'remote', storagePath: retained.storagePath },
+						...replicaPaths,
+					],
+				},
+			};
+		}
 		// Resolve replication storage names so removeBackup can purge them too
 		const replicationStorages = removeRemoteData ? await this.resolveReplicationStorages(plan) : [];
+		if (removeRemoteData) {
+			await this.assertRemovableStorage(plan.storageId, plan.storagePath || '', planId);
+			for (const replica of plan.settings.replication?.storages || [])
+				await this.assertRemovableStorage(replica.storageId, replica.storagePath, planId);
+		}
 
 		const options = {
 			storageName:
@@ -363,9 +583,7 @@ export class PlanService {
 		}
 
 		// Finally, remove from our database
-		await this.restoreStore.deleteByPlanId(planId);
-		await this.backupStore.deleteByPlanId(planId);
-		const deleteRes = await this.planStore.delete(planId);
+		const deleteRes = await this.planStore.delete(planId, true);
 		if (!deleteRes) {
 			throw new AppError(500, 'Failed to delete plan from the database.');
 		}
@@ -376,6 +594,14 @@ export class PlanService {
 			deleted: deleteRes,
 			unremovedPaths: deleteResult.unremovedPaths || [],
 			unremovedReason: deleteResult.unremovedReason || '',
+			storageDisposition: {
+				status: !removeRemoteData
+					? ('retained_by_request' as const)
+					: deleteResult.unremovedPaths?.length
+						? ('cleanup_failed' as const)
+						: ('removed' as const),
+				paths: deleteResult.unremovedPaths || [],
+			},
 		};
 	}
 
@@ -383,11 +609,15 @@ export class PlanService {
 	 * Triggers a one-off manual backup for a plan.
 	 */
 	public async performBackup(planId: string, runConfig?: BackupRunConfig): Promise<string> {
+		if (this.removingPlans.has(planId)) throw new AppError(409, 'Plan removal is in progress.');
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError(`Plan with ID ${planId} not found.`);
 
 		if (await this.planStore.hasActiveBackups(planId)) {
 			throw new AppError(500, 'A backup is already in progress for this plan.');
+		}
+		if (RemoteBackupService.isRemoteFilesystemPlan(plan)) {
+			return this.requireRemoteBackupService().queuePlanBackup(planId);
 		}
 
 		const strategy = this.getStrategy(plan) as BackupStrategy;
@@ -406,6 +636,9 @@ export class PlanService {
 	public async pruneBackups(planId: string): Promise<string> {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError(`Plan with ID ${planId} not found.`);
+		if (RemoteBackupService.isRemoteFilesystemPlan(plan)) {
+			throw new AppError(501, 'REMOTE_CAPABILITY_NOT_IMPLEMENTED');
+		}
 
 		const replicationStorages = await this.resolveReplicationStorages(plan);
 		const strategy = this.getStrategy(plan) as BackupStrategy;
@@ -429,6 +662,12 @@ export class PlanService {
 	public async pauseBackup(planId: string): Promise<void> {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError(`Plan with ID ${planId} not found.`);
+		if (RemoteBackupService.isRemoteFilesystemPlan(plan)) {
+			const paused = await this.requireRemoteBackupService().pausePlan(planId);
+			if (!paused) throw new AppError(500, 'Failed to pause remote backup plan.');
+			await this.planStore.setActive(planId, false);
+			return;
+		}
 
 		const strategy = this.getStrategy(plan) as BackupStrategy;
 		const pauseResult = await strategy.pauseBackup(planId);
@@ -446,6 +685,12 @@ export class PlanService {
 	public async resumeBackup(planId: string): Promise<void> {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError(`Plan with ID ${planId} not found.`);
+		if (RemoteBackupService.isRemoteFilesystemPlan(plan)) {
+			const resumed = await this.requireRemoteBackupService().resumePlan(planId);
+			if (!resumed) throw new AppError(500, 'Failed to resume remote backup plan.');
+			await this.planStore.setActive(planId, true);
+			return;
+		}
 
 		const strategy = this.getStrategy(plan) as BackupStrategy;
 		const resumeResult = await strategy.resumeBackup(planId);
@@ -468,6 +713,9 @@ export class PlanService {
 			if (!plan) {
 				throw new NotFoundError('Plan not found');
 			}
+			if (RemoteBackupService.isRemoteFilesystemPlan(plan)) {
+				throw new AppError(501, 'REMOTE_CAPABILITY_NOT_IMPLEMENTED');
+			}
 			try {
 				const planID = plan.id;
 				const strategy = this.getStrategy(plan);
@@ -479,6 +727,7 @@ export class PlanService {
 			}
 		} catch (error: any) {
 			console.log('[checkIntegrity] error :', error);
+			if (error instanceof AppError) throw error;
 			throw new AppError(500, error?.message || 'Internal Server Error');
 		}
 	}
@@ -492,6 +741,9 @@ export class PlanService {
 			const plan = await this.planStore.getById(planId);
 			if (!plan) {
 				throw new NotFoundError('Plan not found');
+			}
+			if (RemoteBackupService.isRemoteFilesystemPlan(plan)) {
+				throw new AppError(501, 'REMOTE_CAPABILITY_NOT_IMPLEMENTED');
 			}
 			let storageName;
 			let storagePath;
@@ -527,6 +779,7 @@ export class PlanService {
 			return result;
 		} catch (error: any) {
 			console.log('[repairRepo] error :', error);
+			if (error instanceof AppError) throw error;
 			throw new AppError(500, error?.message || 'Internal Server Error');
 		}
 	}
@@ -542,6 +795,29 @@ export class PlanService {
 		removeData: boolean,
 		replicationId?: string
 	): Promise<{ success: boolean; message: string }> {
+		if (this.removingPlans.has(planId))
+			throw new AppError(409, 'Plan removal is already in progress.');
+		this.removingPlans.add(planId);
+		try {
+			return await this.removeReplicationStorage(
+				planId,
+				storageID,
+				storagePath,
+				removeData,
+				replicationId
+			);
+		} finally {
+			this.removingPlans.delete(planId);
+		}
+	}
+
+	private async removeReplicationStorage(
+		planId: string,
+		storageID: string,
+		storagePath: string,
+		removeData: boolean,
+		replicationId?: string
+	) {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError('Plan not found.');
 
@@ -559,6 +835,18 @@ export class PlanService {
 			// If the storage to remove isn't found, we can consider it already "removed" for idempotency
 			return { success: true, message: `Replication storage removed successfully.` };
 		}
+		const selectedStorage = replication.storages[storageIndex];
+		if (selectedStorage.storageId !== storageID || selectedStorage.storagePath !== storagePath)
+			throw new AppError(409, 'Replication storage selection changed. Refresh before removing it.');
+		this.managedReplications?.assertPlanIdle(planId);
+		if (
+			(await this.planStore.hasActiveBackups(planId)) ||
+			(await this.planStore.hasActiveRestore(planId))
+		)
+			throw new AppError(
+				409,
+				'Wait for active backups and restores before removing replication storage.'
+			);
 
 		// Resolve storage name for logging and rclone purge
 		let storageName = 'Unknown';
@@ -568,12 +856,28 @@ export class PlanService {
 			storageName = name === 'Local' || name === 'Local Storage' ? 'local' : name;
 		}
 
+		// Managed repositories are never passed to the legacy whole-prefix purge path.
+		if (RemoteBackupService.isRemoteFilesystemPlan(plan) && removeData)
+			throw new AppError(
+				409,
+				'Managed replica cleanup requires verified repository ownership and separate operator approval. Detach and retain the repository instead.'
+			);
+		if (RemoteBackupService.isRemoteFilesystemPlan(plan))
+			this.managedReplications?.detach(planId, selectedStorage.replicationId);
 		// If removeData is true, purge the replicated data from the remote storage
 		if (removeData) {
+			if (!selectedStorage.replicationId)
+				throw new AppError(409, 'Replication identity is missing. Retain the storage data.');
+			await this.assertRemovableStorage(
+				selectedStorage.storageId,
+				selectedStorage.storagePath,
+				planId,
+				selectedStorage.replicationId
+			);
 			const strategy = this.getStrategy(plan) as BackupStrategy;
 			const purgeResult = await strategy.removeReplicationStorage(planId, {
 				storageName,
-				storagePath,
+				storagePath: selectedStorage.storagePath,
 				removeData,
 			});
 			if (!purgeResult.success) {
@@ -592,6 +896,16 @@ export class PlanService {
 		const updatedSettings = { ...plan.settings, replication: updatedReplication };
 		await this.planStore.update(planId, { settings: updatedSettings } as any);
 
+		if (RemoteBackupService.isRemoteFilesystemPlan(plan)) {
+			await this.requireRemoteBackupService().updateManagedPlan({
+				...plan,
+				settings: updatedSettings,
+			});
+			return {
+				success: true,
+				message: 'Replica detached. Its repository and recovery access were retained.',
+			};
+		}
 		// Sync the CronManager schedule so future backup runs use the updated replication settings
 		try {
 			const planStorage: BackupPlanArgs['storage'] = await this.getStorageDetails(
@@ -621,6 +935,50 @@ export class PlanService {
 		return { success: true, message: `Replication storage "${storageName}" removed successfully.` };
 	}
 
+	private async assertRemovableStorage(
+		storageId: string | null | undefined,
+		storagePath: string,
+		planId: string,
+		replicationId?: string
+	) {
+		if (!storageId)
+			throw new AppError(409, 'Storage identity is missing. Retain the storage data.');
+		const storage = await this.storageStore.getById(storageId);
+		if (!storage)
+			throw new AppError(409, 'Storage identity is unavailable. Retain the storage data.');
+		let references = await this.planStore.getStorageRemovalReferences();
+		for (const retained of this.managedReplications?.listDestinations() || [])
+			references.push({
+				planId: null,
+				storageId: retained.destinationStorageId,
+				storagePath: retained.destinationStoragePath,
+				kind: 'replica',
+			});
+		let checkedPath = storagePath;
+		if (isS3Storage(storage.type)) {
+			const selected = canonicalS3RepositoryIdentity(storage, storagePath);
+			checkedPath = selected.prefix;
+			const canonical = [];
+			for (const reference of references) {
+				if (!reference.storageId) continue;
+				const other =
+					reference.storageId === storageId
+						? storage
+						: await this.storageStore.getById(reference.storageId);
+				if (!other || !isS3Storage(other.type)) continue;
+				const identity = canonicalS3RepositoryIdentity(other, reference.storagePath);
+				if (identity.authority === selected.authority)
+					canonical.push({ ...reference, storageId, storagePath: identity.prefix });
+			}
+			references = canonical;
+		}
+		assertStorageRemovalScope(
+			{ storageId, storagePath: checkedPath, local: storage.type === 'local' },
+			references,
+			{ planId, kind: replicationId === undefined ? 'plan' : 'replica', replicationId }
+		);
+	}
+
 	/**
 	 * Unlocks a plan's repository by removing all stale locks.
 	 */
@@ -628,6 +986,9 @@ export class PlanService {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) {
 			throw new NotFoundError(`Plan with ID ${planId} not found.`);
+		}
+		if (RemoteBackupService.isRemoteFilesystemPlan(plan)) {
+			throw new AppError(501, 'REMOTE_CAPABILITY_NOT_IMPLEMENTED');
 		}
 
 		// This action is immediate and not queued, so we don't check for active backups.
@@ -829,6 +1190,14 @@ export class PlanService {
 
 	public async reconcileSchedules(): Promise<void> {
 		await this.scheduleReconciler.reconcileSchedules();
+		await this.remoteBackupService?.reconcileSchedules();
+	}
+
+	private requireRemoteBackupService(): RemoteBackupService {
+		if (!this.remoteBackupService) {
+			throw new AppError(501, 'REMOTE_CAPABILITY_NOT_IMPLEMENTED');
+		}
+		return this.remoteBackupService;
 	}
 
 	/**

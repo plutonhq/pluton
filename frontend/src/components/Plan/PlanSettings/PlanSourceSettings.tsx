@@ -6,6 +6,7 @@ import { useGetDevices } from '../../../services/devices';
 import { useGetStorages } from '../../../services/storage';
 import Select from '../../common/form/Select/Select';
 import StoragePicker from '../../common/form/StoragePicker/StoragePicker';
+import Input from '../../common/form/Input/Input';
 import { Device } from '../../../@types/devices';
 
 interface PlanSourceSettingsProps {
@@ -19,15 +20,41 @@ const PlanSourceSettings = ({ plan, onUpdate, error, isEditing }: PlanSourceSett
    const { data } = useGetDevices();
    const { data: storageData } = useGetStorages();
    const isStorageSource = plan.sourceType === 'storage';
+   const devices = (data?.success && data.result ? data.result : []) as Device[];
+   const selectedDevice = devices.find((device) => device.id === plan.sourceId);
+   const isRemoteFilesystemSource = Boolean(selectedDevice?.isRemote);
+   const canUseRemoteFilesystem = (device: Device) =>
+      device.isRemote === true &&
+      device.agent?.status !== 'revoked' &&
+      device.agent?.capabilities?.filesystemRootsConfigured === true &&
+      device.agent?.capabilities?.commandTypes?.includes('BACKUP_FILESYSTEM') === true &&
+      Boolean(device.agent?.resticVersion && device.agent?.rcloneVersion);
    const deviceList = [];
    const deviceId = plan.sourceId || 'main';
+   const selectDevice = (nextDeviceId: string) => {
+      const nextDevice = devices.find((device) => device.id === nextDeviceId);
+      const nextIsRemoteFilesystem = nextDevice?.isRemote === true;
+      onUpdate({
+         ...plan,
+         sourceId: nextDeviceId,
+         ...(nextIsRemoteFilesystem
+            ? {
+                 settings: {
+                    ...plan.settings,
+                    // Replication runs on the server; arbitrary scripts never run on an agent.
+                    scripts: undefined,
+                 },
+              }
+            : {}),
+      });
+   };
    if (data?.success && data.result) {
       deviceList.push(
-         ...data.result.map((device: Device) => ({
-            label: `${device.name} ${device.id === 'main' ? '(Main)' : ''}`,
+         ...devices.map((device: Device) => ({
+            label: `${device.name} ${device.id === 'main' ? '(Main)' : device.isRemote ? (canUseRemoteFilesystem(device) ? '(Remote filesystem backup)' : '(Remote agent: backup unavailable)') : ''}`,
             value: device.id,
             icon: device.id === 'main' ? 'computer' : 'computer-remote',
-            // disabled: device.id === 'main' || device.connected ? false : true,
+            disabled: device.isRemote === true && !canUseRemoteFilesystem(device),
          })),
       );
    }
@@ -87,25 +114,43 @@ const PlanSourceSettings = ({ plan, onUpdate, error, isEditing }: PlanSourceSett
       <>
          <div className={classes.field}>
             <label className={classes.label}>Select Device*</label>
-            <Select
-               options={deviceList}
-               fieldValue={deviceId}
-               disabled={isEditing}
-               full={true}
-               onUpdate={(val) => onUpdate({ ...plan, sourceId: val })}
-            />
+            <Select options={deviceList} fieldValue={deviceId} disabled={isEditing} full={true} onUpdate={selectDevice} />
          </div>
-         <div className={classes.field}>
-            <label className={classes.label}>Backup Sources*</label>
-            {error && <span className={classes.fieldErrorLabel}>{error}</span>}
-            <PathPicker
-               paths={{ includes: plan.sourceConfig.includes, excludes: plan.sourceConfig.excludes }}
-               onUpdate={(paths) => onUpdate({ ...plan, sourceConfig: { ...paths } })}
-               deviceId={deviceId}
-               single={plan.method === 'sync'}
-               disallowChange={plan.method === 'sync' && isEditing}
-            />
-         </div>
+         {isRemoteFilesystemSource ? (
+            <div className={classes.field}>
+               <label className={classes.label}>Remote Backup Source*</label>
+               {error && <span className={classes.fieldErrorLabel}>{error}</span>}
+               <Input
+                  fieldValue={plan.sourceConfig.includes[0] || ''}
+                  onUpdate={(sourcePath) =>
+                     onUpdate({
+                        ...plan,
+                        sourceConfig: { ...plan.sourceConfig, includes: sourcePath ? [sourcePath] : [] },
+                     })
+                  }
+                  placeholder="/srv/example-app"
+                  full={true}
+                  disabled={isEditing}
+                  required={true}
+               />
+               <p className={classes.fieldNotice}>
+                  Enter one absolute Linux path inside an allowed source root. The agent validates its real path again and does not expose a remote
+                  file browser.
+               </p>
+            </div>
+         ) : (
+            <div className={classes.field}>
+               <label className={classes.label}>Backup Sources*</label>
+               {error && <span className={classes.fieldErrorLabel}>{error}</span>}
+               <PathPicker
+                  paths={{ includes: plan.sourceConfig.includes, excludes: plan.sourceConfig.excludes }}
+                  onUpdate={(paths) => onUpdate({ ...plan, sourceConfig: { ...paths } })}
+                  deviceId={deviceId}
+                  single={plan.method === 'sync'}
+                  disallowChange={plan.method === 'sync' && isEditing}
+               />
+            </div>
+         )}
       </>
    );
 };

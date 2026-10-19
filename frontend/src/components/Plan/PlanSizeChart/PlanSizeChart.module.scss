@@ -28,7 +28,7 @@
    line-height: 1.4;
 
    &:hover {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       border-color: var(--primary-color);
    }
 }
@@ -43,7 +43,7 @@
    background: var(--content-background-color);
    border: 1px solid var(--line-color);
    border-radius: 4px;
-   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+   box-shadow: 0 4px 12px var(--modal-shadow-color);
    min-width: 80px;
 
    li {
@@ -54,11 +54,11 @@
 
       &:hover {
          background: var(--primary-color-light);
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
 
       &.active {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
          font-weight: 600;
       }
    }

@@ -1,6 +1,7 @@
 import { NewPlan, Plan } from '../db/schema/plans';
 import { Restore } from '../db/schema/restores';
 import { IntegrationTypes } from './settings';
+import type { RemoteBackupLifecycle } from './remoteLifecycle';
 import { SourceTypes } from './source';
 import { Backup } from '../db/schema/backups';
 import { Device } from '../db/schema/devices';
@@ -183,6 +184,7 @@ export interface PlanBackupSettings {
 	scripts?: PlanScripts;
 	rescue?: PlanRescueSettings;
 	replication?: PlanReplicationSettings;
+	remoteLifecycle?: RemoteBackupLifecycle;
 }
 
 export type PlanError = {
@@ -275,6 +277,14 @@ export type PlanRestoreItem = Pick<
 export type PlanStorageItem = Pick<Storage, 'id' | 'name' | 'type'>;
 export type PlanDeviceItem = Pick<Device, 'id' | 'name' | 'hostname'>;
 export interface PlanFull extends Plan {
+	backupChart?: (Pick<Backup, 'status' | 'started'> & {
+		completionStats: {
+			total_files_processed: number | null;
+			total_bytes_processed: number | null;
+		} | null;
+		totalFiles: number;
+		totalSize: number;
+	})[];
 	device: PlanDeviceItem | null;
 	storage: PlanStorageItem | null;
 	backups: PlanBackupItem[];
@@ -295,3 +305,8 @@ export type PlanLogItem = {
 export interface PlanAddRunSettings {
 	runNow: boolean;
 }
+
+export type PlanStorageDisposition = {
+	status: 'retained_intentionally' | 'cleanup_failed' | 'retained_by_request' | 'removed';
+	paths: PlanStoragePath[];
+};

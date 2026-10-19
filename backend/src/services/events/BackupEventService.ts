@@ -192,7 +192,9 @@ export class BackupEventService {
 	protected async wasFinalized(backupId: string): Promise<boolean> {
 		const backup = await this.backupStore.getById(backupId);
 		return (
-			!!backup && !backup.inProgress && (backup.status === 'completed' || backup.status === 'failed')
+			!!backup &&
+			!backup.inProgress &&
+			(backup.status === 'completed' || backup.status === 'failed')
 		);
 	}
 
@@ -273,7 +275,7 @@ export class BackupEventService {
 						error: m.error,
 					}));
 
-				await this.backupNotification.send(plan, 'success', {
+				await this.backupNotification.send(plan, success ? 'success' : 'failure', {
 					id: data.backupId,
 					startTime: backup.started || new Date(),
 					stats: backup.completionStats || undefined,

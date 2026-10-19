@@ -6,6 +6,8 @@ import { RestoreStore } from '../../src/stores/RestoreStore';
 import { BaseBackupManager } from '../../src/managers/BaseBackupManager';
 import { NewPlanReq, PlanBackupSettings } from '../../src/types/plans';
 import { initializeLogger } from '../../src/utils/logger';
+import { AppError } from '../../src/utils/AppError';
+import type { RemoteBackupService } from '../../src/services/RemoteBackupService';
 
 // Mock the dependencies using Jest's mocking factory
 jest.mock('../../src/stores/PlanStore');
@@ -31,6 +33,21 @@ describe('PlanService', () => {
 
 	let performBackupSpy: jest.SpyInstance;
 
+	/**
+	 * Storage-source path baking is independent of remote execution support.
+	 * Stub only the service strategy selection in these tests so the assertions
+	 * can exercise the persisted sourceConfig while RemoteStrategy remains
+	 * fail-closed in production until remote backup is implemented.
+	 */
+	const stubStorageSourceScheduling = () => {
+		const strategy = {
+			createBackup: jest.fn().mockResolvedValue({ success: true, result: 'test schedule' }),
+			updateBackup: jest.fn().mockResolvedValue({ success: true, result: 'test schedule' }),
+		};
+		jest.spyOn(planService, 'getStrategy').mockReturnValue(strategy as any);
+		return strategy;
+	};
+
 	beforeAll(() => {
 		// This now guarantees the logger is initialized for this test file.
 		initializeLogger();
@@ -50,6 +67,9 @@ describe('PlanService', () => {
 
 		mockBackupStore.deleteByPlanId = jest.fn();
 		mockRestoreStore.deleteByPlanId = jest.fn();
+		mockPlanStore.getStorageRemovalReferences.mockResolvedValue([]);
+		mockPlanStore.beginSourceRemoval.mockReturnValue(jest.fn());
+		mockStorageStore.getById.mockResolvedValue({ id: 'storage-123', type: 'local' } as any);
 
 		// The service instantiates the strategy, so we need to mock its constructor and methods
 		mockStrategy = new LocalStrategy(mockLocalAgent) as jest.Mocked<LocalStrategy>;
@@ -179,6 +199,7 @@ describe('PlanService', () => {
 			} as any);
 			mockDeviceStore.getById.mockResolvedValue({ id: 'main', name: 'Main Server' } as any);
 			mockStrategy.createBackup.mockResolvedValue({ success: false, result: 'Cron job failed' });
+			mockPlanStore.create.mockResolvedValue({ id: 'plan-xyz', ...planData } as any);
 
 			// Act & Assert
 			await expect(planService.createPlan(planData)).rejects.toThrow('Cron job failed');
@@ -285,6 +306,7 @@ describe('PlanService', () => {
 			mockPlanStore.create.mockImplementation((data: any) =>
 				Promise.resolve({ id: 'plan-sync', ...data })
 			);
+			stubStorageSourceScheduling();
 		});
 
 		it('bakes the source remote:path into sourceConfig.includes[0]', async () => {
@@ -461,6 +483,7 @@ describe('PlanService', () => {
 				}
 				return null;
 			});
+			stubStorageSourceScheduling();
 		});
 
 		it('re-bakes sourceConfig.includes[0] from a fresh path', async () => {
@@ -532,9 +555,8 @@ describe('PlanService', () => {
 				removeRemoteData: true, // We passed true to the service method
 				replicationStorages: [],
 			});
-			expect(mockBackupStore.deleteByPlanId).toHaveBeenCalledWith(planId);
-			expect(mockPlanStore.delete).toHaveBeenCalledWith(planId);
-			expect(result).toEqual({ deleted: true, unremovedPaths: [], unremovedReason: '' });
+			expect(mockPlanStore.delete).toHaveBeenCalledWith(planId, true);
+			expect(result).toEqual({ deleted: true, unremovedPaths: [], unremovedReason: '', storageDisposition: { status: 'removed', paths: [] } });
 		});
 
 		it('should still delete the plan when storage data could not be removed', async () => {
@@ -553,11 +575,12 @@ describe('PlanService', () => {
 			const result = await planService.deletePlan(planId, true);
 
 			// Assert
-			expect(mockPlanStore.delete).toHaveBeenCalledWith(planId);
+			expect(mockPlanStore.delete).toHaveBeenCalledWith(planId, true);
 			expect(result).toEqual({
 				deleted: true,
 				unremovedPaths: [{ storageName: 'Test Storage', storagePath: '/backups/delete' }],
 				unremovedReason: 'The device could not be reached.',
+				storageDisposition: { status: 'cleanup_failed', paths: [{ storageName: 'Test Storage', storagePath: '/backups/delete' }] },
 			});
 		});
 
@@ -598,6 +621,75 @@ describe('PlanService', () => {
 			await expect(planService.deletePlan(planId, true)).rejects.toThrow(
 				'Failed to delete plan from the database.'
 			);
+		});
+
+		it.each(['active recovery', 'outstanding cleanup lease'])(
+			'refuses remote plan deletion before metadata changes with %s',
+			async () => {
+				mockPlanStore.getById.mockResolvedValue({
+					...mockPlan,
+					sourceId: 'app-01',
+					sourceType: 'device',
+				});
+				const remote = { removeManagedPlan: jest.fn() };
+				const recovery = {
+					assertPlanRemovable: jest
+						.fn()
+						.mockRejectedValue(
+							new AppError(
+								409,
+								'Finish recovery testing and its cleanup before removing this plan.'
+							)
+						),
+				};
+				const guarded = new PlanService(
+					mockLocalAgent,
+					mockPlanStore,
+					mockBackupStore,
+					mockStorageStore,
+					mockDeviceStore,
+					mockRestoreStore,
+					remote as unknown as RemoteBackupService,
+					recovery
+				);
+
+				await expect(guarded.deletePlan(planId, true)).rejects.toHaveProperty('statusCode', 409);
+				expect(recovery.assertPlanRemovable).toHaveBeenCalledWith(planId);
+				expect(remote.removeManagedPlan).not.toHaveBeenCalled();
+				expect(mockRestoreStore.deleteByPlanId).not.toHaveBeenCalled();
+				expect(mockBackupStore.deleteByPlanId).not.toHaveBeenCalled();
+				expect(mockPlanStore.delete).not.toHaveBeenCalled();
+			}
+		);
+
+		it('checks recovery ownership before removing an idle remote plan and its history', async () => {
+			mockPlanStore.getById.mockResolvedValue({
+				...mockPlan,
+				sourceId: 'app-01',
+				sourceType: 'device',
+			});
+			const recovery = { assertPlanRemovable: jest.fn().mockResolvedValue(undefined) };
+			const remote = {
+				removeManagedPlan: jest.fn().mockImplementation(async () => {
+					expect(recovery.assertPlanRemovable).toHaveBeenCalledWith(planId);
+					return { storagePath: 'application/repo' };
+				}),
+			};
+			mockPlanStore.delete.mockResolvedValue(true);
+			const guarded = new PlanService(
+				mockLocalAgent,
+				mockPlanStore,
+				mockBackupStore,
+				mockStorageStore,
+				mockDeviceStore,
+				mockRestoreStore,
+				remote as unknown as RemoteBackupService,
+				recovery
+			);
+
+			await expect(guarded.deletePlan(planId, false)).resolves.toHaveProperty('deleted', true);
+			expect(remote.removeManagedPlan).toHaveBeenCalledTimes(1);
+			expect(mockPlanStore.delete).toHaveBeenCalledWith(planId, true);
 		});
 	});
 
@@ -787,6 +879,28 @@ describe('PlanService', () => {
 	// -------------------------------
 	// Tests for pruning backups
 	// -------------------------------
+	describe('remote filesystem maintenance boundaries', () => {
+		const planId = 'remote-maintenance-plan';
+		const remotePlan = { id: planId, sourceId: 'remote-device-01', sourceType: 'device' } as any;
+
+		beforeEach(() => {
+			mockPlanStore.getById.mockResolvedValue(remotePlan);
+		});
+
+		it.each([
+			['pruneBackups', () => planService.pruneBackups(planId)],
+			['unlockRepo', () => planService.unlockRepo(planId)],
+			['checkIntegrity', () => planService.checkIntegrity(planId)],
+			['repairRepo', () => planService.repairRepo(planId, 'index')],
+		])('rejects %s before invoking a remote strategy', async (_operation, invoke) => {
+			await expect(invoke()).rejects.toHaveProperty('statusCode', 501);
+			expect(mockStrategy.pruneBackups).not.toHaveBeenCalled();
+			expect(mockStrategy.unlockRepo).not.toHaveBeenCalled();
+			expect(mockStrategy.checkIntegrity).not.toHaveBeenCalled();
+			expect(mockStrategy.repairRepo).not.toHaveBeenCalled();
+		});
+	});
+
 	describe('pruneBackups', () => {
 		const planId = 'plan-to-prune';
 		const mockPlan = { id: planId, sourceId: 'main', settings: {} } as any;
@@ -1395,9 +1509,10 @@ describe('PlanService', () => {
 			mockRestoreStore.getAll = jest
 				.fn()
 				.mockResolvedValue([{ id: 'r1', planId: 'p1', backupId: 'b1', inProgress: true }]);
-			mockPlanStore.getAll = jest
-				.fn()
-				.mockResolvedValue([{ id: 'p1', inProgress: true }, { id: 'p2', inProgress: false }]);
+			mockPlanStore.getAll = jest.fn().mockResolvedValue([
+				{ id: 'p1', inProgress: true },
+				{ id: 'p2', inProgress: false },
+			]);
 
 			mockBackupStore.update = jest.fn().mockImplementation((id: string) => ({ id }));
 			mockRestoreStore.update = jest.fn().mockImplementation((id: string) => ({ id }));
@@ -1435,9 +1550,11 @@ describe('PlanService', () => {
 			mockBackupStore.getAll = jest
 				.fn()
 				.mockResolvedValue([{ id: 'b1', planId: 'p1', sourceId: 'device-1', inProgress: true }]);
-			mockRestoreStore.getAll = jest.fn().mockResolvedValue([
-				{ id: 'r1', planId: 'p1', backupId: 'b1', sourceId: 'device-1', inProgress: true },
-			]);
+			mockRestoreStore.getAll = jest
+				.fn()
+				.mockResolvedValue([
+					{ id: 'r1', planId: 'p1', backupId: 'b1', sourceId: 'device-1', inProgress: true },
+				]);
 			mockPlanStore.getAll = jest
 				.fn()
 				.mockResolvedValue([{ id: 'p1', sourceId: 'device-1', inProgress: true }]);

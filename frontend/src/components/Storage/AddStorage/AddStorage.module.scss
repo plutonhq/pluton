@@ -116,7 +116,7 @@
    user-select: none;
 
    &:hover {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
    &.advancedButtonActive {
       border-radius: 6px 6px 0 0;
@@ -147,14 +147,14 @@
       }
    }
    code {
-      background-color: rgba(0, 0, 0, 0.1);
+      background-color: var(--line-color);
       color: var(--content-text-color);
       padding: 2px 6px;
       border-radius: 6px;
    }
    .codeBlock {
-      background-color: #333;
-      color: #ccc;
+      background-color: var(--content-background-color);
+      color: var(--content-text-color);
       padding: 10px;
       width: 100%;
       display: block;
@@ -162,7 +162,7 @@
       box-sizing: border-box;
       margin: 10px 0;
       strong {
-         color: var(--rt-color-success);
+         color: var(--success-text-color);
       }
    }
 }
@@ -235,7 +235,7 @@
       font-size: 13px;
       line-height: 1.5;
       a {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
          text-decoration: underline;
       }
    }

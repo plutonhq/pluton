@@ -4,18 +4,76 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    paths:
+      - .github/workflows/release-please.yml
+      - .github/workflows/release-assets.yml
+      - release-please-config.json
+      - .release-please-manifest.json
+      - scripts/__tests__/releasePlease.test.cjs
+      - package.json
+      - pnpm-lock.yaml
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+
+concurrency:
+  group: release-please-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  release-please:
+  validate-config:
+    name: Validate release metadata
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: actions/checkout@v4
         with:
-          # Use manifest-based config for monorepo
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.20.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install release validation dependencies
+        run: pnpm install --filter pluton --frozen-lockfile --ignore-scripts
+
+      - name: Test release configuration and merged-PR recovery
+        run: pnpm run test:release
+
+  release-please:
+    needs: validate-config
+    # This fork's automation must never create releases on the upstream repo.
+    # Pull requests run only the read-only regression checks above.
+    if: github.event.repository.fork == true && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          repo-url: ${{ github.repository }}
+          target-branch: main
+          # One componentless root release; see docs/RELEASING.md.
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      - name: Report release result
+        env:
+          RELEASE_REPOSITORY: ${{ github.repository }}
+          RELEASES_CREATED: ${{ steps.release.outputs.releases_created }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          printf 'Release Please repository: %s\n' "$RELEASE_REPOSITORY"
+          if [ "$RELEASES_CREATED" = "true" ]; then
+            printf 'Created draft release: %s (publication remains manual).\n' "$RELEASE_TAG"
+          else
+            printf 'No release created. Check pending release PRs and any component warnings above.\n'
+          fi

@@ -1,0 +1,23 @@
+# Optional. Run the fixed root operator's init first, then apply alongside ALL existing overlays.
+# Keeps /data and old Phase 6 targets untouched. Never mount a Docker socket here.
+services:
+  pluton:
+    mem_limit: 1536m
+    memswap_limit: 1536m
+    pids_limit: 256
+    networks:
+      default: {}
+      persistent-restores: {}
+    volumes:
+      - /etc/pluton-persistent-restores/public:/run/pluton-persistent-restores:ro
+      - /var/lib/pluton-persistent-restore-requests:/run/pluton-persistent-restore-requests
+      - type: bind
+        source: /var/lib/pluton-persistent-restores/view
+        target: /run/pluton-persistent-storage
+        read_only: true
+        bind:
+          propagation: rslave
+networks:
+  persistent-restores:
+    external: true
+    name: pluton-persistent-restores

@@ -605,6 +605,102 @@ describe('StorageService', () => {
 	// ----------------------------------------
 	// cancelAuthorize
 	// ----------------------------------------
+	describe('HCP protected credentials', () => {
+		const credentials = {
+			endpoint: 'https://tenant.example.internal',
+			bucket: 'fixture-bucket',
+			access_key_id: 'synthetic-access',
+			secret_access_key: 'synthetic-secret',
+		};
+		it('encrypts session/SSE-C settings and never returns stored secrets to the browser', async () => {
+			mockStorageStore.getAll.mockResolvedValue([]);
+			mockStorageManager.createRemote.mockResolvedValue({ success: true, result: 'verified' });
+			mockStorageStore.create.mockImplementation(async data => data as Storage);
+			const result = await storageService.createStorage({
+				type: 's3compatible',
+				name: 'mirror_01',
+				authType: 'client',
+				credentials,
+				settings: {
+					hcp_mode: true,
+					session_token: 'synthetic-token',
+					sse_customer_key: 'synthetic-sse',
+				},
+			});
+			const saved = mockStorageStore.create.mock.calls[0][0];
+			expect(saved.settings).toEqual({ hcp_mode: true });
+			expect(saved.credentials).toMatchObject({
+				session_token: 'encrypted(synthetic-token)',
+				sse_customer_key: 'encrypted(synthetic-sse)',
+			});
+			expect(result?.credentials).toEqual({
+				endpoint: credentials.endpoint,
+				bucket: credentials.bucket,
+			});
+			expect((result as any).credentialsConfigured).toContain('secret_access_key');
+			expect(JSON.stringify(result)).not.toContain('synthetic-secret');
+		});
+		it.each(['s3compatible', 's3'])('retains configured %s secret values and provider identity on blank protected edits', async type => {
+			const existing = {
+				id: 'mirror-01',
+				type,
+				name: 'mirror_01',
+				credentials: Object.fromEntries(
+					Object.entries(credentials).map(([key, value]) => [key, `encrypted(${value})`])
+				),
+				settings: { hcp_mode: true },
+			} as any;
+			mockStorageStore.getById.mockResolvedValue(existing);
+			mockPlanStore.getStoragePlans.mockResolvedValue([]);
+			mockStorageStore.getReplicationPlanSources.mockResolvedValue([]);
+			mockLocalStrategy.updateRemoteStorage.mockResolvedValue({
+				success: true,
+				result: 'verified',
+			});
+			mockStorageStore.update.mockImplementation(async (_id, data) => ({ ...existing, ...data }));
+			const result = await storageService.updateStorage('mirror-01', {
+				credentials: {
+					endpoint: credentials.endpoint,
+					bucket: credentials.bucket,
+					access_key_id: '',
+					secret_access_key: '',
+				},
+				settings: { hcp_mode: true },
+			});
+			expect(mockStorageStore.update.mock.calls[0][1].credentials).toMatchObject({
+				access_key_id: 'encrypted(synthetic-access)',
+				secret_access_key: 'encrypted(synthetic-secret)',
+			});
+			expect(mockLocalStrategy.updateRemoteStorage).toHaveBeenCalledWith('mirror_01', expect.objectContaining({
+				new: expect.objectContaining({ _pluton_storage_type: type }),
+				old: expect.objectContaining({ _pluton_storage_type: type }),
+			}));
+			expect(result.storage?.credentials).toEqual({
+				endpoint: credentials.endpoint,
+				bucket: credentials.bucket,
+			});
+			await expect(
+				storageService.updateStorage('mirror-01', {
+					credentials: {},
+					settings: { hcp_mode: false },
+				})
+			).rejects.toHaveProperty('statusCode', 409);
+		});
+		it('rejects duplicate HCP remote aliases before touching the shared remote configuration', async () => {
+			mockStorageStore.getAll.mockResolvedValue([{ name: 'MIRROR_01' } as Storage]);
+			await expect(
+				storageService.createStorage({
+					type: 's3compatible',
+					name: 'mirror_01',
+					authType: 'client',
+					credentials,
+					settings: { hcp_mode: true },
+				})
+			).rejects.toHaveProperty('statusCode', 409);
+			expect(mockStorageManager.createRemote).not.toHaveBeenCalled();
+		});
+	});
+
 	describe('cancelAuthorize', () => {
 		it('should kill the process and remove the session', () => {
 			const mockKill = jest.fn();

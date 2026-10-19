@@ -2,6 +2,15 @@ import s3Options from './_s3Options';
 
 const s3CompatibleSettings = [
 	{
+		label: 'HCP / pre-existing namespace mode',
+		value: 'hcp_mode',
+		fieldType: 'bool',
+		required: false,
+		default: false,
+		description:
+			'Use an operator-approved HTTPS S3 API endpoint and existing namespace/bucket. Pluton never provisions a bucket in this mode; use a dedicated repository prefix.',
+	},
+	{
 		label: 'Endpoint',
 		value: 'endpoint',
 		fieldType: 'string',
@@ -14,7 +23,7 @@ const s3CompatibleSettings = [
 	{
 		label: 'Access Key ID',
 		value: 'access_key_id',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',
@@ -25,7 +34,7 @@ const s3CompatibleSettings = [
 	{
 		label: 'Secret Access Key',
 		value: 'secret_access_key',
-		fieldType: 'string',
+		fieldType: 'password',
 		authFieldType: 'client',
 		required: true,
 		default: '',

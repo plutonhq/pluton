@@ -44,6 +44,10 @@ const config: Config = {
 	moduleNameMapper: {
 		// This alias is now even more important to keep imports clean
 		'^#core-backend/(.*)$': '<rootDir>/src/$1',
+		// The agent is authored as NodeNext TypeScript, so its runtime .js
+		// specifiers must resolve to source files when the backend integration
+		// suite imports the real agent protocol before it is built.
+		'^(\\.{1,2}/.*)\\.js$': '$1',
 	},
 	setupFiles: ['<rootDir>/__tests__/env-setup.ts'],
 	setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],

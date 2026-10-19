@@ -27,6 +27,8 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
    const updateStorageMutation = useUpdateStorage();
    const storageType = storage.type;
    const { data: storageData } = useGetStorage(storage.id);
+   const configuredCredentials: string[] = storageData?.result?.credentialsConfigured || storage.credentialsConfigured || [];
+   const retainingCredentials = currentAuthType === (storageData?.result?.authType || storage.authType || '');
 
    useEffect(() => {
       if (storageData && storageData.success && storageData.result && storageData.result.credentials) {
@@ -75,8 +77,9 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
 
          // Check if the value is empty
          const isEmpty = fieldValue === undefined || fieldValue === null || fieldValue === '';
+         const retained = retainingCredentials && configuredCredentials.includes(fieldDef.value);
 
-         if (isEmpty) {
+         if (isEmpty && !retained) {
             errors[fieldDef.value] = 'Required';
          }
       });
@@ -98,7 +101,6 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
                tags: storageTags,
             },
          };
-         console.log('payload :', storagePayload);
          updateStorageMutation.mutate(storagePayload, {
             onError: (error: Error) => {
                console.log('error :', error?.message);
@@ -106,8 +108,8 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
                setStorageCredentials(storageData.result.credentials);
                setStorageSettings(storageData.result.settings);
             },
-            onSuccess: (data: any) => {
-               console.log('Success :', data);
+            onSuccess: () => {
+               setStorageCredentials({});
                toast.success(`Successfully Updated Storage!`, { autoClose: 5000 });
             },
          });
@@ -181,6 +183,7 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
                   errors={inputError}
                   currentAuthType={currentAuthType}
                   onAuthTypeChange={setCurrentAuthType}
+                  configuredFields={retainingCredentials ? configuredCredentials : []}
                />
             )}
             {Object.keys(storageFields.optional).length > 0 && (
@@ -198,6 +201,7 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
                   <StorageSettings
                      fields={storageFields.optional}
                      settings={storageSettings}
+                     configuredFields={retainingCredentials ? configuredCredentials : []}
                      onUpdate={(newSettings) => setStorageSettings(newSettings)}
                   />
                   <div className={classes.field}>

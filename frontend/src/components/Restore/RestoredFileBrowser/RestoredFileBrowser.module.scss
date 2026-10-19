@@ -177,7 +177,7 @@
             border-radius: 50%;
          }
          &:hover {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
          }
       }
    }
@@ -197,13 +197,13 @@
    }
 
    &.restored {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
 
    &.updated {
-      color: #b17010;
+      color: var(--warning-text-color);
       i {
-         background: #ffecd5;
+         background: var(--warning-bg-color);
       }
    }
 

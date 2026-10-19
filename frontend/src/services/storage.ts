@@ -1,3 +1,4 @@
+import { mutationResponse } from '../utils/httpResponse';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_URL } from '../utils/constants';
 
@@ -112,8 +113,7 @@ export function useAddStorage() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: addStorage,
-      onSuccess: (res) => {
-         console.log('# Storage Added! :', res);
+      onSuccess: () => {
          queryClient.invalidateQueries({ queryKey: ['storages'] });
       },
    });
@@ -139,10 +139,10 @@ export function useUpdateStorage() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: updateStorage,
-      onSuccess: (res) => {
+      onSuccess: () => {
          // TODO: Should Display a Nofitication Bubble.
-         console.log('# Storage Updated! :', res);
          queryClient.invalidateQueries({ queryKey: ['storages'] });
+         queryClient.invalidateQueries({ queryKey: ['storage'] });
       },
    });
 }
@@ -150,22 +150,18 @@ export function useUpdateStorage() {
 // Remove Storage
 export async function deleteStorage(id: string) {
    const header = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
-   const res = await fetch(`${API_URL}/storages/${id}`, {
+   return mutationResponse<{ success: boolean; message?: string }>(`${API_URL}/storages/${encodeURIComponent(id)}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: header,
-   });
-   const data = await res.json();
-   if (!data.success) {
-      throw new Error(data.error);
-   }
-   return data;
+   }, { allowNoContent: true, allowAccepted: false });
 }
 
 export function useDeleteStorage() {
    const queryClient = useQueryClient();
    return useMutation({
       mutationFn: deleteStorage,
+      retry: false,
       onSuccess: (res) => {
          // TODO: Should Display a Nofitication Bubble.
          console.log('# Storage Updated! :', res);

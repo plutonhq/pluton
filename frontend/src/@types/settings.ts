@@ -1,4 +1,5 @@
 export interface SmtpSettingsType {
+   passwordConfigured?: boolean;
    server: string;
    port: number;
    username: string;
@@ -20,6 +21,7 @@ export interface LogItem {
 }
 
 export interface NtfySettingsType {
+   authTokenConfigured?: boolean;
    authType: string;
    authToken: string;
    connected: boolean;

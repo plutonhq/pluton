@@ -1,0 +1,36 @@
+# Explicit optional overlay. Do not use for server-only deployments.
+# Supply digest-pinned PLUTON_MYSQL_WORKER_IMAGE_REF and reviewed root-owned config/CA.
+services:
+  pluton:
+    # Ensure fresh named-volume ownership is copied from the worker image first.
+    # Later worker unavailability does not stop normal Pluton backups.
+    depends_on:
+      mysql-recovery-worker:
+        condition: service_started
+    environment:
+      PLUTON_MYSQL_WORKER: enabled
+    volumes:
+      - pluton-mysql-ipc:/run/pluton-mysql-worker:ro
+  mysql-recovery-worker:
+    image: ${PLUTON_MYSQL_WORKER_IMAGE_REF:?Set a reviewed worker image by digest}
+    user: "10001:10001"
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    # No ports or expose. Only the worker has a DB egress network; IPC is Unix-only.
+    networks: [mysql-recovery-egress]
+    pids_limit: 64
+    mem_limit: 3g
+    cpus: 1.0
+    volumes:
+      - pluton-mysql-ipc:/run/pluton-mysql-worker
+      - ${PLUTON_MYSQL_WORKER_CONFIG:?Set approved target JSON path}:/run/pluton-mysql-config/target.json:ro
+      - ${PLUTON_MYSQL_WORKER_CA:?Set approved recovery target CA path}:/run/pluton-mysql-config/ca.pem:ro
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,mode=1777,size=2g
+volumes:
+  pluton-mysql-ipc:
+networks:
+  mysql-recovery-egress:

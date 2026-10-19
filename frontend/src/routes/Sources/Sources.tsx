@@ -1,15 +1,16 @@
 import PageHeader from '../../components/common/PageHeader/PageHeader';
 import DeviceItem from '../../components/Device/DeviceItem/DeviceItem';
-import TagsFilter from '../../components/common/TagsFilter/TagsFilter';
-import SearchItems from '../../components/common/SearchItems/SearchItems';
-import { useEffect, useMemo, useState } from 'react';
+import { CollectionToolbar, CollectionPagination } from '../../components/common/Table/CollectionControls';
+import { useCollectionPage } from '../../components/common/Table/useCollectionPage';
+import { stableCollectionSort } from '../../components/common/Table/collection';
+import { useState } from 'react';
 import { Device } from '../../@types/devices';
 import { useGetDevices } from '../../services/devices';
 import classes from './Sources.module.scss';
 import ItemsLayout from '../../components/common/ItemsLayout/ItemsLayout';
 import SkeletonItems from '../../components/Skeleton/SkeletonItems';
 import deviceItemClasses from '../../components/Device/DeviceItem/DeviceItem.module.scss';
-import Upgrade from '../../components/Upgrade/Upgrade';
+import AgentEnrollmentModal from '../../components/Device/AgentEnrollment/AgentEnrollment';
 
 type SourcesProps = {
    buttonTitle?: string;
@@ -17,51 +18,20 @@ type SourcesProps = {
 };
 
 const Sources = ({ buttonTitle, buttonAction }: SourcesProps) => {
-   const [devices, setDevices] = useState<Device[]>([]);
+   const [search, setSearch] = useState('');
+   const [tag, setTag] = useState('');
+   const [sort, setSort] = useState('name_asc');
    const [devicesLayout, setDevicesLayout] = useState<'list' | 'grid'>(() => (localStorage.getItem('devices_layout') === 'grid' ? 'grid' : 'list'));
-   const { data, isLoading } = useGetDevices();
+   const { data, isLoading, error } = useGetDevices({ refetchInterval: 15000 });
    const fetchedDevices: Device[] = data?.result || [];
-   const [showUpgrade, setShowUpgrade] = useState(false);
+   const [showEnrollment, setShowEnrollment] = useState(false);
 
-   useEffect(() => {
-      if (data?.result) {
-         setDevices(data.result);
-      }
-   }, [data]);
-
-   const allTags = useMemo(() => {
-      const tags: string[] = [];
-      if (devices && devices.length > 0) {
-         devices.forEach(({ tags = [] }) => {
-            console.log('tags :', tags);
-            if (tags && Array.isArray(tags)) {
-               tags.forEach((tag) => {
-                  if (!tags.includes(tag)) {
-                     tags.push(tag);
-                  }
-               });
-            }
-         });
-      }
-
-      return tags;
-   }, [devices]);
-
-   const filterByTags = (tag: string) => {
-      if (tag) {
-         setDevices(fetchedDevices.filter((p) => p.tags.includes(tag)));
-      } else {
-         setDevices(fetchedDevices);
-      }
-   };
-
-   const searchStorages = (term: string) => {
-      if (term) {
-         setDevices(fetchedDevices.filter((p) => p.name.toLowerCase().includes(term.toLowerCase())));
-      } else {
-         setDevices(fetchedDevices);
-      }
-   };
+   const allTags = [...new Set([...fetchedDevices.flatMap((device) => device.tags || []), ...(tag ? [tag] : [])])].sort();
+   const devices = stableCollectionSort(
+      fetchedDevices.filter((device) => device.name.toLowerCase().includes(search.trim().toLowerCase()) && (!tag || device.tags?.includes(tag))),
+      (a, b) => (sort === 'name_desc' ? -1 : 1) * a.name.localeCompare(b.name),
+   );
+   const page = useCollectionPage(devices, JSON.stringify([search, tag, sort]));
 
    return (
       <div className={classes.devices}>
@@ -72,22 +42,46 @@ const Sources = ({ buttonTitle, buttonAction }: SourcesProps) => {
             buttonAction={buttonAction}
             rightSection={
                <>
-                  <TagsFilter tags={allTags} onSelect={filterByTags} />
-                  <SearchItems onSearch={(term) => searchStorages(term)} itemName="Sources" />
                   <ItemsLayout onChange={(value) => setDevicesLayout(value)} type="devices" value={devicesLayout} />
                </>
             }
          />
+         <CollectionToolbar
+            label="sources"
+            search={search}
+            onSearch={setSearch}
+            sort={sort}
+            onSort={setSort}
+            options={[
+               { label: 'Name (A to Z)', value: 'name_asc' },
+               { label: 'Name (Z to A)', value: 'name_desc' },
+            ]}
+         >
+            <label>
+               Source tag
+               <select value={tag} onChange={(event) => setTag(event.target.value)}>
+                  <option value="">All tags</option>
+                  {allTags.map((value) => (
+                     <option key={value} value={value}>
+                        {value}
+                     </option>
+                  ))}
+               </select>
+            </label>
+         </CollectionToolbar>
+         {error && <p role="alert">Could not load sources. {error.message}</p>}
+         {!isLoading && !error && !devices.length && <p>{fetchedDevices.length ? 'No sources match the current filters.' : 'No sources found.'}</p>}
          <div className={`${classes.deviceItems} ${devicesLayout === 'grid' ? classes.devicesGrid : ''}`}>
-            {!isLoading && devices.length > 0 && devices.map((device) => <DeviceItem key={device.id} device={device} layout={devicesLayout} />)}
+            {!isLoading && page.items.map((device) => <DeviceItem key={device.id} device={device} layout={devicesLayout} />)}
             {!isLoading && (
-               <div className={`${deviceItemClasses.device} ${classes.deviceUpgrade}`} onClick={() => setShowUpgrade(true)}>
+               <div className={`${deviceItemClasses.device} ${classes.deviceUpgrade}`} onClick={() => setShowEnrollment(true)}>
                   + Add Remote Machine
                </div>
             )}
          </div>
          {isLoading && <SkeletonItems type="source" layout={devicesLayout} />}
-         {showUpgrade && <Upgrade focus="remote" onClose={() => setShowUpgrade(false)} />}
+         {!error && <CollectionPagination label="sources" {...page} busy={isLoading} />}
+         {showEnrollment && <AgentEnrollmentModal close={() => setShowEnrollment(false)} />}
       </div>
    );
 };

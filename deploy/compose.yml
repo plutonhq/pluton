@@ -1,0 +1,69 @@
+services:
+  pluton:
+    image: "${PLUTON_IMAGE_REF:?Set PLUTON_IMAGE_REF through deploy.sh or a digest-pinned .env}"
+    restart: unless-stopped
+    init: true
+    read_only: true
+    ports:
+      - "${PLUTON_PORT:-5173}:5173"
+    volumes:
+      - pluton-data:/data
+    tmpfs:
+      - /tmp:mode=1777,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      NODE_ENV: production
+      IS_DOCKER: "true"
+      SERVER_PORT: "5173"
+      PLUTON_DATA_DIR: /data
+      ENCRYPTION_KEY: "${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in the VM-only .env}"
+      USER_NAME: "${USER_NAME:?Set USER_NAME in the VM-only .env}"
+      USER_PASSWORD: "${USER_PASSWORD:?Set USER_PASSWORD in the VM-only .env}"
+      APP_TITLE: "${APP_TITLE:-Pluton}"
+      APP_URL: "${APP_URL:-http://localhost:5173}"
+      APP_ALLOWED_ORIGINS: "${APP_ALLOWED_ORIGINS:-}"
+      AGENT_SERVER_URL: "${AGENT_SERVER_URL:-}"
+      ALLOW_INSECURE_AGENT_HTTP: "${ALLOW_INSECURE_AGENT_HTTP:-false}"
+      MAX_CONCURRENT_BACKUPS: "${MAX_CONCURRENT_BACKUPS:-2}"
+      SESSION_DURATION: "${SESSION_DURATION:-7}"
+      ALLOW_CUSTOM_RESTORE_PATH: "${ALLOW_CUSTOM_RESTORE_PATH:-true}"
+      ALLOW_FILE_BROWSER: "${ALLOW_FILE_BROWSER:-true}"
+      DISABLE_EVENT_SCRIPTS: "${DISABLE_EVENT_SCRIPTS:-false}"
+      TRUST_PROXY: "${TRUST_PROXY:-}"
+    healthcheck:
+      # GET only: HEAD is intentionally not a browser Host-policy exemption.
+      # Inline probe also supports rollback images predating the probe file.
+      test:
+        - CMD
+        - node
+        - -e
+        - |
+          const http = require('node:http');
+          const fail = code => process.exit(code);
+          const deadline = setTimeout(() => fail(10), 4000);
+          const request = http.get({ host: '127.0.0.1', port: 5173, path: '/api/health', method: 'GET' }, response => {
+            if (response.statusCode !== 200) return fail(11);
+            if ((response.headers['content-type'] || '').split(';', 1)[0].trim().toLowerCase() !== 'application/json') return fail(12);
+            let body = '';
+            response.on('data', chunk => { body += chunk; if (Buffer.byteLength(body) > 1024) fail(12); });
+            response.on('error', () => fail(10));
+            response.on('end', () => {
+              try {
+                const value = JSON.parse(body);
+                if (!value || Array.isArray(value) || Object.keys(value).length !== 1 || value.status !== 'healthy') return fail(13);
+                clearTimeout(deadline);
+              } catch { fail(12); }
+            });
+          });
+          request.on('error', () => fail(10));
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+volumes:
+  pluton-data:
+    name: "${PLUTON_VOLUME_NAME:-pluton-data}"

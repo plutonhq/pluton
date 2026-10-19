@@ -12,6 +12,11 @@ import { BackupVerifiedResult } from '../../types/plans';
 import { runHelper } from '../linuxHelper';
 import { ResticExitCode } from './exitCodes';
 import { KillableProcess, killProcessTree } from '../processTree';
+import {
+	protectedStorageEnvironment,
+	trustEnvironment,
+	redactStorageOutput,
+} from '../storageSecurity';
 
 export type ResticCommandError = Error & {
 	code?: number;
@@ -69,6 +74,7 @@ export function runResticCommand(
 		const globalRcloneEnv = buildRcloneEnvFromSettings();
 
 		const envVars = {
+			...protectedStorageEnvironment(args),
 			...globalResticEnv,
 			...globalRcloneEnv,
 			...env, // Per-call overrides still take precedence
@@ -76,6 +82,7 @@ export function runResticCommand(
 			RCLONE_CONFIG: rcloneConfigPath,
 			LOCALAPPDATA: localAppData,
 			RCLONE_CONFIG_PASS: configService.config.ENCRYPTION_KEY,
+			...trustEnvironment(),
 		};
 
 		const finalArgs = [
@@ -129,13 +136,10 @@ export function runResticCommand(
 		if (timeoutMs && timeoutMs > 0) {
 			timeoutHandle = setTimeout(() => {
 				timedOut = true;
-				// SIGKILL rather than SIGTERM: a wedged rclone transport may not
-				// respond to a graceful signal.
-				try {
-					resticProcess.kill('SIGKILL');
-				} catch {
-					// Process may have already exited.
-				}
+				clearTimers();
+				// A restic repository can use rclone as a child process. Kill the
+				// whole tree at the hard deadline so it cannot leave its transport alive.
+				killProcessTree(resticProcess as KillableProcess, 'SIGKILL');
 				const timeoutError: ResticCommandError = new Error(
 					`Restic command timed out after ${timeoutMs}ms`
 				);
@@ -224,8 +228,9 @@ export function runResticCommand(
 		resticProcess.stderr?.on('data', (data: Buffer) => {
 			lastActivity = Date.now();
 			if (!wasCancelled) {
-				console.log('restic output Error :', data.toString());
-				errorOutput = appendBounded(errorOutput, data.toString());
+				const safeError = redactStorageOutput(data.toString(), envVars);
+				console.log('restic output Error :', safeError);
+				errorOutput = appendBounded(errorOutput, safeError);
 
 				// NOTE: The onError callback is disabled because rclone/restic always retries the backup task.
 				// The error is handled in process.on('close'

@@ -14,7 +14,7 @@ interface GeneralSettingsProps {
 }
 
 const GeneralSettings = ({ settings, settingsID, onUpdate }: GeneralSettingsProps) => {
-   const { setTheme } = useTheme();
+   const { setTheme, themeSetting } = useTheme();
    const [show2FASetupConfirm, setShow2FASetupConfirm] = useState(false);
    const [show2FASetup, setShow2FASetup] = useState(false);
 
@@ -66,9 +66,9 @@ const GeneralSettings = ({ settings, settingsID, onUpdate }: GeneralSettingsProp
          <div className={classes.field}>
             <Tristate
                label="Color Scheme"
-               fieldValue={settings.theme as string}
+               fieldValue={themeSetting}
                options={[
-                  { label: 'Auto', value: 'auto' },
+                  { label: 'System', value: 'auto' },
                   { label: 'Dark', value: 'dark' },
                   { label: 'Light', value: 'light' },
                ]}

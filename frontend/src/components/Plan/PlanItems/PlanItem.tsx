@@ -11,6 +11,7 @@ import { useGetStorages } from '../../../services/storage';
 import { planIntervalName } from '../../../utils/plans';
 import PlanHistory from '../PlanHistory/PlanHistory';
 import PlanStorageInfo from '../PlanStorageInfo/PlanStorageInfo';
+import { planReportedSize, statisticHelp } from '../../../utils/backupStatistics';
 
 interface PlanItemProps {
    plan: Plan;
@@ -51,6 +52,8 @@ const PlanItem = ({ plan, layout = 'list' }: PlanItemProps) => {
    const shouldBeInaccessible =
       pauseMutation.isPending || resumeMutation.isPending || performBackupMutation.isPending || deletePlanMutation.isPending;
    const isSync = method === 'sync';
+   const remoteManaged = plan.sourceType === 'device' && plan.sourceId !== 'main' && method === 'backup';
+   const displayedSize = planReportedSize(plan);
    const changeStatus = () => {
       if (inProgress || shouldBeInaccessible) {
          return;
@@ -148,7 +151,7 @@ const PlanItem = ({ plan, layout = 'list' }: PlanItemProps) => {
                      )}
                      {verified && verified.hasError && (
                         <i data-tooltip-id="appTooltip" data-tooltip-content={`Plan Has Error`} data-tooltip-place="top">
-                           <Icon size={14} type={'error-circle-filled'} color="#dd6b6b" />
+                           <Icon size={14} type={'error-circle-filled'} color="var(--error-text-color)" />
                         </i>
                      )}
                   </div>
@@ -180,12 +183,13 @@ const PlanItem = ({ plan, layout = 'list' }: PlanItemProps) => {
          <div className={classes.rightContent}>
             <div
                className={classes.size}
+               title={remoteManaged ? `Latest logical Snapshot Size. ${statisticHelp.snapshotSize}` : undefined}
                data-tooltip-id="appTooltip"
                data-tooltip-place="top"
                data-tooltip-hidden={!stats.snapshots || method === 'sync'}
                data-tooltip-content={`Total Snapshots: ${stats.snapshots.length}`}
             >
-               <Icon type="disk" size={14} /> <i>{formatBytes(stats.size)}</i>
+               <Icon type="disk" size={14} /> <i>{displayedSize === undefined ? 'Not measured' : formatBytes(displayedSize)}</i>
             </div>
             <div className={classes.interval}>
                <Icon type="interval" size={14} />{' '}
@@ -202,7 +206,12 @@ const PlanItem = ({ plan, layout = 'list' }: PlanItemProps) => {
                {inProgress ? 'In Progress' : lastBackupTime ? timeAgo(new Date(lastBackupTime as string)) : 'Not Yet'}
             </div>
             <PlanHistory planId={id} history={backups} />
-            <button className={`${classes.moreBtn} ${showSettings ? classes.moreBtnActive : ''}`} onClick={() => setShowSettings(!showSettings)}>
+            <button
+               aria-label={`Plan actions for ${plan.title}`}
+               aria-expanded={showSettings}
+               className={`${classes.moreBtn} ${showSettings ? classes.moreBtnActive : ''}`}
+               onClick={() => setShowSettings(!showSettings)}
+            >
                <Icon type="dots-vertical" size={14} />
             </button>
          </div>

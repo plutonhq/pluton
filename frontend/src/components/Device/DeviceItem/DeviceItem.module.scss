@@ -3,13 +3,14 @@
    flex-direction: row;
    align-items: center;
    position: relative;
-   padding: 10px;
-   margin-bottom: 20px;
+   padding: 16px;
+   margin-bottom: 12px;
    gap: 10px;
    border-radius: 7px;
    background-color: var(--content-background-color);
    color: var(--content-text-color-light);
-   box-shadow: 0 0 15px var(--content-shadow-color);
+   box-shadow: var(--card-shadow);
+   border: 1px solid var(--line-color);
    transition: all 0.2s linear;
    &:hover {
       box-shadow: 0 0 20px var(--content-shadow-color);
@@ -68,7 +69,7 @@
       &:hover {
          color: inherit;
          h4 {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
          }
       }
    }
@@ -82,6 +83,7 @@
       line-height: 0.9rem;
    }
    h4 {
+      font-size: 0.875rem;
       margin: 0;
       margin-bottom: 2px;
       color: var(--content-text-color);
@@ -115,12 +117,12 @@
    }
    b {
       margin-left: 3px;
-      color: #06ba9f;
+      color: var(--success-text-color);
    }
    &.versionUpdate {
       cursor: pointer;
       &:hover {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
    }
 }
@@ -131,7 +133,7 @@
    border-radius: 4px;
    &.moreBtnActive {
       background-color: var(--primary-color-light);
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
    }
 }
 
@@ -156,7 +158,7 @@
       color: var(--content-text-color-light);
       &:hover {
          background-color: var(--primary-color-light);
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
    }
 }

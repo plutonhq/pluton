@@ -4,6 +4,7 @@
 
 export * from './backups';
 export * from './devices';
+export * from './legacyRepositories';
 export * from './plans';
 export * from './restores';
 export * from './settings';

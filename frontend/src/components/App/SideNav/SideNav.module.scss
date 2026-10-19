@@ -17,17 +17,23 @@
    gap: 10px;
    align-items: center;
    margin-top: 10px;
-   & > a {
+   & > a,
+   & > button {
       width: 50px;
       height: 50px;
       background: transparent;
       border-radius: 50%;
       color: var(--nav-color);
       cursor: pointer;
+      padding: 0;
 
       &:global(.active) {
          background-color: var(--content-background-color);
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
+      }
+      &:hover {
+         background: var(--surface-hover);
+         color: var(--primary-color-foreground);
       }
    }
 }
@@ -36,6 +42,13 @@
    padding: 10px;
    display: block;
    text-align: center;
+}
+
+@media (min-width: 769px) {
+   .navMenu > .navMenu {
+      position: sticky;
+      top: 18px;
+   }
 }
 
 @media only screen and (max-width: 768px) {

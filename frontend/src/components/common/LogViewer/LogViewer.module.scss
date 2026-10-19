@@ -21,7 +21,7 @@
          button {
             color: var(--icon-color);
             &:hover {
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
             }
          }
          .filters {
@@ -90,23 +90,23 @@
                width: max-content;
                height: max-content;
                &.logType--error {
-                  background-color: #ffdada;
-                  color: #c43e3e;
+                  background-color: var(--error-bg-color);
+                  color: var(--error-text-color);
                }
                &.logType--warn {
-                  background-color: #fff2d9;
-                  color: #d19628;
+                  background-color: var(--warning-bg-color);
+                  color: var(--warning-text-color);
                }
                &.logType--info {
-                  background-color: #e7edff;
-                  color: #6182e4;
+                  background-color: var(--primary-color-light);
+                  color: var(--primary-color-foreground);
                }
             }
             .logMessage {
                overflow: auto;
             }
             &.log--backupStart {
-               border-top: 1px solid #e4e6ff;
+               border-top: 1px solid var(--line-color);
                margin-top: 30px;
                padding-top: 20px;
             }
@@ -114,7 +114,7 @@
          .backupStartLabel {
             position: absolute;
             background: var(--primary-color-light);
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
             font-weight: 600;
             font-size: 0.7rem;
             padding: 2px 12px;
@@ -147,7 +147,7 @@
 
          &:hover:not(:disabled) {
             background: var(--primary-color-light);
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
             border-color: var(--primary-color);
          }
 

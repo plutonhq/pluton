@@ -2,9 +2,11 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend, ChartOptions } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import Icon from '../../common/Icon/Icon';
-import { Backup } from '../../../@types/backups';
-import { formatBytes, formatNumberToK, isDarkMode } from '../../../utils/helpers';
+import { BackupChartPoint } from '../../../@types/backups';
+import { formatBytes, formatNumberToK } from '../../../utils/helpers';
+import { useTheme } from '../../../context/ThemeContext';
 import classes from './PlanSizeChart.module.scss';
+import { backupStatistics } from '../../../utils/backupStatistics';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -19,10 +21,23 @@ const RANGE_OPTIONS: { key: RangeKey; label: string; labelFull: string; days: nu
 ];
 
 interface PlanSizeChartProps {
-   backups: Backup[];
+   backups: BackupChartPoint[];
+   remoteManaged?: boolean;
+   isSync?: boolean;
 }
 
-const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
+const PlanSizeChart = ({ backups, remoteManaged = false, isSync = false }: PlanSizeChartProps) => {
+   const { theme } = useTheme();
+   // Canvas cannot resolve CSS var() colors. Re-read the shared palette when the
+   // applied app theme changes, not the OS preference captured at module load.
+   const tooltipColors = useMemo(() => {
+      const palette = getComputedStyle(document.documentElement);
+      return {
+         background: palette.getPropertyValue('--content-background-color').trim(),
+         title: palette.getPropertyValue('--content-title-color').trim(),
+         body: palette.getPropertyValue('--content-text-color').trim(),
+      };
+   }, [theme]);
    const [range, setRange] = useState<RangeKey>('3m');
    const [open, setOpen] = useState(false);
    const dropdownRef = useRef<HTMLDivElement>(null);
@@ -42,26 +57,31 @@ const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
 
    const filtered = useMemo(() => {
       const cutoff = Date.now() - activeRange.days * 24 * 60 * 60 * 1000;
-      // if there is only one backup duplicate the first backup to make 2 items
-      // so that the graph is never empty and shows the size even if there is only one backup in the selected range
-      const theBackups = backups && backups.length === 1 ? [backups[0], backups[0]] : backups || [];
+      // Preserve legacy local chart layout; remote points must represent actual snapshots only.
+      const theBackups = !remoteManaged && backups && backups.length === 1 ? [backups[0], backups[0]] : backups || [];
       return [...theBackups]
          .filter((b) => {
+            if (remoteManaged && (b.status !== 'completed' || !b.completionStats)) return false;
             const t = new Date(b.started).getTime();
             return !isNaN(t) && t >= cutoff;
          })
          .sort((a, b) => new Date(a.started).getTime() - new Date(b.started).getTime());
-   }, [backups, activeRange.days]);
+   }, [backups, activeRange.days, remoteManaged]);
 
    const labels = filtered.map((b) => new Date(b.started).toLocaleString());
-   const sizeData = filtered.map((b) => b.totalSize || 0);
-   const filesData = filtered.map((b) => b.totalFiles || 0);
+   const sizeData = filtered.map((b) =>
+      remoteManaged ? (backupStatistics(b.completionStats as unknown as Record<string, unknown>).logicalBytes ?? null) : b.totalSize || 0,
+   );
+   const filesData = filtered.map((b) =>
+      remoteManaged ? (backupStatistics(b.completionStats as unknown as Record<string, unknown>).totalFiles ?? null) : b.totalFiles || 0,
+   );
 
+   const sizeLabel = isSync ? 'Size' : 'Snapshot Size';
    const data = {
       labels,
       datasets: [
          {
-            label: 'Size',
+            label: sizeLabel,
             data: sizeData,
             yAxisID: 'ySize',
             borderColor: 'transparent',
@@ -69,7 +89,7 @@ const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
             fill: true,
             tension: 0.4,
             borderWidth: 1.5,
-            pointRadius: 0,
+            pointRadius: filtered.length === 1 ? 3 : 0,
             pointHoverRadius: 4,
             pointHoverBackgroundColor: 'rgba(87, 90, 255, 1)',
          },
@@ -99,9 +119,9 @@ const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
          legend: { display: false },
          tooltip: {
             displayColors: false,
-            backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 1)',
-            titleColor: isDarkMode ? '#fff' : '#666',
-            bodyColor: isDarkMode ? '#ccc' : '#888',
+            backgroundColor: tooltipColors.background,
+            titleColor: tooltipColors.title,
+            bodyColor: tooltipColors.body,
             padding: 8,
             titleFont: { size: 11 },
             bodyFont: { size: 11 },
@@ -112,7 +132,7 @@ const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
                   return b ? new Date(b.started).toLocaleString() : '';
                },
                label: (ctx) => {
-                  if (ctx.dataset.label === 'Size') return `Size: ${formatBytes(ctx.parsed.y || 0)}`;
+                  if (ctx.dataset.label === sizeLabel) return `${isSync ? 'Size' : 'Logical snapshot size'}: ${formatBytes(ctx.parsed.y || 0)}`;
                   return `Files: ${formatNumberToK(ctx.parsed.y || 0)}`;
                },
             },

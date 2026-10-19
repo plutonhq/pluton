@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { Plan } from '../../../@types/plans';
 import { Backup } from '../../../@types/backups';
-import { formatBytes, formatDateTime, formatDuration, formatNumberToK, timeAgo } from '../../../utils/helpers';
+import { backupRowActions } from '../../../utils/backupDownload';
+import { formatBytes, formatDuration, formatNumberToK } from '../../../utils/helpers';
 import Icon from '../../common/Icon/Icon';
 import classes from './Backups.module.scss';
 import ActionModal from '../../common/ActionModal/ActionModal';
+import DeleteDependencyNotice from '../../common/ActionModal/DeleteDependencyNotice';
 import {
    useCancelBackupDownload,
    useDeleteBackup,
@@ -22,6 +24,15 @@ import Input from '../../common/form/Input/Input';
 import MirrorStatusBadge from '../Mirrors/MirrorStatusBadge';
 import MirrorStorageSelectorModal from '../Mirrors/MirrorStorageSelectorModal';
 import { Modal, SidePanel, SnapshotViewer } from '../..';
+import { useRecoveryAction, useRecoveryTests } from '../../../services/recoveryTests';
+import { canTestRecovery, recoveryActive, recoveryForBackup, recoveryStatusLabel } from '../../../utils/recoveryTests';
+import RecoveryResult from '../RecoveryTesting/RecoveryResult';
+import RecoveryConfirmation from '../RecoveryTesting/RecoveryConfirmation';
+import DatabaseRestoreWizard from '../../Restore/DatabaseRestore/DatabaseRestoreWizard';
+import recoveryClasses from '../RecoveryTesting/RecoveryTesting.module.scss';
+import { backupStatistics, statisticHelp } from '../../../utils/backupStatistics';
+import { displayTimeZone, formatHistoryDate, historyIsoDate } from '../../../utils/backupHistory';
+import BackupRowMenu from './BackupRowMenu';
 
 const DownloadLabel = ({ download, downloadBackup }: { download: Backup['download']; downloadBackup: () => void }) => {
    if (download?.status === 'started') {
@@ -80,6 +91,8 @@ const Backups = ({
    replicationSettings,
    storage,
    deviceId,
+   timeZone = displayTimeZone(),
+   emptyMessage = "Hasn't been backed up yet.",
    // snapLimit,
 }: {
    planId: string;
@@ -89,6 +102,8 @@ const Backups = ({
    sourceType: string;
    snapLimit: number;
    deviceId: string;
+   timeZone?: string;
+   emptyMessage?: string;
    storage: {
       id: string;
       type: string;
@@ -112,16 +127,25 @@ const Backups = ({
    const getDownloadMutation = useGetBackupDownload();
    const browseSnapshotMutation = useBrowseSnapshot();
    const isSync = method === 'sync';
+   const isRemoteManaged = sourceType === 'device' && sourceId !== 'main' && method === 'backup';
+   const recoveryTests = useRecoveryTests(
+      planId,
+      isRemoteManaged,
+      backups.map((backup) => backup.id),
+   );
+   const recoveryAction = useRecoveryAction(planId);
+   const [recoveryResultId, setRecoveryResultId] = useState<string>();
+   const [recoveryConfirmation, setRecoveryConfirmation] = useState<{ backupId: string; snapshotId: string; operation: 'test' | 'restore' }>();
+   const shownRecovery = recoveryTests.data?.find((test) => test.id === recoveryResultId);
 
    const snapshotFiles = browseSnapshotMutation.data?.result;
 
-   console.log('backups :', backups);
-
    const removeBackup = (backup: Backup) => {
+      if (deleteBackupMutation.isPending) return;
       console.log('remove :', backup.id);
       deleteBackupMutation.mutate(backup.id, {
-         onError: () => {
-            toast.error(`Failed to Remove "backup-${backup.id}"`);
+         onError: (error: Error) => {
+            toast.error(error.message || `No reliable response for backup removal. Refresh and check its status before trying again.`);
          },
          onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['plan', planId] });
@@ -156,7 +180,7 @@ const Backups = ({
    };
 
    const handleDownloadClick = (backup: Backup) => {
-      if (replicationSettings?.enabled && backup.mirrors && backup.mirrors.some((m) => m.status === 'completed')) {
+      if (!isRemoteManaged && replicationSettings?.enabled && backup.mirrors && backup.mirrors.some((m) => m.status === 'completed')) {
          setShowStorageSelector(backup);
       } else {
          downloadBackup(backup.id);
@@ -166,7 +190,7 @@ const Backups = ({
    const downloadBackup = (backupId: string, replicationId?: string) => {
       toast.promise(downloadBackupMutation.mutateAsync({ backupId, planId, replicationId }), {
          pending: 'Sending Download Request...',
-         success: 'Generating Download. This might take a while..',
+         success: isRemoteManaged ? 'Download started. Check your browser downloads.' : 'Generating Download. This might take a while..',
          error: {
             render({ data }: any) {
                return `Failed to Generate Download. ${data?.message || 'Unknown Error.'}`;
@@ -188,15 +212,15 @@ const Backups = ({
    };
 
    return (
-      <div className={classes.backupsTable}>
+      <div className={classes.backupsTable} data-backup-table>
          <div className={classes.backupsTableHead}>
             <div>{isSync ? 'Sync' : 'Backup'} ID</div>
             <div>Status</div>
             <div>Duration</div>
             <div>Changes</div>
-            <div>Size</div>
+            <div title={statisticHelp.snapshotSize}>{isSync ? 'Size' : 'Snapshot Size'}</div>
             <div>Date</div>
-            <div></div>
+            <div aria-label="Actions"></div>
          </div>
          <div className={classes.backupsTableContent}>
             {backups
@@ -204,7 +228,16 @@ const Backups = ({
                .map((snapshot) => {
                   const { id, title, description, started, ended, download, status, errorMsg, duration, totalFiles, totalSize, changes, active } =
                      snapshot;
-                  const isDownloading = download && download.status === 'started';
+                  const dateValue = ended ?? started ?? snapshot.createdAt;
+                  const isDownloading = !isRemoteManaged && download && download.status === 'started';
+                  const actions = backupRowActions(snapshot, isSync, isRemoteManaged);
+                  const lifecycleWarning = status === 'completed' && !!snapshot.completionStats?.lifecycle?.warnings.length;
+                  const counters = backupStatistics(snapshot.completionStats as unknown as Record<string, unknown>);
+                  const newFiles = isRemoteManaged ? counters.newFiles : changes.new;
+                  const modifiedFiles = isRemoteManaged ? counters.modifiedFiles : changes.modified;
+                  const measuredFiles = isRemoteManaged ? counters.totalFiles : totalFiles;
+                  const measuredSize = isRemoteManaged ? counters.logicalBytes : totalSize;
+                  const recovery = recoveryForBackup(recoveryTests.data || [], id, snapshot.completionStats?.snapshot_id);
 
                   return (
                      <div
@@ -233,61 +266,113 @@ const Backups = ({
                                  <Icon type="bolt" size={14} />
                               </span>
                            )}
-                           {replicationSettings?.enabled && snapshot.mirrors && snapshot.mirrors.length > 0 && (
-                              <MirrorStatusBadge mirrors={snapshot.mirrors} planId={planId} backupId={id} replicationSettings={replicationSettings} />
+                           {(snapshot.mirrors?.length || (replicationSettings?.enabled && replicationSettings.storages.length > 0)) && (
+                              <MirrorStatusBadge mirrors={snapshot.mirrors || []} planId={planId} backupId={id} replicationSettings={replicationSettings} managedAgent={isRemoteManaged} />
                            )}
-                           {download && <DownloadLabel download={download} downloadBackup={() => getDownloadMutation.mutate(id)} />}
+                           {!isRemoteManaged && download && (
+                              <DownloadLabel download={download} downloadBackup={() => getDownloadMutation.mutate(id)} />
+                           )}
                         </div>
                         <div
                            className={`${classes.status} ${errorMsg ? classes.statusHasError : ''}`}
                            data-tooltip-id="htmlToolTip"
                            data-tooltip-html={`<div class="linebreak-tooltip-content"><string>Error</string>: ${errorMsg?.slice(0, 120) + (errorMsg && errorMsg.length > 120 ? '...' : '')}</div>`}
                            data-tooltip-hidden={!errorMsg}
-                           onClick={() => errorMsg && errorMsg.length > 120 && setShowBackupError(errorMsg)}
+                           onClick={() => errorMsg && (lifecycleWarning || errorMsg.length > 120) && setShowBackupError(errorMsg)}
                         >
-                           <StatusLabel status={status} hasError={!!errorMsg} />
+                           {lifecycleWarning ? (
+                              <span title="Snapshot completed; post-backup/cleanup needs attention">Complete · Cleanup warning</span>
+                           ) : (
+                              <StatusLabel status={status} hasError={!!errorMsg} />
+                           )}
+                           {isRemoteManaged && status === 'completed' && (
+                              <span className={recoveryClasses.badge}>
+                                 Recovery: {recoveryTests.error ? 'Unavailable' : recovery ? recoveryStatusLabel[recovery.status] : 'Not tested'}
+                              </span>
+                           )}
                         </div>
                         <div title={duration + 's'}>{formatDuration(duration)}</div>
                         <div
                            className={classes.changes}
                            data-tooltip-id="htmlToolTip"
                            data-tooltip-html={`
-                                          <div><b>New Files</b>: ${changes.new}</div>
-                                          <div><b>Modified Files</b>: ${changes.modified}</div>
-                                          <div><b>Deleted Files</b>: ${changes.removed || 0}</div>
+                                          <div><b>New Files</b>: ${newFiles ?? 'Not measured'}</div>
+                                          <div><b>Modified Files</b>: ${modifiedFiles ?? 'Not measured'}</div>
+                                          <div><b>Unmodified Files</b>: ${counters.unmodifiedFiles ?? 'Not measured'}</div>
+                                          <div><b>Deleted Files</b>: ${isSync ? changes.removed || 0 : 'Not measured'}</div>
                                        `}
                         >
                            <span className={classes.changesNew}>
-                              <Icon type="file-new" size={12} /> {changes.new}
+                              <Icon type="file-new" size={12} /> {newFiles ?? '—'}
                            </span>{' '}
                            <span className={classes.changesModified}>
-                              <Icon type="file-modified" size={12} /> {changes.modified}
+                              <Icon type="file-modified" size={12} /> {modifiedFiles ?? '—'}
                            </span>{' '}
-                           <span className={classes.changesRemoved}>
-                              <Icon type="file-removed" size={12} /> {changes.removed || 0}
-                           </span>
+                           {isSync && (
+                              <span className={classes.changesRemoved}>
+                                 <Icon type="file-removed" size={12} /> {changes.removed || 0}
+                              </span>
+                           )}
                         </div>
-                        <div data-tooltip-id="htmlToolTip" data-tooltip-html={`${formatNumberToK(totalFiles)} Files `}>
-                           {formatBytes(totalSize)}
+                        <div
+                           title={statisticHelp.snapshotSize}
+                           data-tooltip-id="htmlToolTip"
+                           data-tooltip-html={`${measuredFiles === undefined ? 'Not measured' : formatNumberToK(measuredFiles) + ' Files'} · ${isSync ? 'Sync size' : 'Logical snapshot data'}`}
+                        >
+                           {measuredSize === undefined ? 'Not measured' : formatBytes(measuredSize)}
                         </div>
                         <div
                            data-tooltip-id="htmlToolTip"
                            data-tooltip-html={`
-                                          <div><b>Started</b>: ${formatDateTime(started)}</div>
-                                          <div><b>Ended</b>: ${ended ? formatDateTime(ended) : ''}</div>
+                                          <div><b>Started</b>: ${started ? formatHistoryDate(started, timeZone) : 'Not recorded'}</div>
+                                          <div><b>Ended</b>: ${ended ? formatHistoryDate(ended, timeZone) : 'Not recorded'}</div>
                                        `}
-                           title={formatDateTime(ended || started)}
+                           title={`${formatHistoryDate(dateValue, timeZone)} (${timeZone})`}
                         >
-                           {ended ? timeAgo(new Date(ended)) : timeAgo(started ? new Date(started) : new Date())}
+                           <time dateTime={historyIsoDate(dateValue)}>{formatHistoryDate(dateValue, timeZone)}</time>
                         </div>
                         <div className={classes.snapOptsBtn}>
-                           <button onClick={() => setShowSnapOptions(showSnapOptions && showSnapOptions === id ? false : id)}>
-                              <Icon type="dots-vertical" size={12} />
-                           </button>
-                        </div>
-                        {showSnapOptions === id && (
-                           <div className={classes.settings}>
-                              {!isSync && status === 'completed' && active && (
+                           <BackupRowMenu backupId={id} open={showSnapOptions === id} onOpenChange={(open) => setShowSnapOptions(open ? id : false)}>
+                              {isRemoteManaged && canTestRecovery(snapshot) && (
+                                 <button
+                                    disabled={recoveryAction.isPending || (recoveryTests.data || []).some(recoveryActive)}
+                                    onClick={() => {
+                                       setRecoveryConfirmation({
+                                          backupId: id,
+                                          snapshotId: snapshot.completionStats!.snapshot_id,
+                                          operation: 'test',
+                                       });
+                                       setShowSnapOptions(false);
+                                    }}
+                                 >
+                                    <Icon type="restore" size={14} /> Run Recovery Test
+                                 </button>
+                              )}
+                              {isRemoteManaged && canTestRecovery(snapshot) && (
+                                 <button
+                                    onClick={() => {
+                                       setRecoveryConfirmation({
+                                          backupId: id,
+                                          snapshotId: snapshot.completionStats!.snapshot_id,
+                                          operation: 'restore',
+                                       });
+                                       setShowSnapOptions(false);
+                                    }}
+                                 >
+                                    <Icon type="restore" size={14} /> Restore Database
+                                 </button>
+                              )}
+                              {isRemoteManaged && recovery && (
+                                 <button
+                                    onClick={() => {
+                                       setRecoveryResultId(recovery.id);
+                                       setShowSnapOptions(false);
+                                    }}
+                                 >
+                                    <Icon type="note" size={14} /> View Recovery Result
+                                 </button>
+                              )}
+                              {actions.download && (
                                  <button
                                     className={downloadBackupMutation.isPending || cancelDownloadMutation.isPending ? 'notAllowed' : ''}
                                     disabled={downloadBackupMutation.isPending || cancelDownloadMutation.isPending}
@@ -303,7 +388,7 @@ const Backups = ({
                                     <Icon type={isDownloading ? 'close' : 'download'} size={14} /> {isDownloading ? 'Cancel Download' : 'Download'}
                                  </button>
                               )}
-                              {!isSync && status === 'completed' && active && (
+                              {actions.browse && (
                                  <button
                                     onClick={() => {
                                        toast.promise(browseSnapshotMutation.mutateAsync({ backupId: id }), {
@@ -317,7 +402,7 @@ const Backups = ({
                                     <Icon type="folders" size={14} /> Browse
                                  </button>
                               )}
-                              {status === 'completed' && active && (
+                              {actions.restore && (
                                  <button
                                     className={isDownloading ? 'notAllowed' : ''}
                                     disabled={isDownloading}
@@ -332,26 +417,59 @@ const Backups = ({
                                     <Icon type="restore" size={14} /> Restore
                                  </button>
                               )}
-                              <button
-                                 className={isDownloading ? 'notAllowed' : ''}
-                                 disabled={isDownloading}
-                                 onClick={() => {
-                                    if (isDownloading) {
-                                       return;
-                                    }
-                                    setShowDeleteModal(snapshot);
-                                    setShowSnapOptions(false);
-                                 }}
-                              >
-                                 <Icon type="trash" size={14} /> Remove
-                              </button>
-                           </div>
-                        )}
+                              {actions.remove && (
+                                 <button
+                                    className={isDownloading ? 'notAllowed' : ''}
+                                    disabled={isDownloading}
+                                    onClick={() => {
+                                       if (isDownloading) {
+                                          return;
+                                       }
+                                       setShowDeleteModal(snapshot);
+                                       setShowSnapOptions(false);
+                                    }}
+                                 >
+                                    <Icon type="trash" size={14} /> Remove
+                                 </button>
+                              )}
+                           </BackupRowMenu>
+                        </div>
                      </div>
                   );
                })}
-            {backups.length === 0 && <div className={classes.noBackups}>Hasn't been backed up yet.</div>}
+            {backups.length === 0 && <div className={classes.noBackups}>{emptyMessage}</div>}
          </div>
+         {recoveryConfirmation?.operation === 'restore' && (
+            <DatabaseRestoreWizard
+               selection={{ planId, backupId: recoveryConfirmation.backupId, snapshotId: recoveryConfirmation.snapshotId }}
+               close={() => setRecoveryConfirmation(undefined)}
+            />
+         )}
+         {recoveryConfirmation?.operation === 'test' && (
+            <RecoveryConfirmation
+               {...recoveryConfirmation}
+               planId={planId}
+               pending={recoveryAction.isPending}
+               close={() => !recoveryAction.isPending && setRecoveryConfirmation(undefined)}
+               confirm={(body) =>
+                  recoveryAction.mutate(body, {
+                     onSuccess: (test) => {
+                        setRecoveryConfirmation(undefined);
+                        setRecoveryResultId(test.id);
+                     },
+                     onError: (error) => toast.error(error.message),
+                  })
+               }
+            />
+         )}
+         {shownRecovery && (
+            <RecoveryResult
+               test={shownRecovery}
+               close={() => setRecoveryResultId(undefined)}
+               pending={recoveryAction.isPending}
+               cancel={() => recoveryAction.mutate({ cancelId: shownRecovery.id }, { onError: (error) => toast.error(error.message) })}
+            />
+         )}
          {showDeleteModal && (
             <ActionModal
                title="Remove Backup"
@@ -361,6 +479,7 @@ const Backups = ({
                   </>
                }
                closeModal={() => !deleteBackupMutation.isPending && setShowDeleteModal(false)}
+               errorMessage={deleteBackupMutation.error ? <DeleteDependencyNotice error={deleteBackupMutation.error} /> : undefined}
                width="400px"
                primaryAction={{
                   title: 'Yes, Remove Backup',
@@ -377,9 +496,13 @@ const Backups = ({
                planId={planId}
                backupId={showRestoreModal.id}
                deviceId={deviceId}
+               stagingOnly={isRemoteManaged}
                planStorage={storage}
                mirrors={
-                  replicationSettings?.enabled && showRestoreModal.mirrors && showRestoreModal.mirrors.some((m) => m.status === 'completed')
+                  !isRemoteManaged &&
+                  replicationSettings?.enabled &&
+                  showRestoreModal.mirrors &&
+                  showRestoreModal.mirrors.some((m) => m.status === 'completed')
                      ? showRestoreModal.mirrors
                      : []
                }
@@ -388,6 +511,7 @@ const Backups = ({
          {showBackupEvents && (
             <BackupEvents
                id={showBackupEvents}
+               completionStats={backups.find((backup) => backup.id === showBackupEvents)?.completionStats}
                planId={planId}
                sourceId={sourceId}
                sourceType={sourceType}
@@ -449,9 +573,10 @@ const Backups = ({
                   backup={showSnapshotViewer}
                   planId={planId}
                   isSync={isSync}
+                  stagingOnly={isRemoteManaged}
                   onClose={() => setShowSnapshotViewer(false)}
-                  mirrors={replicationSettings?.enabled ? showSnapshotViewer.mirrors : undefined}
-                  primaryStorage={replicationSettings?.enabled ? storage : undefined}
+                  mirrors={!isRemoteManaged && replicationSettings?.enabled ? showSnapshotViewer.mirrors : undefined}
+                  primaryStorage={!isRemoteManaged && replicationSettings?.enabled ? storage : undefined}
                />
             </SidePanel>
          )}

@@ -102,7 +102,7 @@
          .progressBarFill {
             height: 100%;
             border-radius: 4px;
-            background-color: turquoise;
+            background-color: var(--success-text-color);
             position: relative;
             transition: all 0.2s linear;
             span {
@@ -114,11 +114,14 @@
             &.progressBarFilled {
                span {
                   right: 5px;
-                  color: #fff;
+                  color: var(--content-background-color);
                }
             }
             &.progressBarDryRun {
-               background-color: #b7cbf5;
+               background-color: var(--primary-color);
+               span {
+                  color: var(--primary-text-color);
+               }
             }
          }
       }
@@ -238,5 +241,25 @@
    }
    50% {
       opacity: 0.6;
+   }
+}
+.backup .backupRight .progressBar .progressBarFill.progressIndeterminate {
+   width: 100%;
+   background: repeating-linear-gradient(110deg, var(--primary-color) 0 12px, var(--field-bg) 12px 24px);
+   animation: remote-progress 2s linear infinite;
+   span {
+      color: var(--content-text-color);
+      background: var(--field-bg);
+      padding: 0 0.5em;
+   }
+}
+@keyframes remote-progress {
+   to {
+      background-position: 52px 0;
+   }
+}
+@media (prefers-reduced-motion: reduce) {
+   .backup .backupRight .progressBar .progressBarFill.progressIndeterminate {
+      animation: none;
    }
 }

@@ -9,6 +9,7 @@ import { RestoredFileItem, RestoredItemsStats, RestoreFileItem, RestoreSettings 
 import { useGetSnapshotFiles } from '../../../services/backups';
 import RestoreFileSelectorStep from './RestoreFileSelectorStep';
 import { Backup, Plan } from '../../..';
+import { restoreSelectionSummary } from '../../../utils/restoreSelection';
 
 interface RestoreWizardProps {
    backupId: string;
@@ -16,15 +17,16 @@ interface RestoreWizardProps {
    deviceId: string;
    planStorage: Plan['storage'];
    mirrors?: Backup['mirrors'];
+   stagingOnly?: boolean;
    close: () => void;
 }
 
-const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close }: RestoreWizardProps) => {
+const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, stagingOnly = false, close }: RestoreWizardProps) => {
    const [step, setStep] = useState(1);
    const [restoreSettings, setRestoreSettings] = useState<RestoreSettings>({
       type: 'original',
       path: '',
-      overwrite: 'always',
+      overwrite: stagingOnly ? 'never' : 'always',
       includes: [],
       excludes: [],
       delete: false,
@@ -38,9 +40,10 @@ const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close
    const files: RestoreFileItem[] = snapshotData?.result && Array.isArray(snapshotData.result) ? snapshotData.result : [];
 
    const snapShotsStats = useMemo(() => {
+      const counts = restoreSelectionSummary(files, { includes: new Set(), excludes: new Set() });
       return {
-         total_files: files.length,
-         total_bytes: files.reduce((acc, file) => acc + file.size, 0),
+         total_files: counts.totalFiles,
+         total_bytes: counts.totalBytes,
       };
    }, [files]);
 
@@ -91,6 +94,7 @@ const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close
                   settings={restoreSettings}
                   primaryStorage={planStorage}
                   mirrors={mirrors}
+                  stagingOnly={stagingOnly}
                   updateSettings={(settings) => setRestoreSettings(settings)}
                   goNext={() => setStep(2)}
                   close={close}
@@ -113,6 +117,7 @@ const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close
             )}
             {step === 3 && (
                <RestorePreviewStep
+                  stagingOnly={stagingOnly}
                   backupId={backupId}
                   planId={planId}
                   settings={restoreSettings}
@@ -125,10 +130,15 @@ const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close
             )}
             {step === 4 && (
                <RestoreConfirmStep
+                  stagingOnly={stagingOnly}
                   backupId={backupId}
                   planId={planId}
                   settings={restoreSettings}
                   stats={restorePreview.stats}
+                  selectionCounts={restoreSelectionSummary(files, {
+                     includes: new Set(restoreSettings.includes),
+                     excludes: new Set(restoreSettings.excludes),
+                  })}
                   snapshotsStats={snapShotsStats}
                   method="backup"
                   goBack={() => step > 0 && setStep(step - 1)}

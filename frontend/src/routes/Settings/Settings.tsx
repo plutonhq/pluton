@@ -10,6 +10,7 @@ import AppLogs from '../../components/Settings/AppLogs/AppLogs';
 import SidePanel from '../../components/common/SidePanel/SidePanel';
 import GeneralSettings from '../../components/Settings/GeneralSettings/GeneralSettings';
 import SelfBackupSettings from '../../components/Settings/SelfBackupSettings/SelfBackupSettings';
+import NotificationSettings from '../../components/Settings/NotificationSettings/NotificationSettings';
 
 const Settings = () => {
    const [tab, setTab] = useState(() => {
@@ -22,8 +23,6 @@ const Settings = () => {
    const settingsMutation = useUpdateSettings();
    const settingsID = data?.result?.id;
    const rawSettings = data?.result?.settings;
-
-   console.log('Settings data :', settingsID, data);
 
    useEffect(() => {
       if (rawSettings) {
@@ -66,12 +65,28 @@ const Settings = () => {
                   <li className={`${tab === 'backup' ? classes.tabActive : ''}`} onClick={() => setTab('backup')}>
                      <Icon type="backup" size={13} /> Backup Pluton
                   </li>
+                  <li
+                     role="button"
+                     tabIndex={0}
+                     aria-label="Webhooks and Email"
+                     className={tab === 'notifications' ? classes.tabActive : ''}
+                     onClick={() => setTab('notifications')}
+                     onKeyDown={(event) => {
+                        if (['Enter', ' '].includes(event.key)) {
+                           event.preventDefault();
+                           setTab('notifications');
+                        }
+                     }}
+                  >
+                     <Icon type="notification" size={13} /> Webhooks & Email
+                  </li>
                </ul>
-               <button className={classes.updateBtn} onClick={() => updateSettings()}>
+               <button className={classes.updateBtn} hidden={tab === 'notifications'} onClick={() => updateSettings()}>
                   <Icon type={settingsMutation.isPending ? 'loading' : 'check'} size={11} /> {settingsMutation.isPending ? 'Updating...' : 'Update'}
                </button>
             </div>
             <div className={classes.content}>
+               {tab === 'notifications' && <NotificationSettings />}
                <AnimatedWrapper isVisible={tab === 'general'} animationType="slide-left" animationDuration={100} absolute={true}>
                   <div className={classes.tabContent}>
                      <h4>General Settings</h4>

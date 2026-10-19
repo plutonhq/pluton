@@ -242,6 +242,25 @@ export class CronManager<T extends ScheduleOptions> {
 		}
 	}
 
+	/**
+	 * Remove one schedule kind without disturbing another scheduler-owned
+	 * workflow that happens to use the same plan ID. This is needed for remote
+	 * backup reconciliation, which must never reinterpret or delete local jobs.
+	 */
+	async removeSchedulesByType(id: string, scheduleType: string): Promise<boolean> {
+		await this.initialized;
+		const schedules = this.schedules.get(id);
+		if (!schedules) return false;
+		const removed = schedules.filter(schedule => schedule.type === scheduleType);
+		if (removed.length === 0) return false;
+		removed.forEach(schedule => schedule.cron.stop());
+		const remaining = schedules.filter(schedule => schedule.type !== scheduleType);
+		if (remaining.length > 0) this.schedules.set(id, remaining);
+		else this.schedules.delete(id);
+		await this.saveSchedules();
+		return true;
+	}
+
 	async getSchedule(id: string): Promise<ScheduleEntry<T>[] | undefined> {
 		await this.initialized;
 		return this.schedules.get(id);
@@ -257,11 +276,15 @@ export class CronManager<T extends ScheduleOptions> {
 		return this.schedules;
 	}
 
-	async pauseSchedule(id: string): Promise<boolean> {
+	async pauseSchedule(id: string, scheduleType?: string): Promise<boolean> {
 		await this.initialized;
 		const schedules = this.schedules.get(id);
 		if (schedules) {
-			const success = schedules.every(schedule => {
+			const selected = scheduleType
+				? schedules.filter(schedule => schedule.type === scheduleType)
+				: schedules;
+			if (selected.length === 0) return false;
+			const success = selected.every(schedule => {
 				schedule.options.isActive = false;
 				return schedule.cron.pause();
 			});
@@ -275,11 +298,15 @@ export class CronManager<T extends ScheduleOptions> {
 		return false;
 	}
 
-	async resumeSchedule(id: string): Promise<boolean> {
+	async resumeSchedule(id: string, scheduleType?: string): Promise<boolean> {
 		await this.initialized;
 		const schedules = this.schedules.get(id);
 		if (schedules) {
-			const success = schedules.every(schedule => {
+			const selected = scheduleType
+				? schedules.filter(schedule => schedule.type === scheduleType)
+				: schedules;
+			if (selected.length === 0) return false;
+			const success = selected.every(schedule => {
 				schedule.options.isActive = true;
 				return schedule.cron.resume();
 			});

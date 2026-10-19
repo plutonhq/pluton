@@ -2,13 +2,14 @@
    display: flex;
    justify-content: space-between;
    gap: 20px;
+   margin-top: 8px;
    .widgetTitle {
       padding: 2px 6px;
       background-color: var(--content-background-color);
       border: 1px solid var(--line-color);
       color: var(--content-title-color);
       border-radius: 4px;
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       font-weight: 600;
       width: max-content;
       position: relative;
@@ -34,6 +35,7 @@
       padding: 20px;
       border-radius: 6px;
       box-sizing: border-box;
+      min-width: 0;
    }
 
    .sources {
@@ -43,7 +45,7 @@
          align-items: center;
          justify-content: center;
          padding: 12px;
-         gap: 20%;
+         gap: 18px;
          & > div {
             text-align: center;
             display: flex;
@@ -91,7 +93,7 @@
       }
    }
    .snapshots {
-      width: 24%;
+      width: 30%;
       padding: 20px 0 0 0;
       display: flex;
       flex-direction: column;
@@ -127,6 +129,20 @@
    }
    .health {
       width: 33%;
+   }
+}
+
+@media (max-width: 1200px) and (min-width: 769px) {
+   .planStats {
+      flex-wrap: wrap;
+      row-gap: 24px;
+      .sources,
+      .snapshots {
+         width: calc(50% - 10px);
+      }
+      .health {
+         width: 100%;
+      }
    }
 }
 

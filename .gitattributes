@@ -1,2 +1,9 @@
 # Force LF line endings for git hooks (required for shebang on Windows)
 .githooks/* text eol=lf
+deploy/*.sh text eol=lf
+deploy/compose.yml text eol=lf
+deploy/*.py text eol=lf
+deploy/*.cjs text eol=lf
+scripts/__tests__/*_test.py text eol=lf
+Dockerfile.source text eol=lf
+.github/workflows/*.yml text eol=lf

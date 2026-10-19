@@ -8,6 +8,7 @@ import Icon from '../../common/Icon/Icon';
 interface RestorePreviewStepProps {
    backupId: string;
    planId: string;
+   stagingOnly?: boolean;
    settings: RestoreSettings;
    preview: { stats: RestoredItemsStats | null; files: RestoredFileItem[] };
    nextLabel?: string;
@@ -17,7 +18,18 @@ interface RestorePreviewStepProps {
    close: () => void;
 }
 
-const RestorePreviewStep = ({ backupId, planId, settings, preview, nextLabel, goBack, updatePreview, goNext, close }: RestorePreviewStepProps) => {
+const RestorePreviewStep = ({
+   backupId,
+   planId,
+   settings,
+   preview,
+   nextLabel,
+   stagingOnly = false,
+   goBack,
+   updatePreview,
+   goNext,
+   close,
+}: RestorePreviewStepProps) => {
    const restoreStats = preview.stats;
    const restoredFiles = preview.files || [];
    // const [previousSettings, setPreviousSettings] = useState({ type: 'original', path: '', overwrite: 'always' });
@@ -80,7 +92,11 @@ const RestorePreviewStep = ({ backupId, planId, settings, preview, nextLabel, go
                   {restoreStatsMutation.isError && (
                      <div className={classes.previewError}>{restoreStatsMutation.error?.message || 'Failed to Generate Preview'}</div>
                   )}
-                  <p>Before proceeding with the restoration, perform a dry run to preview what files will be restored</p>
+                  <p>
+                     {stagingOnly
+                        ? 'Preview the exact snapshot selection. No files are written until you confirm the internal staged restore.'
+                        : 'Before proceeding with the restoration, perform a dry run to preview what files will be restored'}
+                  </p>
                   <button
                      className={`${classes.previewButton} ${restoreStatsMutation.isPending ? classes.restoreDisabled : ''}`}
                      onClick={() => getDryRestoreStats()}

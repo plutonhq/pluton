@@ -3,13 +3,14 @@
    display: flex;
    flex-direction: row;
    align-items: center;
-   padding: 10px;
-   margin-bottom: 20px;
+   padding: 16px;
+   margin-bottom: 12px;
    gap: 10px;
    border-radius: 7px;
    background-color: var(--content-background-color);
    color: var(--content-text-color-light);
-   box-shadow: 0 0 15px var(--content-shadow-color);
+   box-shadow: var(--card-shadow);
+   border: 1px solid var(--line-color);
    transition: all 0.2s linear;
    &:hover {
       box-shadow: 0 0 20px var(--content-shadow-color);
@@ -44,7 +45,7 @@
    }
 
    .statusPaused {
-      background-color: #e4e4e4;
+      background-color: var(--line-color);
       button {
          color: inherit;
       }
@@ -59,7 +60,7 @@
          &:hover {
             color: inherit;
             h4 {
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
             }
          }
       }
@@ -69,6 +70,7 @@
       display: flex;
       flex-direction: row;
       h4 {
+         font-size: 0.875rem;
          margin: 0;
          margin-bottom: 4px;
          color: var(--content-text-color);
@@ -156,7 +158,7 @@
       border-radius: 4px;
       &.moreBtnActive {
          background-color: var(--primary-color-light);
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
    }
 
@@ -181,7 +183,7 @@
          color: var(--content-text-color-light);
          &:hover {
             background-color: var(--primary-color-light);
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
          }
       }
    }

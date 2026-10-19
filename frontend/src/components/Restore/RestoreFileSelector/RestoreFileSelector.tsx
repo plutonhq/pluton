@@ -8,6 +8,13 @@ import { getParentPath, getPathSeparator, normalizePath, splitPath } from '../..
 import { SnapshotBrowserToolbar, SnapshotBrowserDirectories, SnapshotBrowserFileList, SnapshotBrowserGoUpRow } from '../../common/SnapshotBrowser';
 import { useSnapshotNavigation } from '../../common/SnapshotBrowser/hooks/useSnapshotNavigation';
 import sbClasses from '../../common/SnapshotBrowser/SnapshotBrowser.module.scss';
+import {
+   encodeRestoreSelection,
+   selectedRestorePaths,
+   restoreSelectionSummary,
+   restoreSelectionState,
+   toggleRestoreSelection,
+} from '../../../utils/restoreSelection';
 
 interface RestoreFileSelectorProps {
    selected: {
@@ -36,59 +43,11 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
       exclude: new Set(selected.excludes),
    }));
 
-   console.log('[RestoreFileSelector] files :', files);
-
-   const getAllChildPaths = (dirPath: string): string[] => {
-      const allPaths: string[] = [];
-
-      files.forEach((file) => {
-         // Use original paths, not normalized
-         if (file.path.startsWith(dirPath + '/') || file.path.startsWith(dirPath + '\\')) {
-            allPaths.push(file.path);
-         }
-      });
-
-      return allPaths;
-   };
-
-   const isPathSelected = (path: string): boolean => {
-      // If path is explicitly excluded, it's not selected
-      if (selectedFiles.exclude.has(path)) {
-         return false;
-      }
-
-      // Check if any parent directory is excluded
-      const hasExcludedParent = Array.from(selectedFiles.exclude).some(
-         (excludedPath) => path.startsWith(excludedPath + '/') || path.startsWith(excludedPath + '\\'),
-      );
-
-      if (hasExcludedParent) {
-         return false;
-      }
-
-      // If nothing is in includes (default state), everything is selected
-      if (selectedFiles.include.size === 0) {
-         return true;
-      }
-
-      // If path is explicitly included, it's selected
-      if (selectedFiles.include.has(path)) {
-         return true;
-      }
-
-      // Check if any parent is included and this path is not excluded
-      const hasIncludedParent = Array.from(selectedFiles.include).some(
-         (includedPath) => path.startsWith(includedPath + '/') || path.startsWith(includedPath + '\\'),
-      );
-
-      return hasIncludedParent;
-   };
-
-   const getEffectiveParentInclude = (path: string): string | null => {
-      return (
-         Array.from(selectedFiles.include).find((includedPath) => path.startsWith(includedPath + '/') || path.startsWith(includedPath + '\\')) || null
-      );
-   };
+   const restorableFiles = useMemo(() => (fileSelectCondition ? files.filter(fileSelectCondition) : files), [files, fileSelectCondition]);
+   const selectedPaths = useMemo(
+      () => selectedRestorePaths(restorableFiles, { includes: selectedFiles.include, excludes: selectedFiles.exclude }),
+      [restorableFiles, selectedFiles],
+   );
 
    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
       const allPaths = new Set<string>();
@@ -116,7 +75,7 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
             return matchesSearch;
          })
          .forEach((file) => {
-            let theFile = file;
+            const theFile = { ...file };
             const dirPath = getParentPath(theFile.path);
             // Use the normalized path as key, but handle root directory
             const normalizedDirPath = normalizePath(dirPath) || '/'; // Use '/' for root
@@ -133,8 +92,6 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
 
       return system;
    }, [files, search]);
-
-   console.log('fileSystem :', fileSystem);
 
    const directories = useMemo(() => {
       const dirs = files.filter((file) => file.isDirectory).map((file) => normalizePath(file.path));
@@ -172,27 +129,17 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
    }, [directories, selectedFolder, setSelectedFolder]);
 
    const summary = useMemo(() => {
-      let selectedFilesCount = 0;
-      let selectedBytes = 0;
-
-      const restorableFiles = fileSelectCondition ? files.filter((file) => fileSelectCondition(file)) : files;
-
-      restorableFiles.forEach((file) => {
-         if (isPathSelected(file.path)) {
-            selectedFilesCount++;
-            if (!file.isDirectory) {
-               selectedBytes += file.size;
-            }
-         }
-      });
-
+      const counts = restoreSelectionSummary(restorableFiles, { includes: selectedFiles.include, excludes: selectedFiles.exclude });
       return {
-         selectedFiles: selectedFilesCount,
-         totalFiles: restorableFiles.length,
-         selectedBytes,
-         totalBytes: restorableFiles.reduce((acc, file) => acc + (!file.isDirectory ? file.size : 0), 0),
+         selectedFiles: counts.files,
+         selectedDirectories: counts.directories,
+         selectedEntries: counts.entries,
+         otherEntries: counts.otherEntries || 0,
+         totalEntries: counts.totalEntries,
+         selectedBytes: counts.bytes,
+         totalBytes: counts.totalBytes,
       };
-   }, [files, selectedFiles]);
+   }, [restorableFiles, selectedFiles]);
 
    const handleSort = (field: 'name' | 'modifiedAt' | 'size') => {
       if (sortField === field) {
@@ -205,80 +152,13 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
       }
    };
 
-   const onFileSelect = (path: string, isDirectory: boolean) => {
-      const newSelected = { ...selectedFiles };
-      const isCurrentlySelected = isPathSelected(path);
-
-      if (isDirectory) {
-         const childPaths = getAllChildPaths(path);
-
-         if (isCurrentlySelected) {
-            // Deselecting directory
-            newSelected.exclude.add(path);
-            newSelected.include.delete(path);
-
-            // Remove any child paths from both include and exclude (they inherit exclusion from parent)
-            childPaths.forEach((childPath) => {
-               newSelected.include.delete(childPath);
-               newSelected.exclude.delete(childPath);
-            });
-         } else {
-            // Selecting directory
-            newSelected.exclude.delete(path);
-
-            // If we have explicit includes, we need to add this to include
-            if (newSelected.include.size > 0) {
-               // Check if parent is already included
-               const parentInclude = getEffectiveParentInclude(path);
-               if (!parentInclude) {
-                  newSelected.include.add(path);
-               }
-            }
-
-            // Remove any child paths from both include and exclude (they inherit from parent)
-            childPaths.forEach((childPath) => {
-               newSelected.include.delete(childPath);
-               newSelected.exclude.delete(childPath);
-            });
-         }
-      } else {
-         // File selection
-         if (isCurrentlySelected) {
-            // Deselecting file
-            newSelected.exclude.add(path);
-            newSelected.include.delete(path);
-         } else {
-            // Selecting file - always allow this
-            newSelected.exclude.delete(path);
-
-            // If we have explicit includes OR if parent is excluded, we need to add this to include
-            if (newSelected.include.size > 0) {
-               const parentInclude = getEffectiveParentInclude(path);
-               if (!parentInclude) {
-                  newSelected.include.add(path);
-               }
-            } else {
-               // Check if any parent is excluded - if so, we need to start using includes
-               const hasExcludedParent = Array.from(newSelected.exclude).some(
-                  (excludedPath) => path.startsWith(excludedPath + '/') || path.startsWith(excludedPath + '\\'),
-               );
-               if (hasExcludedParent) {
-                  newSelected.include.add(path);
-               }
-            }
-         }
-      }
-
-      setSelectedFiles({
-         include: new Set(newSelected.include),
-         exclude: new Set(newSelected.exclude),
-      });
-
-      onSelect({
-         includes: newSelected.include,
-         excludes: newSelected.exclude,
-      });
+   const applySelection = (selection: { includes: Set<string>; excludes: Set<string> }) => {
+      const effective = fileSelectCondition ? encodeRestoreSelection(files, selectedRestorePaths(restorableFiles, selection)) : selection;
+      setSelectedFiles({ include: new Set(effective.includes), exclude: new Set(effective.excludes) });
+      onSelect({ includes: new Set(effective.includes), excludes: new Set(effective.excludes) });
    };
+   const onFileSelect = (pathname: string, _isDirectory: boolean) =>
+      applySelection(toggleRestoreSelection(restorableFiles, { includes: selectedFiles.include, excludes: selectedFiles.exclude }, pathname));
 
    const getDirectChildren = (parentPath: string) => {
       let children = [];
@@ -331,7 +211,8 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
       const fileName = parts[parts.length - 1];
       const normalizedPath = normalizePath(file.path);
       const isDirectory = directories.includes(normalizedPath);
-      const isSelected = isPathSelected(file.path);
+      const state = restoreSelectionState(restorableFiles, selectedPaths, file.path);
+      const isSelected = state === 'all';
       const canBeSelected = fileSelectCondition ? fileSelectCondition(file) : true;
 
       return (
@@ -355,8 +236,16 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
                      onFileSelect(file.path, false);
                   }}
                   disabled={!canBeSelected}
+                  aria-pressed={state === 'partial' ? 'mixed' : isSelected}
+                  title={state === 'partial' ? 'Partially selected; click to select entire subtree' : undefined}
                >
-                  {canBeSelected ? <Icon type={isSelected ? 'check-circle-filled' : 'check-circle'} size={13} /> : null}
+                  {canBeSelected ? (
+                     state === 'partial' ? (
+                        <span>−</span>
+                     ) : (
+                        <Icon type={isSelected ? 'check-circle-filled' : 'check-circle'} size={13} />
+                     )
+                  ) : null}
                </button>
                {isDirectory ? <Icon type={isDirectory ? 'fm-directory' : 'fm-file'} size={16} /> : <FileIcon filename={fileName || ''} />} {fileName}
             </div>
@@ -380,8 +269,19 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
                leftContent={
                   <div className={sbClasses.stats}>
                      <strong>Summary: </strong>
-                     {formatNumberToK(summary.selectedFiles)}/{formatNumberToK(summary.totalFiles)} Items {' • '}
+                     {summary.selectedFiles.toLocaleString('en-US')} files + {summary.selectedDirectories.toLocaleString('en-US')} directories
+                     selected · {summary.selectedEntries.toLocaleString('en-US')}/{summary.totalEntries.toLocaleString('en-US')} entries {' • '}
                      {formatBytes(summary.selectedBytes)}/{formatBytes(summary.totalBytes)}
+                     {summary.otherEntries > 0 && <span> · {summary.otherEntries} other entries (unsupported by remote staged restore)</span>}
+                     <button
+                        type="button"
+                        onClick={() => applySelection(encodeRestoreSelection(restorableFiles, new Set(restorableFiles.map((file) => file.path))))}
+                     >
+                        Select all entries
+                     </button>
+                     <button type="button" onClick={() => applySelection(encodeRestoreSelection(restorableFiles, new Set()))}>
+                        Clear selection
+                     </button>
                      {selectedFiles.exclude.size > 0 && (
                         <div className={classes.excludedStat}>
                            {' • '}
@@ -405,7 +305,12 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
                   isVisible={isVisible}
                   hasSubdirectories={hasSubdirectories}
                   renderDirectoryExtra={(dir) => {
-                     const isSelected = isPathSelected(files.find((f) => f.isDirectory && normalizePath(f.path) === dir)?.path || dir);
+                     const isSelected =
+                        restoreSelectionState(
+                           restorableFiles,
+                           selectedPaths,
+                           files.find((f) => f.isDirectory && normalizePath(f.path) === dir)?.path || dir,
+                        ) === 'all';
                      return (
                         <button
                            className={`${classes.selectButton} ${isSelected ? classes.selected : ''}`}

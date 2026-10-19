@@ -5,6 +5,7 @@ import { PlanController } from '../../src/controllers/PlanController';
 import { PlanService } from '../../src/services/PlanService';
 import jwt from 'jsonwebtoken';
 import Cookies from 'cookies';
+import { RetainedRestoreDependencyError } from '../../src/utils/retainedRestoreDependency';
 
 jest.mock('jsonwebtoken');
 jest.mock('cookies');
@@ -190,6 +191,16 @@ describe('Plan Routes', () => {
 	});
 
 	describe('DELETE /api/plans/:id', () => {
+		it('returns the safe retained database dependency code with HTTP 409', async () => {
+			mockPlanService.deletePlan.mockRejectedValue(new RetainedRestoreDependencyError());
+			const response = await request(app).delete('/api/plans/plan-1?removeData=true');
+			expect(response.status).toBe(409);
+			expect(response.body).toMatchObject({
+				success: false,
+				code: 'RETAINED_DATABASE_RESTORE_DEPENDENCY',
+			});
+			expect(response.body.error).toContain('/database-restores');
+		});
 		it('should return 401 if not authenticated', async () => {
 			setupAuthMock(false);
 

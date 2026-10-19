@@ -13,7 +13,7 @@
       background: var(--content-background-color);
       color: var(--content-text-color);
       border-radius: 8px;
-      border: 1px solid var(--content-shadow-color);
+      border: 1px solid var(--line-color);
       margin: 0 auto;
       left: 0;
       right: 0;
@@ -81,7 +81,7 @@
 
       &:hover {
          background: var(--light-grey);
-         color: var(--content-color);
+         color: var(--content-text-color);
       }
 
       &:disabled {
@@ -124,7 +124,7 @@
       border-radius: 0;
       color: inherit;
       &:hover {
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
          text-decoration: underline;
       }
    }
@@ -209,7 +209,7 @@
       opacity: 0.7;
       &:hover {
          opacity: 1;
-         color: var(--primary-color);
+         color: var(--primary-color-foreground);
       }
    }
 }

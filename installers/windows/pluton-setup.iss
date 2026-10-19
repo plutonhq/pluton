@@ -4,7 +4,7 @@
 #define MyAppName "Pluton"
 #define MyAppVersion "0.0.1"
 #define MyAppPublisher "Amplebyte LLC"
-#define MyAppURL "https://usepluton.com"
+#define MyAppURL "https://github.com/ffigoperdana/pluton"
 #define MyAppExeName "pluton.exe"
 #define MyAppServiceName "Pluton"
 

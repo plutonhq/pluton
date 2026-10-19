@@ -254,6 +254,25 @@ describe('CronManager', () => {
 			const schedules = await cronManager.getSchedules();
 			expect(schedules.has(planId)).toBe(false); // Removed from internal map
 		});
+
+		it('removes only the requested schedule type for a shared plan ID', async () => {
+			const planId = 'plan-with-two-schedule-types';
+			await cronManager.scheduleTask(planId, '* * * * *', { isActive: true } as any, 'backup');
+			await cronManager.scheduleTask(
+				planId,
+				'0 * * * *',
+				{ isActive: true } as any,
+				'remote-backup'
+			);
+			const [localCron, remoteCron] = mockCronInstances;
+
+			expect(await cronManager.removeSchedulesByType(planId, 'remote-backup')).toBe(true);
+			expect(localCron.stop).not.toHaveBeenCalled();
+			expect(remoteCron.stop).toHaveBeenCalledTimes(1);
+			expect((await cronManager.getSchedule(planId))?.map(schedule => schedule.type)).toEqual([
+				'backup',
+			]);
+		});
 	});
 
 	describe('pauseSchedule and resumeSchedule', () => {
@@ -296,6 +315,26 @@ describe('CronManager', () => {
 			// Check that the saved state reflects the change
 			const savedData = JSON.parse((fs.writeFile as jest.Mock).mock.calls[1][1]);
 			expect(savedData[0].options.isActive).toBe(true);
+		});
+
+		it('pauses and resumes only the requested schedule type', async () => {
+			const planId = 'plan-with-scoped-pauses';
+			await cronManager.scheduleTask(planId, '* * * * *', { isActive: true } as any, 'backup');
+			await cronManager.scheduleTask(
+				planId,
+				'0 * * * *',
+				{ isActive: true } as any,
+				'remote-backup'
+			);
+			const [localCron, remoteCron] = mockCronInstances;
+
+			expect(await cronManager.pauseSchedule(planId, 'remote-backup')).toBe(true);
+			expect(remoteCron.pause).toHaveBeenCalledTimes(1);
+			expect(localCron.pause).not.toHaveBeenCalled();
+
+			expect(await cronManager.resumeSchedule(planId, 'remote-backup')).toBe(true);
+			expect(remoteCron.resume).toHaveBeenCalledTimes(1);
+			expect(localCron.resume).not.toHaveBeenCalled();
 		});
 	});
 

@@ -28,6 +28,9 @@ jest.mock('../../src/stores/BackupStore');
 jest.mock('../../src/stores/RestoreStore');
 jest.mock('../../src/managers/BaseRestoreManager');
 jest.mock('fs/promises');
+jest.mock('../../src/services/ConfigService', () => ({
+	configService: { config: { APP_TITLE: 'Pluton Test', SECRET: 'synthetic-restore-event-secret' } },
+}));
 
 // Mock the logger
 jest.mock('../../src/utils/logger', () => ({
@@ -112,6 +115,28 @@ describe('RestoreEventService', () => {
 				})
 			);
 			expect(mockLocalAgent.emit).toHaveBeenCalledWith('restoreCreated', { backupId, restoreId });
+		});
+
+		it('reuses the restore row and emits confirmation on a retry', async () => {
+			mockBackupStore.getById.mockResolvedValue(mockBackup);
+			mockRestoreStore.getById.mockResolvedValue({
+				id: restoreId,
+				status: 'error',
+				inProgress: true,
+			} as any);
+			mockRestoreStore.update.mockResolvedValue({ id: restoreId } as any);
+
+			await restoreEventService.onRestoreStart(startEvent);
+
+			expect(mockRestoreStore.create).not.toHaveBeenCalled();
+			expect(mockRestoreStore.update).toHaveBeenCalledWith(
+				restoreId,
+				expect.objectContaining({ status: 'started', inProgress: true, errorMsg: null })
+			);
+			expect(mockLocalAgent.emit).toHaveBeenCalledWith('restoreCreated', {
+				backupId,
+				restoreId,
+			});
 		});
 
 		it('should log an error and not create a record if the backup is not found', async () => {

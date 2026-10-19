@@ -1,4 +1,4 @@
-import { Backup } from './backups';
+import { Backup, BackupChartPoint } from './backups';
 import { RestoreSlim } from './restores';
 
 export type PlanPrune = {
@@ -139,6 +139,7 @@ export interface PlanReplicationSettings {
 }
 
 export type PlanSettings = {
+   remoteLifecycle?: RemoteBackupLifecycle;
    interval: PlanInterval;
    prune: PlanPrune;
    encryption: boolean;
@@ -156,6 +157,31 @@ export type PlanSettings = {
       onBackupComplete?: PlanScript[];
    };
    replication?: PlanReplicationSettings;
+};
+
+export type RemoteDatabaseBackup = {
+   databaseId?: string;
+   engine: 'mysql' | 'mariadb' | 'postgresql';
+   host: string;
+   port: number;
+   tls: 'verify-identity' | 'local';
+   database: string;
+   username: string;
+   dumpFilename: string;
+   timeoutSeconds: number;
+   maxDumpBytes: number;
+   includeRoutines: boolean;
+   includeEvents: boolean;
+   password?: string;
+   passwordConfigured?: boolean;
+};
+export type RemoteLifecycleHook = { id: string; args: string[]; timeoutSeconds: number };
+export type RemoteBackupLifecycle = {
+   version: 1 | 2;
+   database?: RemoteDatabaseBackup;
+   databases?: RemoteDatabaseBackup[];
+   preHook?: RemoteLifecycleHook;
+   postHook?: RemoteLifecycleHook;
 };
 
 export type PlanStats = {
@@ -192,6 +218,7 @@ export type Plan = {
    storage: { name: string; type: string; id: string };
    device?: { name: string; id: string; hostname: string };
    backups: Backup[];
+   backupChart?: BackupChartPoint[];
    restores?: RestoreSlim[];
 };
 

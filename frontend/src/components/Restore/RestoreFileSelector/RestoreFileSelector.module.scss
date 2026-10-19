@@ -225,7 +225,7 @@
             border-radius: 50%;
          }
          &:hover {
-            color: var(--primary-color);
+            color: var(--primary-color-foreground);
          }
       }
    }
@@ -244,7 +244,7 @@
    color: var(--icon-color);
    margin-right: 7px;
    &.selected {
-      color: var(--primary-color);
+      color: var(--primary-color-foreground);
       background-color: transparent;
    }
 }

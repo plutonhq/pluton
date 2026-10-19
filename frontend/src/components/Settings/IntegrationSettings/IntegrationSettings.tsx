@@ -18,7 +18,6 @@ const IntegrationSettings = ({ settingsID, settings, onUpdate }: IntegrationSett
    const { smtp, ntfy } = integrationSettings || {};
 
    const onIntegrationUpdate = (key: string, intSettings: Record<string, any>) => {
-      console.log('onIntegrationUpdate :', key, intSettings);
       onUpdate({ ...integrationSettings, [key]: { ...integrationSettings[key], ...intSettings } });
    };
 

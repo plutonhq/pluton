@@ -46,6 +46,7 @@ const PlanForm = ({
    setRunSettings,
 }: PlanFormProps) => {
    const [step, setStep] = useState<number>(1);
+   const isRemoteFilesystemSource = planSettings.sourceType === 'device' && planSettings.sourceId !== 'main';
 
    const { data: settingsData } = useGetSettings();
    const appSettings = settingsData?.result?.settings || {};
@@ -233,7 +234,9 @@ const PlanForm = ({
                      <StoragePicker
                         storagePath={storagePath || planSettings.storagePath}
                         storageId={storageId || planSettings.storage?.id || ''}
-                        deviceId={planSettings.sourceId || 'main'}
+                        deviceId={isRemoteFilesystemSource ? 'main' : planSettings.sourceId || 'main'}
+                        allowedStorageTypes={isRemoteFilesystemSource ? ['sftp'] : undefined}
+                        requirePath={isRemoteFilesystemSource}
                         disabled={type === 'edit' ? true : false}
                         onUpdate={(s: { storage: { name: string; id: string; type: string }; path: string }) =>
                            onPlanSettingsChange({
@@ -244,17 +247,27 @@ const PlanForm = ({
                         }
                      />
                   </div>
+                  {isRemoteFilesystemSource && (
+                     <div className={classes.field}>
+                        <p className={classes.fieldNotice}>
+                           Remote managed backups use SFTP. Database dumps and constrained hooks can be configured under Advanced → Database & Hooks.
+                           Optional replicas are copied by the Pluton server after snapshot verification. Storage credentials stay on the server.
+                           Native database recovery continues to use the trusted primary repository. Agent prune and arbitrary scripts remain unavailable.
+                        </p>
+                     </div>
+                  )}
                   <PlanReplicationSettings
                      replication={planSettings.settings.replication}
                      primaryStorageId={planSettings.storage.id}
                      primaryStoragePath={planSettings.storagePath}
-                     deviceId={planSettings.sourceId || 'main'}
-                     isEditing={type === 'edit' ? true : false}
+                     deviceId={isRemoteFilesystemSource ? 'main' : planSettings.sourceId || 'main'}
+                     managedAgent={isRemoteFilesystemSource}
+                     isEditing={type === 'edit'}
                      planID={planId}
                      onUpdate={(replication) =>
                         onPlanSettingsChange({
                            ...planSettings,
-                           settings: { ...planSettings.settings, replication: replication },
+                           settings: { ...planSettings.settings, replication },
                         })
                      }
                   />
@@ -271,15 +284,17 @@ const PlanForm = ({
                         }
                      />
                   </div>
-                  <PlanPruneSettings
-                     plan={planSettings}
-                     onUpdate={(pruneSettings) =>
-                        onPlanSettingsChange({
-                           ...planSettings,
-                           settings: { ...planSettings.settings, prune: pruneSettings },
-                        })
-                     }
-                  />
+                  {!isRemoteFilesystemSource && (
+                     <PlanPruneSettings
+                        plan={planSettings}
+                        onUpdate={(pruneSettings) =>
+                           onPlanSettingsChange({
+                              ...planSettings,
+                              settings: { ...planSettings.settings, prune: pruneSettings },
+                           })
+                        }
+                     />
+                  )}
                </div>
             )}
             {step === 4 && (
@@ -292,6 +307,7 @@ const PlanForm = ({
                      isEditing={type === 'edit'}
                      runSettings={runSettings}
                      setRunSettings={setRunSettings}
+                     allowScripts={!isRemoteFilesystemSource}
                   />
                </div>
             )}

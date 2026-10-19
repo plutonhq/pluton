@@ -13,6 +13,7 @@ dist-ssr
 dist-lib
 *.local
 /.turbo
+/documentation/.source/
 
 # Installer build artifacts
 *.AppImage
@@ -36,11 +37,104 @@ dist-lib
 /*.vscode
 .codegraph
 
-#env
-/*.env
+# Environment files (keep sanitized examples and the upstream template)
 *.env
 .env
+.env.*
+!.env.example
+!.env.template
+!.env.sample
+!.env.*.example
+!.env.*.template
+!.env.*.sample
+
+# Private keys and local credentials
+.ssh/
+.aws/
+.gnupg/
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+*.pem
+*.key
+*.p12
+*.pfx
+*.ppk
+.netrc
+_netrc
+.secrets/
+secrets/
+secrets.*
+credentials
+credentials.*
+*.credentials.*
+keys.json
+rclone.conf
+rclone.conf.*
+restic-password
+restic-password.*
+restic-passwords/
+!secrets.example.*
+!credentials.example.*
+!rclone.conf.example
+!restic-password.example
+# Reviewed public documentation, not a local credential/configuration file.
+!frontend/src/docs/articles/security/credentials.md
+
+# Local inventories and deployment overrides; keep examples in docs/examples/
+/inventory/
+/inventories/
+/inventory.ini
+/inventory.yml
+/inventory.yaml
+/hosts.ini
+inventory.local.*
+inventory.prod.*
+inventory.production.*
+hosts.local.*
+hosts.prod.*
+hosts.production.*
+docker-compose.override.yml
+docker-compose.override.yaml
+compose.override.yml
+compose.override.yaml
+*.local.yml
+*.local.yaml
+
+# Generated application/backup data and temporary restore output
+/data/
+/backups/
+/backup-data/
+/restic-repositories/
+/restic-cache/
+/restores/
+/restore-staging/
+/tmp/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.dump
+*.sql.gz
+*.sql.bz2
 
 #todos
 TODO
 *.TODO
+mysql-worker-dist/
+
+# Operator-local deployment state, inventory and stopped SQLite/script backups.
+/deploy/compose.lab.yml
+/deploy/compose.overlays
+/deploy/.deploy-*
+/deploy/.deployment-lock/
+/deploy/.bundle-*/
+/deploy/backups/
+__pycache__/
+*.pyc

@@ -1,0 +1,292 @@
+name: Container image
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate source and production build inputs
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.20.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint backend
+        run: pnpm --filter @plutonhq/core-backend lint
+
+      - name: Test backend
+        run: pnpm --filter @plutonhq/core-backend test --runInBand
+
+      - name: Check deployment probe, overlay policy and POSIX shell syntax
+        run: |
+          node --test scripts/__tests__/deployment.test.cjs
+          python3 scripts/__tests__/deployment_policy_test.py
+          for script in deploy/*.sh; do sh -n "$script"; done
+
+      - name: Check narrow automatic recovery host operator and lifecycle boundaries
+        run: |
+          node --check deploy/automatic-recovery/operator.cjs
+          node --check deploy/automatic-recovery/systemdStorage.cjs
+          node --check deploy/automatic-recovery/bootUnits.cjs
+          node --check deploy/automatic-recovery/application.cjs
+          node --check deploy/persistent-restore/operator.cjs
+          node --check scripts/automatic-recovery-vm-host.cjs
+          node --check scripts/automatic-recovery-vm-cleanup.cjs
+          node --check scripts/automatic-recovery-vm-enospc.cjs
+          node --check scripts/automatic-recovery-vm-acceptance.cjs
+          node --check scripts/automatic-recovery-vm-api.cjs
+          node --check scripts/automatic-recovery-vm-browser.cjs
+          bash -n scripts/automatic-recovery-vm-bootstrap.sh
+          node --test scripts/__tests__/automaticRecoveryLifecycle.test.cjs scripts/__tests__/automaticRecoveryNamespace.test.cjs scripts/__tests__/automaticRecoveryPublication.test.cjs scripts/__tests__/automaticRecoveryBoot.test.cjs scripts/__tests__/automaticRecoveryVisual.test.cjs scripts/__tests__/automaticRecoveryRequests.test.cjs scripts/__tests__/persistentRestore.test.cjs
+          python3 scripts/__tests__/automaticRecoveryBoot.test.py
+          node --test scripts/__tests__/runtimeReleaseBoundaries.test.cjs
+          node --test scripts/__tests__/mysqlAutomaticRecovery.test.cjs
+          python3 -c "import ast,pathlib; ast.parse(pathlib.Path('deploy/persistent-restore/mysql-lock.py').read_text())"
+          bash -n deploy/persistent-restore/bootstrap.sh
+
+      - name: Type-check backend
+        run: pnpm --filter @plutonhq/core-backend exec tsc --noEmit -p tsconfig.json
+
+      - name: Type-check frontend
+        run: pnpm --filter @plutonhq/core-frontend exec tsc -b
+
+      - name: Test frontend state, polling, accessibility and recovery regressions
+        run: node --experimental-strip-types --test frontend/__tests__/*.test.ts
+
+      - name: Build frontend and backend
+        run: pnpm build
+
+      - name: Check patch whitespace
+        run: git diff --check
+
+      - name: Record known frontend ESLint baseline
+        continue-on-error: true
+        run: pnpm --filter @plutonhq/core-frontend lint
+
+  build-pr:
+    name: Build and verify runtime recovery clients
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build without publishing
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.source
+          push: false
+          load: true
+          tags: pluton-recovery-ci:local
+          build-args: |
+            APP_VERSION=${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'runtime-validation' }}
+            IMAGE_SOURCE=https://github.com/${{ github.repository }}
+            VCS_REF=${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify release excludes test fixtures, host operators and local state
+        run: |
+          docker run --rm --network none --read-only --user 10001:10001 \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --memory 256m --memory-swap 256m --cpus 1 --pids-limit 32 \
+            --memory 256m --memory-swap 256m --cpus 1 --pids-limit 32 \
+            --tmpfs /data:rw,noexec,nosuid,nodev,size=16m,uid=10001,gid=10001,mode=700 \
+            --mount type=bind,source="$PWD/scripts/verify-runtime-release-boundaries.cjs",target=/verify-release.cjs,readonly \
+            --entrypoint node pluton-recovery-ci:local /verify-release.cjs
+
+      - name: Verify isolated dual-origin HTTPS and LAN sessions
+        shell: pwsh
+        run: ./scripts/validate-dual-origin.ps1 -Image pluton-recovery-ci:local -Compiled
+
+      - name: Verify real disposable immutable deployment and automatic rollback
+        # Native Linux operator test; no socket or new privileges in Pluton.
+        run: python3 scripts/validate-deployment.py pluton-recovery-ci:local
+
+      - name: Build isolated database-only fixture
+        run: docker build -f backend/__tests__/fixtures/recovery-clients/Dockerfile -t pluton-recovery-db-only:local .
+
+      - name: Verify UID 10001 clients and real recovery imports
+        shell: pwsh
+        run: ./scripts/validate-database-recovery-clients.ps1 -RuntimeImage pluton-recovery-ci:local
+
+      - name: Build optional genuine Oracle MySQL client-only worker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.mysql-recovery-worker
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: pluton-mysql-worker:local
+          cache-from: type=gha,scope=mysql-worker
+          cache-to: type=gha,scope=mysql-worker,mode=max
+
+      - name: Verify private IPC and real disposable Oracle MySQL recovery
+        shell: pwsh
+        run: ./scripts/validate-mysql-recovery-worker.ps1 -RuntimeImage pluton-recovery-ci:local
+
+      - name: Verify retained MySQL Custom restores and repeated real cancellation
+        shell: pwsh
+        run: ./scripts/validate-mysql-persistent-restore.ps1 -WorkerImage pluton-mysql-worker:local -RuntimeImage pluton-recovery-ci:local
+
+      - name: Verify Oracle MySQL Internal disposable recovery and refusal boundaries
+        shell: pwsh
+        run: ./scripts/validate-mysql-automatic-recovery.ps1 -Mode disposable -WorkerImage pluton-mysql-worker:local -RuntimeImage pluton-recovery-ci:local
+
+      - name: Verify Oracle MySQL Internal retained restore, Stop Resume and cleanup
+        shell: pwsh
+        run: ./scripts/validate-mysql-automatic-recovery.ps1 -Mode persistent -WorkerImage pluton-mysql-worker:local -RuntimeImage pluton-recovery-ci:local
+
+      - name: Check Internal recovery profiles and operator permission boundaries
+        # Test-only native assertions; no dependency installation or application startup.
+        run: node --test scripts/__tests__/internalRecovery.test.cjs scripts/__tests__/internalRecoveryReadiness.test.cjs scripts/__tests__/persistentRestore.test.cjs scripts/__tests__/dualOrigin.test.cjs
+
+      - name: Verify disposable native Internal targets and mandatory infrastructure cleanup
+        shell: pwsh
+        run: ./scripts/validate-internal-recovery.ps1 -RuntimeImage pluton-recovery-ci:local
+
+      - name: Verify automatic lifecycle native bootstrap and retained/disposable separation
+        shell: pwsh
+        # Unprivileged native fixture. Does NOT replace independent host ext4/quota acceptance.
+        run: ./scripts/validate-automatic-recovery-native.ps1 -RuntimeImage pluton-recovery-ci:local -HelperImage pluton-mysql-worker:local
+
+  publish:
+    name: Publish immutable GHCR image
+    needs: [validate, build-pr]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=sha,format=long
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.source
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
+            IMAGE_SOURCE=https://github.com/${{ github.repository }}
+            VCS_REF=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  publish-mysql-worker:
+    name: Publish optional immutable MySQL recovery worker
+    needs: [validate, build-pr]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Generate worker image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-mysql-recovery-worker
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=tag
+            type=sha,format=long
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and publish optional worker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.mysql-recovery-worker
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            IMAGE_SOURCE=https://github.com/${{ github.repository }}
+            VCS_REF=${{ github.sha }}
+          cache-from: type=gha,scope=mysql-worker
+          cache-to: type=gha,scope=mysql-worker,mode=max

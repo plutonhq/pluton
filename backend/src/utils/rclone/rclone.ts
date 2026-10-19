@@ -4,6 +4,11 @@ import { getBinaryPath } from '../binaryPathResolver';
 import { getRcloneConfigPath } from './helpers';
 import { configService } from '../../services/ConfigService';
 import { buildRcloneEnvFromSettings } from '../globalSettings';
+import {
+	protectedStorageEnvironment,
+	trustEnvironment,
+	redactStorageOutput,
+} from '../storageSecurity';
 
 export interface RunRcloneOptions {
 	timeoutMs?: number;
@@ -22,12 +27,14 @@ export function runRcloneCommand(
 		const globalRcloneEnv = buildRcloneEnvFromSettings();
 
 		const envVars = {
+			...protectedStorageEnvironment(args),
 			PATH: process.env.PATH, // Needed for docker instances
 			RCLONE_CONFIG: rcloneConfigPath,
 			LOCALAPPDATA: localAppData,
 			RCLONE_CONFIG_PASS: configService.config.ENCRYPTION_KEY,
 			...globalRcloneEnv,
 			...env, // Per-call overrides still take precedence
+			...trustEnvironment(),
 		};
 		// console.log('rcloneBinary :', rcloneBinary, args);
 		const rcProcess = spawn(rcloneBinary, args, {
@@ -58,6 +65,7 @@ export function runRcloneCommand(
 
 		rcProcess.stdout?.on('data', (data: Buffer) => {
 			// console.log('[rclone] Data :', data.toString());
+			// stdout may be exact restored file bytes (rclone cat), not a diagnostic.
 			output += data.toString();
 		});
 
@@ -70,7 +78,7 @@ export function runRcloneCommand(
 			settle(() => {
 				if (code === 0) {
 					const outputRes = output.trim();
-					const errorOutputRes = errorOutput.trim();
+					const errorOutputRes = redactStorageOutput(errorOutput.trim(), envVars);
 					if (outputRes) {
 						resolve(outputRes);
 					} else if (errorOutputRes) {
@@ -79,7 +87,7 @@ export function runRcloneCommand(
 						resolve('');
 					}
 				} else {
-					reject(new Error(errorOutput || `Rclone command failed`));
+					reject(new Error(redactStorageOutput(errorOutput, envVars) || `Rclone command failed`));
 				}
 			});
 		});
@@ -102,12 +110,14 @@ export function runRcloneCommandWithProgress(
 	const globalRcloneEnv = buildRcloneEnvFromSettings();
 
 	const envVars = {
+		...protectedStorageEnvironment(args),
 		PATH: process.env.PATH,
 		RCLONE_CONFIG: rcloneConfigPath,
 		LOCALAPPDATA: localAppData,
 		RCLONE_CONFIG_PASS: configService.config.ENCRYPTION_KEY,
 		...globalRcloneEnv,
 		...options?.env,
+		...trustEnvironment(),
 	};
 
 	const rcProcess = spawn(rcloneBinary, args, {
@@ -116,6 +126,13 @@ export function runRcloneCommandWithProgress(
 	});
 	let output = '';
 	let errorOutput = '';
+	let diagnosticTail = '';
+	const reportDiagnostics = (final = false) => {
+		const lines = diagnosticTail.split('\n');
+		diagnosticTail = final ? '' : lines.pop() || '';
+		const complete = lines.join('\n');
+		if (complete) options?.onStderr?.(redactStorageOutput(complete + (final ? '' : '\n'), envVars));
+	};
 
 	const promise = new Promise<string>((resolve, reject) => {
 		rcProcess.stdout?.on('data', (data: Buffer) => {
@@ -125,13 +142,15 @@ export function runRcloneCommandWithProgress(
 		rcProcess.stderr?.on('data', (data: Buffer) => {
 			const chunk = data.toString();
 			errorOutput += chunk;
-			options?.onStderr?.(chunk);
+			diagnosticTail += chunk;
+			reportDiagnostics();
 		});
 
 		rcProcess.on('close', (code: number) => {
+			reportDiagnostics(true);
 			if (code === 0) {
 				const outputRes = output.trim();
-				const errorOutputRes = errorOutput.trim();
+				const errorOutputRes = redactStorageOutput(errorOutput.trim(), envVars);
 				if (outputRes) {
 					resolve(outputRes);
 				} else if (errorOutputRes) {
@@ -140,7 +159,7 @@ export function runRcloneCommandWithProgress(
 					resolve('');
 				}
 			} else {
-				reject(new Error(errorOutput || `Rclone command failed`));
+				reject(new Error(redactStorageOutput(errorOutput, envVars) || `Rclone command failed`));
 			}
 		});
 	});

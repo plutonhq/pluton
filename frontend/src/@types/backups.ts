@@ -1,4 +1,9 @@
 export interface BackupCompletionStats {
+   lifecycle?: {
+      warnings: { stage: 'post-backup' | 'cleanup'; code: string }[];
+      database?: { path: string; bytes: number; sha256: string };
+      databases?: { databaseId: string; engine: 'mysql' | 'mariadb' | 'postgresql'; database: string; path: string; bytes: number; sha256: string }[];
+   };
    files_new: number;
    files_changed: number;
    files_unmodified: number;
@@ -45,18 +50,26 @@ export interface BackupMirror {
    ended?: number;
    error?: string;
    size?: number;
+   sourceSnapshotId?: string;
+   snapshotId?: string;
+   attempts?: number;
+   lastErrorCode?: string;
+   verifiedAt?: number;
 }
 
 export type Backup = {
+   completionStats?: BackupCompletionStats | null;
    id: string;
    title?: string;
    description?: string;
    snapshotId: string;
+   createdAt?: string | number;
    started: number;
    ended: number;
    duration: number;
    status: 'completed' | 'cancelled' | 'failed' | 'started' | 'retrying' | 'initializing';
    inProgress: boolean;
+   success?: boolean;
    totalFiles: number;
    totalSize: number;
    changes: { new: number; modified: number; removed: number; newDirs?: number; modifiedDirs?: number };
@@ -75,6 +88,12 @@ export type Backup = {
       error?: string;
    };
    mirrors?: BackupMirror[];
+};
+
+export type BackupChartPoint = Pick<Backup, 'status' | 'started'> & {
+   completionStats?: { total_files_processed: number | null; total_bytes_processed: number | null } | null;
+   totalFiles?: number;
+   totalSize?: number;
 };
 
 export interface BackupProgressEvent {
@@ -97,6 +116,9 @@ export interface ReplicationProgressData {
 }
 
 export interface BackupProgressData {
+   remote?: boolean;
+   backupStage?: string;
+   attempt?: number;
    planId: string;
    backupId: string;
    status: string;

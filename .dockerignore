@@ -12,6 +12,8 @@ frontend/dist-lib/
 # Development data
 data/
 backend/data/
+# Local synthetic archives and private rehearsal drivers are never build inputs.
+/tmp/
 
 # Test files
 coverage/
@@ -57,8 +59,31 @@ llm/
 repomix-output.xml
 **/repomix-output.xml
 
+# VM deployment scripts are not part of the source-built application image.
+deploy/
+
 # Misc
 *.md
 !README.md
 !License.md
+# Built-in documentation is a source input, not generated runtime data.
+!frontend/src/docs/articles/**
+# Only the build-time documentation/identity checks belong in the builder.
+!frontend/__tests__/
+frontend/__tests__/*
+!frontend/__tests__/docs.test.ts
+!frontend/__tests__/productIdentity.test.ts
+# Fumadocs builder source and its Markdown compiler configuration.
+documentation/.source/
+!documentation/tests/
+!documentation/tests/documentation.test.ts
+# Minimal public source evidence checked by docs.test.ts; no deployment overrides.
+!docs/ROADMAP.md
+!deploy/
+deploy/*
+!deploy/compose.yml
+!deploy/healthcheck.cjs
 .turbo/
+
+# Disposable guest/root rehearsal tools are source-review inputs, never image inputs.
+scripts/automatic-recovery-vm-*

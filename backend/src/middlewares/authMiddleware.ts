@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import Cookies from 'cookies';
 import { configService } from '../services/ConfigService';
 import { safeCompare } from '../utils/helpers';
+import { parseWebOrigins, requestWebOrigin, webCookieOptions } from '../utils/webOrigins';
 
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
 	const cookies = new Cookies(req, res);
@@ -27,9 +28,34 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
 
 	let authorized: string = '';
 	if (token && configService.config.SECRET) {
-		jwt.verify(token, configService.config.SECRET, err => {
+		jwt.verify(token, configService.config.SECRET, (err, decoded) => {
 			// console.log(err);
-			authorized = err ? 'Not authorized' : 'authorized';
+			const originBound =
+				typeof decoded === 'object' && decoded !== null && decoded.webOrigin !== undefined;
+			const matches =
+				!originBound ||
+				(typeof decoded.webOrigin === 'string' &&
+					decoded.webOrigin === requestWebOrigin(req, parseWebOrigins(configService.config)));
+			// Existing unbound signed sessions remain valid until expiry; new sessions are origin-bound.
+			authorized = err || !matches ? 'Not authorized' : 'authorized';
+			if (
+				!err &&
+				!originBound &&
+				typeof decoded === 'object' &&
+				decoded !== null &&
+				typeof decoded.user === 'string'
+			) {
+				const origin = requestWebOrigin(req, parseWebOrigins(configService.config));
+				if (origin) {
+					// Upgrade legacy cookie flags without extending the signed token's lifetime or rotating a key.
+					res.cookie('token', token, {
+						...webCookieOptions(origin),
+						...(typeof decoded.exp === 'number'
+							? { maxAge: Math.max(0, decoded.exp * 1000 - Date.now()) }
+							: {}),
+					});
+				}
+			}
 		});
 	} else if (verifiedAPI && accessingAllowedRoute) {
 		authorized = 'authorized';

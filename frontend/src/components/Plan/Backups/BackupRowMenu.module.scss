@@ -1,0 +1,70 @@
+.trigger {
+   width: 38px;
+   height: 38px;
+   padding: 0;
+   display: grid;
+   place-content: center;
+   border: 1px solid transparent;
+   border-radius: 6px;
+   color: var(--icon-color);
+   background: transparent;
+   :global(.icon) {
+      top: 0;
+   }
+   &:hover,
+   &[aria-expanded='true'] {
+      background: var(--surface-hover);
+      color: var(--primary-color-foreground);
+      border-color: var(--line-color);
+   }
+   &:focus-visible {
+      outline: 2px solid var(--line-active-color);
+      outline-offset: 2px;
+   }
+}
+.menu {
+   position: fixed;
+   z-index: 1000;
+   width: max-content;
+   max-width: calc(100vw - 16px);
+   overflow: auto;
+   box-sizing: border-box;
+   padding: 4px;
+   border: 1px solid var(--line-color);
+   border-radius: 8px;
+   background: var(--content-background-color);
+   color: var(--content-text-color);
+   box-shadow: var(--card-shadow);
+   button {
+      display: block;
+      width: 100%;
+      min-height: 36px;
+      padding: 8px 12px;
+      text-align: left;
+      border-radius: 4px;
+      color: inherit;
+      font-size: 0.8125rem;
+      &:hover:not(:disabled),
+      &:focus-visible {
+         background: var(--surface-hover);
+         color: var(--primary-color-foreground);
+      }
+      &:focus-visible {
+         outline: 2px solid var(--line-active-color);
+         outline-offset: -2px;
+      }
+      &:disabled {
+         color: var(--content-text-color-light);
+         opacity: 0.6;
+      }
+   }
+}
+@media (max-width: 768px) {
+   .trigger {
+      width: 44px;
+      height: 44px;
+   }
+   .menu button {
+      min-height: 44px;
+   }
+}

@@ -10,6 +10,10 @@
 
 set -e
 
+# Requires an upstream helper binary not supplied/verified by this public fork.
+printf '%s\n' 'This historical native installer is disabled. Use the source-built Docker deployment at /docs/deployment/docker.' >&2
+exit 1
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

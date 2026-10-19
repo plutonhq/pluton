@@ -1,0 +1,12 @@
+[Unit]
+Description=Reconcile approved Pluton internal lifecycle intents
+
+[Timer]
+OnBootSec=20
+OnUnitInactiveSec=5
+AccuracySec=1
+Unit=pluton-recovery-lifecycle.service
+
+[Install]
+WantedBy=timers.target
+

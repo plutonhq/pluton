@@ -28,6 +28,9 @@ type ResticArgsAndEnv = {
 // The watchdog kills it so the job queue does not lock forever.
 const RESTIC_STALL_TIMEOUT_MS = 60 * 60 * 1000;
 
+const normalizeSourcePathForValidation = (sourcePath: string): string =>
+	sourcePath.startsWith('ip#') ? sourcePath.slice(3) : sourcePath;
+
 export class BackupHandler {
 	private runningBackups = new Set<string>();
 	private cancelledBackups = new Set<string>();
@@ -591,13 +594,14 @@ export class BackupHandler {
 		if (options.sourceConfig?.includes) {
 			const pathsNotFound = [];
 			for (const path of options.sourceConfig.includes) {
+				const sourcePath = normalizeSourcePathForValidation(path);
 				try {
 					// must use stat instead of access since the linux-helper has read capabilities
 					// through CAP_DAC_READ_SEARCH, which causes access to return false even when the path is readable.
 					// stat correctly returns the file info without being affected by permissions.
-					await fs.promises.stat(path);
+					await fs.promises.stat(sourcePath);
 				} catch (error) {
-					pathsNotFound.push(path);
+					pathsNotFound.push(sourcePath);
 				}
 			}
 			if (pathsNotFound.length > 0) {

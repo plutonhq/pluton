@@ -17,6 +17,7 @@ describe('AppPaths', () => {
 		delete process.env.IS_DOCKER;
 		delete process.env.PLUTON_DATA_DIR;
 		delete process.env.NODE_ENV;
+		jest.resetModules();
 	});
 
 	afterEach(() => {
@@ -46,6 +47,20 @@ describe('AppPaths', () => {
 			// Assert - in dev mode it uses process.cwd() + /data
 			const expectedPath = require('path').join(process.cwd(), 'data');
 			expect(freshAppPaths.getBaseDir()).toBe(expectedPath);
+		});
+
+		it('should use an explicit test data directory in test mode', () => {
+			const customDir = '/tmp/pluton-jest-example';
+			process.env.NODE_ENV = 'test';
+			process.env.PLUTON_DATA_DIR = customDir;
+			const mockFs = require('fs');
+			mockFs.existsSync.mockReturnValue(false);
+			mockFs.mkdirSync.mockImplementation(() => undefined);
+			mockFs.writeFileSync.mockImplementation(() => undefined);
+
+			const { appPaths: freshAppPaths } = require('../../src/utils/AppPaths');
+
+			expect(freshAppPaths.getBaseDir()).toBe(customDir);
 		});
 
 		it('should use /data when IS_DOCKER is true', () => {

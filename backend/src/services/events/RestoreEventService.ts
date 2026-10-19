@@ -65,8 +65,25 @@ export class RestoreEventService {
 				return;
 			}
 
-			// Create the restore entry in the Database
-			const restore = await this.restoreStore.create(parsedRestoreData);
+			// A queued restore reuses its restoreId across retries. Reuse the row
+			// rather than attempting a second insert with the same primary key, so
+			// each retry can emit restoreCreated and leave pre-restore.
+			const existingRestore = await this.restoreStore.getById(restoreId);
+			const restore = existingRestore
+				? await this.restoreStore.update(restoreId, {
+						backupId: parsedRestoreData.backupId,
+						planId: parsedRestoreData.planId,
+						storageId: parsedRestoreData.storageId,
+						sourceId: parsedRestoreData.sourceId,
+						sourceType: parsedRestoreData.sourceType,
+						method: parsedRestoreData.method,
+						taskStats: parsedRestoreData.taskStats,
+						config: parsedRestoreData.config,
+						status: 'started',
+						inProgress: true,
+						errorMsg: null,
+					})
+				: await this.restoreStore.create(parsedRestoreData);
 
 			if (!restore) {
 				throw new Error('Failed to create restore entry in the Database');

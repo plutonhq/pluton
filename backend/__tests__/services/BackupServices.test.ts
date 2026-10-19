@@ -9,6 +9,7 @@ import { LocalStrategy as LocalSnapshotStrategy } from '../../src/strategies/sna
 import { LocalStrategy as LocalBackupStrategy } from '../../src/strategies/backup/LocalStrategy';
 import { jobQueue } from '../../src/jobs/JobQueue';
 import { initializeLogger } from '../../src/utils/logger';
+import { ManagedRepositoryAccessError } from '../../src/utils/restic/ManagedSftpRepositorySession';
 
 // Mock dependencies
 jest.mock('../../src/stores/BackupStore');
@@ -43,6 +44,8 @@ describe('BackupService', () => {
 		// Instantiate mocks
 		mockBackupStore = new BackupStore(null as any) as jest.Mocked<BackupStore>;
 		mockPlanStore = new PlanStore(null as any) as jest.Mocked<PlanStore>;
+		mockPlanStore.beginSourceRemoval.mockReturnValue(jest.fn());
+		mockPlanStore.deleteBackupIfUnreferenced.mockResolvedValue(true);
 		mockStorageStore = new StorageStore(null as any) as jest.Mocked<StorageStore>;
 		mockRestoreStore = new RestoreStore(null as any) as jest.Mocked<RestoreStore>;
 		mockSnapshotManager = new BaseSnapshotManager() as jest.Mocked<BaseSnapshotManager>;
@@ -69,6 +72,142 @@ describe('BackupService', () => {
 			mockRestoreStore,
 			mockStorageStore
 		);
+	});
+
+	describe('remote managed recovery routing', () => {
+		it('routes remote Download GET/POST only through the scoped session, preserving cancellation', async () => {
+			const descriptor = { fileName: 'backup-backup-01.tar', streamTo: jest.fn() };
+			const download = jest.fn().mockResolvedValue(descriptor);
+			const prepareDownload = jest.fn().mockResolvedValue({ streaming: true });
+			backupService = new BackupService(
+				mockSnapshotManager,
+				mockBackupManager,
+				mockPlanStore,
+				mockBackupStore,
+				mockRestoreStore,
+				mockStorageStore,
+				undefined,
+				{ download, prepareDownload } as any
+			);
+			mockBackupStore.getById.mockResolvedValue({
+				id: 'backup-01',
+				sourceId: 'app-01',
+				sourceType: 'device',
+				method: 'backup',
+			} as any);
+			const signal = new AbortController().signal;
+			await expect(backupService.getBackupDownload('backup-01')).resolves.toBe(descriptor);
+			await expect(
+				backupService.generateBackupDownload('backup-01', undefined, signal)
+			).resolves.toEqual({ streaming: true });
+			expect(download).toHaveBeenCalledWith('backup-01');
+			expect(prepareDownload).toHaveBeenCalledWith('backup-01', undefined, signal);
+			expect(mockSnapshotStrategy.getSnapshotDownload).not.toHaveBeenCalled();
+			expect(mockSnapshotStrategy.downloadSnapshot).not.toHaveBeenCalled();
+			expect(mockBackupStore.update).not.toHaveBeenCalled();
+		});
+		it('fails closed for remote Download when recovery is not wired; never falls back to local', async () => {
+			mockBackupStore.getById.mockResolvedValue({
+				id: 'backup-01',
+				sourceId: 'app-01',
+				sourceType: 'device',
+				method: 'backup',
+			} as any);
+			await expect(backupService.getBackupDownload('backup-01')).rejects.toMatchObject({
+				statusCode: 501,
+			});
+			await expect(backupService.generateBackupDownload('backup-01')).rejects.toMatchObject({
+				statusCode: 501,
+			});
+			expect(mockSnapshotStrategy.getSnapshotDownload).not.toHaveBeenCalled();
+			expect(mockSnapshotStrategy.downloadSnapshot).not.toHaveBeenCalled();
+		});
+		it('routes remote Browse through the scoped recovery service without using the local strategy', async () => {
+			const browse = jest.fn().mockResolvedValue([{ path: '/srv/example-app/index.txt' }]);
+			backupService = new BackupService(
+				mockSnapshotManager,
+				mockBackupManager,
+				mockPlanStore,
+				mockBackupStore,
+				mockRestoreStore,
+				mockStorageStore,
+				undefined,
+				{ browse } as any
+			);
+			mockBackupStore.getById.mockResolvedValue({
+				id: 'backup-01',
+				sourceId: 'app-01',
+				sourceType: 'device',
+				method: 'backup',
+			} as any);
+			await expect(backupService.getSnapshotFiles('backup-01')).resolves.toEqual([
+				{ path: '/srv/example-app/index.txt' },
+			]);
+			expect(browse).toHaveBeenCalledWith('backup-01', undefined);
+			expect(mockSnapshotStrategy.getSnapshotFiles).not.toHaveBeenCalled();
+			expect(mockStorageStore.getById).not.toHaveBeenCalled();
+		});
+		it('preserves a sanitized repository failure without falling back to another snapshot strategy', async () => {
+			const failure = new ManagedRepositoryAccessError('wrong-password');
+			const browse = jest.fn().mockRejectedValue(failure);
+			backupService = new BackupService(
+				mockSnapshotManager,
+				mockBackupManager,
+				mockPlanStore,
+				mockBackupStore,
+				mockRestoreStore,
+				mockStorageStore,
+				undefined,
+				{ browse } as any
+			);
+			mockBackupStore.getById.mockResolvedValue({
+				id: 'backup-01',
+				sourceId: 'app-01',
+				sourceType: 'device',
+				method: 'backup',
+			} as any);
+			await expect(backupService.getSnapshotFiles('backup-01', 'mirror-01')).rejects.toBe(failure);
+			expect(browse).toHaveBeenCalledWith('backup-01', 'mirror-01');
+			expect(mockSnapshotStrategy.getSnapshotFiles).not.toHaveBeenCalled();
+		});
+		it('fails closed if remote recovery is not wired', async () => {
+			mockBackupStore.getById.mockResolvedValue({
+				id: 'backup-01',
+				sourceId: 'app-01',
+				sourceType: 'device',
+				method: 'backup',
+			} as any);
+			await expect(backupService.getSnapshotFiles('backup-01')).rejects.toMatchObject({
+				statusCode: 501,
+			});
+			expect(mockSnapshotStrategy.getSnapshotFiles).not.toHaveBeenCalled();
+		});
+		it('does not route remote sync into Phase 4 filesystem recovery', async () => {
+			const browse = jest.fn();
+			backupService = new BackupService(
+				mockSnapshotManager,
+				mockBackupManager,
+				mockPlanStore,
+				mockBackupStore,
+				mockRestoreStore,
+				mockStorageStore,
+				undefined,
+				{ browse } as any
+			);
+			mockBackupStore.getById.mockResolvedValue({
+				id: 'backup-01',
+				planId: 'plan-01',
+				sourceId: 'app-01',
+				sourceType: 'device',
+				method: 'sync',
+				storageId: 'local',
+				storagePath: 'application',
+			} as any);
+			await expect(backupService.getSnapshotFiles('backup-01')).rejects.toThrow(
+				'REMOTE_CAPABILITY_NOT_IMPLEMENTED'
+			);
+			expect(browse).not.toHaveBeenCalled();
+		});
 	});
 
 	// -------------------------
@@ -119,7 +258,7 @@ describe('BackupService', () => {
 			expect(mockPlanStore.update).toHaveBeenCalledWith(mockBackup.planId, {
 				stats: { size: 1024, snapshots: ['snap1'] },
 			});
-			expect(mockBackupStore.delete).toHaveBeenCalledWith(backupId);
+			expect(mockPlanStore.deleteBackupIfUnreferenced).toHaveBeenCalledWith(backupId);
 			expect(result).toEqual({
 				success: true,
 				result: 'Snapshot removed',
@@ -133,6 +272,57 @@ describe('BackupService', () => {
 
 			// Act & Assert
 			await expect(backupService.deleteBackup(backupId)).rejects.toThrow('Backup not found');
+		});
+
+		it('keeps the snapshot record and plan stats when removal fails', async () => {
+			mockBackupStore.getById.mockResolvedValue(mockBackup);
+			mockStorageStore.getById.mockResolvedValue(mockStorage);
+			mockSnapshotStrategy.removeSnapshot.mockResolvedValue({
+				success: false,
+				result: 'Storage unavailable',
+			});
+			await expect(backupService.deleteBackup(backupId, true)).rejects.toHaveProperty(
+				'statusCode',
+				500
+			);
+			expect(mockBackupStore.delete).not.toHaveBeenCalled();
+			expect(mockPlanStore.update).not.toHaveBeenCalled();
+		});
+
+		it('preserves the explicit no-encryption repository setting during removal', async () => {
+			mockBackupStore.getById.mockResolvedValue({ ...mockBackup, encryption: false });
+			mockStorageStore.getById.mockResolvedValue(mockStorage);
+			mockSnapshotStrategy.removeSnapshot.mockResolvedValue({ success: true, result: 'Removed' });
+			await backupService.deleteBackup(backupId, true);
+			expect(mockSnapshotStrategy.removeSnapshot).toHaveBeenCalledWith(
+				mockBackup.planId,
+				backupId,
+				expect.objectContaining({ encryption: false })
+			);
+		});
+
+		it.each(['backup', 'restore'])('refuses snapshot deletion during an active %s', async kind => {
+			mockBackupStore.getById.mockResolvedValue({ ...mockBackup, inProgress: kind === 'backup' });
+			mockRestoreStore.isRestoreRunning.mockResolvedValue(kind === 'restore');
+			await expect(backupService.deleteBackup(backupId, true)).rejects.toHaveProperty(
+				'statusCode',
+				409
+			);
+			expect(mockSnapshotStrategy.removeSnapshot).not.toHaveBeenCalled();
+			expect(mockBackupStore.delete).not.toHaveBeenCalled();
+		});
+
+		it('refuses remote snapshot deletion until remote forget is implemented', async () => {
+			mockBackupStore.getById.mockResolvedValue({
+				...mockBackup,
+				sourceId: 'remote-device-01',
+				sourceType: 'device',
+			});
+
+			await expect(backupService.deleteBackup(backupId)).rejects.toThrow(
+				'REMOTE_CAPABILITY_NOT_IMPLEMENTED'
+			);
+			expect(mockBackupStore.delete).not.toHaveBeenCalled();
 		});
 	});
 
@@ -345,7 +535,7 @@ describe('BackupService', () => {
 
 		it('should not call jobQueue.remove for a remote backup', async () => {
 			// Arrange
-			const remoteBackup = { ...mockBackup, sourceId: 'remote-device-1' };
+			const remoteBackup = { ...mockBackup, sourceId: 'remote-device-1', sourceType: 'device' };
 			mockBackupStore.getById.mockResolvedValue(remoteBackup);
 			const mockRemoteBackupStrategy = {
 				cancelBackup: jest.fn().mockResolvedValue({ success: true, result: 'Cancelled' }),

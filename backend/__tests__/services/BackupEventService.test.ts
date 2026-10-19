@@ -31,6 +31,11 @@ jest.mock('../../src/managers/BaseBackupManager');
 jest.mock('../../src/notifications/BackupNotification');
 jest.mock('fs');
 jest.mock('fs/promises');
+// Fully automocked fs is not a real fresh key volume. Config/credential startup
+// is covered independently; this service fixture must not initialize it.
+jest.mock('../../src/services/ConfigService', () => ({
+	configService: { config: { APP_TITLE: 'Pluton Test', SECRET: 'synthetic-event-service-secret' } },
+}));
 
 // Mock the logger to prevent file I/O during tests and allow spying on log calls
 jest.mock('../../src/utils/logger', () => ({

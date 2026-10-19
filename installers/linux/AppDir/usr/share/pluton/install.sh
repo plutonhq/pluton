@@ -4,6 +4,10 @@
 
 set -e
 
+# Do not download unverified helper binaries from the commercial CDN.
+printf '%s\n' 'This historical helper-dependent installer is disabled in this fork. See /docs/deployment/docker.' >&2
+exit 1
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

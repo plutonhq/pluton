@@ -35,7 +35,7 @@
             cursor: pointer;
             color: var(--icon-color);
             &:hover {
-               color: var(--primary-color);
+               color: var(--primary-color-foreground);
             }
          }
          .defaultPath {

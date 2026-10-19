@@ -72,6 +72,15 @@ describe('SettingsService', () => {
 	// getMainSettings
 	// ----------------------------------------
 	describe('getMainSettings', () => {
+		it('does not contact an upstream release service without a trusted fork feed', async () => {
+			const fetchSpy = jest.spyOn(global, 'fetch');
+			try {
+				expect(await settingsService.checkLatestVersion()).toBeNull();
+				expect(fetchSpy).not.toHaveBeenCalled();
+			} finally {
+				fetchSpy.mockRestore();
+			}
+		});
 		it('should return the main settings from the store', async () => {
 			const mockSettings = { id: 1, settings: { title: 'Main Settings' } } as Settings;
 			mockSettingsStore.getFirst.mockResolvedValue(mockSettings);
@@ -213,8 +222,9 @@ describe('SettingsService', () => {
 
 			await expect(promise).rejects.toThrow(AppError);
 			await expect(promise).rejects.toThrow(
-				'Failed to send test notification using smtp. Reason: Auth failed'
+				'Failed to send test notification. Check the saved channel and delivery configuration.'
 			);
+			await expect(promise).rejects.not.toThrow('Auth failed');
 
 			// Ensure the second update to set `connected: true` was NOT called
 			expect(mockSettingsStore.update).toHaveBeenCalledTimes(1);
@@ -369,8 +379,9 @@ describe('SettingsService', () => {
 
 				await expect(promise).rejects.toThrow(AppError);
 				await expect(promise).rejects.toThrow(
-					'Failed to send test notification using ntfy. Reason: Ntfy returned 401: unauthorized'
+					'Failed to send test notification. Check the saved channel and delivery configuration.'
 				);
+				await expect(promise).rejects.not.toThrow('Ntfy returned 401: unauthorized');
 
 				expect(mockSettingsStore.update).toHaveBeenCalledTimes(1);
 			});

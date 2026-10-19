@@ -21,6 +21,9 @@ import { Backup } from '../db/schema/backups';
 import { BackupMirror } from '../types/backups';
 import { PlanStats } from '../types/plans';
 import { AppError, NotFoundError } from '../utils/AppError';
+import { RemoteBackupService } from './RemoteBackupService';
+import { RemoteRepositoryRecoveryService } from './RemoteRepositoryRecoveryService';
+import type { ManagedReplicationService } from './ManagedReplicationService';
 
 export class BackupService {
 	constructor(
@@ -29,7 +32,10 @@ export class BackupService {
 		protected planStore: PlanStore,
 		protected backupStore: BackupStore,
 		protected restoreStore: RestoreStore,
-		protected storageStore: StorageStore
+		protected storageStore: StorageStore,
+		private readonly remoteBackupService?: RemoteBackupService,
+		private readonly remoteRecovery?: RemoteRepositoryRecoveryService,
+		private readonly managedReplications?: ManagedReplicationService
 	) {}
 
 	getSnapshotStrategy(deviceId: string, method?: string): SnapshotStrategy {
@@ -47,9 +53,29 @@ export class BackupService {
 	}
 
 	async deleteBackup(backupId: string, removeSnapshot: boolean = false) {
+		const release = this.planStore.beginSourceRemoval({ backupId });
+		try {
+			return await this.removeBackup(backupId, removeSnapshot);
+		} finally {
+			release();
+		}
+	}
+
+	private async removeBackup(backupId: string, removeSnapshot: boolean) {
 		const backup = await this.backupStore.getById(backupId);
 		if (!backup) {
-			throw new Error('Backup not found');
+			throw new NotFoundError('Backup not found');
+		}
+		this.planStore.assertNoRetainedDatabaseRestores({ backupId });
+		if (backup.inProgress || (await this.restoreStore.isRestoreRunning(backupId)))
+			throw new AppError(
+				409,
+				'Wait for active backup and restore operations before removing this backup.'
+			);
+		if (RemoteBackupService.isRemoteFilesystemPlan(backup)) {
+			// Remote snapshot deletion is a future forget capability. Do not remove
+			// the server record while leaving the remote repository untouched.
+			throw new AppError(501, 'REMOTE_CAPABILITY_NOT_IMPLEMENTED');
 		}
 
 		const strategy = this.getSnapshotStrategy(backup.sourceId, backup.method);
@@ -57,12 +83,16 @@ export class BackupService {
 		const removeResult = await strategy.removeSnapshot(backup.planId as string, backupId, {
 			storageName,
 			storagePath: backup.storagePath || '',
-			encryption: backup.encryption || true,
+			encryption: backup.encryption ?? true,
 			mirrors: backup.mirrors || [],
 		});
 
-		// If snapshot removal fails, it should not throw an error
-		// Because the snapshot might have been removed already by prune process
+		// Only a verified absent snapshot is idempotent. Keep metadata on lookup/forget failure.
+		if (!removeResult.success)
+			throw new AppError(
+				500,
+				'Snapshot removal could not be verified. Backup history was retained.'
+			);
 
 		if (removeResult.stats) {
 			const primaryStats = removeResult.stats.primary;
@@ -89,7 +119,7 @@ export class BackupService {
 			});
 		}
 
-		await this.backupStore.delete(backup.id);
+		await this.planStore.deleteBackupIfUnreferenced(backup.id);
 
 		return removeResult;
 	}
@@ -98,6 +128,10 @@ export class BackupService {
 		const backup = await this.backupStore.getById(backupId);
 		if (!backup) {
 			throw new Error('Backup not found');
+		}
+		if (backup.method === 'backup' && RemoteBackupService.isRemoteFilesystemPlan(backup)) {
+			if (!this.remoteRecovery) throw new AppError(501, 'REMOTE_CAPABILITY_NOT_IMPLEMENTED');
+			return this.remoteRecovery.download(backupId);
 		}
 		const backupDevice = backup.sourceId ? backup.sourceId : 'main';
 		const strategy = this.getSnapshotStrategy(backupDevice, backup.method);
@@ -112,10 +146,18 @@ export class BackupService {
 		return downloadResult.result;
 	}
 
-	async generateBackupDownload(backupId: string, replicationId?: string): Promise<any> {
+	async generateBackupDownload(
+		backupId: string,
+		replicationId?: string,
+		signal?: AbortSignal
+	): Promise<any> {
 		const backup = await this.backupStore.getById(backupId);
 		if (!backup) {
 			throw new Error('Backup not found');
+		}
+		if (backup.method === 'backup' && RemoteBackupService.isRemoteFilesystemPlan(backup)) {
+			if (!this.remoteRecovery) throw new AppError(501, 'REMOTE_CAPABILITY_NOT_IMPLEMENTED');
+			return this.remoteRecovery.prepareDownload(backupId, replicationId, signal);
 		}
 		// If replicationId is provided, download from mirror storage
 		let effectiveStorageId = backup.storageId as string;
@@ -165,6 +207,9 @@ export class BackupService {
 			throw new Error('Backup not found');
 		}
 		const backupDevice = backup.sourceId ? backup.sourceId : 'main';
+		if (RemoteBackupService.isRemoteFilesystemPlan(backup) && this.remoteBackupService) {
+			return this.remoteBackupService.cancelBackup(planId, backupId);
+		}
 		const strategy = this.getBackupStrategy(backupDevice);
 		const cancelResult = strategy.cancelBackup
 			? await strategy.cancelBackup(planId, backupId)
@@ -195,6 +240,9 @@ export class BackupService {
 			throw new Error('Backup not found');
 		}
 		const backupDevice = backup.sourceId ? backup.sourceId : 'main';
+		if (RemoteBackupService.isRemoteFilesystemPlan(backup) && this.remoteBackupService) {
+			return this.remoteBackupService.getBackupProgress(backupId);
+		}
 		const strategy = this.getBackupStrategy(backupDevice);
 		const progressResult = strategy.getBackupProgress
 			? await strategy.getBackupProgress(backup.planId as string, backupId)
@@ -208,6 +256,10 @@ export class BackupService {
 		const backup = await this.backupStore.getById(backupId);
 		if (!backup) {
 			throw new Error('Backup not found');
+		}
+		if (backup.method === 'backup' && RemoteBackupService.isRemoteFilesystemPlan(backup)) {
+			if (!this.remoteRecovery) throw new AppError(501, 'REMOTE_CAPABILITY_NOT_IMPLEMENTED');
+			return this.remoteRecovery.browse(backupId, replicationId);
 		}
 		const backupDevice = backup.sourceId ? backup.sourceId : 'main';
 		const backupMethod = backup.method;
@@ -262,6 +314,12 @@ export class BackupService {
 		const backup = await this.backupStore.getById(backupId);
 		if (!backup) {
 			throw new Error('Backup not found');
+		}
+		if (RemoteBackupService.isRemoteFilesystemPlan(backup)) {
+			if (!this.managedReplications)
+				throw new AppError(503, 'Managed replication executor is unavailable.');
+			await this.managedReplications.retryFailed(backupId, replicationId);
+			return 'Managed replica retry queued; primary backup result is unchanged.';
 		}
 
 		const currentMirrors = (backup.mirrors || []) as BackupMirror[];
