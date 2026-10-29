@@ -10,7 +10,7 @@ import { extract, pack } from 'tar-stream';
 import { appPaths } from '../AppPaths';
 import { getDrizzleJournalTag } from '../migrations';
 
-export type PlutonEdition = 'core' | 'pro' | 'biz';
+export type PlutonEdition = 'core' | 'pro' | 'plus';
 
 export interface PayloadManifest {
 	edition: PlutonEdition;
