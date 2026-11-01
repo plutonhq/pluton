@@ -2,7 +2,7 @@ import path from 'path';
 import { z } from 'zod';
 import { RestoreOptions } from '../../types/restores';
 import { appPaths } from '../AppPaths';
-import { generateResticRepoPath } from './helpers';
+import { escapeResticPattern, generateResticRepoPath } from './helpers';
 
 const performanceSettingsSchema = z
 	.object({
@@ -81,10 +81,10 @@ export function buildResticRestoreCommand(request: NormalizedRestoreRequest): {
 	];
 
 	for (const item of request.includes) {
-		resticArgs.push('--include', item);
+		resticArgs.push('--include', escapeResticPattern(item));
 	}
 	for (const item of request.excludes) {
-		resticArgs.push('--exclude', item);
+		resticArgs.push('--exclude', escapeResticPattern(item));
 	}
 	if (request.delete) {
 		resticArgs.push('--delete');
@@ -133,7 +133,7 @@ export function buildHelperRestoreArgs(request: NormalizedRestoreRequest): strin
 		request.sources.length > 0
 	) {
 		for (const item of request.sources) {
-			helperArgs.push('--include', item);
+			helperArgs.push('--include', escapeResticPattern(item));
 		}
 	}
 
@@ -141,10 +141,10 @@ export function buildHelperRestoreArgs(request: NormalizedRestoreRequest): strin
 		helperArgs.push('--overwrite', request.overwrite);
 	}
 	for (const item of request.includes) {
-		helperArgs.push('--include', item);
+		helperArgs.push('--include', escapeResticPattern(item));
 	}
 	for (const item of request.excludes) {
-		helperArgs.push('--exclude', item);
+		helperArgs.push('--exclude', escapeResticPattern(item));
 	}
 	if (request.delete) {
 		helperArgs.push('--delete');

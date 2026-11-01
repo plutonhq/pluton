@@ -39,6 +39,14 @@ export class RemoteStrategy implements SnapshotStrategy {
 		return await this.publishCommand('GET_SNAPSHOT_FILES', { planId, backupId, options });
 	}
 
+	async listSnapshotFiles(
+		planId: string,
+		backupId: string,
+		options: { storagePath: string; storageName: string; encryption: boolean; buildId: string }
+	) {
+		return await this.publishCommand('LIST_SNAPSHOT_FILES', { planId, backupId, options });
+	}
+
 	async retryFailedReplication(planId: string, backupId: string, replicationIds: string[]) {
 		return await this.publishCommand('RETRY_REPLICATION', { planId, backupId, replicationIds });
 	}

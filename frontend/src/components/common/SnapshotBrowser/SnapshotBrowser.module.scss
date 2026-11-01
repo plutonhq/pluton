@@ -143,6 +143,22 @@
    }
 }
 
+.loadMoreDirectories {
+   display: block;
+   width: 100%;
+   padding: 8px 16px;
+   border: none;
+   background: none;
+   color: var(--content-text-color-light);
+   font-size: 0.85rem;
+   text-align: left;
+   cursor: pointer;
+
+   &:hover:not(:disabled) {
+      background: var(--background-color);
+   }
+}
+
 .selected {
    background: var(--primary-color-light);
 }
@@ -291,7 +307,7 @@
 
 .errorState button {
    padding: 8px 16px;
-   background: var(--primary);
+   background: var(--primary-color);
    color: white;
    border: none;
    border-radius: 4px;

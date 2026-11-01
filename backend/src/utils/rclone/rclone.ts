@@ -7,7 +7,12 @@ import { buildRcloneEnvFromSettings } from '../globalSettings';
 
 export interface RunRcloneOptions {
 	timeoutMs?: number;
+	stdout?: NodeJS.WritableStream; // Receives stdout with backpressure, and the promise resolves empty
+	stallTimeoutMs?: number; // Stops rclone after this long with no output
+	onProcess?: (process: ChildProcess) => void;
 }
+
+const STALL_POLL_INTERVAL = 30_000;
 
 export function runRcloneCommand(
 	args: string[],
@@ -34,20 +39,27 @@ export function runRcloneCommand(
 			env: envVars,
 			detached: process.platform !== 'win32',
 		});
+		opts?.onProcess?.(rcProcess);
 		let output = '';
 		let errorOutput = '';
 		let timer: NodeJS.Timeout | undefined;
+		let stallTimer: NodeJS.Timeout | undefined;
+		let lastActivity = Date.now();
 		let settled = false;
 
 		const settle = (fn: () => void) => {
 			if (settled) return;
 			settled = true;
 			if (timer) clearTimeout(timer);
+			if (stallTimer) clearInterval(stallTimer);
 			fn();
 		};
 
-		if (opts?.timeoutMs) {
+		if (opts?.timeoutMs || opts?.stdout) {
 			rcProcess.on('error', (error: Error) => settle(() => reject(error)));
+		}
+
+		if (opts?.timeoutMs) {
 			timer = setTimeout(() => {
 				rcProcess.kill();
 				settle(() =>
@@ -56,9 +68,28 @@ export function runRcloneCommand(
 			}, opts.timeoutMs);
 		}
 
+		if (opts?.stallTimeoutMs) {
+			stallTimer = setInterval(() => {
+				if (Date.now() - lastActivity < opts.stallTimeoutMs!) return;
+				rcProcess.kill();
+				settle(() => {
+					const error: Error & { stalled?: boolean } = new Error(
+						`Rclone command stalled: no output for ${Math.round(opts.stallTimeoutMs! / 60000)} minute(s)`
+					);
+					error.stalled = true;
+					reject(error);
+				});
+			}, STALL_POLL_INTERVAL);
+		}
+
+		if (opts?.stdout) {
+			rcProcess.stdout?.pipe(opts.stdout, { end: false });
+		}
+
 		rcProcess.stdout?.on('data', (data: Buffer) => {
 			// console.log('[rclone] Data :', data.toString());
-			output += data.toString();
+			lastActivity = Date.now();
+			if (!opts?.stdout) output += data.toString();
 		});
 
 		rcProcess.stderr?.on('data', (data: Buffer) => {

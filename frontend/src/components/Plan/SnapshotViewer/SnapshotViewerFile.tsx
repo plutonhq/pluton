@@ -3,11 +3,12 @@ import Icon from '../../common/Icon/Icon';
 import FileIcon from '../../common/FileIcon/FileIcon';
 import { formatBytes, formatDateTime, proViewableFileFormats, proViewFileFormatObj, timeAgo } from '../../../utils/helpers';
 import { FileItem } from '../../../@types/system';
+import { SnapshotIndexRow } from '../../../@types/backups';
 import classes from '../../common/SnapshotBrowser/SnapshotBrowser.module.scss';
 
 interface SnapshotViewerFileProps {
    style: React.CSSProperties;
-   file: FileItem | { isGoUp: true; path: string; name: string; isDirectory: true };
+   file: SnapshotIndexRow | { isGoUp: true; path: string; name: string; isDirectory: true };
    isSync?: boolean;
    gridColumns: string;
    onGoUp: () => void;
@@ -47,7 +48,7 @@ const SnapshotViewerFile = ({
       );
    }
 
-   const typedFile = file as FileItem;
+   const typedFile = file as SnapshotIndexRow;
    const fileName = typedFile.name || typedFile.path.split('/').pop() || '';
    const isDirectory = typedFile.isDirectory;
    const fileExtension = fileName.split('.').pop() || '';
@@ -66,10 +67,12 @@ const SnapshotViewerFile = ({
          <div className={classes.fileName}>
             {isDirectory ? <Icon type={'fm-directory'} size={16} /> : <FileIcon filename={fileName} />} {fileName}
          </div>
-         <div className={classes.fileModifiedAt} title={formatDateTime(typedFile.modifiedAt)}>
-            <i>{timeAgo(new Date(typedFile.modifiedAt))}</i>
+         <div className={classes.fileModifiedAt} title={typedFile.modifiedAt ? formatDateTime(typedFile.modifiedAt) : undefined}>
+            <i>{typedFile.modifiedAt ? timeAgo(new Date(typedFile.modifiedAt)) : ''}</i>
          </div>
-         <div className={classes.fileSize}>{!isDirectory ? formatBytes(typedFile.size || 0) : ''}</div>
+         <div className={classes.fileSize}>
+            {!isDirectory ? formatBytes(typedFile.size || 0) : typedFile.dirBytes !== undefined ? formatBytes(typedFile.dirBytes) : ''}
+         </div>
          {!isSync && (
             <div className={classes.fileActions}>
                {renderFileActions?.(typedFile, { fileExtension, isDirectory })}

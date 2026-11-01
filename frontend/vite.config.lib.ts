@@ -74,8 +74,6 @@ export default defineConfig(({ command, mode }) => ({
             'react-toastify',
             'react-tooltip',
             'react-window',
-            'comlink',
-            'dexie',
             'marked',
             'nanoid',
             /^virtual:/, // Exclude all virtual modules (like PWA)

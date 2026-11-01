@@ -83,12 +83,10 @@ try {
 		dependencies.splice(nanoidIndex, 1);
 	}
 
-	await build({
-		entryPoints: ['src/index.ts'],
+	const bundleOptions = {
 		bundle: true,
 		platform: 'node',
 		target: 'node24',
-		outfile: 'dist/pkg-index.cjs', // Different output file for pkg
 		format: 'cjs',
 		external: dependencies,
 		sourcemap: true,
@@ -106,6 +104,19 @@ try {
 			'process.env.APP_VERSION': JSON.stringify(rootPackageJson.version),
 		},
 		inject: [join(process.cwd(), 'scripts/esbuild-import-meta-url-shim.js')],
+	};
+
+	await build({
+		...bundleOptions,
+		entryPoints: ['src/index.ts'],
+		outfile: 'dist/pkg-index.cjs', // Different output file for pkg
+	});
+
+	// Loaded by new Worker() at runtime, so the main bundle cannot hold it.
+	await build({
+		...bundleOptions,
+		entryPoints: ['src/workers/snapshotIndexWorker.ts'],
+		outfile: 'dist/snapshot-index-worker.cjs',
 	});
 
 	console.log('✅ esbuild compilation completed!');

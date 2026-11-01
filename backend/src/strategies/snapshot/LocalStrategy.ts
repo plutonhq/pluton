@@ -41,6 +41,15 @@ export class LocalStrategy implements SnapshotStrategy {
 	) {
 		return await this.localAgent.getSnapshotFiles(backupId, options);
 	}
+
+	async listSnapshotFiles(
+		planId: string,
+		backupId: string,
+		options: { storagePath: string; storageName: string; encryption: boolean; buildId: string }
+	) {
+		return await this.localAgent.listSnapshotFiles(backupId, options);
+	}
+
 	async retryFailedReplication(planId: string, backupId: string, replicationIds: string[]) {
 		return await this.localAgent.retryFailedReplication(planId, backupId, replicationIds);
 	}

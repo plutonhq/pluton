@@ -1,6 +1,7 @@
 import { RcloneLsJsonOutput } from '../../types/rclone';
 import { SnapShotFile } from '../../types/restic';
-import { toResticPath } from '../restic/helpers';
+import { SnapshotIndexEntry, SnapshotIndexSource } from '../../types/snapshotIndex';
+import { parseResticMtime, toResticPath, trimTrailingSlashes } from '../restic/helpers';
 
 export function processRcloneResponse(res: string) {
 	// console.log('[RCLONE_RESPONSE] :', res);
@@ -67,3 +68,34 @@ export const parseRcloneFilesList = (
 
 	return filesList;
 };
+
+/**
+ * Parses `rclone lsjson`, which prints one object per line inside a JSON array.
+ * A `srcPath` line comes first for each source, because item paths are relative to it.
+ */
+export function createRcloneLineParser(sources: SnapshotIndexSource[]) {
+	let root = '';
+	return (line: string): SnapshotIndexEntry | null => {
+		if (line === '[' || line === ']') {
+			return null;
+		}
+		const item = JSON.parse(line.endsWith(',') ? line.slice(0, -1) : line);
+		if (typeof item?.srcPath === 'string') {
+			root = trimTrailingSlashes(toResticPath(item.srcPath));
+			sources.push({ root, srcPath: item.srcPath });
+			// An empty source has no lines, and its folder must still exist.
+			return root ? { path: root, type: 'dir', size: 0, mtime: null, perm: null } : null;
+		}
+		if (typeof item?.Path !== 'string' || !item.Path) {
+			return null;
+		}
+		return {
+			path: `${root}/${item.Path}`,
+			type: item.IsDir ? 'dir' : 'file',
+			// rclone gives a directory a size of 0 or -1.
+			size: item.IsDir ? 0 : item.Size || 0,
+			mtime: parseResticMtime(item.ModTime),
+			perm: null,
+		};
+	};
+}

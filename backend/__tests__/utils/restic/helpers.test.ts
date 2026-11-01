@@ -1,10 +1,36 @@
 import {
+	escapeResticPattern,
 	generateResticRepoPath,
 	toResticPath,
 	resticPathToWindows,
+	trimTrailingSlashes,
 } from '../../../src/utils/restic/helpers';
 
 describe('Restic Helpers', () => {
+	describe('escapeResticPattern', () => {
+		it('keeps a path with no glob characters', () => {
+			expect(escapeResticPattern('/C/Users/a b.txt', 'win32')).toBe('/C/Users/a b.txt');
+			expect(escapeResticPattern('/home/a b.txt', 'linux')).toBe('/home/a b.txt');
+		});
+
+		it('escapes each glob character as a character class', () => {
+			expect(escapeResticPattern('/d/r[1]*?.txt', 'linux')).toBe('/d/r[[]1][*][?].txt');
+		});
+
+		it('escapes a backslash except on Windows', () => {
+			expect(escapeResticPattern('/d/a\\b', 'linux')).toBe('/d/a\\\\b');
+			expect(escapeResticPattern('/d/a\\b', 'win32')).toBe('/d/a\\b');
+		});
+	});
+
+	describe('trimTrailingSlashes', () => {
+		it('removes trailing slashes only', () => {
+			expect(trimTrailingSlashes('/a//b///')).toBe('/a//b');
+			expect(trimTrailingSlashes('/a')).toBe('/a');
+			expect(trimTrailingSlashes('///')).toBe('');
+		});
+	});
+
 	describe('generateResticRepoPath', () => {
 		it('should generate repo path with storage name and path', () => {
 			const result = generateResticRepoPath('myStorage', 'backups/restic');

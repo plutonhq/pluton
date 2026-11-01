@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { BackupService } from '../services/BackupServices';
+import { SnapshotIndexEntriesQuery } from '../types/snapshotIndex';
 
 export class BackupController {
 	constructor(protected backupService: BackupService) {}
@@ -77,6 +78,92 @@ export class BackupController {
 				success: false,
 				error: 'Failed to get Snapshot Files. ' + (error.message || ''),
 			});
+		}
+	}
+
+	protected sendIndexError(res: Response, error: any) {
+		res.status(error.statusCode || 500).json({
+			success: false,
+			error: error?.message || 'Failed to read the Snapshot Index',
+		});
+	}
+
+	async startSnapshotIndex(req: Request, res: Response): Promise<void> {
+		try {
+			const replicationId = req.query.replicationId as string | undefined;
+			const result = await this.backupService.startSnapshotIndex(req.params.id, replicationId);
+			res.status(200).json({ success: true, result });
+		} catch (error: any) {
+			this.sendIndexError(res, error);
+		}
+	}
+
+	async getSnapshotIndexStatus(req: Request, res: Response): Promise<void> {
+		try {
+			const replicationId = req.query.replicationId as string | undefined;
+			const result = await this.backupService.getSnapshotIndexStatus(req.params.id, replicationId);
+			res.status(200).json({ success: true, result });
+		} catch (error: any) {
+			this.sendIndexError(res, error);
+		}
+	}
+
+	async getSnapshotIndexEntries(req: Request, res: Response): Promise<void> {
+		try {
+			const { dir, sort, order, offset, limit, q, replicationId } = req.query;
+			const result = await this.backupService.getSnapshotIndexEntries(
+				req.params.id,
+				replicationId as string | undefined,
+				{
+					dir: dir as string | undefined,
+					sort: sort as SnapshotIndexEntriesQuery['sort'],
+					order: order as SnapshotIndexEntriesQuery['order'],
+					offset: Number(offset) || 0,
+					limit: Number(limit) || undefined,
+					q: q as string | undefined,
+				}
+			);
+			res.status(200).json({ success: true, result });
+		} catch (error: any) {
+			this.sendIndexError(res, error);
+		}
+	}
+
+	async getSnapshotIndexDirs(req: Request, res: Response): Promise<void> {
+		try {
+			const { parent, depth, offset, limit, replicationId } = req.query;
+			const result = await this.backupService.getSnapshotIndexDirs(
+				req.params.id,
+				replicationId as string | undefined,
+				{
+					parent: parent as string | undefined,
+					depth: Number(depth) || undefined,
+					offset: Number(offset) || 0,
+					limit: Number(limit) || undefined,
+				}
+			);
+			res.status(200).json({ success: true, result });
+		} catch (error: any) {
+			this.sendIndexError(res, error);
+		}
+	}
+
+	async getSnapshotIndexSelection(req: Request, res: Response): Promise<void> {
+		const { includes, excludes } = req.body || {};
+		if (!Array.isArray(includes) || !Array.isArray(excludes)) {
+			res.status(400).json({ success: false, error: 'includes and excludes are required' });
+			return;
+		}
+		try {
+			const result = await this.backupService.getSnapshotIndexSelection(
+				req.params.id,
+				req.query.replicationId as string | undefined,
+				includes,
+				excludes
+			);
+			res.status(200).json({ success: true, result });
+		} catch (error: any) {
+			this.sendIndexError(res, error);
 		}
 	}
 

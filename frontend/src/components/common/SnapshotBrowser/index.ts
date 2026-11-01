@@ -10,4 +10,3 @@ export { default as SnapshotViewerFile } from '../../Plan/SnapshotViewer/Snapsho
 // Hooks
 export { useSnapshotSort } from './hooks/useSnapshotSort';
 export { useSnapshotNavigation } from './hooks/useSnapshotNavigation';
-export { useSnapshotDatabase } from './hooks/useSnapshotDatabase';

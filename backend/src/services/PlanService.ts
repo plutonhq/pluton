@@ -34,6 +34,7 @@ import { sanitizeStoragePath } from '../utils/sanitizeStoragePath';
 import { BackupNotification } from '../notifications/BackupNotification';
 import { ScheduleReconciler } from './ScheduleReconciler';
 import { BackupRunConfig } from '../types/backups';
+import { snapshotIndexService } from './SnapshotIndexService';
 
 /**
  * PlanService is the central orchestrator for all business logic related to backup plans.
@@ -369,7 +370,9 @@ export class PlanService {
 
 		// Finally, remove from our database
 		await this.restoreStore.deleteByPlanId(planId);
+		const backupIds = await this.backupStore.getIdsByPlanId(planId);
 		await this.backupStore.deleteByPlanId(planId);
+		await Promise.all(backupIds.map(id => snapshotIndexService.clear(id)));
 		const deleteRes = await this.planStore.delete(planId);
 		if (!deleteRes) {
 			throw new AppError(500, 'Failed to delete plan from the database.');

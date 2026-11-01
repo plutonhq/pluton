@@ -12,7 +12,6 @@ import {
    useDownloadBackup,
    useGetBackupDownload,
    useUpdateBackup,
-   useBrowseSnapshot,
 } from '../../../services/backups';
 import { useQueryClient } from '@tanstack/react-query';
 import RestoreWizard from '../../Restore/RestoreWizard/RestoreWizard';
@@ -110,10 +109,7 @@ const Backups = ({
    const downloadBackupMutation = useDownloadBackup();
    const cancelDownloadMutation = useCancelBackupDownload();
    const getDownloadMutation = useGetBackupDownload();
-   const browseSnapshotMutation = useBrowseSnapshot();
    const isSync = method === 'sync';
-
-   const snapshotFiles = browseSnapshotMutation.data?.result;
 
    console.log('backups :', backups);
 
@@ -306,10 +302,6 @@ const Backups = ({
                               {!isSync && status === 'completed' && active && (
                                  <button
                                     onClick={() => {
-                                       toast.promise(browseSnapshotMutation.mutateAsync({ backupId: id }), {
-                                          pending: 'Getting Snapshot Data...',
-                                          error: 'Failed to Get Snapshot Data.',
-                                       });
                                        setShowSnapOptions(false);
                                        setShowSnapshotViewer(snapshot);
                                     }}
@@ -442,10 +434,9 @@ const Backups = ({
                onClose={() => setShowStorageSelector(false)}
             />
          )}
-         {showSnapshotViewer && showSnapshotViewer.id && browseSnapshotMutation.isSuccess && (
+         {showSnapshotViewer && showSnapshotViewer.id && (
             <SidePanel width="100%" title="Browse Snapshot" icon={<Icon type={'folders'} size={20} />} close={() => setShowSnapshotViewer(false)}>
                <SnapshotViewer
-                  files={snapshotFiles || []}
                   backup={showSnapshotViewer}
                   planId={planId}
                   isSync={isSync}

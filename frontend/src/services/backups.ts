@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { API_URL } from '../utils/constants';
+import { SnapshotIndexDir, SnapshotIndexRow, SnapshotIndexSelection, SnapshotIndexStatus } from '../@types/backups';
 
 const notifiedBackupProgress = new Set<string>();
 
@@ -230,25 +231,158 @@ export async function getSnapshotFiles({ backupId, replicationId }: { backupId: 
    }
    return data;
 }
-export function useGetSnapshotFiles(payload: { backupId: string }) {
+export function useGetSnapshotFiles({ enabled = true, ...payload }: { backupId: string; replicationId?: string; enabled?: boolean }) {
    return useQuery({
-      queryKey: ['snapshot-files', payload.backupId],
+      queryKey: ['snapshot-files', payload.backupId, payload.replicationId || ''],
       queryFn: () => getSnapshotFiles(payload),
+      enabled,
       refetchOnMount: true,
       staleTime: 1000 * 60 * 60, // Cache the data for 60 minutes
       retry: false,
    });
 }
 
-// Get Snapshot Files (Mutation)
-// To be used for manual refresh or when triggered from an action,
-// since it bypasses the cache and directly calls the API
-export function useBrowseSnapshot() {
-   return useMutation({
-      mutationFn: getSnapshotFiles,
-      onSuccess: (res, payload) => {
-         console.log('res :', payload, res);
+// Snapshot Index
+export const SNAPSHOT_INDEX_PAGE_SIZE = 1000;
+
+type SnapshotIndexTarget = { backupId: string; replicationId?: string };
+
+async function requestSnapshotIndex<T>(
+   { backupId, replicationId }: SnapshotIndexTarget,
+   path: string,
+   params: Record<string, string | number | undefined> = {},
+   init: RequestInit = {},
+): Promise<T> {
+   const query = new URLSearchParams();
+   for (const [key, value] of Object.entries({ ...params, replicationId })) {
+      if (value !== undefined && value !== '') {
+         query.set(key, String(value));
+      }
+   }
+   const res = await fetch(`${API_URL}/backups/${backupId}/index${path}?${query}`, { credentials: 'include', ...init });
+   const data = await res.json();
+   if (!data.success) {
+      throw new Error(data.error);
+   }
+   return data.result;
+}
+
+export function startSnapshotIndex(target: SnapshotIndexTarget) {
+   return requestSnapshotIndex<SnapshotIndexStatus>(target, '', {}, { method: 'POST' });
+}
+
+export function getSnapshotIndexStatus(target: SnapshotIndexTarget) {
+   return requestSnapshotIndex<SnapshotIndexStatus>(target, '/status');
+}
+
+export function useSnapshotIndex({ enabled = true, ...target }: SnapshotIndexTarget & { enabled?: boolean }) {
+   const queryClient = useQueryClient();
+   const queryKey = ['snapshot-index', target.backupId, target.replicationId || ''];
+   return useQuery({
+      queryKey,
+      // Only a poll of a running build can use GET. POST starts a build again after a failure.
+      queryFn: async () => {
+         const current = queryClient.getQueryData<SnapshotIndexStatus>(queryKey);
+         if (current?.state !== 'building') {
+            return startSnapshotIndex(target);
+         }
+         const status = await getSnapshotIndexStatus(target);
+         return status.state === 'none' ? startSnapshotIndex(target) : status;
       },
+      enabled,
+      retry: false,
+      refetchOnWindowFocus: false,
+      refetchInterval: (query) => (query.state.data?.state === 'building' ? 3000 : false),
+      meta: { background: true },
+   });
+}
+
+export function getSnapshotEntries(
+   target: SnapshotIndexTarget,
+   params: { dir: string; sort: string; order: string; offset: number; limit: number; q?: string },
+) {
+   return requestSnapshotIndex<{ rows: SnapshotIndexRow[]; total: number }>(target, '/entries', params);
+}
+
+export function useSnapshotEntries({
+   backupId,
+   replicationId,
+   builtAt,
+   dir,
+   sort,
+   order,
+   q,
+   enabled = true,
+}: SnapshotIndexTarget & { builtAt?: number; dir: string; sort: string; order: string; q?: string; enabled?: boolean }) {
+   return useInfiniteQuery({
+      queryKey: ['snapshot-index-entries', backupId, replicationId || '', builtAt, dir, sort, order, q],
+      queryFn: ({ pageParam }) =>
+         getSnapshotEntries({ backupId, replicationId }, { dir, sort, order, q, offset: pageParam, limit: SNAPSHOT_INDEX_PAGE_SIZE }),
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, pages) => {
+         const loaded = pages.reduce((count, page) => count + page.rows.length, 0);
+         return lastPage.rows.length > 0 && loaded < lastPage.total ? loaded : undefined;
+      },
+      enabled,
+      retry: false,
+      staleTime: Infinity,
+      meta: { background: true },
+   });
+}
+
+export function getSnapshotDirs(target: SnapshotIndexTarget, params: { parent: string; depth?: number; offset: number; limit: number }) {
+   return requestSnapshotIndex<{ dirs: SnapshotIndexDir[]; total: number }>(target, '/dirs', params);
+}
+
+export function useSnapshotDirs({
+   backupId,
+   replicationId,
+   builtAt,
+   pages,
+   enabled = true,
+}: SnapshotIndexTarget & { builtAt?: number; pages: { parent: string; offset: number }[]; enabled?: boolean }) {
+   return useQueries({
+      queries: pages.map(({ parent, offset }) => ({
+         queryKey: ['snapshot-index-dirs', backupId, replicationId || '', builtAt, parent, offset],
+         queryFn: () => getSnapshotDirs({ backupId, replicationId }, { parent, offset, limit: SNAPSHOT_INDEX_PAGE_SIZE }),
+         enabled,
+         retry: false,
+         staleTime: Infinity,
+         meta: { background: true },
+      })),
+      combine: (results) => ({
+         data: results.map((result) => result.data),
+         error: results.find((result) => result.error)?.error,
+         isFetching: results.some((result) => result.isFetching),
+      }),
+   });
+}
+
+export function getSnapshotSelection(target: SnapshotIndexTarget, selection: { includes: string[]; excludes: string[] }) {
+   return requestSnapshotIndex<SnapshotIndexSelection>(
+      target,
+      '/selection',
+      {},
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(selection) },
+   );
+}
+
+export function useSnapshotSelection({
+   backupId,
+   replicationId,
+   builtAt,
+   includes,
+   excludes,
+   enabled = true,
+}: SnapshotIndexTarget & { builtAt?: number; includes: string[]; excludes: string[]; enabled?: boolean }) {
+   return useQuery({
+      queryKey: ['snapshot-index-selection', backupId, replicationId || '', builtAt, includes, excludes],
+      queryFn: () => getSnapshotSelection({ backupId, replicationId }, { includes, excludes }),
+      enabled,
+      retry: false,
+      staleTime: Infinity,
+      placeholderData: keepPreviousData,
+      meta: { background: true },
    });
 }
 

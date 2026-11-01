@@ -1,13 +1,19 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState } from 'react';
 import Icon from '../../common/Icon/Icon';
 import { RestoreFileItem } from '../../../@types/restores';
-import { calculateDirectorySizes, formatBytes, formatDateTime, formatNumberToK, isMobile, sortFileItems } from '../../../utils/helpers';
+import { formatBytes, formatDateTime, formatNumberToK, isMobile } from '../../../utils/helpers';
 import FileIcon from '../../common/FileIcon/FileIcon';
 import classes from './RestoreFileSelector.module.scss';
-import { getParentPath, getPathSeparator, normalizePath, splitPath } from '../../../utils/restore';
+import { splitPath } from '../../../utils/restore';
 import { SnapshotBrowserToolbar, SnapshotBrowserDirectories, SnapshotBrowserFileList, SnapshotBrowserGoUpRow } from '../../common/SnapshotBrowser';
-import { useSnapshotNavigation } from '../../common/SnapshotBrowser/hooks/useSnapshotNavigation';
+import SnapshotIndexProgress from '../../common/SnapshotBrowser/SnapshotIndexProgress';
 import sbClasses from '../../common/SnapshotBrowser/SnapshotBrowser.module.scss';
+import { RestoreSelection, useInMemoryFileSource, useIndexedFileSource, withRootRule } from './useRestoreFileSource';
+
+export interface RestoreIndexSource {
+   backupId: string;
+   replicationId?: string;
+}
 
 interface RestoreFileSelectorProps {
    selected: {
@@ -16,6 +22,8 @@ interface RestoreFileSelectorProps {
    };
    backupId: string;
    files: RestoreFileItem[];
+   /** Reads the snapshot from the server index, so `files` is not used. */
+   source?: RestoreIndexSource;
    isLoading: boolean;
    errorFetching: string | null;
    showChange?: boolean;
@@ -26,32 +34,54 @@ interface RestoreFileSelectorProps {
 const isMobileDevice = isMobile();
 const ITEM_HEIGHT = isMobileDevice ? 65 : 45;
 const GRID_COLUMNS = '1fr 180px minmax(80px, auto)';
+const ROOT = '/';
 
-const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showChange, onSelect, fileSelectCondition }: RestoreFileSelectorProps) => {
+const isChildPath = (path: string, parent: string) =>
+   parent === ROOT ? path !== ROOT : path.startsWith(parent + '/') || path.startsWith(parent + '\\');
+
+const clearChildRules = (rules: Set<string>, parent: string) => {
+   rules.forEach((path) => {
+      if (isChildPath(path, parent)) rules.delete(path);
+   });
+};
+
+// Nearest rule wins, and root is selected unless it is excluded.
+const isSelectedByNearestRule = ({ include, exclude }: RestoreSelection, path: string): boolean => {
+   for (let current = path; current && current !== ROOT; current = current.slice(0, Math.max(current.lastIndexOf('/'), 0))) {
+      if (exclude.has(current)) return false;
+      if (include.has(current)) return true;
+   }
+   return !exclude.has(ROOT);
+};
+
+// An index holds selection rules, not rows, so one rule covers a whole folder.
+const toggleNearestRule = (selection: RestoreSelection, path: string): RestoreSelection => {
+   const wasSelected = isSelectedByNearestRule(selection, path);
+   const include = new Set(selection.include);
+   const exclude = new Set(selection.exclude);
+   for (const rules of [include, exclude]) {
+      rules.delete(path);
+      clearChildRules(rules, path);
+   }
+   if (isSelectedByNearestRule({ include, exclude }, path) === wasSelected) {
+      (wasSelected ? exclude : include).add(path);
+   }
+   return { include, exclude };
+};
+
+const RestoreFileSelector = ({ selected, files, source: indexSource, isLoading, errorFetching, showChange, onSelect, fileSelectCondition }: RestoreFileSelectorProps) => {
+   const indexed = !!indexSource;
    const [search, setSearch] = useState('');
    const [sortField, setSortField] = useState<'name' | 'modifiedAt' | 'size'>('name');
    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-   const [selectedFiles, setSelectedFiles] = useState<{ include: Set<string>; exclude: Set<string> }>(() => ({
+   const [selectedFiles, setSelectedFiles] = useState<RestoreSelection>(() => ({
       include: new Set(selected.includes),
-      exclude: new Set(selected.excludes),
+      exclude: new Set(indexed ? withRootRule(Array.from(selected.includes), Array.from(selected.excludes)) : selected.excludes),
    }));
 
-   console.log('[RestoreFileSelector] files :', files);
-
-   const getAllChildPaths = (dirPath: string): string[] => {
-      const allPaths: string[] = [];
-
-      files.forEach((file) => {
-         // Use original paths, not normalized
-         if (file.path.startsWith(dirPath + '/') || file.path.startsWith(dirPath + '\\')) {
-            allPaths.push(file.path);
-         }
-      });
-
-      return allPaths;
-   };
-
    const isPathSelected = (path: string): boolean => {
+      if (indexed) return isSelectedByNearestRule(selectedFiles, path);
+
       // If path is explicitly excluded, it's not selected
       if (selectedFiles.exclude.has(path)) {
          return false;
@@ -90,109 +120,12 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
       );
    };
 
-   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
-      const allPaths = new Set<string>();
-      files.forEach((file) => {
-         const separator = getPathSeparator(file.path);
-         const parts = splitPath(file.path);
-         let currentPath = '';
-
-         parts.forEach((part, index) => {
-            currentPath = currentPath ? `${currentPath}${separator}${part}` : part;
-            if (index < 3) {
-               allPaths.add(currentPath);
-            }
-         });
-      });
-      return allPaths;
-   });
-
-   const fileSystem = useMemo(() => {
-      const system: { [key: string]: RestoreFileItem[] } = {};
-      const dirSizes = calculateDirectorySizes(files);
-      files
-         .filter((file) => {
-            const matchesSearch = file.path.toLowerCase().includes(search.toLowerCase());
-            return matchesSearch;
-         })
-         .forEach((file) => {
-            let theFile = file;
-            const dirPath = getParentPath(theFile.path);
-            // Use the normalized path as key, but handle root directory
-            const normalizedDirPath = normalizePath(dirPath) || '/'; // Use '/' for root
-
-            if (theFile.isDirectory) {
-               theFile.size = dirSizes[theFile.path] || 0;
-            }
-
-            if (!system[normalizedDirPath]) {
-               system[normalizedDirPath] = [];
-            }
-            system[normalizedDirPath].push(theFile);
-         });
-
-      return system;
-   }, [files, search]);
-
-   console.log('fileSystem :', fileSystem);
-
-   const directories = useMemo(() => {
-      const dirs = files.filter((file) => file.isDirectory).map((file) => normalizePath(file.path));
-
-      // Sort directories by their path to ensure proper hierarchical order
-      const sortedDirs = dirs.sort((a, b) => {
-         const aParts = splitPath(a);
-         const bParts = splitPath(b);
-         const minLength = Math.min(aParts.length, bParts.length);
-
-         for (let i = 0; i < minLength; i++) {
-            const comparison = aParts[i].localeCompare(bParts[i]);
-            if (comparison !== 0) {
-               return comparison;
-            }
-         }
-         return aParts.length - bParts.length;
-      });
-
-      return sortedDirs;
-   }, [files]);
-
-   const { selectedFolder, setSelectedFolder, hasSubdirectories, isVisible, expandParentFolders, toggleFolder } = useSnapshotNavigation(
-      directories,
-      expandedFolders,
-      setExpandedFolders,
-      { splitPath, getPathSeparator, hasLeadingSeparator: false },
-   );
-
-   // Set the first directory as selected by default
-   useEffect(() => {
-      if (directories.length > 0 && selectedFolder === '') {
-         setSelectedFolder(directories[0]);
-      }
-   }, [directories, selectedFolder, setSelectedFolder]);
-
-   const summary = useMemo(() => {
-      let selectedFilesCount = 0;
-      let selectedBytes = 0;
-
-      const restorableFiles = fileSelectCondition ? files.filter((file) => fileSelectCondition(file)) : files;
-
-      restorableFiles.forEach((file) => {
-         if (isPathSelected(file.path)) {
-            selectedFilesCount++;
-            if (!file.isDirectory) {
-               selectedBytes += file.size;
-            }
-         }
-      });
-
-      return {
-         selectedFiles: selectedFilesCount,
-         totalFiles: restorableFiles.length,
-         selectedBytes,
-         totalBytes: restorableFiles.reduce((acc, file) => acc + (!file.isDirectory ? file.size : 0), 0),
-      };
-   }, [files, selectedFiles]);
+   const sourceOptions = { search, sortField, sortDirection, selection: selectedFiles };
+   const memorySource = useInMemoryFileSource(files, { ...sourceOptions, isPathSelected, fileSelectCondition });
+   const indexSourceData = useIndexedFileSource(indexSource?.backupId ?? '', indexSource?.replicationId, indexed, sourceOptions);
+   const source = indexed ? indexSourceData : memorySource;
+   const { directories, children, summary } = source;
+   const excludedRules = Array.from(selectedFiles.exclude).filter((path) => path !== ROOT);
 
    const handleSort = (field: 'name' | 'modifiedAt' | 'size') => {
       if (sortField === field) {
@@ -206,22 +139,25 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
    };
 
    const onFileSelect = (path: string, isDirectory: boolean) => {
+      if (indexed) {
+         const next = toggleNearestRule(selectedFiles, path);
+         setSelectedFiles(next);
+         onSelect({ includes: next.include, excludes: next.exclude });
+         return;
+      }
+
       const newSelected = { ...selectedFiles };
       const isCurrentlySelected = isPathSelected(path);
 
       if (isDirectory) {
-         const childPaths = getAllChildPaths(path);
-
          if (isCurrentlySelected) {
             // Deselecting directory
             newSelected.exclude.add(path);
             newSelected.include.delete(path);
 
             // Remove any child paths from both include and exclude (they inherit exclusion from parent)
-            childPaths.forEach((childPath) => {
-               newSelected.include.delete(childPath);
-               newSelected.exclude.delete(childPath);
-            });
+            clearChildRules(newSelected.include, path);
+            clearChildRules(newSelected.exclude, path);
          } else {
             // Selecting directory
             newSelected.exclude.delete(path);
@@ -236,10 +172,8 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
             }
 
             // Remove any child paths from both include and exclude (they inherit from parent)
-            childPaths.forEach((childPath) => {
-               newSelected.include.delete(childPath);
-               newSelected.exclude.delete(childPath);
-            });
+            clearChildRules(newSelected.include, path);
+            clearChildRules(newSelected.exclude, path);
          }
       } else {
          // File selection
@@ -280,57 +214,18 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
       });
    };
 
-   const getDirectChildren = (parentPath: string) => {
-      let children = [];
-
-      if (!parentPath && fileSystem['']) {
-         children = fileSystem[''];
-      } else {
-         children = fileSystem[parentPath] || [];
-      }
-      const directories = children.filter((item) => item.isDirectory);
-      const files = children.filter((item) => !item.isDirectory);
-      return [
-         ...(sortFileItems(directories, sortField, sortDirection) as RestoreFileItem[]),
-         ...(sortFileItems(files, sortField, sortDirection) as RestoreFileItem[]),
-      ];
-   };
-
-   const directChildren = useMemo(() => {
-      if (!selectedFolder) return [];
-
-      const children = getDirectChildren(selectedFolder);
-      const hasParent = getParentPath(selectedFolder) !== selectedFolder;
-
-      // Add parent navigation item if needed
-      return hasParent ? [null, ...children] : children;
-   }, [selectedFolder, fileSystem, sortField, sortDirection]);
-
    const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
-      const item = directChildren[index];
+      const item = children[index];
 
       // Parent directory navigation
       if (item === null) {
-         return (
-            <SnapshotBrowserGoUpRow
-               style={style}
-               onGoUp={() => {
-                  const parentPath = getParentPath(selectedFolder);
-                  const normalizedParentPath = normalizePath(parentPath);
-                  if (!normalizedParentPath || normalizedParentPath === '') return;
-                  expandParentFolders(normalizedParentPath);
-                  setSelectedFolder(normalizedParentPath);
-               }}
-               gridTemplateColumns={GRID_COLUMNS}
-            />
-         );
+         return <SnapshotBrowserGoUpRow style={style} onGoUp={source.goUp} gridTemplateColumns={GRID_COLUMNS} />;
       }
 
       const file = item;
       const parts = splitPath(file.path);
       const fileName = parts[parts.length - 1];
-      const normalizedPath = normalizePath(file.path);
-      const isDirectory = directories.includes(normalizedPath);
+      const isDirectory = source.isDirectory(file);
       const isSelected = isPathSelected(file.path);
       const canBeSelected = fileSelectCondition ? fileSelectCondition(file) : true;
 
@@ -340,10 +235,7 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
             key={file.path}
             className={`${sbClasses.snapshotFile} ${isDirectory ? sbClasses.fileIsDir : ''} ${showChange && file.changeType === 'modified' ? classes.fileModified : ''} ${showChange && file.changeType === 'removed' ? classes.fileRemoved : ''}`}
             onClick={() => {
-               if (isDirectory) {
-                  expandParentFolders(normalizedPath);
-                  setSelectedFolder(normalizedPath);
-               }
+               if (isDirectory) source.openFolder(file);
             }}
          >
             <div className={sbClasses.fileName}>
@@ -352,7 +244,7 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
                   onClick={(e) => {
                      if (!canBeSelected) return;
                      e.stopPropagation();
-                     onFileSelect(file.path, false);
+                     onFileSelect(file.path, isDirectory);
                   }}
                   disabled={!canBeSelected}
                >
@@ -360,8 +252,8 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
                </button>
                {isDirectory ? <Icon type={isDirectory ? 'fm-directory' : 'fm-file'} size={16} /> : <FileIcon filename={fileName || ''} />} {fileName}
             </div>
-            <div className={classes.fileModified}>{formatDateTime(file.modifiedAt)}</div>
-            <div className={classes.fileSize}>{formatBytes(file.size || 0)}</div>
+            <div className={classes.fileModified}>{file.modifiedAt ? formatDateTime(file.modifiedAt) : ''}</div>
+            <div className={classes.fileSize}>{formatBytes(source.displaySize(file))}</div>
          </div>
       );
    };
@@ -377,76 +269,92 @@ const RestoreFileSelector = ({ selected, files, isLoading, errorFetching, showCh
             <SnapshotBrowserToolbar
                search={search}
                onSearchChange={setSearch}
+               isLoading={source.isLoadingList}
                leftContent={
                   <div className={sbClasses.stats}>
                      <strong>Summary: </strong>
                      {formatNumberToK(summary.selectedFiles)}/{formatNumberToK(summary.totalFiles)} Items {' • '}
                      {formatBytes(summary.selectedBytes)}/{formatBytes(summary.totalBytes)}
-                     {selectedFiles.exclude.size > 0 && (
+                     {excludedRules.length > 0 && (
                         <div className={classes.excludedStat}>
                            {' • '}
                            <span>
-                              Excluded:{' '}
-                              <i title={Array.from(selectedFiles.exclude).join('\n')}>{formatNumberToK(selectedFiles.exclude.size)} Items</i>
+                              Excluded: <i title={excludedRules.join('\n')}>{formatNumberToK(excludedRules.length)} Items</i>
                            </span>
+                        </div>
+                     )}
+                     {source.selectionError === 'selection_too_complex' && (
+                        <div className={classes.excludedStat}>
+                           {' • '}
+                           <span>Select fewer separate items</span>
                         </div>
                      )}
                   </div>
                }
             />
 
-            <div className={sbClasses.browserContent}>
-               <SnapshotBrowserDirectories
-                  directories={directories}
-                  selectedFolder={selectedFolder}
-                  expandedFolders={expandedFolders}
-                  onDirectoryClick={(dir) => setSelectedFolder(dir)}
-                  onToggleFolder={toggleFolder}
-                  isVisible={isVisible}
-                  hasSubdirectories={hasSubdirectories}
-                  renderDirectoryExtra={(dir) => {
-                     const isSelected = isPathSelected(files.find((f) => f.isDirectory && normalizePath(f.path) === dir)?.path || dir);
-                     return (
-                        <button
-                           className={`${classes.selectButton} ${isSelected ? classes.selected : ''}`}
-                           onClick={(e) => {
-                              e.stopPropagation();
-                              const originalPath = files.find((f) => f.isDirectory && normalizePath(f.path) === dir)?.path || dir;
-                              onFileSelect(originalPath, true);
-                           }}
-                        >
-                           <Icon type={isSelected ? 'check-circle-filled' : 'check-circle'} size={13} />
-                        </button>
-                     );
-                  }}
-               />
-
-               <div className={`${sbClasses.content} styled__scrollbar`}>
-                  <SnapshotBrowserFileList
-                     files={directChildren}
-                     height={window.innerHeight - 370}
-                     itemSize={ITEM_HEIGHT}
-                     headerContent={
-                        <>
-                           <div onClick={() => handleSort('name')} className={sortField === 'name' ? classes.activeSort : ''}>
-                              Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                           </div>
-                           <div onClick={() => handleSort('modifiedAt')} className={sortField === 'modifiedAt' ? classes.activeSort : ''}>
-                              Last Modified {sortField === 'modifiedAt' && (sortDirection === 'asc' ? '↑' : '↓')}
-                           </div>
-                           <div onClick={() => handleSort('size')} className={sortField === 'size' ? classes.activeSort : ''}>
-                              Size {sortField === 'size' && (sortDirection === 'asc' ? '↑' : '↓')}
-                           </div>
-                        </>
-                     }
-                     renderRow={Row}
-                     selectedFolder={selectedFolder || null}
-                     gridTemplateColumns={GRID_COLUMNS}
-                     emptyMessage="Select a folder from the left to browse it's content"
-                  />
-                  {errorFetching && <div className={classes.error}>Failed to load files. Please try again.</div>}
+            {source.index && !source.index.ready ? (
+               <div className={`${sbClasses.browserContent} ${sbClasses.loadingState}`}>
+                  <SnapshotIndexProgress status={source.index.status} error={source.index.error} onRetry={source.index.retry} />
                </div>
-            </div>
+            ) : (
+               <div className={sbClasses.browserContent}>
+                  <SnapshotBrowserDirectories
+                     directories={directories}
+                     selectedFolder={source.selectedFolder}
+                     expandedFolders={source.expandedFolders}
+                     onDirectoryClick={source.selectFolder}
+                     onToggleFolder={source.toggleFolder}
+                     isVisible={source.isVisible}
+                     hasSubdirectories={source.hasSubdirectories}
+                     renderDirectoryExtra={(dir) => {
+                        const originalPath = source.originalPath(dir);
+                        const isSelected = isPathSelected(originalPath);
+                        return (
+                           <button
+                              className={`${classes.selectButton} ${isSelected ? classes.selected : ''}`}
+                              onClick={(e) => {
+                                 e.stopPropagation();
+                                 onFileSelect(originalPath, true);
+                              }}
+                           >
+                              <Icon type={isSelected ? 'check-circle-filled' : 'check-circle'} size={13} />
+                           </button>
+                        );
+                     }}
+                     {...source.directoryProps}
+                  />
+
+                  <div className={`${sbClasses.content} styled__scrollbar`}>
+                     <SnapshotBrowserFileList
+                        files={children}
+                        height={window.innerHeight - 370}
+                        itemSize={ITEM_HEIGHT}
+                        headerContent={
+                           <>
+                              <div onClick={() => handleSort('name')} className={sortField === 'name' ? classes.activeSort : ''}>
+                                 Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                              </div>
+                              <div onClick={() => handleSort('modifiedAt')} className={sortField === 'modifiedAt' ? classes.activeSort : ''}>
+                                 Last Modified {sortField === 'modifiedAt' && (sortDirection === 'asc' ? '↑' : '↓')}
+                              </div>
+                              <div onClick={() => handleSort('size')} className={sortField === 'size' ? classes.activeSort : ''}>
+                                 Size {sortField === 'size' && (sortDirection === 'asc' ? '↑' : '↓')}
+                              </div>
+                           </>
+                        }
+                        renderRow={Row}
+                        selectedFolder={source.listFolder}
+                        isLoading={source.isLoadingList}
+                        error={source.listError}
+                        gridTemplateColumns={GRID_COLUMNS}
+                        emptyMessage="Select a folder from the left to browse it's content"
+                        onNearEnd={source.loadMore}
+                     />
+                     {errorFetching && <div className={classes.error}>Failed to load files. Please try again.</div>}
+                  </div>
+               </div>
+            )}
          </div>
       </div>
    );

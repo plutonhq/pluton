@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { readFile, writeFile } from 'fs/promises';
+import { PassThrough } from 'stream';
 import {
 	getBackupPlanStats,
 	getSnapshotByTag,
@@ -12,6 +13,10 @@ import { configService } from '../services/ConfigService';
 import { SnapShotFile } from '../types/restic';
 import { appPaths } from '../utils/AppPaths';
 import { jobQueue } from '../jobs/JobQueue';
+import { SnapshotIndexError, snapshotIndexService } from '../services/SnapshotIndexService';
+import { killProcessTree, KillableProcess } from '../utils/processTree';
+
+const SNAPSHOT_LIST_STALL_TIMEOUT = 10 * 60 * 1000;
 
 export class BaseSnapshotManager extends EventEmitter {
 	private downloadHandler: DownloadHandler;
@@ -236,6 +241,45 @@ export class BaseSnapshotManager extends EventEmitter {
 			console.log('getSnapshotFiles error :', error);
 			return { success: false, result: error?.message || 'Failed to get snapshot files' };
 		}
+	}
+
+	async listSnapshotFiles(
+		backupId: string,
+		options: { storagePath: string; storageName: string; encryption: boolean; buildId: string }
+	): Promise<{ success: boolean; result: any }> {
+		const { success, result } = await getSnapshotByTag('backup-' + backupId, options);
+		if (!success || typeof result === 'string') {
+			throw new SnapshotIndexError('snapshot_not_found', 'Snapshot not found');
+		}
+		const { storageName, storagePath, encryption, buildId } = options;
+		const repoPath = generateResticRepoPath(storageName, storagePath || '');
+		const resticEnv = { RESTIC_PASSWORD: encryption ? configService.config.ENCRYPTION_KEY : '' };
+
+		// .pipe ends the sink on any exit code, so ingest waits for the producer.
+		const sink = new PassThrough();
+		let restic: KillableProcess | undefined;
+		sink.once('error', () => {
+			if (restic) {
+				killProcessTree(restic, 'SIGTERM');
+			}
+		});
+		await snapshotIndexService.ingest(buildId, sink, {
+			origin: 'local',
+			snapshotId: result.id,
+			producer: () =>
+				runResticCommand(
+					['ls', '-r', repoPath, result.id, '--json', '--long'],
+					resticEnv,
+					undefined,
+					undefined,
+					undefined,
+					process => {
+						restic = process;
+					},
+					{ stdout: sink, stallTimeout: SNAPSHOT_LIST_STALL_TIMEOUT }
+				),
+		});
+		return { success: true, result: result.id };
 	}
 
 	async retryFailedReplication(

@@ -3,7 +3,8 @@
 	"bin": "dist/pkg-index.cjs",
 	"pkg": {
 		"scripts": [
-			"dist/pkg-index.cjs"
+			"dist/pkg-index.cjs",
+			"dist/snapshot-index-worker.cjs"
 		],
 		"assets": [
 			"public/**/*",

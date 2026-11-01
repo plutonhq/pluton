@@ -1,3 +1,5 @@
+import { FileItem } from './system';
+
 export interface BackupCompletionStats {
    files_new: number;
    files_changed: number;
@@ -105,4 +107,33 @@ export interface BackupProgressData {
    events: BackupProgressEvent[];
    duration?: number;
    mirrors?: Record<string, ReplicationProgressData>;
+}
+
+export interface SnapshotIndexStats {
+   entries: number;
+   files: number;
+   dirs: number;
+   bytes: number;
+}
+
+export type SnapshotIndexStatus =
+   | { state: 'none' }
+   | { state: 'unsupported' }
+   | { state: 'building'; stage: 'queued' | 'listing' | 'transferring' | 'indexing'; entries: number; total?: number }
+   | { state: 'ready'; snapshotId: string; builtAt: number; stats: SnapshotIndexStats }
+   | { state: 'failed'; code: string; error: string };
+
+export type SnapshotIndexRow = FileItem & { dirBytes?: number; hasSubdirs?: boolean };
+
+export interface SnapshotIndexDir {
+   path: string;
+   subDirs: number;
+   items: number;
+   bytes: number;
+}
+
+export interface SnapshotIndexSelection {
+   selected: { items: number; bytes: number };
+   total: { items: number; bytes: number };
+   normalized: { includes: string[]; excludes: string[] };
 }

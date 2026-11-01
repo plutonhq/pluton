@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { Fragment, ReactNode } from 'react';
 import Icon from '../Icon/Icon';
 import classes from './SnapshotBrowser.module.scss';
 
@@ -14,6 +14,13 @@ interface SnapshotBrowserDirectoriesProps {
    renderDirectoryExtra?: (dir: string) => ReactNode;
    /** Custom function to split a path into parts. Defaults to splitting by / and \ */
    splitPath?: (path: string) => string[];
+   /** Count for the header when the list holds only part of the directories. */
+   totalDirectories?: number;
+   emptyMessage?: string;
+   /** Maps a directory to the parents that show a load-more row after it. */
+   loadMoreAfter?: Map<string, string[]>;
+   onLoadMore?: (parent: string) => void;
+   isLoadingMore?: boolean;
 }
 
 const defaultSplitPath = (path: string) => path.split(/[/\\]/).filter(Boolean);
@@ -29,17 +36,24 @@ const SnapshotBrowserDirectories = ({
    hasSubdirectories,
    renderDirectoryExtra,
    splitPath: splitPathFn = defaultSplitPath,
+   totalDirectories,
+   emptyMessage,
+   loadMoreAfter,
+   onLoadMore,
+   isLoadingMore,
 }: SnapshotBrowserDirectoriesProps) => {
    return (
       <div className={`${classes.sidebar} styled__scrollbar`}>
          <div className={classes.sidebarHeader}>
             <h4>
-               Directories ({directories.length}
-               {useProgressiveLoading && '+'})
+               Directories ({totalDirectories ?? directories.length}
+               {totalDirectories === undefined && useProgressiveLoading && '+'})
             </h4>
          </div>
          {directories.length === 0 && (
-            <div className={classes.noDirectories}>{useProgressiveLoading ? 'Loading directories...' : 'No directories found'}</div>
+            <div className={classes.noDirectories}>
+               {emptyMessage || (useProgressiveLoading ? 'Loading directories...' : 'No directories found')}
+            </div>
          )}
          {directories.map((dir) => {
             const parts = splitPathFn(dir);
@@ -51,30 +65,42 @@ const SnapshotBrowserDirectories = ({
             if (!isVisible(dir)) return null;
 
             return (
-               <div
-                  key={dir}
-                  className={`${classes.directory} ${selectedFolder === dir ? classes.selected : ''} ${hasChildren ? '' : classes.directoryEmpty}`}
-                  style={{ paddingLeft: `${depth * 20}px` }}
-                  onClick={() => onDirectoryClick(dir)}
-               >
-                  {hasChildren ? (
+               <Fragment key={dir}>
+                  <div
+                     className={`${classes.directory} ${selectedFolder === dir ? classes.selected : ''} ${hasChildren ? '' : classes.directoryEmpty}`}
+                     style={{ paddingLeft: `${depth * 20}px` }}
+                     onClick={() => onDirectoryClick(dir)}
+                  >
+                     {hasChildren ? (
+                        <button
+                           className={classes.toggleButton}
+                           onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleFolder(dir);
+                           }}
+                        >
+                           {isExpanded ? '-' : '+'}
+                        </button>
+                     ) : (
+                        <span className={classes.togglePlaceholder} />
+                     )}
+                     <span className={classes.dirName}>
+                        <Icon type={'fm-directory'} size={14} /> {dirName}
+                     </span>
+                     {renderDirectoryExtra?.(dir)}
+                  </div>
+                  {loadMoreAfter?.get(dir)?.map((parent) => (
                      <button
-                        className={classes.toggleButton}
-                        onClick={(e) => {
-                           e.stopPropagation();
-                           onToggleFolder(dir);
-                        }}
+                        key={parent}
+                        className={classes.loadMoreDirectories}
+                        style={{ paddingLeft: `${splitPathFn(parent).length * 20 + 16}px` }}
+                        disabled={isLoadingMore}
+                        onClick={() => onLoadMore?.(parent)}
                      >
-                        {isExpanded ? '-' : '+'}
+                        Load more folders
                      </button>
-                  ) : (
-                     <span className={classes.togglePlaceholder} />
-                  )}
-                  <span className={classes.dirName}>
-                     <Icon type={'fm-directory'} size={14} /> {dirName}
-                  </span>
-                  {renderDirectoryExtra?.(dir)}
-               </div>
+                  ))}
+               </Fragment>
             );
          })}
       </div>

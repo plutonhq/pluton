@@ -6,7 +6,7 @@ import RestoreSettingsStep from './RestoreSettingsStep';
 import RestorePreviewStep from './RestorePreviewStep';
 import RestoreConfirmStep from './RestoreConfirmStep';
 import { RestoredFileItem, RestoredItemsStats, RestoreFileItem, RestoreSettings } from '../../../@types/restores';
-import { useGetSnapshotFiles } from '../../../services/backups';
+import { useGetSnapshotFiles, useSnapshotIndex } from '../../../services/backups';
 import RestoreFileSelectorStep from './RestoreFileSelectorStep';
 import { Backup, Plan } from '../../..';
 
@@ -31,18 +31,26 @@ const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close
       storageId: undefined,
    });
    const [restorePreview, setRestorePreview] = useState<{ stats: RestoredItemsStats | null; files: RestoredFileItem[] }>({ stats: null, files: [] });
-   const isFetching = useIsFetching();
+   const isFetching = useIsFetching({ predicate: (query) => !query.meta?.background });
    const isMutating = useIsMutating();
    const isLoading = isFetching > 0 || isMutating > 0;
-   const { data: snapshotData, error: snapShotError } = useGetSnapshotFiles({ backupId });
+   const target = { backupId, replicationId: restoreSettings.replicationId };
+   // The storage comes from step 1, so an earlier start could index the wrong one.
+   const { data: indexStatus } = useSnapshotIndex({ ...target, enabled: step >= 2 });
+   const useIndex = indexStatus?.state !== 'unsupported';
+   const { data: snapshotData, error: snapShotError } = useGetSnapshotFiles({ ...target, enabled: !useIndex });
    const files: RestoreFileItem[] = snapshotData?.result && Array.isArray(snapshotData.result) ? snapshotData.result : [];
 
    const snapShotsStats = useMemo(() => {
+      if (useIndex) {
+         const stats = indexStatus?.state === 'ready' ? indexStatus.stats : undefined;
+         return { total_files: stats?.entries ?? 0, total_bytes: stats?.bytes ?? 0 };
+      }
       return {
          total_files: files.length,
          total_bytes: files.reduce((acc, file) => acc + file.size, 0),
       };
-   }, [files]);
+   }, [files, useIndex, indexStatus]);
 
    return (
       <div className={classes.restoreWizard}>
@@ -102,6 +110,7 @@ const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close
                   settings={restoreSettings}
                   updateSettings={(settings) => setRestoreSettings(settings as RestoreSettings)}
                   files={files}
+                  source={useIndex ? target : undefined}
                   isLoading={isLoading}
                   errorFetching={snapShotError?.message || null}
                   currentStep={step}

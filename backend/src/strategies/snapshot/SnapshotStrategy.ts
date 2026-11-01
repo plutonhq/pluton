@@ -44,6 +44,17 @@ export interface SnapshotStrategy {
 			skipCache?: boolean;
 		}
 	): Promise<{ success: boolean; result: SnapShotFile[] | string }>;
+	listSnapshotFiles(
+		planId: string,
+		backupId: string,
+		options: {
+			storagePath: string;
+			storageName: string;
+			encryption: boolean;
+			buildId: string;
+			skipCache?: boolean;
+		}
+	): Promise<{ success: boolean; result: any }>;
 	retryFailedReplication(
 		planId: string,
 		backupId: string,

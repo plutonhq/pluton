@@ -18,6 +18,17 @@ import {
 import { BaseBackupManager } from '../managers';
 import { jobQueue } from '../jobs/JobQueue';
 import { SnapShotFile } from '../types/restic';
+import {
+	SnapshotIndexDirsQuery,
+	SnapshotIndexEntriesQuery,
+	SnapshotIndexStatus,
+} from '../types/snapshotIndex';
+import { snapshotIndexService } from './SnapshotIndexService';
+import {
+	listIndexDirs,
+	listIndexEntries,
+	resolveIndexSelection,
+} from '../utils/snapshotIndex/SnapshotIndexReader';
 import { Backup } from '../db/schema/backups';
 import { BackupMirror } from '../types/backups';
 import { PlanStats } from '../types/plans';
@@ -91,6 +102,7 @@ export class BackupService {
 		}
 
 		await this.backupStore.delete(backup.id);
+		await snapshotIndexService.clear(backup.id);
 
 		return removeResult;
 	}
@@ -219,31 +231,10 @@ export class BackupService {
 		}
 		const backupDevice = backup.sourceId ? backup.sourceId : 'main';
 		const backupMethod = backup.method;
-
-		// If replicationId is provided, browse from mirror storage
-		let effectiveStorageId = backup.storageId as string;
-		let effectiveStoragePath = backup.storagePath as string;
-		if (replicationId) {
-			//if replicationId is passed, its a replication storage ID, so find the storage path and name from the backup's mirrors
-			if (backup.mirrors && backup.mirrors.length > 0) {
-				const planReplicationStorage = backup.mirrors.find(s => s.replicationId === replicationId);
-				if (!planReplicationStorage) {
-					throw new NotFoundError('Replication Storage not found in Plan settings');
-				}
-			}
-			const mirrors = (backup.mirrors || []) as BackupMirror[];
-			const mirror = mirrors.find(m => m.replicationId === replicationId);
-			if (mirror) {
-				effectiveStorageId = mirror.storageId;
-				effectiveStoragePath = mirror.storagePath;
-			}
-		}
-		const storageName = await this.getStorageName(effectiveStorageId);
+		const storage = await this.resolveSnapshotStorage(backup, replicationId);
 		const strategy = this.getSnapshotStrategy(backupDevice, backupMethod);
 		const browseRes = await strategy.getSnapshotFiles(backup.planId as string, backup.id, {
-			storagePath: effectiveStoragePath || '',
-			storageName: storageName,
-			encryption: backup.encryption || false,
+			...storage,
 			skipCache: !!replicationId,
 		});
 		if (!browseRes.success || !browseRes.result || typeof browseRes.result === 'string') {
@@ -253,6 +244,109 @@ export class BackupService {
 			);
 		}
 		return browseRes.result;
+	}
+
+	/** A replicationId that is not in the mirrors is a 404, never the primary storage. */
+	protected async resolveSnapshotStorage(backup: Backup, replicationId?: string) {
+		let storageId = backup.storageId as string;
+		let storagePath = backup.storagePath as string;
+		if (replicationId) {
+			const mirrors = (backup.mirrors || []) as BackupMirror[];
+			const mirror = mirrors.find(m => m.replicationId === replicationId);
+			if (!mirror) {
+				throw new NotFoundError('Replication Storage not found in Plan settings');
+			}
+			storageId = mirror.storageId;
+			storagePath = mirror.storagePath;
+		}
+		return {
+			storageName: await this.getStorageName(storageId),
+			storagePath: storagePath || '',
+			encryption: backup.encryption || false,
+		};
+	}
+
+	protected supportsSnapshotIndex(backup: Backup): boolean {
+		return true;
+	}
+
+	private async getBackupOrThrow(backupId: string): Promise<Backup> {
+		const backup = await this.backupStore.getById(backupId);
+		if (!backup) {
+			throw new NotFoundError('Backup not found');
+		}
+		return backup;
+	}
+
+	async startSnapshotIndex(backupId: string, replicationId?: string): Promise<SnapshotIndexStatus> {
+		const backup = await this.getBackupOrThrow(backupId);
+		if (!this.supportsSnapshotIndex(backup)) {
+			return { state: 'unsupported' };
+		}
+		const storage = await this.resolveSnapshotStorage(backup, replicationId);
+		const sourceId = backup.sourceId ? backup.sourceId : 'main';
+		const strategy = this.getSnapshotStrategy(sourceId, backup.method);
+		return snapshotIndexService.start({
+			backupId,
+			replicationId,
+			sourceId,
+			stillExists: async () => !!(await this.backupStore.getById(backupId)),
+			run: async buildId => {
+				const { success, result } = await strategy.listSnapshotFiles(
+					backup.planId as string,
+					backupId,
+					{ ...storage, buildId, skipCache: !!replicationId }
+				);
+				if (!success) {
+					throw new Error(typeof result === 'string' ? result : 'Could not list the snapshot');
+				}
+				return result;
+			},
+		});
+	}
+
+	async getSnapshotIndexStatus(
+		backupId: string,
+		replicationId?: string
+	): Promise<SnapshotIndexStatus> {
+		const backup = await this.getBackupOrThrow(backupId);
+		if (!this.supportsSnapshotIndex(backup)) {
+			return { state: 'unsupported' };
+		}
+		await this.resolveSnapshotStorage(backup, replicationId);
+		return snapshotIndexService.status(backupId, replicationId);
+	}
+
+	protected async getIndexFile(backupId: string, replicationId?: string): Promise<string> {
+		const backup = await this.getBackupOrThrow(backupId);
+		await this.resolveSnapshotStorage(backup, replicationId);
+		return snapshotIndexService.openIndexFile(backupId, replicationId);
+	}
+
+	async getSnapshotIndexEntries(
+		backupId: string,
+		replicationId: string | undefined,
+		query: SnapshotIndexEntriesQuery
+	) {
+		return listIndexEntries(await this.getIndexFile(backupId, replicationId), query);
+	}
+
+	async getSnapshotIndexDirs(
+		backupId: string,
+		replicationId: string | undefined,
+		query: SnapshotIndexDirsQuery
+	) {
+		return listIndexDirs(await this.getIndexFile(backupId, replicationId), query);
+	}
+
+	async getSnapshotIndexSelection(
+		backupId: string,
+		replicationId: string | undefined,
+		includes: string[],
+		excludes: string[]
+	) {
+		const file = await this.getIndexFile(backupId, replicationId);
+		return resolveIndexSelection(file, includes, excludes);
 	}
 
 	async updateBackup(backupId: string, data: Partial<Backup>): Promise<any> {

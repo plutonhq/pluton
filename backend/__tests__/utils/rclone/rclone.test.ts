@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { spawn } from 'child_process';
 import os from 'os';
+import { PassThrough } from 'stream';
 
 jest.mock('child_process');
 jest.mock('os');
@@ -361,6 +362,52 @@ describe('runRcloneCommand', () => {
 				RCLONE_CONFIG: '/custom/path/rclone.conf',
 				RCLONE_CONFIG_PASS: 'custom-password',
 			}),
+		});
+	});
+
+	describe('with a stdout stream', () => {
+		beforeEach(() => {
+			mockProcess.stdout = new PassThrough();
+			mockProcess.kill = jest.fn();
+		});
+
+		it('sends stdout to the stream, leaves it open, and resolves empty', async () => {
+			const sink = new PassThrough();
+			const chunks: string[] = [];
+			sink.on('data', chunk => chunks.push(chunk.toString()));
+			const onProcess = jest.fn();
+
+			const promise = runRcloneCommand(['lsjson', '/data'], undefined, { stdout: sink, onProcess });
+			mockProcess.stdout.write('[\n');
+			mockProcess.stdout.end(']\n');
+			await new Promise(resolve => setImmediate(resolve));
+			mockProcess.emit('close', 0);
+
+			await expect(promise).resolves.toBe('');
+			expect(chunks.join('')).toBe('[\n]\n');
+			expect(sink.writableEnded).toBe(false);
+			expect(onProcess).toHaveBeenCalledWith(mockProcess);
+		});
+
+		it('rejects when rclone cannot start', async () => {
+			const promise = runRcloneCommand(['lsjson', '/data'], undefined, { stdout: new PassThrough() });
+			mockProcess.emit('error', new Error('spawn failed'));
+			await expect(promise).rejects.toThrow('spawn failed');
+		});
+
+		it('stops rclone after a time with no output', async () => {
+			jest.useFakeTimers();
+			try {
+				const promise = runRcloneCommand(['lsjson', '/data'], undefined, {
+					stdout: new PassThrough(),
+					stallTimeoutMs: 60000,
+				});
+				jest.advanceTimersByTime(90000);
+				await expect(promise).rejects.toMatchObject({ stalled: true });
+				expect(mockProcess.kill).toHaveBeenCalled();
+			} finally {
+				jest.useRealTimers();
+			}
 		});
 	});
 });

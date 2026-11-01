@@ -3,6 +3,7 @@ import express, { Express } from 'express';
 import { createBackupRouter } from '../../src/routes/backups';
 import { BackupController } from '../../src/controllers/BackupController';
 import { BackupService } from '../../src/services/BackupServices';
+import { AppError } from '../../src/utils/AppError';
 import jwt from 'jsonwebtoken';
 import Cookies from 'cookies';
 
@@ -53,6 +54,11 @@ describe('Backup Routes', () => {
 			getBackupDownload: jest.fn(),
 			generateBackupDownload: jest.fn(),
 			cancelBackupDownload: jest.fn(),
+			startSnapshotIndex: jest.fn(),
+			getSnapshotIndexStatus: jest.fn(),
+			getSnapshotIndexEntries: jest.fn(),
+			getSnapshotIndexDirs: jest.fn(),
+			getSnapshotIndexSelection: jest.fn(),
 		} as any;
 
 		backupController = new BackupController(mockBackupService);
@@ -231,6 +237,154 @@ describe('Backup Routes', () => {
 
 			expect(response.status).toBe(200);
 			expect(mockBackupService.cancelBackupDownload).toHaveBeenCalledWith('plan-1', 'backup-1');
+		});
+	});
+
+	describe('Snapshot index routes', () => {
+		const ready = {
+			state: 'ready',
+			snapshotId: 'abc',
+			builtAt: 1000,
+			stats: { entries: 2, files: 1, dirs: 1, bytes: 5 },
+		};
+
+		it.each([
+			['post', '/api/backups/backup-1/index'],
+			['get', '/api/backups/backup-1/index/status'],
+			['get', '/api/backups/backup-1/index/entries'],
+			['get', '/api/backups/backup-1/index/dirs'],
+			['post', '/api/backups/backup-1/index/selection'],
+		] as const)('should return 401 for %s %s if not authenticated', async (method, url) => {
+			setupAuthMock(false);
+
+			const response = await request(app)[method](url);
+
+			expect(response.status).toBe(401);
+		});
+
+		it('should start the index for a mirror and wrap the status', async () => {
+			mockBackupService.startSnapshotIndex.mockResolvedValue({
+				state: 'building',
+				stage: 'queued',
+				entries: 0,
+			});
+
+			const response = await request(app).post('/api/backups/backup-1/index?replicationId=repl-1');
+
+			expect(response.status).toBe(200);
+			expect(response.body).toEqual({
+				success: true,
+				result: { state: 'building', stage: 'queued', entries: 0 },
+			});
+			expect(mockBackupService.startSnapshotIndex).toHaveBeenCalledWith('backup-1', 'repl-1');
+		});
+
+		it('should return the index status for primary storage', async () => {
+			mockBackupService.getSnapshotIndexStatus.mockResolvedValue(ready as any);
+
+			const response = await request(app).get('/api/backups/backup-1/index/status');
+
+			expect(response.body).toEqual({ success: true, result: ready });
+			expect(mockBackupService.getSnapshotIndexStatus).toHaveBeenCalledWith('backup-1', undefined);
+		});
+
+		it('should pass the entries query and wrap the page', async () => {
+			const page = { rows: [{ name: 'a.txt', path: '/data/a.txt' }], total: 1 };
+			mockBackupService.getSnapshotIndexEntries.mockResolvedValue(page as any);
+
+			const response = await request(app).get('/api/backups/backup-1/index/entries').query({
+				dir: '/data',
+				sort: 'size',
+				order: 'desc',
+				offset: 1000,
+				limit: 500,
+				q: 'report',
+				replicationId: 'repl-1',
+			});
+
+			expect(response.body).toEqual({ success: true, result: page });
+			expect(mockBackupService.getSnapshotIndexEntries).toHaveBeenCalledWith('backup-1', 'repl-1', {
+				dir: '/data',
+				sort: 'size',
+				order: 'desc',
+				offset: 1000,
+				limit: 500,
+				q: 'report',
+			});
+		});
+
+		it('should list the root when the entries query has no folder', async () => {
+			mockBackupService.getSnapshotIndexEntries.mockResolvedValue({ rows: [], total: 0 });
+
+			await request(app).get('/api/backups/backup-1/index/entries');
+
+			expect(mockBackupService.getSnapshotIndexEntries).toHaveBeenCalledWith('backup-1', undefined, {
+				dir: undefined,
+				sort: undefined,
+				order: undefined,
+				offset: 0,
+				limit: undefined,
+				q: undefined,
+			});
+		});
+
+		it('should pass the dirs query and wrap the page', async () => {
+			const page = { dirs: [{ path: '/data', subDirs: 2, items: 10, bytes: 50 }], total: 1 };
+			mockBackupService.getSnapshotIndexDirs.mockResolvedValue(page);
+
+			const response = await request(app)
+				.get('/api/backups/backup-1/index/dirs')
+				.query({ parent: '/', depth: 2, offset: 1000, limit: 1000 });
+
+			expect(response.body).toEqual({ success: true, result: page });
+			expect(mockBackupService.getSnapshotIndexDirs).toHaveBeenCalledWith('backup-1', undefined, {
+				parent: '/',
+				depth: 2,
+				offset: 1000,
+				limit: 1000,
+			});
+		});
+
+		it('should pass the selection lists', async () => {
+			const result = {
+				selected: { items: 1, bytes: 5 },
+				total: { items: 2, bytes: 5 },
+				normalized: { includes: ['/data/a.txt'], excludes: [] },
+			};
+			mockBackupService.getSnapshotIndexSelection.mockResolvedValue(result);
+
+			const response = await request(app)
+				.post('/api/backups/backup-1/index/selection')
+				.send({ includes: ['/data/a.txt'], excludes: ['/'] });
+
+			expect(response.body).toEqual({ success: true, result });
+			expect(mockBackupService.getSnapshotIndexSelection).toHaveBeenCalledWith(
+				'backup-1',
+				undefined,
+				['/data/a.txt'],
+				['/']
+			);
+		});
+
+		it('should return 400 if a selection list is missing', async () => {
+			const response = await request(app)
+				.post('/api/backups/backup-1/index/selection')
+				.send({ includes: [] });
+
+			expect(response.status).toBe(400);
+			expect(mockBackupService.getSnapshotIndexSelection).not.toHaveBeenCalled();
+		});
+
+		it.each([
+			['/entries', 'getSnapshotIndexEntries'],
+			['/dirs', 'getSnapshotIndexDirs'],
+		] as const)('should return 409 index_not_ready from %s', async (path, method) => {
+			mockBackupService[method].mockRejectedValue(new AppError(409, 'index_not_ready'));
+
+			const response = await request(app).get(`/api/backups/backup-1/index${path}`);
+
+			expect(response.status).toBe(409);
+			expect(response.body).toEqual({ success: false, error: 'index_not_ready' });
 		});
 	});
 });

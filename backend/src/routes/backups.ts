@@ -9,6 +9,15 @@ export function createBackupRouter(
 	router.delete('/:id', authM, controller.deleteBackup.bind(controller));
 	router.post('/:id/', authM, controller.updateBackup.bind(controller));
 	router.get('/:id/files', authM, controller.getSnapshotFiles.bind(controller));
+	router.post('/:id/index', authM, controller.startSnapshotIndex.bind(controller));
+	router.get('/:id/index/status', authM, controller.getSnapshotIndexStatus.bind(controller));
+	router.get('/:id/index/entries', authM, controller.getSnapshotIndexEntries.bind(controller));
+	router.get('/:id/index/dirs', authM, controller.getSnapshotIndexDirs.bind(controller));
+	router.post(
+		'/:id/index/selection',
+		authM,
+		controller.getSnapshotIndexSelection.bind(controller)
+	);
 	router.get('/:id/progress', authM, controller.getBackupProgress.bind(controller));
 	router.post('/:id/action/cancel', authM, controller.cancelBackup.bind(controller));
 	router.get('/:id/action/download', authM, controller.getBackupDownload.bind(controller));

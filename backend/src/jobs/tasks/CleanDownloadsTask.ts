@@ -24,10 +24,16 @@ export class CleanDownloadsTask extends Task {
 				const files = await readdir(dir);
 				for (const file of files) {
 					const filePath = path.join(dir, file);
-					const fileStat = await stat(filePath);
+					try {
+						const fileStat = await stat(filePath);
 
-					if (now - fileStat.mtime.getTime() > ninetySixHours) {
-						await rm(filePath, { recursive: true, force: true });
+						if (now - fileStat.mtime.getTime() > ninetySixHours) {
+							await rm(filePath, { recursive: true, force: true });
+						}
+					} catch (error: any) {
+						if (error.code !== 'ENOENT') {
+							cronLogger.error(`Error cleaning file: ${filePath}`);
+						}
 					}
 				}
 			} catch (error: any) {

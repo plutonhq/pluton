@@ -141,7 +141,7 @@ export { default as SnapshotBrowserDirectories } from './common/SnapshotBrowser/
 export { default as SnapshotBrowserFileList } from './common/SnapshotBrowser/SnapshotBrowserFileList';
 export { default as SnapshotBrowserFileRow } from './common/SnapshotBrowser/SnapshotBrowserFileRow';
 export { default as SnapshotBrowserGoUpRow } from './common/SnapshotBrowser/SnapshotBrowserGoUpRow';
+export { default as SnapshotIndexProgress } from './common/SnapshotBrowser/SnapshotIndexProgress';
 export { useSnapshotSort } from './common/SnapshotBrowser/hooks/useSnapshotSort';
 export { useSnapshotNavigation } from './common/SnapshotBrowser/hooks/useSnapshotNavigation';
-export { useSnapshotDatabase } from './common/SnapshotBrowser/hooks/useSnapshotDatabase';
 // export { default as SnapshotBrowserStyles } from './common/SnapshotBrowser/SnapshotBrowser.module.scss';

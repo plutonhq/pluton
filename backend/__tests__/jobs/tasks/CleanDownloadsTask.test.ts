@@ -208,6 +208,30 @@ describe('CleanDownloadsTask', () => {
 			expect(mockCronLogger.error).not.toHaveBeenCalled();
 		});
 
+		it('continues with the next file when one delete fails', async () => {
+			mockAppPaths.getCacheDir.mockReturnValue('/cache');
+			mockReaddir.mockImplementation(async (dir: string) =>
+				dir === '/cache' ? ['locked', 'old'] : []
+			);
+			mockStat.mockResolvedValue({ mtime: new Date(Date.now() - 100 * 60 * 60 * 1000) });
+			mockRm.mockRejectedValueOnce(new Error('in use')).mockResolvedValue(undefined);
+
+			const job: Job = {
+				id: 'job-1',
+				name: 'CleanDownloads',
+				payload: {},
+				attempts: 0,
+				maxAttempts: 3,
+				retryDelay: 60000,
+				lastAttempt: 0,
+			};
+
+			await cleanTask.run(job);
+
+			expect(mockRm).toHaveBeenCalledTimes(2);
+			expect(mockCronLogger.error).toHaveBeenCalledTimes(1);
+		});
+
 		it('logs other errors during cleaning', async () => {
 			const error = new Error('Permission denied');
 			mockReaddir.mockRejectedValue(error);

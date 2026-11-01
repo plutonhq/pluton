@@ -1,5 +1,4 @@
-import { useState, useCallback, useRef, ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useCallback, useEffect, useMemo, useRef, ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 import Icon from '../../common/Icon/Icon';
@@ -8,21 +7,21 @@ import Select from '../../common/form/Select/Select';
 import ActionModal from '../../common/ActionModal/ActionModal';
 import { Backup, BackupMirror } from '../../../@types/backups';
 import { useRestoreBackup } from '../../../services/restores';
-import { useBrowseSnapshot } from '../../../services/backups';
+import { useSnapshotEntries } from '../../../services/backups';
 import { FileItem } from '../../../@types/system';
 import { isMobile, formatBytes, timeAgo } from '../../../utils/helpers';
 import SnapshotBrowserToolbar from '../../common/SnapshotBrowser/SnapshotBrowserToolbar';
 import SnapshotBrowserDirectories from '../../common/SnapshotBrowser/SnapshotBrowserDirectories';
 import SnapshotBrowserFileList from '../../common/SnapshotBrowser/SnapshotBrowserFileList';
+import SnapshotIndexProgress from '../../common/SnapshotBrowser/SnapshotIndexProgress';
 import SnapshotViewerFile from './SnapshotViewerFile';
-import { useSnapshotDatabase } from '../../common/SnapshotBrowser/hooks/useSnapshotDatabase';
+import { useSnapshotIndexTree } from '../../common/SnapshotBrowser/hooks/useSnapshotIndexTree';
 import { useSnapshotNavigation } from '../../common/SnapshotBrowser/hooks/useSnapshotNavigation';
 import { useSnapshotSort } from '../../common/SnapshotBrowser/hooks/useSnapshotSort';
 import classes from '../../common/SnapshotBrowser/SnapshotBrowser.module.scss';
 import Upgrade from '../../Upgrade/Upgrade';
 
 interface SnapshotViewerProps {
-   files: FileItem[];
    backup: Backup;
    planId: string;
    isSync?: boolean;
@@ -46,9 +45,10 @@ interface SnapshotViewerProps {
 const isMobileDevice = isMobile();
 const GRID_COLUMNS = '1fr 120px minmax(100px, auto) 120px';
 const GRID_COLUMNS_SYNC = '1fr 120px minmax(100px, auto)';
+const SEARCH_DELAY = 300;
+const GO_UP_ROW = { isGoUp: true, path: '..', name: '..', isDirectory: true } as any;
 
 const SnapshotViewer = ({
-   files,
    backup,
    planId,
    isSync = false,
@@ -65,25 +65,20 @@ const SnapshotViewer = ({
    onStorageChange,
 }: SnapshotViewerProps) => {
    const [search, setSearch] = useState('');
+   const [indexSearch, setIndexSearch] = useState('');
    const [showRestoreModal, setShowRestoreModal] = useState<FileItem | false>(false);
    const [selectedReplicationId, setSelectedReplicationId] = useState<string | undefined>(replicationId);
-   const [currentFiles, setCurrentFiles] = useState<FileItem[]>(files);
    const [showUpgrade, setShowUpgrade] = useState<boolean>(false);
    const fileListRef = useRef<HTMLDivElement | null>(null);
    const navigate = useNavigate();
 
    const backupId = backup.id;
    const restoreMutation = useRestoreBackup();
-   const browseSnapshotMutation = useBrowseSnapshot();
-   const useProgressiveLoading = currentFiles.length > 1000;
 
-   const { db, initError, discoveredDirectories, expandedFolders, setExpandedFolders, addDirectoriesSorted } = useSnapshotDatabase(
-      currentFiles,
-      backupId,
-      useProgressiveLoading,
-   );
+   const indexTree = useSnapshotIndexTree({ backupId, replicationId: selectedReplicationId });
+   const { status: indexStatus, builtAt, restartIndex, discoveredDirectories, expandedFolders, setExpandedFolders } = indexTree;
 
-   const { selectedFolder, handleGoUp, handleDirectoryClick, toggleFolder, isVisible, hasSubdirectories } = useSnapshotNavigation(
+   const { selectedFolder, setSelectedFolder, handleGoUp, handleDirectoryClick, toggleFolder, isVisible } = useSnapshotNavigation(
       discoveredDirectories,
       expandedFolders,
       setExpandedFolders,
@@ -91,27 +86,13 @@ const SnapshotViewer = ({
 
    const { sortField, sortDirection, handleSort } = useSnapshotSort();
 
-   // Handle storage change - re-browse from selected mirror
    const handleStorageChange = useCallback(
       (replicationIdValue?: string) => {
          setSelectedReplicationId(replicationIdValue);
          onStorageChange?.(replicationIdValue);
-         if (replicationIdValue) {
-            browseSnapshotMutation.mutate(
-               { backupId: backup.id, replicationId: replicationIdValue },
-               {
-                  onSuccess: (data: any) => {
-                     if (data?.result) {
-                        setCurrentFiles(data.result);
-                     }
-                  },
-               },
-            );
-         } else {
-            setCurrentFiles(files);
-         }
+         setSelectedFolder('');
       },
-      [backup.id, files, browseSnapshotMutation, onStorageChange],
+      [onStorageChange, setSelectedFolder],
    );
 
    // Build storage selector for toolbar
@@ -131,39 +112,41 @@ const SnapshotViewer = ({
          ]}
          fieldValue={selectedReplicationId || 'primary'}
          onUpdate={(value) => handleStorageChange(value === 'primary' ? undefined : value)}
-         disabled={browseSnapshotMutation.isPending}
       />
    ) : undefined;
 
-   // Directory contents query
-   const directoryContentsQuery = useQuery({
-      queryKey: ['directoryContents', selectedFolder, sortField, sortDirection, search, backupId],
-      queryFn: async () => {
-         if (!db || selectedFolder === null) return [];
+   useEffect(() => {
+      const timer = setTimeout(() => setIndexSearch(search.trim()), SEARCH_DELAY);
+      return () => clearTimeout(timer);
+   }, [search]);
 
-         const contents = await db.getDirectoryContents(selectedFolder, sortField, sortDirection, search);
-
-         if (useProgressiveLoading) {
-            const subdirs = await db.getSubdirectories(selectedFolder);
-            if (subdirs.length > 0) {
-               addDirectoriesSorted(subdirs);
-            }
-         }
-
-         if (selectedFolder) {
-            return [{ isGoUp: true, path: '..', name: '..', isDirectory: true } as any, ...contents];
-         }
-
-         return contents;
-      },
-      enabled: !!db && selectedFolder !== null,
-      staleTime: 30000,
-      retry: 1,
+   const entriesQuery = useSnapshotEntries({
+      backupId,
+      replicationId: selectedReplicationId,
+      builtAt,
+      dir: selectedFolder,
+      sort: sortField,
+      order: sortDirection,
+      q: indexSearch,
+      enabled: builtAt !== undefined,
    });
+   const { data: entriesData, error: entriesError, hasNextPage, isFetchingNextPage, fetchNextPage } = entriesQuery;
 
-   const currentDirectoryFiles = directoryContentsQuery.data || [];
-   const isInitializing = !db && !initError;
-   const isDirectoryLoading = directoryContentsQuery.isPending;
+   useEffect(() => {
+      if (entriesError?.message === 'index_not_ready') restartIndex();
+   }, [entriesError, restartIndex]);
+
+   const currentDirectoryFiles = useMemo(() => {
+      const rows = entriesData?.pages.flatMap((page) => page.rows) ?? [];
+      return selectedFolder ? [GO_UP_ROW, ...rows] : rows;
+   }, [entriesData, selectedFolder]);
+
+   const loadMoreEntries = useCallback(() => {
+      if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+   const isDirectoryLoading = entriesQuery.isFetching;
+   const showIndexProgress = indexStatus?.state !== 'ready';
 
    // Restore handler
    const restoreFile = (path: string) => {
@@ -223,33 +206,6 @@ const SnapshotViewer = ({
       [currentDirectoryFiles, isSync, gridColumns, handleGoUp, handleDirectoryClick, renderFileActions, hideRestore],
    );
 
-   // Error state
-   if (initError) {
-      return (
-         <div className={classes.snapshotBrowser}>
-            <div className={classes.errorState}>
-               <Icon type="error" size={24} />
-               <p>Failed to initialize database</p>
-               <small>{initError}</small>
-               <button onClick={() => window.location.reload()}>Reload Page</button>
-            </div>
-         </div>
-      );
-   }
-
-   // Loading state
-   if (isInitializing) {
-      return (
-         <div className={classes.snapshotBrowser}>
-            <div className={classes.loadingState}>
-               <Icon type="loading" size={24} />
-               <p>Indexing snapshot data...</p>
-               <small>Building efficient database for {files.length.toLocaleString()} files</small>
-            </div>
-         </div>
-      );
-   }
-
    const defaultToolbarLeft = (
       <div className={classes.stats}>
          <Icon type="box" />
@@ -262,7 +218,7 @@ const SnapshotViewer = ({
          <SnapshotBrowserToolbar
             search={search}
             onSearchChange={setSearch}
-            isLoading={isDirectoryLoading || isExternalLoading || browseSnapshotMutation.isPending}
+            isLoading={isDirectoryLoading || isExternalLoading}
             leftContent={toolbarLeftContent || defaultToolbarLeft}
             rightContent={
                <>
@@ -272,7 +228,11 @@ const SnapshotViewer = ({
             }
          />
 
-         {isExternalLoading || browseSnapshotMutation.isPending ? (
+         {showIndexProgress ? (
+            <div className={`${classes.browserContent} ${classes.loadingState}`}>
+               <SnapshotIndexProgress status={indexStatus} error={indexTree.statusError} onRetry={() => restartIndex()} />
+            </div>
+         ) : isExternalLoading ? (
             <div className={`${classes.browserContent} ${classes.loadingState}`}>
                <div>
                   <Icon type="loading" size={16} /> Loading...
@@ -284,11 +244,16 @@ const SnapshotViewer = ({
                   directories={discoveredDirectories}
                   selectedFolder={selectedFolder}
                   expandedFolders={expandedFolders}
-                  useProgressiveLoading={useProgressiveLoading}
+                  useProgressiveLoading={indexTree.isLoadingDirectories}
                   onDirectoryClick={handleDirectoryClick}
                   onToggleFolder={toggleFolder}
                   isVisible={isVisible}
-                  hasSubdirectories={hasSubdirectories}
+                  hasSubdirectories={indexTree.hasSubdirectories}
+                  totalDirectories={indexStatus?.state === 'ready' ? indexStatus.stats.dirs : undefined}
+                  emptyMessage={indexTree.directoriesError?.message}
+                  loadMoreAfter={indexTree.loadMoreAfter}
+                  onLoadMore={indexTree.loadMoreDirectories}
+                  isLoadingMore={indexTree.isLoadingDirectories}
                />
 
                <div className={`${classes.content} styled__scrollbar`} ref={fileListRef}>
@@ -313,7 +278,9 @@ const SnapshotViewer = ({
                      renderRow={renderFileRow}
                      selectedFolder={selectedFolder}
                      isLoading={isDirectoryLoading}
+                     error={!entriesData ? entriesError?.message : undefined}
                      gridTemplateColumns={gridColumns}
+                     onNearEnd={loadMoreEntries}
                   />
                </div>
             </div>

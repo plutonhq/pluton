@@ -13,6 +13,11 @@ jest.mock('../src/notifications/templateLoader', () => ({
 	loadBackupTemplate: jest.fn().mockReturnValue('<div>Backup template</div>'),
 }));
 
+// import.meta does not work under Jest
+jest.mock('../src/utils/snapshotIndex/workerLocator', () => ({
+	getSnapshotIndexWorker: jest.fn(),
+}));
+
 beforeAll(() => {
 	console.log('--- JEST SETUP FILE IS RUNNING ---');
 	//initialize logger

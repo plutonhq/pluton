@@ -59,7 +59,7 @@ const RestoreConfirmStep = ({ backupId, planId, settings, stats, snapshotsStats,
                      {restoreStats ? (
                         <strong>
                            {restoreStats?.files_restored}
-                           {!isSync ? `/${snapshotsStats.total_files} files` : ''}
+                           {!isSync && snapshotsStats.total_files > 0 ? `/${snapshotsStats.total_files} files` : ''}
                         </strong>
                      ) : (
                         `The content of the Backup (${backupId}) `

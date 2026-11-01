@@ -107,6 +107,14 @@ export class BackupStore {
 		return result.changes > 0;
 	}
 
+	async getIdsByPlanId(planId: string): Promise<string[]> {
+		const rows = await this.db.query.backups.findMany({
+			where: eq(backups.planId, planId),
+			columns: { id: true },
+		});
+		return rows.map(row => row.id);
+	}
+
 	async deleteByPlanId(id: string): Promise<boolean> {
 		const result = await this.db.delete(backups).where(eq(backups.planId, id));
 		return result.changes > 0;

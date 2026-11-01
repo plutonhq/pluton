@@ -8,6 +8,10 @@ import { NewPlanReq, PlanBackupSettings } from '../../src/types/plans';
 import { initializeLogger } from '../../src/utils/logger';
 
 // Mock the dependencies using Jest's mocking factory
+const mockClearIndex = jest.fn();
+jest.mock('../../src/services/SnapshotIndexService', () => ({
+	snapshotIndexService: { clear: (id: string) => mockClearIndex(id) },
+}));
 jest.mock('../../src/stores/PlanStore');
 jest.mock('../../src/stores/StorageStore');
 jest.mock('../../src/stores/DeviceStore');
@@ -49,6 +53,7 @@ describe('PlanService', () => {
 		mockLocalAgent = new BaseBackupManager() as jest.Mocked<BaseBackupManager>;
 
 		mockBackupStore.deleteByPlanId = jest.fn();
+		mockBackupStore.getIdsByPlanId = jest.fn().mockResolvedValue(['backup-1', 'backup-2']);
 		mockRestoreStore.deleteByPlanId = jest.fn();
 
 		// The service instantiates the strategy, so we need to mock its constructor and methods
@@ -533,6 +538,8 @@ describe('PlanService', () => {
 				replicationStorages: [],
 			});
 			expect(mockBackupStore.deleteByPlanId).toHaveBeenCalledWith(planId);
+			expect(mockClearIndex).toHaveBeenCalledWith('backup-1');
+			expect(mockClearIndex).toHaveBeenCalledWith('backup-2');
 			expect(mockPlanStore.delete).toHaveBeenCalledWith(planId);
 			expect(result).toEqual({ deleted: true, unremovedPaths: [], unremovedReason: '' });
 		});

@@ -22,6 +22,7 @@ jest.mock('../../../src/utils/restic/restic', () => ({
 }));
 
 jest.mock('../../../src/utils/restic/helpers', () => ({
+	escapeResticPattern: (value: string) => value,
 	generateResticRepoPath: (...args: any[]) => mockGenerateResticRepoPath(...args),
 	resticPathToWindows: (...args: any[]) => mockResticPathToWindows(...args),
 }));
