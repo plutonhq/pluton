@@ -7,6 +7,15 @@ import { runCommand } from '../runCommand';
 import { getBinaryPath } from '../binaryPathResolver';
 import { getInstallType } from '../installHelpers';
 
+// A flag or a connection string can make rclone run a command, such as
+// :sftp,ssh="cmd": or remote,ssh="cmd":.
+const RCLONE_UNSAFE_PATH = /^(-|:|[^/\\:,]*,)/;
+
+/** True for a local path or remote:path. */
+export function isSafeRclonePath(value: string) {
+	return !RCLONE_UNSAFE_PATH.test(value);
+}
+
 export interface RcloneAuthSession {
 	id: string;
 	storageType: string;

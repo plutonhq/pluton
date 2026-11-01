@@ -29,6 +29,7 @@ import { DeviceStore } from '../stores/DeviceStore';
 import { BackupStrategy } from '../strategies/backup';
 import { appPaths } from '../utils/AppPaths';
 import { AppError, NotFoundError } from '../utils/AppError';
+import { isSafeRclonePath } from '../utils/rclone/helpers';
 import { SourceTypes } from '../types/source';
 import { sanitizeStoragePath } from '../utils/sanitizeStoragePath';
 import { BackupNotification } from '../notifications/BackupNotification';
@@ -138,6 +139,9 @@ export class PlanService {
 				...sourceConfig,
 				includes: [await this.bakeStorageSourcePath(sourceConfig?.includes?.[0], sourceId)],
 			};
+		}
+		if (planSourceConfig?.includes?.some(item => !isSafeRclonePath(item))) {
+			throw new AppError(400, 'A source path cannot be a flag or a connection string.');
 		}
 
 		// Fetch the device early so we can use its OS for cross-platform path sanitization.
@@ -290,6 +294,9 @@ export class PlanService {
 						: currentPlan.sourceConfig.includes,
 				};
 			}
+		}
+		if (parsedPlanData.sourceConfig?.includes?.some(item => !isSafeRclonePath(item))) {
+			throw new AppError(400, 'A source path cannot be a flag or a connection string.');
 		}
 
 		const updatedPlan = await this.planStore.update(planId, parsedPlanData as Partial<Plan>);

@@ -106,6 +106,22 @@ describe('PlanService', () => {
 			} as PlanBackupSettings, // Using 'as any' for brevity in example
 		};
 
+		it('should refuse a source that rclone reads as a connection string', async () => {
+			mockStorageStore.getById.mockResolvedValue({
+				id: 'storage-123',
+				name: 'Test Storage',
+				type: 'local',
+			} as any);
+
+			await expect(
+				planService.createPlan({
+					...planData,
+					sourceConfig: { includes: [':sftp,ssh="cmd":'], excludes: [] },
+				})
+			).rejects.toMatchObject({ statusCode: 400 });
+			expect(mockPlanStore.create).not.toHaveBeenCalled();
+		});
+
 		it('should throw a Zod validation error if required fields are missing', async () => {
 			// Arrange: Create plan data that is intentionally invalid
 			const invalidPlanData = {
@@ -304,6 +320,19 @@ describe('PlanService', () => {
 			);
 		});
 
+		it('keeps a comma in the path of a storage source', async () => {
+			await planService.createPlan({
+				...storagePlanData,
+				sourceConfig: { includes: ['some,path'], excludes: [] },
+			});
+
+			expect(mockPlanStore.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					sourceConfig: expect.objectContaining({ includes: ['SourceRemote:some,path'] }),
+				})
+			);
+		});
+
 		it('does not look up a source device', async () => {
 			await planService.createPlan(storagePlanData);
 
@@ -346,6 +375,17 @@ describe('PlanService', () => {
 				interval: { type: 'weekly', days: 'sun', time: '02:00PM' },
 			},
 		};
+
+		it('should refuse a source that rclone reads as a connection string', async () => {
+			mockPlanStore.getById.mockResolvedValue(currentPlan);
+
+			await expect(
+				planService.updatePlan(planId, {
+					sourceConfig: { includes: ['remote,ssh="cmd":'], excludes: [] },
+				} as any)
+			).rejects.toMatchObject({ statusCode: 400 });
+			expect(mockPlanStore.update).not.toHaveBeenCalled();
+		});
 
 		it('should successfully update a plan and its schedule', async () => {
 			// Arrange

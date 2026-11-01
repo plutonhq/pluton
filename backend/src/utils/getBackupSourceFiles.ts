@@ -1,6 +1,8 @@
 import { RcloneLsJsonOutput } from '../types/rclone';
 import { runRcloneCommand } from './rclone/rclone';
+import { isSafeRclonePath } from './rclone/helpers';
 import { parseRcloneFilesList } from './rclone/parsers';
+import { AppError } from './AppError';
 import { SnapShotFile } from '../types/restic';
 
 async function getBackupSourceFiles(
@@ -15,6 +17,9 @@ async function getBackupSourceFiles(
 
 	for (const srcPath of sourcePaths) {
 		try {
+			if (!isSafeRclonePath(srcPath)) {
+				throw new AppError(400, `Invalid source path: ${srcPath}`);
+			}
 			const currentFilesOutput = await runRcloneCommand([
 				`lsjson`,
 				`${srcPath}`,

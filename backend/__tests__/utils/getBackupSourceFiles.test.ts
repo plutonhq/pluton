@@ -401,6 +401,13 @@ describe('getBackupSourceFiles', () => {
 	});
 
 	describe('error handling', () => {
+		it('should not pass a connection string to rclone', async () => {
+			const result = await getBackupSourceFiles([':sftp,host=x,ssh="cmd":']);
+
+			expect(result.success).toBe(false);
+			expect(mockRunRcloneCommand).not.toHaveBeenCalled();
+		});
+
 		it('should return error when rclone command fails', async () => {
 			mockRunRcloneCommand.mockRejectedValue(new Error('rclone failed'));
 

@@ -5,6 +5,7 @@ import { appPaths } from '../../../src/utils/AppPaths';
 import {
 	encryptRcloneConfig,
 	getRcloneConfigPath,
+	isSafeRclonePath,
 	spawnRcloneAuthorize,
 	RcloneAuthSession,
 } from '../../../src/utils/rclone/helpers';
@@ -19,6 +20,28 @@ jest.mock('../../../src/utils/binaryPathResolver');
 jest.mock('../../../src/utils/installHelpers');
 
 describe('rclone helpers', () => {
+	describe('isSafeRclonePath', () => {
+		it.each([
+			'/home/a,b',
+			'C:\\data\\a,b',
+			'\\\\server\\a,b',
+			'/:sftp,ssh="cmd":',
+			'remote:a,b/c',
+			'my remote:path',
+		])('should allow %s', value => {
+			expect(isSafeRclonePath(value)).toBe(true);
+		});
+
+		it.each([
+			':sftp,host=x,ssh="cmd":',
+			'remote,ssh="cmd":',
+			'remote,ssh="/bin/sh":',
+			'--sftp-ssh=cmd',
+		])('should refuse %s', value => {
+			expect(isSafeRclonePath(value)).toBe(false);
+		});
+	});
+
 	describe('getRcloneConfigPath', () => {
 		let originalGetConfigDir: any;
 
