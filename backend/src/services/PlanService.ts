@@ -363,7 +363,7 @@ export class PlanService {
 			storageName:
 				storageName === 'Local' || storageName === 'Local Storage' ? 'local' : storageName,
 			storagePath: plan.storagePath || '',
-			encryption: plan.settings.encryption || true,
+			encryption: plan.settings.encryption ?? true,
 			removeRemoteData,
 			replicationStorages,
 		};

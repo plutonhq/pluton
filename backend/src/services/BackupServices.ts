@@ -69,7 +69,7 @@ export class BackupService {
 		const removeResult = await strategy.removeSnapshot(backup.planId as string, backupId, {
 			storageName,
 			storagePath: backup.storagePath || '',
-			encryption: backup.encryption || true,
+			encryption: backup.encryption ?? true,
 			mirrors: backup.mirrors || [],
 		});
 
@@ -154,7 +154,7 @@ export class BackupService {
 		const downloadResult = await strategy.downloadSnapshot(backup.planId as string, backupId, '', {
 			storageName,
 			storagePath: effectiveStoragePath,
-			encryption: backup.encryption || true,
+			encryption: backup.encryption ?? true,
 		});
 		if (!downloadResult.success) {
 			throw new Error(downloadResult.result || 'Failed to generate Download Link');
@@ -262,7 +262,7 @@ export class BackupService {
 		return {
 			storageName: await this.getStorageName(storageId),
 			storagePath: storagePath || '',
-			encryption: backup.encryption || false,
+			encryption: backup.encryption ?? true,
 		};
 	}
 

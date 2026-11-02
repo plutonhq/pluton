@@ -204,6 +204,22 @@ describe('RestoreService', () => {
 			);
 		});
 
+		it('should keep encryption false for an unencrypted backup', async () => {
+			mockBackupStore.getById.mockResolvedValue({ ...mockBackup, encryption: false });
+			mockRestoreStore.isRestoreRunning.mockResolvedValue(false);
+			mockPlanStore.getById.mockResolvedValue({ id: 'plan-1', settings: {} } as any);
+			mockStorageStore.getById.mockResolvedValue(mockStorage);
+			mockRestoreStrategy.getRestoreSnapshotStats.mockResolvedValue({ success: true, result: {} });
+
+			await restoreService.dryRestoreBackup(backupId, restoreConfig as any);
+
+			expect(mockRestoreStrategy.getRestoreSnapshotStats).toHaveBeenCalledWith(
+				mockBackup.planId,
+				backupId,
+				expect.objectContaining({ encryption: false })
+			);
+		});
+
 		it('should throw an error if backup is not found', async () => {
 			// Arrange
 			mockBackupStore.getById.mockResolvedValue(null);
@@ -284,6 +300,22 @@ describe('RestoreService', () => {
 				mockBackup.planId,
 				backupId,
 				expect.objectContaining({ extra })
+			);
+		});
+
+		it('should keep encryption false for an unencrypted backup', async () => {
+			mockBackupStore.getById.mockResolvedValue({ ...mockBackup, encryption: false });
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockRestoreStore.isRestoreRunning.mockResolvedValue(false);
+			mockStorageStore.getById.mockResolvedValue(mockStorage);
+			mockRestoreStrategy.restoreSnapshot.mockResolvedValue({ success: true, result: 'ok' });
+
+			await restoreService.restoreBackup(backupId, restoreConfig as any);
+
+			expect(mockRestoreStrategy.restoreSnapshot).toHaveBeenCalledWith(
+				mockBackup.planId,
+				backupId,
+				expect.objectContaining({ encryption: false })
 			);
 		});
 
