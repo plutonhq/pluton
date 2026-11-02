@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.21.1](https://github.com/plutonhq/pluton/compare/pluton-v0.21.0...pluton-v0.21.1) (2026-10-28)
+
+
+### Bug Fixes
+
+* resolves mail.ru integration issue ([bec95bf](https://github.com/plutonhq/pluton/commit/bec95bfebcaf07277af7970d96eaf9b4b96682a5))
+* resolves oracle switf storage integration issue ([1a3f37d](https://github.com/plutonhq/pluton/commit/1a3f37d90fa9334829ebfd2270672c1a9cc13489))
+* resolves storing storage credentials in db as plain-text for some fields ([7f83daa](https://github.com/plutonhq/pluton/commit/7f83daacb9a6c3fb5aae3c36b7397b957febbf9c)), closes [#134](https://github.com/plutonhq/pluton/issues/134)
+
 ## [0.21.0](https://github.com/plutonhq/pluton/compare/pluton-v0.20.0...pluton-v0.21.0) (2026-10-20)
 
 
