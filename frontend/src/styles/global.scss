@@ -369,3 +369,8 @@ i.pipe {
       --container-width: 100%;
    }
 }
+
+// Hide Tanstack Dev UI Button
+.tsqd-parent-container {
+   display: none;
+}
