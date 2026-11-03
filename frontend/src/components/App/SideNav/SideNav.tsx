@@ -12,9 +12,9 @@ const SideNav = () => {
    const logoutMutation = useLogout();
 
    return (
-      <div className={classes.navMenu} tabIndex={-1}>
+      <div className={classes.sideNavInner} tabIndex={-1}>
          <div className={classes.logo}>
-            <Logo size={30} color="#fff" />
+            <Logo size={30} />
          </div>
          <nav className={classes.navMenu}>
             <NavLink to="/" end aria-label="Backup Plans">
@@ -73,19 +73,19 @@ const SideNav = () => {
                   </span>
                )}
             </NavLink>
-            <a onClick={() => setShowLogoutModal(true)} aria-label="Logout">
-               <span
-                  className={classes.navMenuLabel}
-                  data-tooltip-id="appTooltip"
-                  data-tooltip-content="Logout"
-                  data-tooltip-place="left"
-                  data-tooltip-delay-show={500}
-                  data-tooltip-hidden={isMobile()}
-               >
-                  <Icon type="logout" size={30} />
-               </span>
-            </a>
          </nav>
+         <button className={classes.logoutButton} onClick={() => setShowLogoutModal(true)} aria-label="Logout">
+            <span
+               className={classes.navMenuLabel}
+               data-tooltip-id="appTooltip"
+               data-tooltip-content="Logout"
+               data-tooltip-place="left"
+               data-tooltip-delay-show={500}
+               data-tooltip-hidden={isMobile()}
+            >
+               <Icon type="logout" size={30} />
+            </span>
+         </button>
          {showLogoutModal && (
             <Modal title="Logout" closeModal={() => setShowLogoutModal(false)} width="300px">
                <p>Are you sure you want to Logout?</p>
