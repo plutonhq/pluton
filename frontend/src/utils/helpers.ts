@@ -570,19 +570,19 @@ export const proViewableFileFormats = Object.values(proViewFileFormatObj).flat()
 
 export const getBackupIconName = (method: string, sourceType?: string): string => {
    if (method === 'sync' && sourceType === 'storage') {
-      return 'storage-sync';
+      return 'plan-storage';
    }
    if (method === 'sync') {
-      return 'sync';
+      return 'plan-sync';
    }
    if (method === 'rescue') {
-      return 'rescue';
+      return 'plan-rescue';
    }
    if (method === 'vm') {
-      return 'vm-backup';
+      return 'plan-vm';
    }
    if (method === 'database') {
-      return 'database';
+      return 'plan-database';
    }
-   return 'backup';
+   return 'plan-backup';
 };

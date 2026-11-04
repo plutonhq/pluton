@@ -37,6 +37,7 @@ const PlanStrategySettings = ({ plan, options = [], disabled = false, onUpdate }
                disabled={disabled}
                showDescription={true}
                layout="list"
+               customClasses={classes.planStrategySelect}
             />
          </div>
          {showUpgrade && <Upgrade focus={showUpgrade} onClose={() => setShowUpgrade(false)} />}

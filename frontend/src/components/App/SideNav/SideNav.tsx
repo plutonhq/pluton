@@ -14,7 +14,9 @@ const SideNav = () => {
    return (
       <div className={classes.sideNavInner} tabIndex={-1}>
          <div className={classes.logo}>
-            <Logo size={30} />
+            <NavLink to="/" end aria-label="Backup Plans">
+               <Logo size={30} />
+            </NavLink>
          </div>
          <nav className={classes.navMenu}>
             <NavLink to="/" end aria-label="Backup Plans">
@@ -27,7 +29,7 @@ const SideNav = () => {
                      data-tooltip-delay-show={500}
                      data-tooltip-hidden={isMobile()}
                   >
-                     <Icon type="plans" size={30} />
+                     <Icon type="plans" size={28} />
                   </span>
                )}
             </NavLink>
@@ -41,7 +43,7 @@ const SideNav = () => {
                      data-tooltip-delay-show={500}
                      data-tooltip-hidden={isMobile()}
                   >
-                     <Icon type="storages" size={26} />
+                     <Icon type="storages" size={24} />
                   </span>
                )}
             </NavLink>
@@ -55,7 +57,7 @@ const SideNav = () => {
                      data-tooltip-delay-show={500}
                      data-tooltip-hidden={isMobile()}
                   >
-                     <Icon type="sources" size={26} />
+                     <Icon type="sources" size={22} />
                   </span>
                )}
             </NavLink>
@@ -69,7 +71,7 @@ const SideNav = () => {
                      data-tooltip-delay-show={500}
                      data-tooltip-hidden={isMobile()}
                   >
-                     <Icon type="settings" size={30} />
+                     <Icon type="settings" size={24} />
                   </span>
                )}
             </NavLink>
@@ -83,7 +85,7 @@ const SideNav = () => {
                data-tooltip-delay-show={500}
                data-tooltip-hidden={isMobile()}
             >
-               <Icon type="logout" size={30} />
+               <Icon type="logout" size={24} />
             </span>
          </button>
          {showLogoutModal && (

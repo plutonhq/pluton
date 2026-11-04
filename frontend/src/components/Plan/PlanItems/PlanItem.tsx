@@ -118,7 +118,12 @@ const PlanItem = ({ plan, layout = 'list' }: PlanItemProps) => {
       >
          <div className={classes.leftContent}>
             <div className={`${classes.status} ${!isActive ? classes.paused : ''}  ${inProgress ? classes.inProgress : ''}`}>
-               {inProgress ? <Icon type="loading" size={28} /> : <Icon type={getBackupIconName(method, plan.sourceType)} size={28} />}
+               {inProgress && (
+                  <span className={classes.inProgressIcon}>
+                     <Icon type="loading" size={14} />
+                  </span>
+               )}
+               <Icon type={getBackupIconName(method, plan.sourceType)} size={24} />
             </div>
 
             <div className={classes.content}>

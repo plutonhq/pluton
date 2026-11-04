@@ -189,27 +189,27 @@ const PlanForm = ({
                         options={[
                            {
                               value: 'backup',
-                              icon: 'backup',
+                              icon: 'plan-backup',
                               label: 'Incremental Backup',
                               description: 'Periodically create Incremental backup snapshots of source',
                            },
                            {
                               value: 'sync',
-                              icon: 'sync',
+                              icon: 'plan-sync',
                               label: 'Real-time Sync',
                               description: 'Maintain identical source (with revisions)',
                               disabled: true,
                            },
                            {
                               value: 'storage-sync',
-                              icon: 'storage-sync',
+                              icon: 'plan-storage',
                               label: 'Storage Sync',
                               description: 'Sync one cloud storage to another cloud storage',
                               disabled: true,
                            },
                            {
                               value: 'rescue',
-                              icon: 'rescue',
+                              icon: 'plan-rescue',
                               label: 'Linux Server Backup',
                               description: 'Full Linux system backups with bootable ISO image',
                               disabled: true,

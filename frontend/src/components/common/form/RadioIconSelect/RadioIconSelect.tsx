@@ -11,6 +11,7 @@ interface RadioIconSelectProps {
    showDescription?: boolean;
    hint?: string;
    inline?: boolean;
+   customClasses?: string;
    onUpdate: (type: string) => void;
    onDisableClick?: (value: string) => void;
 }
@@ -24,13 +25,14 @@ const RadioIconSelect = ({
    hint,
    inline = false,
    layout = 'grid',
+   customClasses,
    onUpdate,
    onDisableClick,
 }: RadioIconSelectProps) => {
    return (
       <FormField type="radioIconSelect" label={label} classes={classes.radioIconField} hint={hint} inline={inline}>
          <div
-            className={`${classes.radioIconFieldOptions} ${disabled ? classes.radioIconFieldOptionsDisabled : ''} ${showDescription ? classes.radioIconFieldOptionsDesc : ''} ${layout === 'list' ? classes.radioIconFieldList : ''}`}
+            className={`${classes.radioIconFieldOptions} ${disabled ? classes.radioIconFieldOptionsDisabled : ''} ${showDescription ? classes.radioIconFieldOptionsDesc : ''} ${layout === 'list' ? classes.radioIconFieldList : ''} ${customClasses || ''}`}
          >
             {options.map((option) => {
                const { label, value, icon, description, disabled = false } = option;

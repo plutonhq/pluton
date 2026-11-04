@@ -210,6 +210,12 @@
    }
 }
 
+.planStrategySelect {
+   div[class*='_radioIconFieldIcon'] {
+      color: var(--plan-icon-color);
+   }
+}
+
 .advancedTabContent {
    padding-left: 15px;
    min-height: 500px;

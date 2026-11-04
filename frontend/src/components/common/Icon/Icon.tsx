@@ -116,7 +116,7 @@ const Icon = ({ type, color = 'currentColor', size = 16, title = '', classes = '
                ></path>
             </IconWrapper>
          )}
-         {type === 'storages' && (
+         {/* {type === 'storages' && (
             <IconWrapper size={size} viewBox="0 0 48 48">
                <g fill="none">
                   <path stroke={color} strokeLinejoin="round" strokeWidth={4} d="M44 29H4v13h40z"></path>
@@ -131,6 +131,37 @@ const Icon = ({ type, color = 'currentColor', size = 16, title = '', classes = '
                   ></path>
                   <path stroke={color} strokeWidth={4} d="M20 23h8"></path>
                </g>
+            </IconWrapper>
+         )} */}
+         {type === 'storages' && (
+            <IconWrapper size={size} viewBox="0 0 22.38 20.18">
+               <path
+                  d="M13,3H10.06c-2,0-2.95,0-3.71.52S5.22,5,4.49,6.77L2.43,11.93A6,6,0,0,0,2.06,13,5.65,5.65,0,0,0,2,14.16V15c0,2.83,0,4.24.88,5.12S5.17,21,8,21h8c2.83,0,4.24,0,5.12-.88S22,17.83,22,15v-.84A6.76,6.76,0,0,0,22,13a7.22,7.22,0,0,0-.38-1.08L21.2,11"
+                  transform="translate(-1.25 -1.57)"
+                  fill="none"
+                  stroke={color}
+                  strokeLinecap="round"
+                  strokeWidth="1.5"
+               />
+               <path
+                  d="M2.5,13H5.59a4.1,4.1,0,0,1,1.13.08,1.94,1.94,0,0,1,.42.17A4.26,4.26,0,0,1,8,14a4.26,4.26,0,0,0,.86.75,1.94,1.94,0,0,0,.42.17,4.1,4.1,0,0,0,1.13.08h3.18a4.1,4.1,0,0,0,1.13-.08,1.94,1.94,0,0,0,.42-.17A4.26,4.26,0,0,0,16,14a4.26,4.26,0,0,1,.86-.75,1.94,1.94,0,0,1,.42-.17A4.1,4.1,0,0,1,18.41,13H21.5"
+                  transform="translate(-1.25 -1.57)"
+                  fill="none"
+                  stroke={color}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+               />
+               <path
+                  d="M15.54,5a2,2,0,0,0-2.1,1.83c0,1.3,1.1,1.83,2.47,1.83h.67M20.79,5c1.1,0,2.09.51,2.09,1.83s-1.1,1.83-2.47,1.83h-.68M20.79,5a2.49,2.49,0,0,0-2.63-2.63A2.47,2.47,0,0,0,15.54,5"
+                  transform="translate(-1.25 -1.57)"
+                  fill="none"
+                  stroke={color}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+               />
+               <path d="M19.4,17.33a1.5,1.5,0,1,1-1.5-1.5A1.5,1.5,0,0,1,19.4,17.33Z" transform="translate(-1.25 -1.57)" fill={color} />
             </IconWrapper>
          )}
          {type === 'mirrors' && (
@@ -156,91 +187,15 @@ const Icon = ({ type, color = 'currentColor', size = 16, title = '', classes = '
             </IconWrapper>
          )}
          {type === 'sources' && (
-            <IconWrapper size={size} viewBox="0 0 430 502">
-               <circle cx="215" cy="55" r="40" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={30} />
-               <circle cx="375" cy="155" r="40" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={30} />
-               <circle cx="55" cy="155" r="40" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={30} />
-               <circle cx="215" cy="251" r="40" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={30} />
-               <circle cx="375" cy="347" r="40" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={30} />
-               <circle cx="55" cy="347" r="40" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={30} />
-               <circle cx="215" cy="447" r="40" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={30} />
-               <line
-                  x1="88.92"
-                  y1="133.8"
-                  x2="181.08"
-                  y2="76.2"
-                  fill="none"
-                  stroke={color}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={30}
+            <IconWrapper size={size} viewBox="0 0 20.64 20.67">
+               <path
+                  d="M18.41,10.49l.28-.64a4.88,4.88,0,0,1,2.49-2.53L22,6.94a.6.6,0,0,0,0-1.08l-.81-.36A4.88,4.88,0,0,1,18.7,2.88l-.29-.69a.57.57,0,0,0-.74-.31.57.57,0,0,0-.32.31l-.28.69A4.91,4.91,0,0,1,14.54,5.5l-.81.36a.6.6,0,0,0,0,1.08l.85.38a4.94,4.94,0,0,1,2.5,2.53l.28.64a.56.56,0,0,0,.74.3.57.57,0,0,0,.31-.3"
+                  transform="translate(-1.87 -1.72)"
+                  fill={color}
                />
-               <line
-                  x1="248.92"
-                  y1="76.2"
-                  x2="341.08"
-                  y2="133.8"
-                  fill="none"
-                  stroke={color}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={30}
-               />
-               <line
-                  x1="181.08"
-                  y1="229.8"
-                  x2="88.92"
-                  y2="176.2"
-                  fill="none"
-                  stroke={color}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={30}
-               />
-               <line
-                  x1="341.08"
-                  y1="176.2"
-                  x2="248.92"
-                  y2="229.8"
-                  fill="none"
-                  stroke={color}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={30}
-               />
-               <line
-                  x1="248.92"
-                  y1="272.2"
-                  x2="341.08"
-                  y2="325.8"
-                  fill="none"
-                  stroke={color}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={30}
-               />
-               <line
-                  x1="181.08"
-                  y1="425.8"
-                  x2="88.92"
-                  y2="368.2"
-                  fill="none"
-                  stroke={color}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={30}
-               />
-               <line
-                  x1="88.92"
-                  y1="325.8"
-                  x2="181.08"
-                  y2="272.2"
-                  fill="none"
-                  stroke={color}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={30}
-               />
+               <circle cx="4.62" cy="4.62" r="3.87" fill="none" stroke={color} strokeMiterlimit="10" strokeWidth="1.5" />
+               <circle cx="16.02" cy="16.04" r="3.87" fill="none" stroke={color} strokeMiterlimit="10" strokeWidth="1.5" />
+               <rect x="0.86" y="12.24" width="7.61" height="7.61" rx="1.06" fill="none" stroke={color} strokeMiterlimit="10" strokeWidth="1.5" />
             </IconWrapper>
          )}
          {type === 'link' && (
@@ -1595,6 +1550,112 @@ const Icon = ({ type, color = 'currentColor', size = 16, title = '', classes = '
                <path
                   fill={color}
                   d="M7 21q-2.075 0-3.537-1.463T2 16q0-1.4.675-2.537t1.8-1.788q.525-.3 1.025.013t.5.862q0 .275-.112.5t-.313.325q-.7.375-1.137 1.075T4 16q0 1.25.875 2.125T7 19t2.125-.875T10 16q0-.425.238-.712T10.9 15h4.975q.2-.225.488-.363T17 14.5q.625 0 1.063.438T18.5 16t-.437 1.063T17 17.5q-.35 0-.638-.137T15.876 17H11.9q-.35 1.725-1.713 2.863T7 21m0-3.5q-.625 0-1.062-.437T5.5 16q0-.55.35-.95t.85-.525l2.35-3.9q-.725-.675-1.138-1.612T7.5 7q0-2.075 1.463-3.537T12.5 2q1.75 0 3.088 1.063T17.35 5.75q.125.475-.175.863t-.8.387q-.325 0-.612-.238t-.388-.587q-.275-.95-1.05-1.562T12.5 4q-1.25 0-2.125.875T9.5 7q0 .825.413 1.513T10.974 9.6q.35.2.438.5t-.088.6l-2.9 4.85q.05.125.063.225T8.5 16q0 .625-.437 1.063T7 17.5M17 21q-.65 0-1.263-.162T14.6 20.4q-.675-.375-.537-1.137t1.012-.763q.125 0 .275.05t.275.125q.325.175.663.25T17 19q1.25 0 2.125-.875T20 16t-.875-2.125T17 13q-.25 0-.475.038t-.45.112q-.4.125-.75.013t-.525-.388l-2.575-4.3q-.525-.1-.875-.5T11 7q0-.625.438-1.062T12.5 5.5t1.063.438T14 7v.213q0 .087-.05.212l2.175 3.65q.2-.05.425-.062T17 11q2.075 0 3.538 1.463T22 16t-1.463 3.538T17 21"
+               />
+            </IconWrapper>
+         )}
+         {type === 'plan-backup' && (
+            <IconWrapper size={size} viewBox="0 0 427.11 320.57">
+               <path
+                  fill={color}
+                  d="M108.8,268.22a64,64,0,0,1,56-32.79l240.36.13.19-.13v-22.1a56.57,56.57,0,0,0-64-64h-128l-42.66-42.66h-64a56.57,56.57,0,0,0-64,64v224h.12a31.46,31.46,0,0,1,4-15.21Z"
+                  transform="translate(-42.1 -106.09)"
+               />
+               <path
+                  fill={color}
+                  opacity="0.4"
+                  d="M452.84,239.61a31.88,31.88,0,0,0-15.51-4H405l-240.36-.15a64,64,0,0,0-55.87,32.79L46.93,379.31A31.48,31.48,0,0,0,43,394.52a32,32,0,0,0,31.68,32.15H244.79V358.83H199.57L256.1,291l56.52,67.83H267.4v67.84h80a64,64,0,0,0,55.94-32.77L465.17,283A31.87,31.87,0,0,0,452.84,239.61Z"
+                  transform="translate(-42.1 -106.09)"
+               />
+            </IconWrapper>
+         )}
+         {type === 'plan-sync' && (
+            <IconWrapper size={size} viewBox="0 0 427.11 320.57">
+               <path
+                  fill={color}
+                  d="M108.8,268.22a64,64,0,0,1,56-32.79l240.36.13.19-.13v-22.1a56.57,56.57,0,0,0-64-64h-128l-42.66-42.66h-64a56.57,56.57,0,0,0-64,64v224h.12a31.46,31.46,0,0,1,4-15.21Z"
+                  transform="translate(-42.1 -106.09)"
+               />
+               <path
+                  fill={color}
+                  opacity="0.4"
+                  d="M452.84,239.61a31.88,31.88,0,0,0-15.51-4H405l-240.36-.15a64,64,0,0,0-55.87,32.79L46.93,379.31A31.48,31.48,0,0,0,43,394.52a32,32,0,0,0,31.68,32.15h272.7a64,64,0,0,0,55.94-32.77L465.17,283A31.87,31.87,0,0,0,452.84,239.61ZM317.73,342.73a62.73,62.73,0,0,1-105,33.67l-9,9a6.07,6.07,0,0,1-10.37-4.29v-33.9a6.07,6.07,0,0,1,6.07-6.07h33.91a6.07,6.07,0,0,1,4.29,10.36l-10.56,10.56a42.51,42.51,0,0,0,70.23-20.63,3,3,0,0,1,2.94-2.32h14.5A3,3,0,0,1,317.73,342.73Zm1.09-27.87a6.07,6.07,0,0,1-6.07,6.07H278.84a6.07,6.07,0,0,1-4.29-10.36L285.11,300a42.5,42.5,0,0,0-70.22,20.63,3,3,0,0,1-2.95,2.32H197.45a3,3,0,0,1-3-3.59,62.73,62.73,0,0,1,105-33.67l9-9A6.07,6.07,0,0,1,318.82,281Z"
+                  transform="translate(-42.1 -106.09)"
+               />
+            </IconWrapper>
+         )}
+         {type === 'plan-storage' && (
+            <IconWrapper size={size} viewBox="0 0 383.33 318.31">
+               <path
+                  fill={color}
+                  stroke="#fff"
+                  d="M320.64,161.92A138.66,138.66,0,1,0,111,338.75c15.14,16.38,37.44,25.45,62.81,30.34a87.11,87.11,0,1,1,161,3.91c2.24.09,4.42.19,6.54.33C495.22,368.48,472.65,137.09,320.64,161.92Z"
+                  transform="translate(-63.44 -95.5)"
+                  strokeMiterlimit="10"
+                  opacity="0.4"
+               />
+               <path
+                  fill={color}
+                  d="M263.65,300.78h.07a38.31,38.31,0,0,1,29.75,29.75,39,39,0,0,1,0,15.42A38.28,38.28,0,0,1,283,365.29l10.82,10.81a53.52,53.52,0,0,0-27.05-90.29c-1.05-.21-2.11-.33-3.15-.48V261.77l-30.6,30.59,30.6,30.6Zm-57,58.3a54,54,0,0,0,4.94,9.11,52.52,52.52,0,0,0,6.53,7.9,53.44,53.44,0,0,0,17,11.48,52.26,52.26,0,0,0,10.06,3.12c1.27.26,2.58.43,3.88.6v22.52l30.59-30.6-30.59-30.59V375.8c-.27-.05-.55,0-.82-.09a38.24,38.24,0,0,1-19.37-64.43l.06-.06-10.81-10.83a53.56,53.56,0,0,0-11.48,58.69"
+                  transform="translate(-63.44 -95.5)"
+               />
+            </IconWrapper>
+         )}
+         {type === 'plan-rescue' && (
+            <IconWrapper size={size} viewBox="0 0 386.78 368.86">
+               <path
+                  d="M448,173V118.45a41,41,0,0,0,0-13.62c-4.41-26.36-33.07-44.68-64-40.91H128a65.72,65.72,0,0,0-16,0c-30.94,3.76-52.43,28.17-48,54.53V173a41,41,0,0,0,0,13.62c4.41,26.35,33.07,44.67,64,40.91H384a66.74,66.74,0,0,0,16,0C430.92,223.75,452.41,199.34,448,173Zm-236.67-1.76H117.44a22.22,22.22,0,0,1,0-44.44h93.89a22.22,22.22,0,1,1,0,44.44Z"
+                  transform="translate(-63.43 -63.43)"
+                  fill={color}
+                  opacity="0.4"
+               />
+               <path
+                  d="M413.67,149a21.34,21.34,0,1,1-21.34-21.33A21.33,21.33,0,0,1,413.67,149Zm-85.34-21.33A21.33,21.33,0,1,0,349.67,149,21.33,21.33,0,0,0,328.33,127.67Z"
+                  transform="translate(-63.43 -63.43)"
+                  fill={color}
+               />
+
+               <path
+                  d="M449.63,377.27V322.73a40.91,40.91,0,0,0,0-13.61c-4.41-26.36-33.07-44.68-64-40.92h-256a66.74,66.74,0,0,0-16,0c-30.94,3.76-52.43,28.18-48,54.53v54.54a40.91,40.91,0,0,0,0,13.61c4.41,26.36,33.07,44.68,64,40.92h256a66.74,66.74,0,0,0,16,0C432.55,428,454,403.62,449.63,377.27ZM213,375.51H119.07a22.23,22.23,0,0,1,0-44.45H213a22.23,22.23,0,1,1,0,44.45Z"
+                  transform="translate(-63.43 -63.43)"
+                  fill={color}
+                  opacity="0.4"
+               />
+               <path
+                  d="M415.3,353.29A21.34,21.34,0,1,1,394,332,21.33,21.33,0,0,1,415.3,353.29ZM330,332a21.34,21.34,0,1,0,21.34,21.34A21.34,21.34,0,0,0,330,332Z"
+                  transform="translate(-63.43 -63.43)"
+                  fill={color}
+               />
+            </IconWrapper>
+         )}
+         {type === 'plan-database' && (
+            <IconWrapper size={size} viewBox="0 0 24 24">
+               <g fill={color}>
+                  <path
+                     d="m20 10.05v1.95c0 2.21-3.58 4-8 4s-8-1.79-8-4v-1.95c1.66 1.5 4.56 2.45 8 2.45s6.35-.95 8-2.45zm-8 7.45c-3.44 0-6.34-.95-8-2.45v1.95c0 2.21 3.58 4 8 4s8-1.79 8-4v-1.95c-1.65 1.5-4.56 2.45-8 2.45z"
+                     opacity=".4"
+                  />
+                  <ellipse cx="12" cy="7" rx="8" ry="4" />
+               </g>
+            </IconWrapper>
+         )}
+         {type === 'plan-vm' && (
+            <IconWrapper size={size} viewBox="0 0 384 382.39">
+               <path
+                  d="M202.24,237.87A91.48,91.48,0,0,0,218.67,243V446.08a55.9,55.9,0,0,1-10-3.63l-128-57a64,64,0,0,1-38-58.45V185A62.7,62.7,0,0,1,45,168.11Z"
+                  transform="translate(-42.67 -63.95)"
+                  fill={color}
+                  opacity="0.4"
+               />
+               <path
+                  d="M254.29,208.43a48.42,48.42,0,0,1-39.25,0L61.23,140a62,62,0,0,1,19.41-13.44l128-57a63.25,63.25,0,0,1,52.05,0l128,57A62,62,0,0,1,408.11,140Z"
+                  transform="translate(-42.67 -63.95)"
+                  fill={color}
+               />
+               <path
+                  d="M426.67,185.22V327.3a64,64,0,0,1-38,58.45l-128,57a56.58,56.58,0,0,1-10,3.63V243.24a111.11,111.11,0,0,0,16.42-5.12l50.35-22.4,32-14.08,74.88-33.28a63.24,63.24,0,0,1,2.35,16.86Z"
+                  transform="translate(-42.67 -63.95)"
+                  fill={color}
+                  opacity="0.4"
                />
             </IconWrapper>
          )}

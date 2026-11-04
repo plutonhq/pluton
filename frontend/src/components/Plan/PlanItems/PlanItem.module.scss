@@ -36,11 +36,23 @@
       margin-right: 10px;
       margin-left: 5px;
       position: relative;
-      color: var(--success-label);
+      color: var(--plan-icon-color);
       &.paused,
       &.inProgress {
          color: var(--icon-color);
       }
+   }
+
+   .inProgressIcon {
+      position: absolute;
+      background: var(--content-background-color);
+      padding: 0px;
+      border-radius: 50%;
+      z-index: 1;
+      width: 16px;
+      height: 16px;
+      bottom: -3px;
+      left: -8px;
    }
 
    .statusPaused {
