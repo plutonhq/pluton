@@ -255,6 +255,19 @@ const Icon = ({ type, color = 'currentColor', size = 16, title = '', classes = '
             </IconWrapper>
          )}
 
+         {type === 'table' && (
+            <IconWrapper size={size} viewBox="0 0 24 24">
+               <path
+                  fill="none"
+                  stroke={color}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m-1 6h16M4 15h16M10 10v10"
+               ></path>
+            </IconWrapper>
+         )}
+
          {type === 'computer-remote' && (
             <IconWrapper size={size} viewBox="0 0 24 24">
                <path
@@ -1628,14 +1641,14 @@ const Icon = ({ type, color = 'currentColor', size = 16, title = '', classes = '
             </IconWrapper>
          )}
          {type === 'plan-database' && (
-            <IconWrapper size={size} viewBox="0 0 24 24">
-               <g fill={color}>
-                  <path
-                     d="m20 10.05v1.95c0 2.21-3.58 4-8 4s-8-1.79-8-4v-1.95c1.66 1.5 4.56 2.45 8 2.45s6.35-.95 8-2.45zm-8 7.45c-3.44 0-6.34-.95-8-2.45v1.95c0 2.21 3.58 4 8 4s8-1.79 8-4v-1.95c-1.65 1.5-4.56 2.45-8 2.45z"
-                     opacity=".4"
-                  />
-                  <ellipse cx="12" cy="7" rx="8" ry="4" />
-               </g>
+            <IconWrapper size={size} viewBox="0 0 383.78 431.75">
+               <path
+                  d="M447.89,209.23V256c0,53-85.87,95.94-191.89,95.94S64.11,309,64.11,256V209.23C103.93,245.21,173.49,268,256,268S408.31,245.21,447.89,209.23ZM256,387.92c-82.51,0-152.07-22.78-191.89-58.76v46.77c0,53,85.87,95.94,191.89,95.94s191.89-42.93,191.89-95.94V329.16C408.31,365.14,338.51,387.92,256,387.92Z"
+                  transform="translate(-64.11 -40.13)"
+                  fill={color}
+                  opacity="0.4"
+               />
+               <ellipse cx="191.89" cy="95.94" rx="191.89" ry="95.94" fill={color} />
             </IconWrapper>
          )}
          {type === 'plan-vm' && (

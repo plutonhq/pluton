@@ -1,10 +1,9 @@
 import Icon from '../../common/Icon/Icon';
 import classes from './DeviceItem.module.scss';
-import { NavLink, useNavigate } from 'react-router';
+import { NavLink } from 'react-router';
 import { Device } from '../../../@types/devices';
-import { useState } from 'react';
 import { getOSIcon } from '../../../utils/helpers';
-import EditDevice from '../EditDevice/EditDevice';
+import DeviceActions from './DeviceActions';
 
 interface DeviceItemProps {
    device: Device;
@@ -12,9 +11,6 @@ interface DeviceItemProps {
 }
 
 const DeviceItem = ({ device, layout }: DeviceItemProps) => {
-   const [showSettings, setShowSettings] = useState(false);
-   const [showEditModal, setShowEditModal] = useState(false);
-   const navigate = useNavigate();
    const { id, versions, name, isRemote, plans = [], os = 'linux', type, status, connected } = device;
    const { agent: agentVersion } = versions || {};
    const isPlutonServer = id === 'main';
@@ -63,32 +59,8 @@ const DeviceItem = ({ device, layout }: DeviceItemProps) => {
                   <Icon type="logo" size={13} /> <i>{agentVersion ? 'v' + agentVersion : 'latest'}</i>
                </div>
             )}
-            <button className={`${classes.moreBtn} ${showSettings ? classes.moreBtnActive : ''}`} onClick={() => setShowSettings(!showSettings)}>
-               <Icon type="dots-vertical" size={14} />
-            </button>
-            {showSettings && (
-               <div className={classes.settings}>
-                  <button
-                     onClick={() => {
-                        setShowEditModal(true);
-                        setShowSettings(false);
-                     }}
-                  >
-                     <Icon type="edit-settings" size={14} /> Edit
-                  </button>
-                  <button
-                     onClick={() => {
-                        setShowSettings(false);
-                        navigate(`/device/${id}`);
-                     }}
-                  >
-                     <Icon type="eye" size={14} /> System Info
-                  </button>
-               </div>
-            )}
+            <DeviceActions device={device} />
          </div>
-
-         {showEditModal && <EditDevice device={device} close={() => setShowEditModal(false)} />}
       </div>
    );
 };

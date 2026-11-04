@@ -162,46 +162,47 @@
       min-width: 90px;
    }
 
-   .moreBtn {
-      color: var(--content-text-color-light);
-      padding: 3px 6px;
-      border-radius: 4px;
-      &.moreBtnActive {
-         background-color: var(--primary-color-light);
-         color: var(--primary-color);
-      }
-   }
-
-   .settings {
-      position: absolute;
-      z-index: 99;
-      top: 45px;
-      right: 15px;
-      display: flex;
-      flex-direction: column;
-      justify-content: left;
-      width: 120px;
-      text-align: left;
-      align-items: center;
-      background: var(--content-background-color);
-      border: 1px solid var(--line-color);
-      border-radius: 6px;
-      button {
-         padding: 6px 10px;
-         width: 100%;
-         text-align: left;
-         color: var(--content-text-color-light);
-         &:hover {
-            background-color: var(--primary-color-light);
-            color: var(--primary-color);
-         }
-      }
-   }
-
    &.planHasError {
       border: 1px solid var(--error-bg-color-active);
       .status {
          color: var(--error-button-color);
+      }
+   }
+}
+
+// Not nested in .plan, so the table layout can use them too.
+.moreBtn {
+   color: var(--content-text-color-light);
+   padding: 3px 6px;
+   border-radius: 4px;
+   &.moreBtnActive {
+      background-color: var(--primary-color-light);
+      color: var(--primary-color);
+   }
+}
+
+.settings {
+   position: absolute;
+   z-index: 99;
+   top: 45px;
+   right: 15px;
+   display: flex;
+   flex-direction: column;
+   justify-content: left;
+   width: 120px;
+   text-align: left;
+   align-items: center;
+   background: var(--content-background-color);
+   border: 1px solid var(--line-color);
+   border-radius: 6px;
+   button {
+      padding: 6px 10px;
+      width: 100%;
+      text-align: left;
+      color: var(--content-text-color-light);
+      &:hover {
+         background-color: var(--primary-color-light);
+         color: var(--primary-color);
       }
    }
 }

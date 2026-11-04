@@ -63,12 +63,6 @@
       }
    }
    &.withReplications {
-      &:hover {
-         .storageWithReplications {
-            filter: blur(2px);
-         }
-      }
-
       .storageAction {
          margin-top: 0px;
          left: 27px;

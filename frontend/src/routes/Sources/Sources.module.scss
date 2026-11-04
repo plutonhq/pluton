@@ -26,6 +26,12 @@
    gap: 15px;
 }
 
+.devicesTable {
+   .deviceUpgrade {
+      margin-top: 30px;
+   }
+}
+
 @media only screen and (max-width: 1024px) {
    .deviceItems {
       &.devicesGrid {
