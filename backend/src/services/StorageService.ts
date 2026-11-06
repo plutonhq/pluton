@@ -33,7 +33,7 @@ import {
 export interface StorageBrowseItem {
 	name: string;
 	path: string;
-	type: 'directory' | 'file';
+	type: 'directory' | 'file' | 'drive';
 	isDirectory: boolean;
 	size: number;
 	modifiedAt: string;
@@ -119,7 +119,7 @@ export class StorageService {
 
 		const remote = storage.id === 'local' ? 'local' : normalizeStorageName(storage.name);
 		const isLocal = storage.type === 'local';
-		const trimmed = (requestedPath || '').trim();
+		const trimmed = (requestedPath || '').trim().replace(/^([A-Za-z]:)$/, '$1\\');
 
 		if (isLocal) {
 			this.assertLocalBrowseAllowed(trimmed);
@@ -184,7 +184,7 @@ export class StorageService {
 		}
 		const items: StorageBrowseItem[] = entries.map(entry => ({
 			name: entry.Name,
-			path: cleaned ? `${cleaned}/${entry.Path}` : entry.Path,
+			path: cleaned ? `${cleaned.replace(/\/$/, '')}/${entry.Path}` : entry.Path,
 			type: entry.IsDir ? 'directory' : 'file',
 			isDirectory: entry.IsDir,
 			size: entry.Size < 0 ? 0 : entry.Size,
