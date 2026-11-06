@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router';
 import Plans from './routes/Plans/Plans';
+import Dashboard from './routes/Dashboard/Dashboard';
 import Login from './routes/Login/Login';
 import VerifyOtp from './routes/Login/VerifyOtp';
 import Setup from './routes/Setup/Setup';
@@ -74,7 +75,8 @@ export function AppRoutes() {
    return (
       <Routes>
          <Route path="/" element={<ProtectedLayout />}>
-            <Route index element={<Plans />} />
+            <Route index element={<Dashboard />} />
+            <Route path="plans" element={<Plans />} />
             <Route path="settings" element={<Settings />} />
             <Route path="storages" element={<Storages />} />
             <Route path="sources" element={<Sources />} />

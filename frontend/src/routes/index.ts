@@ -1,4 +1,5 @@
 // Route Components
+export { default as Dashboard } from './Dashboard/Dashboard';
 export { default as DeviceSingle } from './DeviceSingle/DeviceSingle';
 export { default as Login } from './Login/Login';
 export { default as NotFoundRoute } from './NotFoundRoute/NotFoundRoute';

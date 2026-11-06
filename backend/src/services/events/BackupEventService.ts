@@ -9,6 +9,7 @@ import { BackupNotification } from '../../notifications/BackupNotification';
 import { appPaths } from '../../utils/AppPaths';
 import { Backup, backupInsertSchema, NewBackup } from '../../db/schema/backups';
 import { SourceTypes } from '../../types/source';
+import { BackupCompletionStats } from '../../types/backups';
 // import { jobProcessor } from '../../jobs/JobProcessor';
 import {
 	BackupInitEvent,
@@ -203,6 +204,7 @@ export class BackupEventService {
 		const progressFile = `${this.progressDir}/backup-${backupId}.json`;
 		let summaryData: any = null;
 		let totalDuration = 0;
+		let warningMsg: string | null = null;
 		try {
 			if (await this.wasFinalized(backupId)) {
 				return;
@@ -215,27 +217,33 @@ export class BackupEventService {
 			if (summary && summary.message_type === 'summary') {
 				summaryData = summary;
 				totalDuration = summary.total_duration || 0;
-			} else {
-				// If local agent, read the progress file to get the summary data
-				try {
-					if (existsSync(progressFile)) {
-						const backupProgressData = JSON.parse(await readFile(progressFile, 'utf8'));
-						if (backupProgressData.events && backupProgressData.events.length > 0) {
-							const eventsWithSummary = backupProgressData.events.filter(
-								(event: any) => event.resticData && event.resticData.message_type === 'summary'
-							);
-							if (eventsWithSummary.length > 0) {
-								const lastEvent = eventsWithSummary[eventsWithSummary.length - 1];
-								summaryData = lastEvent.resticData;
-								totalDuration = lastEvent.resticData.total_duration || 0;
-							}
+			}
+			// If local agent, read the progress file to get the summary data and any restic warning
+			try {
+				if (existsSync(progressFile)) {
+					const backupProgressData = JSON.parse(await readFile(progressFile, 'utf8'));
+					const progressEvents: any[] = backupProgressData.events || [];
+					if (!summaryData) {
+						const eventsWithSummary = progressEvents.filter(
+							(event: any) => event.resticData && event.resticData.message_type === 'summary'
+						);
+						if (eventsWithSummary.length > 0) {
+							const lastEvent = eventsWithSummary[eventsWithSummary.length - 1];
+							summaryData = lastEvent.resticData;
+							totalDuration = lastEvent.resticData.total_duration || 0;
 						}
 					}
-				} catch (error: any) {
-					planLogger('backup', planId, backupId).warn(
-						`Could not read progress file to fetch the completion summary: ${error.message}`
+					const warningEvent = progressEvents.find(
+						(event: any) => event.action === 'BACKUP_WARNING'
 					);
+					if (warningEvent) {
+						warningMsg = warningEvent.error || 'Backup completed with warnings';
+					}
 				}
+			} catch (error: any) {
+				planLogger('backup', planId, backupId).warn(
+					`Could not read progress file to fetch the completion summary: ${error.message}`
+				);
 			}
 
 			const backupPayload: Partial<Backup> = {
@@ -243,14 +251,23 @@ export class BackupEventService {
 				status: success ? 'completed' : 'failed',
 				success: !!success,
 				ended: eventDate((data as { occurredAt?: number }).occurredAt),
-				completionStats: summaryData ? summaryData : null,
-				...(success ? { errorMsg: null } : {}),
+				...(success ? { errorMsg: warningMsg } : {}),
 			};
 			const plan = await this.planStore.getById(planId);
 
 			// A backup that skipped its dry run has no real file counts in taskStats. Backfill them from the
 			// completion summary so notifications and history have accurate numbers.
 			const existingBackup = await this.backupStore.getById(backupId);
+			// Keep the repo sizes that onBackupStatsUpdate may have written first
+			const prevStats = existingBackup?.completionStats;
+			const keptSizes = {
+				...(prevStats?.plan_size !== undefined ? { plan_size: prevStats.plan_size } : {}),
+				...(prevStats?.mirrors_size !== undefined ? { mirrors_size: prevStats.mirrors_size } : {}),
+			};
+			backupPayload.completionStats =
+				summaryData || Object.keys(keptSizes).length > 0
+					? { ...(summaryData || {}), ...keptSizes }
+					: null;
 			// If the sourceCongif was actually different from the plan's, record the resolved config
 			if (data.resolvedSourceConfig) {
 				backupPayload.sourceConfig = {
@@ -433,6 +450,18 @@ export class BackupEventService {
 					},
 					...(isNewer ? { lastBackupTime: eventTime } : {}),
 				});
+				// Keep the repo size on the backup row so the dashboard can chart size history
+				const backup = backupId ? await this.backupStore.getById(backupId) : null;
+				if (backup) {
+					const mirrors_size = (mirrors || []).reduce((acc, m) => acc + (m.size || 0), 0);
+					await this.backupStore.update(backupId, {
+						completionStats: {
+							...(backup.completionStats || {}),
+							plan_size: total_size,
+							mirrors_size,
+						} as BackupCompletionStats,
+					});
+				}
 				planLogger('update', planId, backupId).info(
 					`Updated plan stats for Backup Plan. Total Size: ${total_size} bytes, Total Snapshots: ${snapshots.length || 0} `
 				);

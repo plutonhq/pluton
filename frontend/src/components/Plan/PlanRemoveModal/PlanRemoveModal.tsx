@@ -45,7 +45,7 @@ const PlanRemoveModal = ({ planId, taskPending, actionInProgress, close }: PlanR
                } else {
                   toast.success(`Removed Backup Plan Successfully!`, { autoClose: 5000 });
                }
-               navigate('/');
+               navigate('/plans');
             },
          },
       );

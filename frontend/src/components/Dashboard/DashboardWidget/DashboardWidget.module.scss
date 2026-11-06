@@ -1,0 +1,70 @@
+.widget {
+   position: relative;
+   display: flex;
+   flex-direction: column;
+   min-width: 0;
+   padding: 24px;
+   border-radius: var(--border-radius);
+   background-color: var(--content-background-color);
+   color: var(--content-text-color);
+   box-shadow: 0 0 15px var(--content-shadow-color);
+   overflow: hidden;
+}
+
+.widget :global(.styled__scrollbar) {
+   scrollbar-color: transparent transparent;
+   &::-webkit-scrollbar-thumb {
+      color: transparent;
+   }
+}
+
+.widget:hover :global(.styled__scrollbar) {
+   scrollbar-color: var(--scrollbar-color) transparent;
+   &::-webkit-scrollbar-thumb {
+      color: var(--scrollbar-color);
+   }
+}
+
+.header {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+   margin-bottom: 18px;
+}
+
+.title {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   margin: 0;
+   font-size: 0.8rem;
+   font-weight: 500;
+   color: var(--content-subtitle-color);
+   :global(.icon) {
+      display: inline-flex;
+      color: var(--icon-color);
+      top: auto;
+   }
+}
+
+.headerRight {
+   display: flex;
+   align-items: center;
+}
+
+.content {
+   position: relative;
+   display: flex;
+   flex-direction: column;
+   flex: 1;
+   min-height: 0;
+}
+
+.loading {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   min-height: 80px;
+   color: var(--primary-color);
+}

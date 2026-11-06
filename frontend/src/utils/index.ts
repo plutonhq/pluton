@@ -4,6 +4,7 @@
 
 export * from './constants';
 export * from './helpers';
+export * from './dashboard';
 export * from './plans';
 export * from './progressHelpers';
 export * from './restore';

@@ -10,6 +10,7 @@ import AppLogs from '../../components/Settings/AppLogs/AppLogs';
 import SidePanel from '../../components/common/SidePanel/SidePanel';
 import GeneralSettings from '../../components/Settings/GeneralSettings/GeneralSettings';
 import SelfBackupSettings from '../../components/Settings/SelfBackupSettings/SelfBackupSettings';
+import { useUrlPanelParam } from '../../hooks/useUrlPanelParam';
 
 const Settings = () => {
    const [tab, setTab] = useState(() => {
@@ -17,7 +18,7 @@ const Settings = () => {
       return params.get('t') || 'general';
    });
    const [settings, setSettings] = useState<Record<string, any>>({});
-   const [showAppLogs, setShowAppLogs] = useState(false);
+   const [showAppLogs, setShowAppLogs] = useState(useUrlPanelParam('appLogs') === '1');
    const { data } = useGetSettings();
    const settingsMutation = useUpdateSettings();
    const settingsID = data?.result?.id;

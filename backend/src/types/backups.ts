@@ -14,6 +14,8 @@ export interface BackupCompletionStats {
 	total_bytes_processed: number;
 	total_duration: number;
 	snapshot_id: string;
+	plan_size?: number;
+	mirrors_size?: number;
 }
 
 export interface BackupTaskStats {

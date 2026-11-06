@@ -314,6 +314,56 @@ describe('BackupEventService', () => {
 			);
 		});
 
+		it('should keep success and store the restic warning in errorMsg', async () => {
+			const progressFileData = JSON.stringify({
+				events: [
+					{ action: 'BACKUP_WARNING', error: 'Some files could not be read' },
+					{ resticData: mockCompletionStats },
+				],
+			});
+			(fs.existsSync as jest.Mock).mockReturnValue(true);
+			(fsPromises.readFile as jest.Mock).mockResolvedValue(progressFileData);
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockBackupStore.update.mockResolvedValue({ id: backupId } as any);
+
+			await backupEventService.onBackupComplete({ planId, backupId, success: true });
+
+			expect(mockBackupStore.update).toHaveBeenCalledWith(
+				backupId,
+				expect.objectContaining({
+					status: 'completed',
+					success: true,
+					errorMsg: 'Some files could not be read',
+				})
+			);
+		});
+
+		it('should keep plan_size and mirrors_size written before the completion', async () => {
+			mockBackupStore.getById.mockResolvedValue({
+				id: backupId,
+				inProgress: true,
+				status: 'started',
+				completionStats: { plan_size: 2048, mirrors_size: 512 },
+			} as any);
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockBackupStore.update.mockResolvedValue({ id: backupId } as any);
+
+			await backupEventService.onBackupComplete({
+				planId,
+				backupId,
+				success: true,
+				summary: mockCompletionStats,
+			});
+
+			expect(mockBackupStore.update).toHaveBeenCalledWith(
+				backupId,
+				expect.objectContaining({
+					errorMsg: null,
+					completionStats: { ...mockCompletionStats, plan_size: 2048, mirrors_size: 512 },
+				})
+			);
+		});
+
 		it('should skip a replayed completion for an already finalized backup', async () => {
 			// Arrange
 			mockBackupStore.getById.mockResolvedValue({
@@ -509,6 +559,33 @@ describe('BackupEventService', () => {
 	});
 
 	describe('onBackupStatsUpdate', () => {
+		it('should merge plan_size and mirrors_size into the backup completionStats', async () => {
+			mockBackupStore.getById.mockResolvedValue({
+				id: 'backup-abc',
+				completionStats: { message_type: 'summary', data_added: 10 },
+			} as any);
+
+			await backupEventService.onBackupStatsUpdate({
+				planId: 'plan-123',
+				backupId: 'backup-abc',
+				total_size: 1024,
+				snapshots: ['snap1'],
+				mirrors: [
+					{ replicationId: 'r1', storageId: 's1', storagePath: '', size: 100, snapshots: [] },
+					{ replicationId: 'r2', storageId: 's2', storagePath: '', size: 50, snapshots: [] },
+				],
+			});
+
+			expect(mockBackupStore.update).toHaveBeenCalledWith('backup-abc', {
+				completionStats: {
+					message_type: 'summary',
+					data_added: 10,
+					plan_size: 1024,
+					mirrors_size: 150,
+				},
+			});
+		});
+
 		it('should update plan stats if data is valid', async () => {
 			// Arrange
 			const statsEvent = {

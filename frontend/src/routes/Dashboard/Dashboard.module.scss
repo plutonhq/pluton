@@ -1,0 +1,44 @@
+.dashboard {
+   width: 100%;
+}
+
+.widgets {
+   display: grid;
+   grid-template-columns: 1fr 1.1fr 1fr;
+   gap: 30px;
+   margin-top: 20px;
+}
+
+.column {
+   display: flex;
+   flex-direction: column;
+   gap: 30px;
+   min-width: 0;
+   & > :last-child {
+      flex: 1;
+   }
+}
+
+.eventsColumn {
+   min-height: 400px;
+}
+
+@media only screen and (max-width: 1100px) {
+   .widgets {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+   }
+   .column {
+      gap: 20px;
+   }
+   .eventsColumn {
+      grid-column: 1 / -1;
+      min-height: 0;
+   }
+}
+
+@media only screen and (max-width: 900px) {
+   .widgets {
+      grid-template-columns: 1fr;
+   }
+}

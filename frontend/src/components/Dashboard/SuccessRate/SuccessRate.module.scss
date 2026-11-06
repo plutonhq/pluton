@@ -1,0 +1,51 @@
+.successRate {
+   display: flex;
+   align-items: center;
+   gap: 24px;
+}
+
+.gauge {
+   position: relative;
+   width: 140px;
+   height: 76px;
+   flex-shrink: 0;
+}
+
+.gaugeValue {
+   position: absolute;
+   left: 0;
+   right: 0;
+   bottom: -4px;
+   text-align: center;
+   font-size: 1.525rem;
+   font-weight: 600;
+   color: var(--content-text-color);
+   pointer-events: none;
+}
+
+.legend {
+   margin: 0;
+   padding: 0;
+   list-style: none;
+   font-size: 0.8125rem;
+   color: var(--content-text-color-light);
+   li {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+   }
+   i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+   }
+   b {
+      font-weight: 500;
+      color: var(--content-text-color);
+   }
+   .total {
+      margin: 0;
+      font-size: 0.6875rem;
+   }
+}

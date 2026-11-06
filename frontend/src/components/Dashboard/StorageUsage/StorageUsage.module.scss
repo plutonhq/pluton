@@ -1,0 +1,58 @@
+.storageUsage {
+   padding-bottom: 8px;
+}
+
+.stats {
+   margin: 10px 0 10px;
+   padding: 0;
+   list-style: none;
+   font-size: 0.8125rem;
+   color: var(--content-text-color-light);
+   li {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+   }
+   i {
+      width: 10px;
+      height: 10px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background-color: var(--primary-color-mid);
+   }
+   b,
+   a {
+      font-weight: 500;
+      color: var(--content-text-color);
+   }
+   a {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      &:hover {
+         color: var(--primary-color);
+      }
+   }
+}
+
+// .dotPrimary {
+//    background-color: var(--primary-color-mid);
+// }
+
+// .dotSuccess {
+//    background-color: var(--success-label);
+// }
+
+// .dotFailure {
+//    background-color: var(--error-button-color);
+// }
+
+.chart {
+   position: relative;
+   flex: 1;
+   min-height: 140px;
+   margin: 0 -24px;
+}

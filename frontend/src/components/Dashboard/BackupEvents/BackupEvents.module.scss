@@ -1,0 +1,89 @@
+.tabList {
+   font-size: 0.75rem;
+   ul {
+      flex-wrap: wrap;
+   }
+}
+
+.events {
+   position: absolute;
+   top: 44px;
+   left: 0;
+   right: 0;
+   bottom: 0;
+   overflow-y: auto;
+   ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+   }
+   li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 18px;
+   }
+}
+
+.dot {
+   width: 10px;
+   height: 10px;
+   flex-shrink: 0;
+   margin-top: 5px;
+   border-radius: 50%;
+}
+
+.event--success .dot {
+   background-color: var(--success-label);
+}
+
+.event--warning .dot {
+   background-color: var(--warning-button-color);
+   opacity: 0.6;
+}
+
+.event--failure .dot {
+   background-color: var(--error-button-color);
+   opacity: 0.8;
+}
+
+.eventContent {
+   min-width: 0;
+   font-size: 0.8125rem;
+   line-height: 1.4;
+   color: var(--content-text-color-light);
+}
+
+.message {
+   margin-right: 8px;
+   word-break: break-word;
+   a {
+      font-weight: 500;
+      color: var(--content-text-color);
+      &:hover {
+         color: var(--primary-color);
+      }
+   }
+}
+
+.time {
+   display: inline-block;
+   font-size: 0.75rem;
+   opacity: 0.8;
+}
+.empty {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   min-height: 120px;
+   font-size: 0.75rem;
+   color: var(--content-text-color-light);
+}
+
+@media only screen and (max-width: 1400px) {
+   .events {
+      position: static;
+      max-height: 480px;
+      margin-top: 18px;
+   }
+}

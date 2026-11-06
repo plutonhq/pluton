@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, gte } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
 import { DatabaseType } from '../db';
 import { Backup, NewBackup, backups } from '../db/schema/backups';
@@ -113,6 +113,23 @@ export class BackupStore {
 			columns: { id: true },
 		});
 		return rows.map(row => row.id);
+	}
+
+	async getEndedSince(date: Date) {
+		return this.db.query.backups.findMany({
+			where: gte(backups.ended, date),
+			columns: {
+				id: true,
+				planId: true,
+				status: true,
+				success: true,
+				errorMsg: true,
+				mirrors: true,
+				started: true,
+				ended: true,
+				completionStats: true,
+			},
+		});
 	}
 
 	async deleteByPlanId(id: string): Promise<boolean> {

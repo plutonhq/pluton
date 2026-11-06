@@ -62,7 +62,7 @@ const PlanSingle = () => {
    // const errorMessage = planError?.message;
    const errorStatusCode = (planError as Error & { status?: number })?.status;
    if (!id || errorStatusCode === 404) {
-      return <NotFound name="Plan" link="/" />;
+      return <NotFound name="Plan" link="/plans" />;
    } else {
       if (isLoading) {
          return (

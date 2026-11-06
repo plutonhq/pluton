@@ -59,7 +59,7 @@ export class BaseSystemManager {
 			]);
 
 			// Check if Server Edition
-			const isServer = this.isServerEdition(osInfo);
+			const isServer = await this.isServerEdition(osInfo);
 
 			// Get filesystem stats for all mounted disks
 			const fsStats = await si.fsSize();

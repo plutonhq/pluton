@@ -5,6 +5,7 @@ import { useGetPlan, usePausePlan, usePerformBackup, useResumePlan } from '../se
 import { Plan } from '../@types/plans';
 import { Backup } from '../@types/backups';
 import { RestoreSlim } from '../@types/restores';
+import { useUrlPanelParam } from './useUrlPanelParam';
 
 export const usePlanSingleActions = (): {
    showDeleteModal: boolean;
@@ -34,7 +35,7 @@ export const usePlanSingleActions = (): {
    const [showEditModal, setShowEditModal] = useState(false);
    const [showUnlockModal, setShowUnlockModal] = useState(false);
    const [showPruneModal, setShowPruneModal] = useState(false);
-   const [showLogsModal, setShowLogsModal] = useState(false);
+   const [showLogsModal, setShowLogsModal] = useState(useUrlPanelParam('logs') === '1');
 
    const { id } = useParams();
    const navigate = useNavigate();

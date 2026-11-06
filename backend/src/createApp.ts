@@ -25,6 +25,8 @@ import { SettingsController } from './controllers/SettingsController';
 import { SetupController } from './controllers/SetupController';
 import { createBackupRouter } from './routes/backups';
 import { BackupController } from './controllers/BackupController';
+import { createDashboardRouter } from './routes/dashboard';
+import { DashboardController } from './controllers/DashboardController';
 
 import versionMiddleware from './middlewares/versionMiddleware';
 import { PlanStore } from './stores/PlanStore';
@@ -47,6 +49,7 @@ import { BaseSystemManager } from './managers/BaseSystemManager';
 import { BaseStorageManager } from './managers/BaseStorageManager';
 import { StorageService } from './services/StorageService';
 import { SettingsService } from './services/SettingsService';
+import { DashboardService } from './services/DashboardService';
 import { SelfBackupService } from './services/SelfBackupService';
 import { StartupRecovery } from './services/StartupRecovery';
 import { SystemTaskManager } from './jobs/SystemTaskManager';
@@ -119,6 +122,7 @@ export async function createApp(): Promise<{ app: Express }> {
 	);
 	const selfBackupService = new SelfBackupService(settingsStore, storageStore, sqlite, 'core');
 	const settingsService = new SettingsService(settingsStore, selfBackupService);
+	const dashboardService = new DashboardService(planStore, backupStore, deviceStore);
 
 	// API Route Controllers
 	const planController = new PlanController(planService);
@@ -129,6 +133,7 @@ export async function createApp(): Promise<{ app: Express }> {
 	const settingsController = new SettingsController(settingsService);
 	const userController = new UserController(settingsService);
 	const setupController = new SetupController();
+	const dashboardController = new DashboardController(dashboardService);
 
 	// Express App
 	const app = express();
@@ -249,6 +254,7 @@ export async function createApp(): Promise<{ app: Express }> {
 	app.use('/api/storages', createStorageRouter(storageController));
 	app.use('/api/restores', createRestoreRouter(restoreController));
 	app.use('/api/settings', createSettingsRouter(settingsController));
+	app.use('/api/dashboard', createDashboardRouter(dashboardController));
 	app.use('/api/health', createHealthRouter());
 
 	// For any other request that doesn't match an API route or a static file,

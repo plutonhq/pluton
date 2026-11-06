@@ -1672,6 +1672,38 @@ const Icon = ({ type, color = 'currentColor', size = 16, title = '', classes = '
                />
             </IconWrapper>
          )}
+         {type === 'trend' && (
+            <IconWrapper size={size} viewBox="0 0 24 24">
+               <g fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}>
+                  <path d="m3 17l6-6l4 4l8-8"></path>
+                  <path d="M14 7h7v7"></path>
+               </g>
+            </IconWrapper>
+         )}
+         {type === 'server' && (
+            <IconWrapper size={size} viewBox="0 0 24 24">
+               <g fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}>
+                  <rect width={18} height={8} x={3} y={4} rx={3}></rect>
+                  <rect width={18} height={8} x={3} y={12} rx={3}></rect>
+                  <path d="M7 8v.01M7 16v.01"></path>
+               </g>
+            </IconWrapper>
+         )}
+         {type === 'dashboard' && (
+            <IconWrapper size={size} viewBox="0 0 24 24">
+               <g fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+                  <path d="M6 9.45L8.51 7.6c.84-.62 1.26-.93 1.74-1.01a2 2 0 0 1 .67 0c.47.08.89.4 1.73 1.02c.94.71 1.42 1.06 1.94 1.13a2 2 0 0 0 .74-.05c.51-.12.94-.53 1.8-1.35l2-1.91M6.5 13.29v4.18m8.33-4.18v4.18m-4.17-6v6m8.34-6v6" />
+                  <path d="M21.24 21.33H10.76c-3.77 0-5.66 0-6.83-1.17s-1.17-3.06-1.17-6.83V2.63" />
+               </g>
+            </IconWrapper>
+         )}
+         {type === 'check-shield' && (
+            <IconWrapper size={size} viewBox="0 0 24 24">
+               <path d="M0 0h24v24H0z" fill="none" />
+               <path fill={color} d="M20.995 6.9a1 1 0 0 0-.548-.795l-8-4a1 1 0 0 0-.895 0l-8 4a1 1 0 0 0-.547.795c-.011.107-.961 10.767 8.589 15.014a1 1 0 0 0 .812 0c9.55-4.247 8.6-14.906 8.589-15.014M12 19.897C5.231 16.625 4.911 9.642 4.966 7.635L12 4.118l7.029 3.515c.037 1.989-.328 9.018-7.029 12.264" />
+               <path fill={color} d="m11 12.586l-2.293-2.293l-1.414 1.414L11 15.414l5.707-5.707l-1.414-1.414z" />
+            </IconWrapper>
+         )}
       </span>
    );
 };

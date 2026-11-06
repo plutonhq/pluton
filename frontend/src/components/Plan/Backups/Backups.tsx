@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import RestoreWizard from '../../Restore/RestoreWizard/RestoreWizard';
 import StatusLabel from '../../common/StatusLabel/StatusLabel';
 import BackupEvents from '../BackupEvents/BackupEvents';
+import { useUrlPanelParam } from '../../../hooks/useUrlPanelParam';
 import Input from '../../common/form/Input/Input';
 import MirrorStatusBadge from '../Mirrors/MirrorStatusBadge';
 import MirrorStorageSelectorModal from '../Mirrors/MirrorStorageSelectorModal';
@@ -98,7 +99,7 @@ const Backups = ({
    const [showSnapOptions, setShowSnapOptions] = useState<false | string>(false);
    const [showDeleteModal, setShowDeleteModal] = useState<Backup | false>(false);
    const [showRestoreModal, setShowRestoreModal] = useState<Backup | false>(false);
-   const [showBackupEvents, setShowBackupEvents] = useState<false | string>(false);
+   const [showBackupEvents, setShowBackupEvents] = useState<false | string>(useUrlPanelParam('backupEvents') || false);
    const [showSnapshotViewer, setShowSnapshotViewer] = useState<Backup | false>(false);
    const [showBackupError, setShowBackupError] = useState<string | false>(false);
    const [showEditModal, setShowEditModal] = useState<Backup | false>(false);
@@ -235,9 +236,9 @@ const Backups = ({
                            {download && <DownloadLabel download={download} downloadBackup={() => getDownloadMutation.mutate(id)} />}
                         </div>
                         <div
-                           className={`${classes.status} ${errorMsg ? classes.statusHasError : ''}`}
+                           className={`${classes.status} ${errorMsg ? classes.statusHasError : ''} ${status === 'completed' && errorMsg ? classes.statusHasWarning : ''}`}
                            data-tooltip-id="htmlToolTip"
-                           data-tooltip-html={`<div class="linebreak-tooltip-content"><string>Error</string>: ${errorMsg?.slice(0, 120) + (errorMsg && errorMsg.length > 120 ? '...' : '')}</div>`}
+                           data-tooltip-html={`<div class="linebreak-tooltip-content"><string>${status === 'completed' ? 'Warning' : 'Error'}</string>: ${errorMsg?.slice(0, 120) + (errorMsg && errorMsg.length > 120 ? '...' : '')}</div>`}
                            data-tooltip-hidden={!errorMsg}
                            onClick={() => errorMsg && errorMsg.length > 120 && setShowBackupError(errorMsg)}
                         >

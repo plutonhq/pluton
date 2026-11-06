@@ -3,6 +3,7 @@
  */
 
 export * from './backups';
+export * from './dashboard';
 export * from './devices';
 export * from './plans';
 export * from './restores';

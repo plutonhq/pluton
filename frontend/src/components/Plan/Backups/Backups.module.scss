@@ -148,6 +148,10 @@
                text-decoration-style: dashed;
                cursor: pointer;
             }
+            &.statusHasWarning > div {
+               color: var(--warning-text-color);
+               text-decoration-color: var(--warning-button-color);
+            }
          }
          .settings {
             position: absolute;

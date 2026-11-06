@@ -14,12 +14,26 @@ const SideNav = () => {
    return (
       <div className={classes.sideNavInner} tabIndex={-1}>
          <div className={classes.logo}>
-            <NavLink to="/" end aria-label="Backup Plans">
+            <NavLink to="/" end aria-label="Dashboard">
                <Logo size={30} />
             </NavLink>
          </div>
          <nav className={classes.navMenu}>
-            <NavLink to="/" end aria-label="Backup Plans">
+            <NavLink to="/" end aria-label="Dashboard">
+               {() => (
+                  <span
+                     className={classes.navMenuLabel}
+                     data-tooltip-id="appTooltip"
+                     data-tooltip-content="Dashboard"
+                     data-tooltip-place="left"
+                     data-tooltip-delay-show={500}
+                     data-tooltip-hidden={isMobile()}
+                  >
+                     <Icon type="dashboard" size={26} />
+                  </span>
+               )}
+            </NavLink>
+            <NavLink to="/plans" end aria-label="Backup Plans">
                {() => (
                   <span
                      className={classes.navMenuLabel}

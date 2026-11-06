@@ -1,0 +1,48 @@
+.rows {
+   margin: 0;
+   padding: 0;
+   list-style: none;
+   li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      &:last-child {
+         margin-bottom: 0;
+      }
+   }
+}
+
+.icon {
+   display: inline-flex;
+   color: var(--icon-color);
+   :global(.icon) {
+      display: inline-flex;
+   }
+}
+
+.bar {
+   position: relative;
+   flex: 1;
+   height: 8px;
+   border-radius: 8px;
+   background-color: var(--primary-color-light);
+   overflow: hidden;
+}
+
+.barFill {
+   position: absolute;
+   top: 0;
+   left: 0;
+   bottom: 0;
+   border-radius: 8px;
+   background: linear-gradient(90deg, var(--primary-color) 0%, #6f8dff 100%);
+   transition: width 0.4s ease;
+}
+
+.value {
+   min-width: 34px;
+   text-align: right;
+   font-size: 0.75rem;
+   color: var(--content-text-color-light);
+}
