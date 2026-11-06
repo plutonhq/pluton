@@ -34,7 +34,15 @@ const SnapshotBrowserFileRow = ({
       >
          <div className={classes.fileName}>
             {namePrefix}
-            {isDirectory ? <Icon type={'fm-directory'} size={16} /> : <FileIcon filename={fileName} />} {fileName}
+            {onClick ? (
+               <button type="button" className={classes.fileNameBtn}>
+                  {isDirectory ? <Icon type={'fm-directory'} size={16} /> : <FileIcon filename={fileName} />} {fileName}
+               </button>
+            ) : (
+               <>
+                  {isDirectory ? <Icon type={'fm-directory'} size={16} /> : <FileIcon filename={fileName} />} {fileName}
+               </>
+            )}
          </div>
          {children}
       </div>

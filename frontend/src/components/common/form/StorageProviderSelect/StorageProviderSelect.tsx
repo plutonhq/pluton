@@ -85,11 +85,12 @@ const StorageProviderSelect = ({
                               return (
                                  <li
                                     key={indx}
-                                    onClick={() => !item.disabled && updateOption(item.value)}
                                     className={`${item.value === selectedItemValue ? classes.selectedItem : ''} ${item.disabled ? classes.disabledItem : ''}`}
                                  >
-                                    {item.image && item.image}
-                                    {item.label}
+                                    <button type="button" disabled={item.disabled} onClick={() => updateOption(item.value)}>
+                                       {item.image && item.image}
+                                       {item.label}
+                                    </button>
                                  </li>
                               );
                            })}

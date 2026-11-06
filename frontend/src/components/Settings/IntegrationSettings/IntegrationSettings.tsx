@@ -38,13 +38,17 @@ const IntegrationSettings = ({ settingsID, settings, onUpdate }: IntegrationSett
          ) : (
             <>
                <ul className={classes.tabs}>
-                  <li className={`${tab === 'smtp' ? classes.tabActive : ''}`} onClick={() => setTab('smtp')}>
-                     <Icon type="email" size={14} /> SMTP
-                     {smtp?.connected && <Icon type="check-circle-filled" size={12} />}
+                  <li className={`${tab === 'smtp' ? classes.tabActive : ''}`}>
+                     <button type="button" aria-pressed={tab === 'smtp'} onClick={() => setTab('smtp')}>
+                        <Icon type="email" size={14} /> SMTP
+                        {smtp?.connected && <Icon type="check-circle-filled" size={12} />}
+                     </button>
                   </li>
-                  <li className={`${tab === 'ntfy' ? classes.tabActive : ''}`} onClick={() => setTab('ntfy')}>
-                     <Icon type="ntfy" size={14} /> Ntfy
-                     {ntfy?.connected && <Icon type="check-circle-filled" size={12} />}
+                  <li className={`${tab === 'ntfy' ? classes.tabActive : ''}`}>
+                     <button type="button" aria-pressed={tab === 'ntfy'} onClick={() => setTab('ntfy')}>
+                        <Icon type="ntfy" size={14} /> Ntfy
+                        {ntfy?.connected && <Icon type="check-circle-filled" size={12} />}
+                     </button>
                   </li>
                </ul>
             </>

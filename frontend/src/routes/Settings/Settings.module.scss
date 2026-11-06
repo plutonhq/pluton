@@ -1,3 +1,5 @@
+@use '../../styles/fields.scss';
+
 .settings {
    .settingsContent {
       width: 100%;
@@ -41,11 +43,20 @@
          padding: 0;
          gap: 0.5rem;
          li {
-            cursor: pointer;
-            padding: 10px 16px;
-            padding-left: 20px;
             position: relative;
             font-weight: 500;
+
+            button {
+               @include fields.buttonReset;
+               display: block;
+               width: 100%;
+               padding: 10px 16px;
+               padding-left: 20px;
+               border-radius: 6px;
+               &:focus-visible {
+                  @include fields.focusRing;
+               }
+            }
 
             &.tabActive {
                border-right: 0;

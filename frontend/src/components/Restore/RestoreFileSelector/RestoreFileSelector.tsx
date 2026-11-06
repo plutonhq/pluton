@@ -250,7 +250,15 @@ const RestoreFileSelector = ({ selected, files, source: indexSource, isLoading, 
                >
                   {canBeSelected ? <Icon type={isSelected ? 'check-circle-filled' : 'check-circle'} size={13} /> : null}
                </button>
-               {isDirectory ? <Icon type={isDirectory ? 'fm-directory' : 'fm-file'} size={16} /> : <FileIcon filename={fileName || ''} />} {fileName}
+               {isDirectory ? (
+                  <button type="button" className={sbClasses.fileNameBtn}>
+                     <Icon type={'fm-directory'} size={16} /> {fileName}
+                  </button>
+               ) : (
+                  <>
+                     <FileIcon filename={fileName || ''} /> {fileName}
+                  </>
+               )}
             </div>
             <div className={classes.fileModified}>{file.modifiedAt ? formatDateTime(file.modifiedAt) : ''}</div>
             <div className={classes.fileSize}>{formatBytes(source.displaySize(file))}</div>

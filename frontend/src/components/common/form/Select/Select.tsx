@@ -101,12 +101,13 @@ const Select = ({
                               return (
                                  <li
                                     key={indx}
-                                    onClick={() => !item.pro && !item.disabled && updateOption(item.value)}
                                     className={`${item.value === selectedItemValue ? classes.selectedItem : ''} ${item.disabled ? classes.disabledItem : ''}`}
                                  >
-                                    {item.icon && <Icon type={item.icon} size={13} />}
-                                    {item.image && item.image}
-                                    {item.label}
+                                    <button type="button" disabled={item.pro || item.disabled} onClick={() => updateOption(item.value)}>
+                                       {item.icon && <Icon type={item.icon} size={13} />}
+                                       {item.image && item.image}
+                                       {item.label}
+                                    </button>
                                  </li>
                               );
                            })}

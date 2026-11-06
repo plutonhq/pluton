@@ -1,3 +1,5 @@
+@use '../../../../styles/fields.scss';
+
 .storageProviderSelectField {
    .search {
       border: 1px solid;
@@ -103,18 +105,27 @@
             padding-right: 0;
 
             li {
-               padding: 9px;
-               cursor: pointer;
                display: flex;
                flex-basis: 114px;
-               align-items: center;
-               justify-content: center;
-               text-align: center;
-               flex-direction: column;
-               gap: 5px;
                border-radius: 6px;
                border: 1px solid var(--line-color);
                font-size: 11px;
+
+               button {
+                  @include fields.buttonReset;
+                  flex: 1;
+                  padding: 9px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  text-align: center;
+                  flex-direction: column;
+                  gap: 5px;
+                  border-radius: 6px;
+                  &:focus-visible {
+                     @include fields.focusRing;
+                  }
+               }
 
                img {
                   width: auto;
@@ -129,7 +140,9 @@
                &.disabledItem {
                   opacity: 0.6;
                   user-select: none;
-                  cursor: not-allowed;
+                  button {
+                     cursor: not-allowed;
+                  }
                }
 
                &.selectedItem {
@@ -206,7 +219,7 @@
             font-size: 0.9em;
             margin-top: 4px;
             width: max-content;
-            li {
+            li button {
                padding: 6px 10px;
             }
          }

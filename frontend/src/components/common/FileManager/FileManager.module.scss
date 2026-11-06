@@ -1,3 +1,5 @@
+@use '../../../styles/fields.scss';
+
 .fileManager {
    background: var(--content-background-color);
    border-radius: 4px;
@@ -129,7 +131,7 @@
    }
    &.selected {
       background-color: var(--background-color);
-      .fileName button {
+      .fileName button:not(.fileNameBtn) {
          color: var(--primary-color);
          opacity: 1;
       }
@@ -147,9 +149,17 @@
    gap: 6px;
    max-width: 300px;
    color: var(--content-text-color);
-   button {
+   button:not(.fileNameBtn) {
       opacity: 0.3;
       color: var(--icon-color);
+   }
+   .fileNameBtn {
+      @include fields.buttonReset;
+      display: flex;
+      min-width: 0;
+      &:focus-visible {
+         @include fields.focusRing;
+      }
    }
    .fileNameText {
       display: inline-block;

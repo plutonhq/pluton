@@ -168,8 +168,15 @@ const RestoredFileBrowser = ({ files, stats, isPreview = false }: RestoredFileBr
             }}
          >
             <div className={sbClasses.fileName}>
-               {isDirectory ? <Icon type={'fm-directory'} size={16} /> : <FileIcon filename={fileName || ''} />}{' '}
-               {isRestored && <span className={classes.newFileIndicator} />} {fileName}
+               {isDirectory ? (
+                  <button type="button" className={sbClasses.fileNameBtn}>
+                     <Icon type={'fm-directory'} size={16} /> {isRestored && <span className={classes.newFileIndicator} />} {fileName}
+                  </button>
+               ) : (
+                  <>
+                     <FileIcon filename={fileName || ''} /> {isRestored && <span className={classes.newFileIndicator} />} {fileName}
+                  </>
+               )}
                {hasUpdates && <i />}
             </div>
             <div className={`${classes.status} ${classes[fileAction]}`}>

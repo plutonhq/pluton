@@ -38,6 +38,13 @@ const Modal = ({ children, width, closeModal, title, disablePortal = false, clas
    }, [closeModal]);
 
    useEffect(() => {
+      const el = modalContentRef.current;
+      if (el && !el.contains(document.activeElement)) {
+         el.focus({ preventScroll: true });
+      }
+   }, []);
+
+   useEffect(() => {
       const checkModalHeight = () => {
          if (modalContentRef.current) {
             const height = modalContentRef.current.offsetHeight;
@@ -71,7 +78,7 @@ const Modal = ({ children, width, closeModal, title, disablePortal = false, clas
             onClick={closeOnBGClick}
             data-testid="modal"
          >
-            <div className={`${classes.modalContent} ${isActive ? classes.active : ''}`} style={{ width: width }} ref={modalContentRef}>
+            <div className={`${classes.modalContent} ${isActive ? classes.active : ''}`} style={{ width: width }} ref={modalContentRef} tabIndex={-1}>
                {title && <h3>{title}</h3>}
                <button className={classes.modalClose} onClick={handleClose}>
                   <Icon type="close" size={24} />

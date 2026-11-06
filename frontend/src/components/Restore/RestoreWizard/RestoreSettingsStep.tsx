@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Select from '../../common/form/Select/Select';
 import Input from '../../common/form/Input/Input';
 import Icon from '../../common/Icon/Icon';
@@ -22,6 +22,7 @@ interface RestoreSettingsStepProps {
 const RestoreSettingsStep = ({ settings, mirrors = [], primaryStorage, updateSettings, goNext, close, deviceId }: RestoreSettingsStepProps) => {
    const [showFileManager, setShowFileManager] = useState(false);
    const [showCustomPathError, setShowCustomPathError] = useState(false);
+   const overwriteGroupName = useId();
 
    const gotoPreviewStep = () => {
       if ((settings.type === 'custom' && settings.path) || settings.type === 'original') {
@@ -97,13 +98,17 @@ const RestoreSettingsStep = ({ settings, mirrors = [], primaryStorage, updateSet
             )}
 
             <div className={classes.settingBlock}>
-               <div className={classes.checkboxSettings}>
-                  <div className={classes.label}>Overwrite Policy</div>
+               <fieldset className={classes.checkboxSettings}>
+                  <legend className={classes.label}>Overwrite Policy</legend>
                   <div className={classes.checkboxSettingsOpts}>
-                     <div
-                        onClick={() => updateSettings({ ...settings, overwrite: 'always' })}
-                        className={` ${classes.checkboxOption} ${settings.overwrite === 'always' ? classes.checkboxOptionActive : ''} `}
-                     >
+                     <label className={` ${classes.checkboxOption} ${settings.overwrite === 'always' ? classes.checkboxOptionActive : ''} `}>
+                        <input
+                           type="radio"
+                           name={overwriteGroupName}
+                           value="always"
+                           checked={settings.overwrite === 'always'}
+                           onChange={() => updateSettings({ ...settings, overwrite: 'always' })}
+                        />
                         <div>
                            <Icon type={settings.overwrite === 'always' ? 'check-circle-filled' : 'check-circle'} size={16} />
                         </div>
@@ -114,11 +119,15 @@ const RestoreSettingsStep = ({ settings, mirrors = [], primaryStorage, updateSet
                               be restored to minimize downloads. Updates the metadata of all files.
                            </div>
                         </div>
-                     </div>
-                     <div
-                        onClick={() => updateSettings({ ...settings, overwrite: 'if-changed' })}
-                        className={` ${classes.checkboxOption} ${settings.overwrite === 'if-changed' ? classes.checkboxOptionActive : ''} `}
-                     >
+                     </label>
+                     <label className={` ${classes.checkboxOption} ${settings.overwrite === 'if-changed' ? classes.checkboxOptionActive : ''} `}>
+                        <input
+                           type="radio"
+                           name={overwriteGroupName}
+                           value="if-changed"
+                           checked={settings.overwrite === 'if-changed'}
+                           onChange={() => updateSettings({ ...settings, overwrite: 'if-changed' })}
+                        />
                         <div>
                            <Icon type={settings.overwrite === 'if-changed' ? 'check-circle-filled' : 'check-circle'} size={16} />
                         </div>
@@ -130,11 +139,15 @@ const RestoreSettingsStep = ({ settings, mirrors = [], primaryStorage, updateSet
                               all files.
                            </div>
                         </div>
-                     </div>
-                     <div
-                        onClick={() => updateSettings({ ...settings, overwrite: 'if-newer' })}
-                        className={` ${classes.checkboxOption} ${settings.overwrite === 'if-newer' ? classes.checkboxOptionActive : ''} `}
-                     >
+                     </label>
+                     <label className={` ${classes.checkboxOption} ${settings.overwrite === 'if-newer' ? classes.checkboxOptionActive : ''} `}>
+                        <input
+                           type="radio"
+                           name={overwriteGroupName}
+                           value="if-newer"
+                           checked={settings.overwrite === 'if-newer'}
+                           onChange={() => updateSettings({ ...settings, overwrite: 'if-newer' })}
+                        />
                         <div>
                            <Icon type={settings.overwrite === 'if-newer' ? 'check-circle-filled' : 'check-circle'} size={16} />
                         </div>
@@ -142,11 +155,15 @@ const RestoreSettingsStep = ({ settings, mirrors = [], primaryStorage, updateSet
                            <h5>Overwrite If Newer</h5>
                            <div>Only overwrite existing files if the file in the snapshot has a newer modification time (mtime).</div>
                         </div>
-                     </div>
-                     <div
-                        onClick={() => updateSettings({ ...settings, overwrite: 'never' })}
-                        className={` ${classes.checkboxOption} ${settings.overwrite === 'never' ? classes.checkboxOptionActive : ''} `}
-                     >
+                     </label>
+                     <label className={` ${classes.checkboxOption} ${settings.overwrite === 'never' ? classes.checkboxOptionActive : ''} `}>
+                        <input
+                           type="radio"
+                           name={overwriteGroupName}
+                           value="never"
+                           checked={settings.overwrite === 'never'}
+                           onChange={() => updateSettings({ ...settings, overwrite: 'never' })}
+                        />
                         <div>
                            <Icon type={settings.overwrite === 'never' ? 'check-circle-filled' : 'check-circle'} size={16} />
                         </div>
@@ -154,9 +171,9 @@ const RestoreSettingsStep = ({ settings, mirrors = [], primaryStorage, updateSet
                            <h5>Never Overwrite</h5>
                            <div>Never overwrite existing files.</div>
                         </div>
-                     </div>
+                     </label>
                   </div>
-               </div>
+               </fieldset>
             </div>
             <div className={classes.settingBlock}>
                <Toggle

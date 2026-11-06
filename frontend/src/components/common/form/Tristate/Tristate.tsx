@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import Icon from '../../Icon/Icon';
 import FormField from '../FormField/FormField';
 import classes from './Tristate.module.scss';
@@ -14,6 +15,7 @@ type TristateProps = {
 };
 
 const Tristate = ({ label, description, customClasses = '', fieldValue = '', hint = '', inline = false, options, onUpdate }: TristateProps) => {
+   const groupName = useId();
    const sortedOptions = [...options].sort((a, b) => {
       if (a.disabled === b.disabled) return 0;
       return a.disabled ? 1 : -1;
@@ -30,13 +32,21 @@ const Tristate = ({ label, description, customClasses = '', fieldValue = '', hin
          <div className={classes.inputGroup}>
             <ul className={classes.optionSelector}>
                {sortedOptions.map((option) => (
-                  <li
-                     key={option.value}
-                     className={`${classes.option} ${fieldValue === option.value ? classes.selected : ''} ${option.disabled ? classes.optionDisabled : ''}`}
-                     onClick={() => !option.disabled && onUpdate(option.value)}
-                  >
-                     {fieldValue === option.value && <Icon type="check" size={12} />}
-                     {option.label}
+                  <li key={option.value}>
+                     <label
+                        className={`${classes.option} ${fieldValue === option.value ? classes.selected : ''} ${option.disabled ? classes.optionDisabled : ''}`}
+                     >
+                        <input
+                           type="radio"
+                           name={groupName}
+                           value={option.value}
+                           checked={fieldValue === option.value}
+                           disabled={option.disabled}
+                           onChange={() => onUpdate(option.value)}
+                        />
+                        {fieldValue === option.value && <Icon type="check" size={12} />}
+                        {option.label}
+                     </label>
                   </li>
                ))}
             </ul>

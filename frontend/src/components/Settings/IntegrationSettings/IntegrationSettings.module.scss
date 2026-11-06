@@ -1,3 +1,5 @@
+@use '../../../styles/fields.scss';
+
 .integrations {
    width: 100%;
    .tabs {
@@ -8,11 +10,19 @@
       gap: 10px;
       margin-bottom: 20px;
       li {
-         padding: 5px 15px;
          border-radius: 6px;
          font-size: 0.75rem;
          font-weight: 500;
-         cursor: pointer;
+         button {
+            @include fields.buttonReset;
+            display: block;
+            width: 100%;
+            padding: 5px 15px;
+            border-radius: 6px;
+            &:focus-visible {
+               @include fields.focusRing;
+            }
+         }
          &.tabActive {
             color: var(--primary-color);
             background: var(--background-color);

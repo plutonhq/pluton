@@ -43,9 +43,9 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing, 
                customClasses={classes.advancedSettingsSelect}
                options={[
                   { label: 'General', value: 'General', icon: 'folders' },
-                  // { label: 'Prune', value: 'Prune', icon: 'prune' },
                   { label: 'Performance', value: 'Performance', icon: 'performance' },
                   { label: 'Notification', value: 'Notification', icon: 'notification' },
+                  { label: 'Scripts', value: 'Scripts', icon: 'cli' },
                   { label: 'Misc.', value: 'Misc', icon: 'settings-alt' },
                ]}
                fieldValue={advancedTab}
@@ -55,23 +55,33 @@ const PlanAdvancedSettings = ({ plan, appSettings, device, onUpdate, isEditing, 
          ) : (
             <>
                <ul className={classes.advancedTabs}>
-                  <li onClick={() => setAdvancedTab('General')} className={advancedTab === 'General' ? classes.advancedTabActive : ''}>
-                     <Icon size={13} type="folders" /> General
+                  <li className={advancedTab === 'General' ? classes.advancedTabActive : ''}>
+                     <button type="button" aria-pressed={advancedTab === 'General'} onClick={() => setAdvancedTab('General')}>
+                        <Icon size={13} type="folders" /> General
+                     </button>
                   </li>
                   {/* <li onClick={() => setAdvancedTab('Prune')} className={advancedTab === 'Prune' ? classes.advancedTabActive : ''}>
                      <Icon size={13} type="prune" /> Prune
                   </li> */}
-                  <li onClick={() => setAdvancedTab('Performance')} className={advancedTab === 'Performance' ? classes.advancedTabActive : ''}>
-                     <Icon size={13} type="performance" /> Performance
+                  <li className={advancedTab === 'Performance' ? classes.advancedTabActive : ''}>
+                     <button type="button" aria-pressed={advancedTab === 'Performance'} onClick={() => setAdvancedTab('Performance')}>
+                        <Icon size={13} type="performance" /> Performance
+                     </button>
                   </li>
-                  <li onClick={() => setAdvancedTab('Notification')} className={advancedTab === 'Notification' ? classes.advancedTabActive : ''}>
-                     <Icon size={13} type="notification" /> Notification
+                  <li className={advancedTab === 'Notification' ? classes.advancedTabActive : ''}>
+                     <button type="button" aria-pressed={advancedTab === 'Notification'} onClick={() => setAdvancedTab('Notification')}>
+                        <Icon size={13} type="notification" /> Notification
+                     </button>
                   </li>
-                  <li onClick={() => setAdvancedTab('Scripts')} className={advancedTab === 'Scripts' ? classes.advancedTabActive : ''}>
-                     <Icon size={13} type="cli" /> Scripts
+                  <li className={advancedTab === 'Scripts' ? classes.advancedTabActive : ''}>
+                     <button type="button" aria-pressed={advancedTab === 'Scripts'} onClick={() => setAdvancedTab('Scripts')}>
+                        <Icon size={13} type="cli" /> Scripts
+                     </button>
                   </li>
-                  <li onClick={() => setAdvancedTab('Misc')} className={advancedTab === 'Misc' ? classes.advancedTabActive : ''}>
-                     <Icon size={14} type="settings-alt" /> Misc.
+                  <li className={advancedTab === 'Misc' ? classes.advancedTabActive : ''}>
+                     <button type="button" aria-pressed={advancedTab === 'Misc'} onClick={() => setAdvancedTab('Misc')}>
+                        <Icon size={14} type="settings-alt" /> Misc.
+                     </button>
                   </li>
                </ul>
             </>

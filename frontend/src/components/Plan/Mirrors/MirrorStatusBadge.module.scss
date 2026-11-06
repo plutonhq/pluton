@@ -1,4 +1,7 @@
+@use '../../../styles/fields.scss';
+
 .badge {
+   @include fields.buttonReset;
    display: inline-flex;
    align-items: center;
    gap: 3px;
@@ -6,6 +9,9 @@
    cursor: default;
    white-space: nowrap;
    cursor: pointer;
+   &:focus-visible {
+      @include fields.focusRing;
+   }
 }
 
 .badgeSuccess {

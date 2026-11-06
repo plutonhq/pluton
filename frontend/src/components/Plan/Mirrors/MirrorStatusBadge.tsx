@@ -40,15 +40,17 @@ const MirrorStatusBadge = ({ mirrors, planId, backupId, replicationSettings }: M
 
    return (
       <>
-         <span
+         <button
+            type="button"
             className={badgeClass}
+            aria-label={label}
             data-tooltip-id="htmlToolTip"
             data-tooltip-place="top"
             data-tooltip-html={`<div>${label}</div>`}
             onClick={() => setShowMirrorDetails(true)}
          >
             <Icon type={'mirrors'} size={13} />
-         </span>
+         </button>
          {showMirrorDetails && (
             <MirrorDetails
                mirrors={mirrors}

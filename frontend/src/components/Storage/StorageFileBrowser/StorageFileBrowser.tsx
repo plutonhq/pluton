@@ -102,9 +102,15 @@ const StorageFileBrowser = ({ title, storageId, storageType, defaultPath, rootPa
          <div style={style} className={classes.fileRow} onClick={() => item.isDirectory && navigateToPath(item.path)}>
             <div className={classes.fileName}>
                {item.isDirectory ? <Icon type="fm-directory" size={18} /> : <FileIcon filename={item.name} />}
-               <span className={classes.fileNameText} title={item.name}>
-                  {item.name}
-               </span>
+               {item.isDirectory ? (
+                  <button type="button" className={classes.fileNameText} title={item.name}>
+                     {item.name}
+                  </button>
+               ) : (
+                  <span className={classes.fileNameText} title={item.name}>
+                     {item.name}
+                  </span>
+               )}
                {renderFileActions && <div className={classes.fileActions}>{renderFileActions(item)}</div>}
             </div>
             {isMobileDevice ? (

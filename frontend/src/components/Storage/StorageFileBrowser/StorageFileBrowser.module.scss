@@ -1,3 +1,5 @@
+@use '../../../styles/fields.scss';
+
 .browserModal {
    position: fixed;
    width: 100%;
@@ -191,6 +193,12 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+   }
+   button.fileNameText {
+      @include fields.buttonReset;
+      &:focus-visible {
+         @include fields.focusRing;
+      }
    }
 }
 

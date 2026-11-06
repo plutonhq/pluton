@@ -11,6 +11,7 @@
    transition: opacity 0.3s ease-out;
 
    .modalContent {
+      outline: none;
       position: absolute;
       width: 70%;
       background: var(--content-background-color);

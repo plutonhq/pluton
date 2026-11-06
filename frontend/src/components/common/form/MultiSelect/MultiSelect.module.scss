@@ -1,3 +1,5 @@
+@use '../../../../styles/fields.scss';
+
 .multiSelectField {
    .search {
       border: 1px solid;
@@ -94,9 +96,17 @@
             list-style-type: none;
 
             li {
-               padding: 8px 10px;
-               cursor: pointer;
                text-transform: capitalize;
+               button {
+                  @include fields.buttonReset;
+                  display: block;
+                  width: 100%;
+                  padding: 8px 10px;
+                  &:focus-visible {
+                     @include fields.focusRing;
+                     outline-offset: -2px;
+                  }
+               }
                span svg {
                   color: var(--icon-color);
                }

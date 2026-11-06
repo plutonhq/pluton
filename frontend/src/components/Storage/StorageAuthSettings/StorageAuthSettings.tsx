@@ -123,14 +123,16 @@ const StorageAuthSettings = ({
 
    return (
       <div className={classes.authSettings}>
-         <div
+         <button
+            type="button"
+            aria-expanded={showAdvanced}
             className={`${classes.advancedButton}  ${showAdvanced ? classes.advancedButtonActive : ''}`}
             onClick={() => setShowAdvanced(!showAdvanced)}
          >
             <Icon type={'authentication'} size={14} />
             <span>{storageType === 'local' ? 'Local Storage Setup' : 'Account Authentication'}</span>
             <Icon type={showAdvanced ? 'caret-up' : 'caret-down'} />
-         </div>
+         </button>
          {showAdvanced && (
             <div className={classes.advancedOptions}>
                {showAdvanced && authTypes.length > 1 && (

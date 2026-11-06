@@ -24,7 +24,17 @@
       overflow: hidden;
    }
 
+   .optionSelector li {
+      display: flex;
+      border-right: 1px solid var(--field-line-color);
+
+      &:last-child {
+         border-right: none;
+      }
+   }
+
    .option {
+      position: relative;
       display: flex;
       align-items: center;
       gap: 4px;
@@ -33,11 +43,15 @@
       cursor: pointer;
       color: var(--content-text-color);
       background: transparent;
-      border-right: 1px solid var(--field-line-color);
       transition: all 0.2s ease;
 
-      &:last-child {
-         border-right: none;
+      input {
+         @include fields.visuallyHidden;
+      }
+
+      &:has(input:focus-visible) {
+         @include fields.focusRing;
+         outline-offset: -2px;
       }
 
       &:hover {

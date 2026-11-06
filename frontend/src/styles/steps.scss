@@ -35,7 +35,8 @@
             margin-top: 5px;
             color: var(--content-text-color-light);
          }
-         & > span {
+         & > span,
+         & > button > span {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -48,7 +49,8 @@
             box-sizing: border-box;
          }
          &.stepCurrent {
-            & > span {
+            & > span,
+            & > button > span {
                background-color: var(--primary-color);
                color: var(--primary-text-color);
             }
@@ -58,7 +60,8 @@
             }
          }
          &.stepPassed {
-            & > span {
+            & > span,
+            & > button > span {
                background-color: var(--primary-color);
             }
          }

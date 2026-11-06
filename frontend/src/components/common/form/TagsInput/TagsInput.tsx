@@ -62,9 +62,9 @@ const TagsInput = ({ label, description, customClasses = '', hint = '', fieldVal
             {tags.map((t, i) => (
                <div className={classes.tag} key={t + i}>
                   <Icon size={13} type={icon || 'tags'} /> {t}{' '}
-                  <i title="Remove" onClick={() => removeTag(t)}>
+                  <button type="button" title="Remove" aria-label={`Remove ${t}`} onClick={() => removeTag(t)}>
                      ✖
-                  </i>
+                  </button>
                </div>
             ))}
             <div className={classes.textInput}>

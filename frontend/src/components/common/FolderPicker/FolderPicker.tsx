@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import Icon from '../Icon/Icon';
 import { FileManager } from '../FileManager/FileManager';
 import classes from './FolderPicker.module.scss';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface FolderPickerProps {
    title: string;
@@ -16,6 +16,15 @@ interface FolderPickerProps {
 
 const FolderPicker = ({ title, selected, footerText = '', buttonText = 'Insert Path', deviceId = 'main', close, onSelect }: FolderPickerProps) => {
    const [selectedPath, setSelectedPath] = useState(selected);
+   const pickerRef = useRef<HTMLDivElement>(null);
+
+   useEffect(() => {
+      const el = pickerRef.current;
+      if (el && !el.contains(document.activeElement)) {
+         el.focus({ preventScroll: true });
+      }
+   }, []);
+
    const closeOnBGClick = (e: React.SyntheticEvent) => {
       e.stopPropagation();
       e.nativeEvent.stopImmediatePropagation();
@@ -24,12 +33,19 @@ const FolderPicker = ({ title, selected, footerText = '', buttonText = 'Insert P
       }
    };
 
+   const closeOnEsc = (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+         e.stopPropagation();
+         close();
+      }
+   };
+
    return createPortal(
-      <div className={classes.folderPickerModal} onClick={closeOnBGClick}>
-         <div className={classes.folderPickerModalInner}>
+      <div className={classes.folderPickerModal} onClick={closeOnBGClick} onKeyDown={closeOnEsc}>
+         <div className={classes.folderPickerModalInner} ref={pickerRef} tabIndex={-1}>
             <div className={classes.folderPickerHeader}>
                <h4>{title}</h4>
-               <button onClick={() => close()}>
+               <button type="button" aria-label="Close" onClick={() => close()}>
                   <Icon type="close" size={20} />
                </button>
             </div>

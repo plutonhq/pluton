@@ -1,3 +1,5 @@
+@use '../../../styles/fields.scss';
+
 .snapshotBrowser {
    display: flex;
    flex-direction: column;
@@ -111,6 +113,13 @@
       width: auto;
       padding: 0px 4px;
       border-radius: 3px;
+   }
+   .dirNameBtn {
+      @include fields.buttonReset;
+      width: auto;
+      &:focus-visible {
+         @include fields.focusRing;
+      }
    }
    .togglePlaceholder {
       width: 10px;
@@ -227,6 +236,17 @@
          justify-content: left;
          gap: 5px;
          word-break: break-all;
+      }
+   }
+
+   .fileNameBtn {
+      @include fields.buttonReset;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      &:focus-visible {
+         @include fields.focusRing;
       }
    }
 
@@ -364,6 +384,13 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            .fileNameBtn {
+               display: inline-block;
+               max-width: 100%;
+               overflow: hidden;
+               text-overflow: ellipsis;
+               vertical-align: top;
+            }
          }
          & > div {
             display: block;

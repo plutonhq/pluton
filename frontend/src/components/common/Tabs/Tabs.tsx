@@ -64,13 +64,15 @@ const Tab = ({ value, label, icon, customClasses }: TabProps) => {
    const isActive = activeTab === value;
 
    return (
-      <li onClick={() => setActiveTab(value)} className={`${isActive ? classes.tabActive : ''} ${customClasses || ''}`}>
-         {icon && (
-            <>
-               <Icon type={icon} size={13} />{' '}
-            </>
-         )}
-         <span>{label}</span>
+      <li className={`${isActive ? classes.tabActive : ''} ${customClasses || ''}`}>
+         <button type="button" aria-pressed={isActive} onClick={() => setActiveTab(value)}>
+            {icon && (
+               <>
+                  <Icon type={icon} size={13} />{' '}
+               </>
+            )}
+            <span>{label}</span>
+         </button>
       </li>
    );
 };

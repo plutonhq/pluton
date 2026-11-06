@@ -40,7 +40,11 @@ const SnapshotViewerFile = ({
             className={`${classes.snapshotFile} ${classes.fileIsDir} ${classes.goUpButton}`}
             onClick={onGoUp}
          >
-            <div className={classes.fileName}>...</div>
+            <div className={classes.fileName}>
+               <button type="button" className={classes.fileNameBtn} aria-label="Go up">
+                  ...
+               </button>
+            </div>
             <div></div>
             <div></div>
             {!isSync && <div></div>}
@@ -65,7 +69,15 @@ const SnapshotViewerFile = ({
          }}
       >
          <div className={classes.fileName}>
-            {isDirectory ? <Icon type={'fm-directory'} size={16} /> : <FileIcon filename={fileName} />} {fileName}
+            {isDirectory ? (
+               <button type="button" className={classes.fileNameBtn}>
+                  <Icon type={'fm-directory'} size={16} /> {fileName}
+               </button>
+            ) : (
+               <>
+                  <FileIcon filename={fileName} /> {fileName}
+               </>
+            )}
          </div>
          <div className={classes.fileModifiedAt} title={typedFile.modifiedAt ? formatDateTime(typedFile.modifiedAt) : undefined}>
             <i>{typedFile.modifiedAt ? timeAgo(new Date(typedFile.modifiedAt)) : ''}</i>

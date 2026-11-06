@@ -1,3 +1,5 @@
+@use '../../../styles/fields.scss';
+
 .pathPicker {
    width: 100%;
 }
@@ -52,13 +54,19 @@
 .pathAdd {
    font-size: 1.125rem;
    font-weight: 600;
-   padding: 0px 10px;
+   display: flex;
    color: var(--content-text-color-light);
    user-select: none;
-   cursor: pointer;
    position: relative;
    span {
       font-size: 0.75rem;
+   }
+   & > button {
+      @include fields.buttonReset;
+      padding: 0px 10px;
+      &:focus-visible {
+         @include fields.focusRing;
+      }
    }
    &:hover {
       color: var(--primary-color);
@@ -152,6 +160,7 @@
    z-index: 99999999;
    background: var(--modal-shadow-color-light);
    .pathPickerModalInner {
+      outline: none;
       position: absolute;
       width: 70%;
       max-width: 1000px;

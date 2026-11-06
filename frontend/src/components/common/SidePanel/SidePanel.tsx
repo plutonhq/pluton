@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom';
 import Icon from '../Icon/Icon';
 import classes from './SidePanel.module.scss';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type SidePanelProps = {
    title: string;
@@ -17,8 +17,14 @@ type SidePanelProps = {
 const SidePanel = ({ close, children, title, icon, footer, width, headerWidth, withTabs }: SidePanelProps) => {
    const [isActive, setIsActive] = useState(false);
    const isFullWidth = width === '100%' || width === '100vw';
+   const wrapperRef = useRef<HTMLDivElement>(null);
 
    useEffect(() => {
+      const el = wrapperRef.current;
+      if (el && !el.contains(document.activeElement)) {
+         el.focus({ preventScroll: true });
+      }
+
       const body = document.querySelector('body');
       if (body) {
          body.style.overflow = 'hidden';
@@ -46,7 +52,7 @@ const SidePanel = ({ close, children, title, icon, footer, width, headerWidth, w
 
    return createPortal(
       <div className={classes.sidePanel + (isFullWidth ? ` ${classes.fullWidth}` : '')}>
-         <div className={`${classes.wrapper} ${isActive ? classes.active : ''} ${withTabs ? classes.noPadding : ''}`} style={{ width: width }}>
+         <div className={`${classes.wrapper} ${isActive ? classes.active : ''} ${withTabs ? classes.noPadding : ''}`} style={{ width: width }} ref={wrapperRef} tabIndex={-1}>
             <div className={classes.header}>
                <div className={classes.headerContent} style={{ maxWidth: headerWidth ? headerWidth : undefined }}>
                   <h3>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon/Icon';
 import classes from './PathPicker.module.scss';
@@ -24,18 +24,21 @@ const PathPicker = ({ onUpdate, single = false, disallowChange = false, paths = 
    const [patternInputType, setPatternInputType] = useState<'includes' | 'excludes'>('includes');
    const [openPath, setOpenPath] = useState<string | undefined>();
    const [selectedPaths, setSelectedPaths] = useState<{ includes: string[]; excludes: string[] }>(() => paths);
+   const pickerRef = useRef<HTMLDivElement>(null);
 
    useEffect(() => {
-      const closeModalOnEsc = (event: KeyboardEvent) => {
-         if (event.key === 'Escape') {
-            setShowPicker(false);
-         }
-      };
-      window.addEventListener('keydown', closeModalOnEsc, false);
-      return () => {
-         window.removeEventListener('keydown', closeModalOnEsc, false);
-      };
-   }, []);
+      const el = pickerRef.current;
+      if (showPicker && el && !el.contains(document.activeElement)) {
+         el.focus({ preventScroll: true });
+      }
+   }, [showPicker]);
+
+   const closeOnEsc = (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+         e.stopPropagation();
+         setShowPicker(false);
+      }
+   };
 
    const closeOnBGClick = (e: React.SyntheticEvent) => {
       e.stopPropagation();
@@ -125,8 +128,10 @@ const PathPicker = ({ onUpdate, single = false, disallowChange = false, paths = 
                );
             })}
             {(!single || (single && paths.includes.length === 0)) && (
-               <div title="Add Path" onClick={() => setShowAddPicker(!showAddPicker)} className={classes.pathAdd}>
-                  + <span>Add</span>
+               <div className={classes.pathAdd}>
+                  <button type="button" title="Add Path" aria-expanded={showAddPicker} onClick={() => setShowAddPicker(!showAddPicker)}>
+                     + <span>Add</span>
+                  </button>
                   {showAddPicker && (
                      <div className={classes.addDropDown}>
                         <button
@@ -239,11 +244,11 @@ const PathPicker = ({ onUpdate, single = false, disallowChange = false, paths = 
          )}
          {showPicker &&
             createPortal(
-               <div className={classes.pathPickerModal} onClick={closeOnBGClick}>
-                  <div className={classes.pathPickerModalInner}>
+               <div className={classes.pathPickerModal} onClick={closeOnBGClick} onKeyDown={closeOnEsc}>
+                  <div className={classes.pathPickerModalInner} ref={pickerRef} tabIndex={-1}>
                      <div className={classes.pathPickerHeader}>
                         <h4>Choose Paths/Files to Backup</h4>
-                        <button onClick={() => setShowPicker(false)}>
+                        <button type="button" aria-label="Close" onClick={() => setShowPicker(false)}>
                            <Icon type="close" size={20} />
                         </button>
                      </div>

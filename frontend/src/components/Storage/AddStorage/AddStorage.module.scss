@@ -1,3 +1,5 @@
+@use '../../../styles/fields.scss';
+
 .addStorage {
    position: relative;
 
@@ -103,6 +105,7 @@
    }
 }
 .advancedButton {
+   @include fields.buttonReset;
    display: flex;
    width: 100%;
    cursor: pointer;
@@ -117,6 +120,9 @@
 
    &:hover {
       color: var(--primary-color);
+   }
+   &:focus-visible {
+      @include fields.focusRing;
    }
    &.advancedButtonActive {
       border-radius: 6px 6px 0 0;

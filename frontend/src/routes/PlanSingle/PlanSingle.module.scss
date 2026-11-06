@@ -1,3 +1,5 @@
+@use '../../styles/fields.scss';
+
 .planSingle {
    .planDescription {
       margin-left: 6px;
@@ -7,6 +9,11 @@
    }
 }
 
+// :where keeps the reset below the global .label styles
+:where(.planError) {
+   @include fields.buttonReset;
+}
+
 .planError {
    border: 1px solid #f3cfcf;
    padding-top: 0;
@@ -14,6 +21,9 @@
    transition: all 0.12s linear;
    &:hover {
       background-color: #f3cfcf;
+   }
+   &:focus-visible {
+      @include fields.focusRing;
    }
 }
 
@@ -37,7 +47,15 @@
       border: 1px solid var(--line-color);
       border-radius: 6px;
       list-style-type: none;
-      li {
+      li > button {
+         @include fields.buttonReset;
+         width: 100%;
+         &:focus-visible {
+            @include fields.focusRing;
+            outline-offset: -2px;
+         }
+      }
+      .actionBtn {
          cursor: pointer;
          padding: 5px 15px;
          font-size: 0.9em;

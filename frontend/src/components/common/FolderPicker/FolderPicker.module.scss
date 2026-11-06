@@ -7,6 +7,7 @@
    z-index: 99999999;
    background: var(--modal-shadow-color-light);
    .folderPickerModalInner {
+      outline: none;
       position: absolute;
       width: 70%;
       max-width: 1000px;

@@ -1,3 +1,5 @@
+@use '../../../../styles/fields.scss';
+
 .selectField {
    .search {
       border: 1px solid;
@@ -85,8 +87,16 @@
             list-style-type: none;
 
             li {
-               padding: 8px 10px;
-               cursor: pointer;
+               button {
+                  @include fields.buttonReset;
+                  display: block;
+                  width: 100%;
+                  padding: 8px 10px;
+                  &:focus-visible {
+                     @include fields.focusRing;
+                     outline-offset: -2px;
+                  }
+               }
 
                img {
                   margin-right: 5px;
@@ -102,7 +112,9 @@
                &.disabledItem {
                   opacity: 0.6;
                   user-select: none;
-                  cursor: not-allowed;
+                  button {
+                     cursor: not-allowed;
+                  }
                }
 
                &.selectedItem {
@@ -176,7 +188,7 @@
             font-size: 0.9em;
             margin-top: 4px;
             width: max-content;
-            li {
+            li button {
                padding: 6px 10px;
             }
          }

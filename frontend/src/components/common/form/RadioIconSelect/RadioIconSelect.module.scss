@@ -1,3 +1,5 @@
+@use '../../../../styles/fields.scss';
+
 .radioIconField {
    width: 100%;
    position: relative;
@@ -47,6 +49,14 @@
    cursor: pointer;
    font-size: 0.75rem;
    position: relative;
+
+   input {
+      @include fields.visuallyHidden;
+   }
+
+   &:has(input:focus-visible) {
+      @include fields.focusRing;
+   }
 
    :global(.checkMark) {
       color: var(--primary-color);

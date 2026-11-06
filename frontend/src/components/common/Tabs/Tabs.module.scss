@@ -1,3 +1,5 @@
+@use '../../../styles/fields.scss';
+
 .tabs {
    padding: 10px;
    border: 1px solid var(--line-color);
@@ -9,9 +11,16 @@
       display: flex;
       gap: 10px;
       li {
-         padding: 3px 12px;
          border-radius: 20px;
-         cursor: pointer;
+         button {
+            @include fields.buttonReset;
+            display: block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            &:focus-visible {
+               @include fields.focusRing;
+            }
+         }
          span {
             color: var(--icon-color);
          }

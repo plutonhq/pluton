@@ -47,3 +47,32 @@
    font-size: 0.75rem;
    color: var(--content-text-color-light);
 }
+
+@mixin visuallyHidden {
+   position: absolute;
+   width: 1px;
+   height: 1px;
+   margin: -1px;
+   padding: 0;
+   border: 0;
+   overflow: hidden;
+   clip: rect(0 0 0 0);
+   white-space: nowrap;
+   opacity: 0;
+}
+
+@mixin focusRing {
+   outline: 2px solid var(--primary-color);
+   outline-offset: 2px;
+}
+
+@mixin buttonReset {
+   font: inherit;
+   color: inherit;
+   background: none;
+   border: none;
+   margin: 0;
+   padding: 0;
+   text-align: inherit;
+   cursor: pointer;
+}

@@ -74,6 +74,7 @@ const SnapshotBrowserDirectories = ({
                      {hasChildren ? (
                         <button
                            className={classes.toggleButton}
+                           aria-expanded={isExpanded}
                            onClick={(e) => {
                               e.stopPropagation();
                               onToggleFolder(dir);
@@ -84,9 +85,11 @@ const SnapshotBrowserDirectories = ({
                      ) : (
                         <span className={classes.togglePlaceholder} />
                      )}
-                     <span className={classes.dirName}>
-                        <Icon type={'fm-directory'} size={14} /> {dirName}
-                     </span>
+                     <button type="button" className={classes.dirNameBtn}>
+                        <span className={classes.dirName}>
+                           <Icon type={'fm-directory'} size={14} /> {dirName}
+                        </span>
+                     </button>
                      {renderDirectoryExtra?.(dir)}
                   </div>
                   {loadMoreAfter?.get(dir)?.map((parent) => (

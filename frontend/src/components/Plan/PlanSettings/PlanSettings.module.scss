@@ -1,3 +1,5 @@
+@use '../../../styles/fields.scss';
+
 //Fields
 
 .field {
@@ -232,11 +234,18 @@
    li {
       list-style-type: none;
       font-size: 0.75rem;
-      padding: 5px 15px;
       border-radius: 4px;
       border: 1px solid transparent;
-      cursor: pointer;
       color: var(--content-text-color);
+      button {
+         @include fields.buttonReset;
+         display: block;
+         padding: 5px 15px;
+         &:focus-visible {
+            @include fields.focusRing;
+            outline-offset: -2px;
+         }
+      }
       &.advancedTabActive {
          color: var(--primary-color);
          border: 1px solid var(--line-color);

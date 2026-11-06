@@ -109,13 +109,16 @@ const MultiSelect = ({
                         {optionsItems.length > 0 &&
                            optionsItems.map((item, indx) => {
                               return (
-                                 <li
-                                    key={indx}
-                                    onClick={() => !item.pro && toggleOption(item.value)}
-                                    className={`${fieldValue.includes(item.value) ? classes.selectedItem : ''}`}
-                                 >
-                                    <Icon type={'check-circle-filled'} size={13} />
-                                    {item.label}
+                                 <li key={indx} className={`${fieldValue.includes(item.value) ? classes.selectedItem : ''}`}>
+                                    <button
+                                       type="button"
+                                       disabled={item.pro}
+                                       aria-pressed={fieldValue.includes(item.value)}
+                                       onClick={() => toggleOption(item.value)}
+                                    >
+                                       <Icon type={'check-circle-filled'} size={13} />
+                                       {item.label}
+                                    </button>
                                  </li>
                               );
                            })}

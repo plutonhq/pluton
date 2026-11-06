@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import Icon from '../../Icon/Icon';
 import FormField from '../FormField/FormField';
 import classes from './RadioIconSelect.module.scss';
@@ -29,6 +30,7 @@ const RadioIconSelect = ({
    onUpdate,
    onDisableClick,
 }: RadioIconSelectProps) => {
+   const groupName = useId();
    return (
       <FormField type="radioIconSelect" label={label} classes={classes.radioIconField} hint={hint} inline={inline}>
          <div
@@ -37,14 +39,12 @@ const RadioIconSelect = ({
             {options.map((option) => {
                const { label, value, icon, description, disabled = false } = option;
                return (
-                  <div
+                  <label
                      key={value}
                      className={`${classes.radioIconFieldOption} ${disabled ? classes.radioIconFieldDisabled : ''} ${fieldValue === value ? classes.radioIconFieldActive : ''}`}
                      onClick={() => {
                         if (disabled && onDisableClick) {
                            onDisableClick(value);
-                        } else {
-                           onUpdate(value);
                         }
                      }}
                      data-tooltip-id="appTooltip"
@@ -52,6 +52,14 @@ const RadioIconSelect = ({
                      data-tooltip-place="top"
                      data-tooltip-delay-show={300}
                   >
+                     <input
+                        type="radio"
+                        name={groupName}
+                        value={value}
+                        checked={fieldValue === value}
+                        disabled={disabled}
+                        onChange={() => onUpdate(value)}
+                     />
                      {fieldValue === value && <Icon classes="checkMark" type="check-circle-filled" size={14} />}
                      <div className={classes.radioIconFieldIcon}>
                         <Icon type={icon} size={30} />
@@ -66,7 +74,7 @@ const RadioIconSelect = ({
                            <h4>{label}</h4>
                         )}
                      </div>
-                  </div>
+                  </label>
                );
             })}
          </div>

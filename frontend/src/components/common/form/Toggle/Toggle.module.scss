@@ -1,3 +1,5 @@
+@use '../../../../styles/fields.scss';
+
 .toggleField {
    &.toggleFieldInline {
       .fieldInner {
@@ -12,6 +14,7 @@
 
 .toggleCheckbox {
    display: flex;
+   position: relative;
    span {
       // width: 250px;
       display: inline-block;
@@ -19,11 +22,11 @@
    }
 
    input[type='checkbox'] {
-      height: 0;
-      width: 0;
-      margin: 0;
-      min-width: 0;
-      visibility: hidden;
+      @include fields.visuallyHidden;
+   }
+
+   input:focus-visible + label {
+      @include fields.focusRing;
    }
 
    label {

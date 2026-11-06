@@ -58,14 +58,20 @@ const Settings = () => {
          <div className={classes.settingsContent}>
             <div className={classes.sidebar}>
                <ul className={classes.tabs}>
-                  <li className={`${tab === 'general' ? classes.tabActive : ''}`} onClick={() => setTab('general')}>
-                     <Icon type="cog" size={13} /> General
+                  <li className={`${tab === 'general' ? classes.tabActive : ''}`}>
+                     <button type="button" aria-pressed={tab === 'general'} onClick={() => setTab('general')}>
+                        <Icon type="cog" size={13} /> General
+                     </button>
                   </li>
-                  <li className={`${tab === 'integration' ? classes.tabActive : ''}`} onClick={() => setTab('integration')}>
-                     <Icon type="integration" size={13} /> Integrations
+                  <li className={`${tab === 'integration' ? classes.tabActive : ''}`}>
+                     <button type="button" aria-pressed={tab === 'integration'} onClick={() => setTab('integration')}>
+                        <Icon type="integration" size={13} /> Integrations
+                     </button>
                   </li>
-                  <li className={`${tab === 'backup' ? classes.tabActive : ''}`} onClick={() => setTab('backup')}>
-                     <Icon type="backup" size={13} /> Backup Pluton
+                  <li className={`${tab === 'backup' ? classes.tabActive : ''}`}>
+                     <button type="button" aria-pressed={tab === 'backup'} onClick={() => setTab('backup')}>
+                        <Icon type="backup" size={13} /> Backup Pluton
+                     </button>
                   </li>
                </ul>
                <button className={classes.updateBtn} onClick={() => updateSettings()}>

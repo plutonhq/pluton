@@ -14,7 +14,11 @@ const SnapshotBrowserGoUpRow = ({ style, onGoUp, gridTemplateColumns }: Snapshot
          className={`${classes.snapshotFile} ${classes.fileIsDir} ${classes.goUpButton}`}
          onClick={onGoUp}
       >
-         <div className={classes.fileName}>...</div>
+         <div className={classes.fileName}>
+            <button type="button" className={classes.fileNameBtn} aria-label="Go up">
+               ...
+            </button>
+         </div>
       </div>
    );
 };
