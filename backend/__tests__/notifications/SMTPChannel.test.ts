@@ -42,10 +42,6 @@ describe('SMTPChannel', () => {
 				messageId: 'test-message-id',
 				response: '250 OK',
 			}),
-			options: {
-				from: 'Test Sender <sender@example.com>',
-				to: 'default@example.com',
-			},
 		};
 
 		(nodemailer.createTransport as jest.Mock).mockReturnValue(mockTransporter);
@@ -83,7 +79,6 @@ describe('SMTPChannel', () => {
 				tls: {
 					rejectUnauthorized: false,
 				},
-				from: 'Test Sender <sender@example.com>',
 			});
 		});
 
@@ -105,9 +100,9 @@ describe('SMTPChannel', () => {
 			mockSmtpSettings.senderName = undefined;
 			smtpChannel = new SMTPChannel(mockSmtpSettings);
 
-			await smtpChannel.initialize();
+			await smtpChannel.send(new MockNotification(), { emails: ['test@example.com'] });
 
-			expect(nodemailer.createTransport).toHaveBeenCalledWith(
+			expect(mockTransporter.sendMail).toHaveBeenCalledWith(
 				expect.objectContaining({
 					from: 'Pluton Backup <sender@example.com>',
 				})
@@ -163,14 +158,14 @@ describe('SMTPChannel', () => {
 			);
 		});
 
-		it('should use default recipient if emails not provided in options', async () => {
+		it('should send from the configured sender', async () => {
 			const notification = new MockNotification();
 
-			await smtpChannel.send(notification, {});
+			await smtpChannel.send(notification, { emails: ['test@example.com'] });
 
 			expect(mockTransporter.sendMail).toHaveBeenCalledWith(
 				expect.objectContaining({
-					to: 'default@example.com',
+					from: 'Test Sender <sender@example.com>',
 				})
 			);
 		});

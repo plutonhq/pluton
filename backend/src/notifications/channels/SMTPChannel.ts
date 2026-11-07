@@ -1,10 +1,11 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { BaseNotification } from '../BaseNotification';
 import { NotificationChannel } from '../NotificationChannel';
 import { SmtpSettings } from '../../types/settings';
 
 export class SMTPChannel implements NotificationChannel {
-	private transporter!: nodemailer.Transporter;
+	private transporter!: Transporter;
+	private sender = '';
 	protected smtpSettings: SmtpSettings;
 
 	constructor(smtpSettings: SmtpSettings) {
@@ -14,6 +15,7 @@ export class SMTPChannel implements NotificationChannel {
 	async initialize() {
 		const smtpConfig = this.smtpSettings;
 		const senderName = smtpConfig?.senderName || 'Pluton Backup';
+		this.sender = `${senderName} <${smtpConfig.senderEmail}>`;
 
 		// console.log('smtpConfig :', smtpConfig);/
 		this.transporter = nodemailer.createTransport({
@@ -34,7 +36,6 @@ export class SMTPChannel implements NotificationChannel {
 				// Disable certificate verification
 				rejectUnauthorized: false,
 			},
-			from: `${senderName} <${smtpConfig.senderEmail}>`,
 		});
 	}
 
@@ -48,8 +49,8 @@ export class SMTPChannel implements NotificationChannel {
 			}
 
 			const mailOptions = {
-				from: this.transporter.options.from,
-				to: options?.emails ? options.emails : this.transporter.options.to,
+				from: this.sender,
+				to: options?.emails,
 				subject: notification.getSubject(),
 				html: notification.getContent(),
 			};

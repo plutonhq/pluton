@@ -4,10 +4,10 @@ packages:
   - '../pluton/backend'
   - '../pluton/frontend'
 
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - better-sqlite3
-  - cpu-features
-  - esbuild
-  - ssh2
-  - unrs-resolver
+allowBuilds:
+  '@parcel/watcher': true
+  better-sqlite3: true
+  cpu-features: true
+  esbuild: true
+  ssh2: true
+  unrs-resolver: true

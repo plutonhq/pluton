@@ -19,12 +19,12 @@
     "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\" "
   },
   "devDependencies": {
-    "@yao-pkg/pkg": "6.20.0",
-    "compressing": "^2.1.0",
-    "concurrently": "^9.1.2",
+    "@yao-pkg/pkg": "6.25.0",
+    "compressing": "^2.1.5",
+    "concurrently": "^10.0.6",
     "prettier": "^3.0.0",
-    "release-please": "^17.2.1",
-    "syncpack": "^14.0.0",
+    "release-please": "^17.11.2",
+    "syncpack": "^15.3.3",
     "turbo": "^2.6.0",
     "typescript": "^5.9.3",
     "unbzip2-stream": "^1.4.3"
@@ -43,7 +43,7 @@
     ],
     "outputPath": "dist/executables"
   },
-  "packageManager": "pnpm@10.20.0",
+  "packageManager": "pnpm@12.18.0",
   "workspaces": [
     "backend",
     "frontend"
