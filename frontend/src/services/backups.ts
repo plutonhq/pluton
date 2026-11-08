@@ -3,8 +3,6 @@ import { toast } from 'react-toastify';
 import { API_URL } from '../utils/constants';
 import { SnapshotIndexDir, SnapshotIndexRow, SnapshotIndexSelection, SnapshotIndexStatus } from '../@types/backups';
 
-const notifiedBackupProgress = new Set<string>();
-
 // Generate Download
 export async function generateBackupDownload({ backupId, replicationId }: { backupId: string; planId: string; replicationId?: string }) {
    const url = `${API_URL}/backups/${backupId}/action/download?${replicationId ? `replicationId=${replicationId}` : ''}`;
@@ -125,50 +123,6 @@ export async function getBackupProgress({ id, sourceId, sourceType, planId }: { 
    return data;
 }
 
-export function useGetBackupProgress(payload: { id: string; sourceId: string; sourceType: string; planId: string }) {
-   const queryClient = useQueryClient();
-   return useQuery({
-      queryKey: ['progress-backup', payload.id],
-      queryFn: () => getBackupProgress(payload),
-      refetchOnMount: true,
-      retry: false,
-      refetchInterval(query) {
-         // Only refetch if the browser tab is active
-         // if (document.hidden) return false;
-
-         // console.log('query :', query.state?.data);
-         const progressData = query.state?.data;
-
-         // Check if backup is finished by looking for a "finished" phase event
-         const isFinished = progressData?.events?.some((event: any) => event.phase === 'finished' && event.completed === true);
-
-         if (isFinished) {
-            const planId = progressData?.planId || payload.planId;
-            if (!notifiedBackupProgress.has(payload.id)) {
-               notifiedBackupProgress.add(payload.id);
-               if (planId) {
-                  console.log('Invalidate Plan and Reload It :', planId);
-                  queryClient.invalidateQueries({ queryKey: ['plan', planId] });
-               }
-               toast.success('Process Complete!');
-            }
-            return false;
-         }
-
-         return 1000;
-      },
-   });
-}
-
-export function useGetBackupProgressOnce(payload: { id: string; sourceId: string; sourceType: string; planId: string }) {
-   return useQuery({
-      queryKey: ['progress-backup', payload.id],
-      queryFn: () => getBackupProgress(payload),
-      refetchOnMount: true,
-      retry: false,
-   });
-}
-
 // Cancel Backup
 export async function cancelBackup({ planId, backupId }: { planId: string; backupId: string }) {
    const res = await fetch(`${API_URL}/backups/${backupId}/action/cancel?planId=${planId}`, {
@@ -233,7 +187,7 @@ export async function getSnapshotFiles({ backupId, replicationId }: { backupId: 
 }
 export function useGetSnapshotFiles({ enabled = true, ...payload }: { backupId: string; replicationId?: string; enabled?: boolean }) {
    return useQuery({
-      queryKey: ['snapshot-files', payload.backupId, payload.replicationId || ''],
+      queryKey: ['snapshot-files', payload.backupId, payload.replicationId || '', payload],
       queryFn: () => getSnapshotFiles(payload),
       enabled,
       refetchOnMount: true,
@@ -275,13 +229,13 @@ export function getSnapshotIndexStatus(target: SnapshotIndexTarget) {
    return requestSnapshotIndex<SnapshotIndexStatus>(target, '/status');
 }
 
-export function useSnapshotIndex({ enabled = true, ...target }: SnapshotIndexTarget & { enabled?: boolean }) {
+export function useSnapshotIndex({ enabled = true, backupId, replicationId }: SnapshotIndexTarget & { enabled?: boolean }) {
    const queryClient = useQueryClient();
-   const queryKey = ['snapshot-index', target.backupId, target.replicationId || ''];
    return useQuery({
-      queryKey,
+      queryKey: ['snapshot-index', backupId, replicationId || ''],
       // Only a poll of a running build can use GET. POST starts a build again after a failure.
-      queryFn: async () => {
+      queryFn: async ({ queryKey }) => {
+         const target = { backupId, replicationId };
          const current = queryClient.getQueryData<SnapshotIndexStatus>(queryKey);
          if (current?.state !== 'building') {
             return startSnapshotIndex(target);

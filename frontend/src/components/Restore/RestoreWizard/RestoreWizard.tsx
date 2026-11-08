@@ -39,7 +39,7 @@ const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close
    const { data: indexStatus } = useSnapshotIndex({ ...target, enabled: step >= 2 });
    const useIndex = indexStatus?.state !== 'unsupported';
    const { data: snapshotData, error: snapShotError } = useGetSnapshotFiles({ ...target, enabled: !useIndex });
-   const files: RestoreFileItem[] = snapshotData?.result && Array.isArray(snapshotData.result) ? snapshotData.result : [];
+   const files: RestoreFileItem[] = useMemo(() => (Array.isArray(snapshotData?.result) ? snapshotData.result : []), [snapshotData]);
 
    const snapShotsStats = useMemo(() => {
       if (useIndex) {

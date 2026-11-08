@@ -25,6 +25,7 @@ interface PlanSizeChartProps {
 const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
    const [range, setRange] = useState<RangeKey>('3m');
    const [open, setOpen] = useState(false);
+   const [now] = useState(() => Date.now());
    const dropdownRef = useRef<HTMLDivElement>(null);
 
    useEffect(() => {
@@ -41,7 +42,7 @@ const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
    const activeRange = RANGE_OPTIONS.find((r) => r.key === range) || RANGE_OPTIONS[3];
 
    const filtered = useMemo(() => {
-      const cutoff = Date.now() - activeRange.days * 24 * 60 * 60 * 1000;
+      const cutoff = now - activeRange.days * 24 * 60 * 60 * 1000;
       // if there is only one backup duplicate the first backup to make 2 items
       // so that the graph is never empty and shows the size even if there is only one backup in the selected range
       const theBackups = backups && backups.length === 1 ? [backups[0], backups[0]] : backups || [];
@@ -51,7 +52,7 @@ const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
             return !isNaN(t) && t >= cutoff;
          })
          .sort((a, b) => new Date(a.started).getTime() - new Date(b.started).getTime());
-   }, [backups, activeRange.days]);
+   }, [backups, activeRange.days, now]);
 
    const labels = filtered.map((b) => new Date(b.started).toLocaleString());
    const sizeData = filtered.map((b) => b.totalSize || 0);

@@ -4,7 +4,7 @@ import DeviceActions from '../../components/Device/DeviceItem/DeviceActions';
 import TagsFilter from '../../components/common/TagsFilter/TagsFilter';
 import SearchItems from '../../components/common/SearchItems/SearchItems';
 import SortItems from '../../components/common/SortItems/SortItems';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Device } from '../../@types/devices';
 import { useGetDevices } from '../../services/devices';
 import classes from './Sources.module.scss';
@@ -17,65 +17,52 @@ import SkeletonItems from '../../components/Skeleton/SkeletonItems';
 import deviceItemClasses from '../../components/Device/DeviceItem/DeviceItem.module.scss';
 import Upgrade from '../../components/Upgrade/Upgrade';
 
-type SourcesProps = {
-   buttonTitle?: string;
-   buttonAction?: (bool: boolean) => void;
+const getAgentVersion = (device: Device) => device.versions?.agent || '';
+
+const sortDevices = (list: Device[], sortBy: string): Device[] => {
+   switch (sortBy) {
+      case 'name_asc':
+         return [...list].sort((a, b) => a.name.localeCompare(b.name));
+      case 'name_desc':
+         return [...list].sort((a, b) => b.name.localeCompare(a.name));
+      case 'type_asc':
+         return [...list].sort((a, b) => (a.type || '').localeCompare(b.type || ''));
+      case 'type_desc':
+         return [...list].sort((a, b) => (b.type || '').localeCompare(a.type || ''));
+      case 'plans_asc':
+         return [...list].sort((a, b) => (a.plans?.length || 0) - (b.plans?.length || 0));
+      case 'plans_desc':
+         return [...list].sort((a, b) => (b.plans?.length || 0) - (a.plans?.length || 0));
+      case 'agent_asc':
+         return [...list].sort((a, b) => getAgentVersion(a).localeCompare(getAgentVersion(b), undefined, { numeric: true }));
+      case 'agent_desc':
+         return [...list].sort((a, b) => getAgentVersion(b).localeCompare(getAgentVersion(a), undefined, { numeric: true }));
+      default:
+         return list;
+   }
 };
 
-const Sources = ({}: SourcesProps) => {
-   const [devices, setDevices] = useState<Device[]>([]);
+const Sources = () => {
    const [devicesLayout, setDevicesLayout] = useState<ItemsLayoutValue>(() => getSavedLayout('devices'));
    const [sortBy, setSortBy] = useState(localStorage.getItem('devices_sort') || '');
+   const [tagFilter, setTagFilter] = useState('');
+   const [searchTerm, setSearchTerm] = useState('');
    const itemLayout = devicesLayout === 'grid' ? 'grid' : 'list';
    const { data, isLoading } = useGetDevices();
-   const fetchedDevices: Device[] = data?.result || [];
    const [showUpgrade, setShowUpgrade] = useState(false);
 
-   useEffect(() => {
-      if (data?.result) {
-         setDevices(data.result);
-         if (sortBy) {
-            sortDevices(sortBy, data.result);
-         }
-      }
-   }, [data]);
+   const fetchedDevices = useMemo<Device[]>(() => data?.result ?? [], [data]);
 
-   const getAgentVersion = (device: Device) => device.versions?.agent || '';
-
-   const sortDevices = (sortBy: string, devicesToSort?: Device[]) => {
-      const theDevices = devicesToSort && devicesToSort.length > 0 ? devicesToSort : devices;
-      switch (sortBy) {
-         case 'name_asc':
-            setDevices([...theDevices].sort((a, b) => a.name.localeCompare(b.name)));
-            break;
-         case 'name_desc':
-            setDevices([...theDevices].sort((a, b) => b.name.localeCompare(a.name)));
-            break;
-         case 'type_asc':
-            setDevices([...theDevices].sort((a, b) => (a.type || '').localeCompare(b.type || '')));
-            break;
-         case 'type_desc':
-            setDevices([...theDevices].sort((a, b) => (b.type || '').localeCompare(a.type || '')));
-            break;
-         case 'plans_asc':
-            setDevices([...theDevices].sort((a, b) => (a.plans?.length || 0) - (b.plans?.length || 0)));
-            break;
-         case 'plans_desc':
-            setDevices([...theDevices].sort((a, b) => (b.plans?.length || 0) - (a.plans?.length || 0)));
-            break;
-         case 'agent_asc':
-            setDevices([...theDevices].sort((a, b) => getAgentVersion(a).localeCompare(getAgentVersion(b), undefined, { numeric: true })));
-            break;
-         case 'agent_desc':
-            setDevices([...theDevices].sort((a, b) => getAgentVersion(b).localeCompare(getAgentVersion(a), undefined, { numeric: true })));
-            break;
-         case '':
-            setDevices([...fetchedDevices]);
-            break;
-         default:
-            break;
+   const devices = useMemo(() => {
+      let list = fetchedDevices;
+      if (tagFilter) {
+         list = list.filter((p) => p.tags.includes(tagFilter));
       }
-   };
+      if (searchTerm) {
+         list = list.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      }
+      return sortDevices(list, sortBy);
+   }, [fetchedDevices, tagFilter, searchTerm, sortBy]);
 
    const onTableSort = (value: string) => {
       if (value) {
@@ -84,42 +71,9 @@ const Sources = ({}: SourcesProps) => {
          localStorage.removeItem('devices_sort');
       }
       setSortBy(value);
-      sortDevices(value);
    };
 
-   const allTags = useMemo(() => {
-      const tags: string[] = [];
-      if (devices && devices.length > 0) {
-         devices.forEach(({ tags = [] }) => {
-            console.log('tags :', tags);
-            if (tags && Array.isArray(tags)) {
-               tags.forEach((tag) => {
-                  if (!tags.includes(tag)) {
-                     tags.push(tag);
-                  }
-               });
-            }
-         });
-      }
-
-      return tags;
-   }, [devices]);
-
-   const filterByTags = (tag: string) => {
-      if (tag) {
-         setDevices(fetchedDevices.filter((p) => p.tags.includes(tag)));
-      } else {
-         setDevices(fetchedDevices);
-      }
-   };
-
-   const searchStorages = (term: string) => {
-      if (term) {
-         setDevices(fetchedDevices.filter((p) => p.name.toLowerCase().includes(term.toLowerCase())));
-      } else {
-         setDevices(fetchedDevices);
-      }
-   };
+   const allTags = useMemo(() => [...new Set(fetchedDevices.flatMap((d) => d.tags ?? []))], [fetchedDevices]);
 
    return (
       <div className={classes.devices}>
@@ -130,8 +84,8 @@ const Sources = ({}: SourcesProps) => {
             buttonAction={() => setShowUpgrade(true)}
             rightSection={
                <>
-                  <TagsFilter tags={allTags} onSelect={filterByTags} />
-                  <SearchItems onSearch={(term) => searchStorages(term)} itemName="Sources" />
+                  <TagsFilter tags={allTags} onSelect={setTagFilter} />
+                  <SearchItems onSearch={(term) => setSearchTerm(term)} itemName="Sources" />
                   <SortItems
                      key={sortBy}
                      id={'devices_sort'}

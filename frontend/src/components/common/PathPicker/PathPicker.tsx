@@ -104,9 +104,9 @@ const PathPicker = ({ onUpdate, single = false, disallowChange = false, paths = 
                      className={classes.path}
                      key={p + i}
                      onClick={() => {
-                        if (disallowChange) return;
-                        !isPattern && setOpenPath(p);
-                        !isPattern && setShowPicker(true);
+                        if (disallowChange || isPattern) return;
+                        setOpenPath(p);
+                        setShowPicker(true);
                      }}
                   >
                      <Icon type={isPattern ? 'pattern' : 'folders'} />

@@ -1,4 +1,4 @@
-import { ChangeEvent, KeyboardEvent, useEffect, useState } from 'react';
+import { ChangeEvent, KeyboardEvent, useState } from 'react';
 import classes from './TagsInput.module.scss';
 import Icon from '../../Icon/Icon';
 import FormField from '../FormField/FormField';
@@ -16,28 +16,18 @@ type TagsInputProps = {
 };
 
 const TagsInput = ({ label, description, customClasses = '', hint = '', fieldValue = [], onUpdate, icon, type = 'tag', inline }: TagsInputProps) => {
-   const [tags, setTags] = useState<string[]>(() => (Array.isArray(fieldValue) ? fieldValue : []));
+   const tags = Array.isArray(fieldValue) ? fieldValue : [];
    const [newTag, setNewTag] = useState('');
-
-   useEffect(() => {
-      if (Array.isArray(fieldValue)) {
-         setTags(fieldValue);
-      }
-   }, [fieldValue]);
 
    const addTag = (tag: string) => {
       if (tag.length > 1) {
-         const updated = [...tags, tag];
-         setTags(updated);
          setNewTag('');
-         onUpdate(updated);
+         onUpdate([...tags, tag]);
       }
    };
 
    const removeTag = (t: string) => {
-      const updatedTags = tags.filter((tag) => t !== tag);
-      setTags(updatedTags);
-      onUpdate(updatedTags);
+      onUpdate(tags.filter((tag) => t !== tag));
    };
 
    const updateTag = (e: ChangeEvent<HTMLInputElement>) => {

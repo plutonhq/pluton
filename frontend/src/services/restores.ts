@@ -1,8 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
 import { API_URL } from '../utils/constants';
-
-const notifiedRestoreProgress = new Set<string>();
 
 // Get All Restores
 export async function getAllRestores() {
@@ -234,46 +231,4 @@ export async function getRestoreProgress({ id, sourceId, sourceType, planId }: {
    });
    const data = await res.json();
    return data;
-}
-
-export function useGetRestoreProgress(payload: { id: string; sourceId: string; sourceType: string; planId: string }) {
-   const queryClient = useQueryClient();
-   return useQuery({
-      queryKey: ['progress-restore', payload.id],
-      queryFn: () => getRestoreProgress(payload),
-      refetchOnMount: true,
-      retry: false,
-      refetchInterval(query) {
-         // Only refetch if the browser tab is active
-         // if (document.hidden) return false;
-
-         const progressData = query.state?.data;
-
-         // Check if backup is finished by looking for a "finished" phase event
-         const isFinished = progressData?.events?.some((event: any) => event.phase === 'finished' && event.completed === true);
-
-         if (isFinished) {
-            const planId = progressData?.planId || payload.planId;
-            if (!notifiedRestoreProgress.has(payload.id)) {
-               notifiedRestoreProgress.add(payload.id);
-               if (planId) {
-                  console.log('Invalidate Plan and Reload It :', planId);
-                  queryClient.invalidateQueries({ queryKey: ['plan', planId] });
-               }
-               toast.success('Restoration Complete!');
-            }
-            return false;
-         }
-
-         return 1000;
-      },
-   });
-}
-export function useGetRestoreProgressOnce(payload: { id: string; sourceId: string; sourceType: string; planId: string }) {
-   return useQuery({
-      queryKey: ['progress-restore', payload.id],
-      queryFn: () => getRestoreProgress(payload),
-      refetchOnMount: true,
-      retry: false,
-   });
 }

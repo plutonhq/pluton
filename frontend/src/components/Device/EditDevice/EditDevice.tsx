@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
 import Icon from '../../common/Icon/Icon';
 import SidePanel from '../../common/SidePanel/SidePanel';
@@ -24,12 +24,6 @@ const EditDevice = ({ close, device }: EditDeviceProps) => {
    }));
    const [showFileManager, setShowFileManager] = useState(false);
    const updateDeviceMutation = useUpdateDevice();
-
-   useEffect(() => {
-      if (newDevice.name) {
-         setInputErrors((currentState) => ({ ...currentState, name: '' }));
-      }
-   }, [newDevice.name]);
 
    const updateDevice = () => {
       console.log('newDevice :', newDevice);
@@ -93,7 +87,10 @@ const EditDevice = ({ close, device }: EditDeviceProps) => {
                type="text"
                placeholder="Device Name"
                value={newDevice.name || ''}
-               onChange={(e) => setNewDevice({ ...newDevice, name: e.target.value })}
+               onChange={(e) => {
+                  setNewDevice({ ...newDevice, name: e.target.value });
+                  if (e.target.value) setInputErrors((s) => ({ ...s, name: '' }));
+               }}
             />
          </div>
          <Tabs defaultValue="general">

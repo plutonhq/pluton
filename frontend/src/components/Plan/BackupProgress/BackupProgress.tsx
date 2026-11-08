@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import Icon from '../../common/Icon/Icon';
-import { useCancelBackup, useGetBackupProgress } from '../../../services/backups';
+import { useCancelBackup } from '../../../services/backups';
 import classes from './BackupProgress.module.scss';
 import { formatBytes, formatDateTime, formatSeconds, timeAgo } from '../../../utils/helpers';
 import {
@@ -14,7 +14,8 @@ import {
 import { Backup } from '../../../@types/backups';
 import { RestoreSlim } from '../../../@types/restores';
 import ActionModal from '../../common/ActionModal/ActionModal';
-import { useCancelRestore, useGetRestoreProgress } from '../../../services/restores';
+import { useCancelRestore } from '../../../services/restores';
+import { useGetProgress } from '../../../services/progress';
 import BackupEvents from '../BackupEvents/BackupEvents';
 import { ReplicationProgressData } from '../../../@types/backups';
 
@@ -34,8 +35,7 @@ const BackupProgress = ({ item, sourceId, sourceType, planId, type = 'backup' }:
    const cancelBackupMutation = useCancelBackup();
 
    const { id, started } = item;
-   const { data: progressData } =
-      type === 'backup' ? useGetBackupProgress({ id, sourceId, sourceType, planId }) : useGetRestoreProgress({ id, sourceId, sourceType, planId });
+   const { data: progressData } = useGetProgress(type, { id, sourceId, sourceType, planId }, { poll: true });
 
    const resticData = extractResticData(progressData);
    const progressMessage = type === 'backup' ? generateBackupProgressMessage(progressData) : generateRestoreProgressMessage(progressData);
@@ -59,7 +59,7 @@ const BackupProgress = ({ item, sourceId, sourceType, planId, type = 'backup' }:
    let filesProcessed = files_done;
    let bytesProcessed = bytes_done;
    let totalBytes = total_bytes;
-   let totalFiles = total_files;
+   const totalFiles = total_files;
    let progressPercent = total_bytes ? Math.round((bytes_done / total_bytes) * 100) : 0;
 
    if (type === 'restore') {

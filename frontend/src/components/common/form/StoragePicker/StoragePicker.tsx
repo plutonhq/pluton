@@ -37,11 +37,27 @@ const StoragePicker = ({
    const fullPath = hasBucketName ? `${selectedStorage.defaultPath}${path ? `/${path}` : ''}` : path;
 
    const { data: allStorageData } = useGetStorages();
-   const allUserStorages = (allStorageData?.result as storageItem[]) || [];
-   const allStorages = [...allUserStorages];
+   const allStorages = useMemo(() => (allStorageData?.result as storageItem[]) || [], [allStorageData]);
 
-   console.log('allStorages :', allStorages);
-   console.log('selectedStorage :', selectedStorage);
+   // Select the storage of `storageId` each time the storage list data changes.
+   const [syncedStorageData, setSyncedStorageData] = useState<typeof allStorageData>();
+   if (allStorageData !== syncedStorageData) {
+      setSyncedStorageData(allStorageData);
+      if (allStorages.length > 0 && storageId) {
+         const currentStorage = allStorages.find((s) => s.id === storageId);
+         setSelectedStorage(currentStorage);
+         if (currentStorage?.defaultPath && currentStorage.defaultPath !== '/') {
+            const prefix = currentStorage.defaultPath + '/';
+            setPath((prev) => (prev.startsWith(prefix) ? prev.slice(prefix.length) : prev));
+         }
+      }
+   }
+
+   // Clear the selection when the picked storage becomes excluded
+   if (selectedStorage && excludeStorageIds?.includes(selectedStorage.id)) {
+      setSelectedStorage(null);
+      setPath('');
+   }
 
    const storageOptions = useMemo(() => {
       const storageOpts = allStorages
@@ -54,17 +70,7 @@ const StoragePicker = ({
       return storageOpts;
    }, [allStorages, excludeStorageIds]);
 
-   // Clear the selection when the picked storage becomes excluded (e.g. the user
-   // selected it as the source of the same plan).
-   useEffect(() => {
-      if (selectedStorage && excludeStorageIds?.includes(selectedStorage.id)) {
-         setSelectedStorage(null);
-         setPath('');
-      }
-   }, [excludeStorageIds, selectedStorage]);
-
    const selectStorage = (storageID: string) => {
-      console.log('storageID :', storageID);
       if (storageID === 'add_new') {
          return setShowAddStorageModal(true);
       }
@@ -74,22 +80,17 @@ const StoragePicker = ({
       }
    };
 
+   // Latest onUpdate, so a new parent callback does not trigger the notify effect
+   const onUpdateRef = useRef(onUpdate);
    useEffect(() => {
-      if (allStorages.length > 0 && storageId) {
-         const currentStorage = allStorages.find((s) => s.id === storageId);
-         setSelectedStorage(currentStorage);
-         if (currentStorage?.defaultPath && currentStorage.defaultPath !== '/') {
-            const prefix = currentStorage.defaultPath + '/';
-            setPath((prev) => (prev.startsWith(prefix) ? prev.slice(prefix.length) : prev));
-         }
-      }
-   }, [allStorageData]);
+      onUpdateRef.current = onUpdate;
+   }, [onUpdate]);
 
    useEffect(() => {
       if (selectedStorage) {
-         onUpdate({ storage: selectedStorage, path: fullPath });
+         onUpdateRef.current({ storage: selectedStorage, path: fullPath });
       }
-   }, [selectedStorage, path]);
+   }, [selectedStorage, fullPath]);
 
    // Reset the storage selection only when the device actually changes (not on mount/remount,
    // e.g. when navigating between steps in the Add Plan form).

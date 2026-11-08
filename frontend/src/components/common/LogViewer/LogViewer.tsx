@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Icon from '../Icon/Icon';
 import classes from './LogViewer.module.scss';
 import { useGetDownloadLogs } from '../../../services/plans';
@@ -25,16 +25,11 @@ const LogViewer = ({ type = '', planMethod = 'backup', logs = [], planId, settin
    const allTaskTypes = [...new Set(logs.map((log) => log.module))];
    const [search, setSearch] = useState('');
    const [filters, setFilters] = useState<string[]>(['info', 'error', 'warn']);
-   const [taskTypes, setTaskTypes] = useState<string[]>([]);
+   const [pickedTaskTypes, setTaskTypes] = useState<string[] | null>(null);
+   const taskTypes = pickedTaskTypes ?? allTaskTypes;
    const [currentPage, setCurrentPage] = useState(1);
    const downloadPlanLogsMutation = useGetDownloadLogs();
    const downloadAppLogsMutation = useGetDownloadAppLogs();
-
-   useEffect(() => {
-      if (allTaskTypes.length > 0 && taskTypes.length === 0) {
-         setTaskTypes(allTaskTypes);
-      }
-   }, [allTaskTypes.length]);
 
    const theLogs = logs
       .filter((log) => {
@@ -61,7 +56,7 @@ const LogViewer = ({ type = '', planMethod = 'backup', logs = [], planId, settin
       const pages = [];
       const maxVisiblePages = 5;
       let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
       if (endPage - startPage < maxVisiblePages - 1) {
          startPage = Math.max(1, endPage - maxVisiblePages + 1);

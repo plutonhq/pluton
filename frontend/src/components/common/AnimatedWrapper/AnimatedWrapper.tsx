@@ -23,32 +23,35 @@ const AnimatedWrapper: React.FC<AnimatedWrapperProps> = ({
    const [isActive, setIsActive] = useState(false);
    const [shouldRender, setShouldRender] = useState(isVisible);
 
+   const rendered = isVisible || shouldRender;
+   const active = isVisible && isActive;
+
    useEffect(() => {
       if (isVisible) {
-         setShouldRender(true);
          // Small delay to ensure DOM is ready before animation starts
-         setTimeout(() => {
+         const timer = setTimeout(() => {
+            setShouldRender(true);
             setIsActive(true);
          }, 10);
-      } else {
-         setIsActive(false);
-         // Wait for animation to complete before unmounting
-         const timer = setTimeout(() => {
-            setShouldRender(false);
-            onAnimationComplete?.();
-         }, animationDuration);
          return () => clearTimeout(timer);
       }
+      // Wait for animation to complete before unmounting
+      const timer = setTimeout(() => {
+         setShouldRender(false);
+         setIsActive(false);
+         onAnimationComplete?.();
+      }, animationDuration);
+      return () => clearTimeout(timer);
    }, [isVisible, animationDuration, onAnimationComplete]);
 
-   if (!shouldRender) return null;
+   if (!rendered) return null;
 
    return (
       <div
          className={`
         ${classes.animatedWrapper} 
         ${classes[animationType]} 
-        ${isActive ? classes.active : ''} 
+        ${active ? classes.active : ''}
         ${absolute ? classes.absolute : ''}
         ${className}
       `}

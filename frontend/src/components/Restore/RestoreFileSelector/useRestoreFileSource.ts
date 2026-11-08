@@ -100,7 +100,7 @@ export const useInMemoryFileSource = (
             return matchesSearch;
          })
          .forEach((file) => {
-            let theFile = file;
+            const theFile = file;
             const dirPath = getParentPath(theFile.path);
             // Use the normalized path as key, but handle root directory
             const normalizedDirPath = normalizePath(dirPath) || '/'; // Use '/' for root

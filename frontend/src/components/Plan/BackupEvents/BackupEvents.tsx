@@ -3,8 +3,7 @@ import SidePanel from '../../common/SidePanel/SidePanel';
 import { getBackupEventActionMessage, getRestoreEventActionMessage, isWarningAction } from '../../../utils/progressHelpers';
 import classes from './BackupEvents.module.scss';
 import { BackupProgressData, ReplicationProgressData } from '../../../@types/backups';
-import { useGetBackupProgressOnce } from '../../../services/backups';
-import { useGetRestoreProgressOnce } from '../../../services/restores';
+import { useGetProgress } from '../../../services/progress';
 import { useMemo, useState } from 'react';
 import Modal from '../../common/Modal/Modal';
 import { formatDuration } from '../../../utils/helpers';
@@ -22,10 +21,7 @@ interface BackupEventsProps {
 
 const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inProgress, progressData, close }: BackupEventsProps) => {
    const [showError, setShowError] = useState<false | string>(false);
-   const { data: fetchedProgressData, isLoading } =
-      type === 'backup'
-         ? useGetBackupProgressOnce({ id, sourceId, sourceType, planId })
-         : useGetRestoreProgressOnce({ id, sourceId, sourceType, planId });
+   const { data: fetchedProgressData, isLoading } = useGetProgress(type, { id, sourceId, sourceType, planId }, { enabled: !progressData });
 
    const progressDataToUse: BackupProgressData | null = progressData || fetchedProgressData;
 
@@ -55,7 +51,7 @@ const BackupEvents = ({ id, type = 'backup', sourceId, sourceType, planId, inPro
                ${!inProgress && hasFinished === 'Completed' ? classes.hasCompleted : ''} ${!inProgress && hasFinished === 'Failed' ? classes.hasFailed : ''}`}
                >
                   <Icon type={inProgress ? 'loading' : hasFinished === 'Completed' ? 'check-circle-filled' : 'error-circle-filled'} size={14} />{' '}
-                  {inProgress ? `${type} In Progress` : `${type} ${hasFinished}` || 'Unknown'}
+                  {inProgress ? `${type} In Progress` : `${type} ${hasFinished || 'Unknown'}`}
                </div>
                {!inProgress && hasFinished && (
                   <div title="Duration" className={classes.duration}>

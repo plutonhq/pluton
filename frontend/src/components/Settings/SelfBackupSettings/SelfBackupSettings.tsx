@@ -14,7 +14,7 @@ interface SelfBackupSettingsProps {
    onUpdate: (settings: Record<string, any>) => void;
 }
 
-export const SELF_BACKUP_DEFAULTS = {
+const SELF_BACKUP_DEFAULTS = {
    enabled: false,
    storageId: '',
    storageName: '',
@@ -43,15 +43,17 @@ function formatRelative(iso?: string): string {
 
 const SelfBackupSettings = ({ settings, settingsID, onUpdate }: SelfBackupSettingsProps) => {
    const selfBackup = { ...SELF_BACKUP_DEFAULTS, ...(settings?.selfBackup || {}) };
-   const { data } = useGetSelfBackupStatus(settingsID ? String(settingsID) : '');
+   const { data, dataUpdatedAt } = useGetSelfBackupStatus(settingsID ? String(settingsID) : '');
    const runMutation = useRunSelfBackup();
    const status = data?.result;
    const [showBackups, setShowBackups] = useState(false);
 
    const update = (patch: Record<string, any>) => onUpdate({ ...settings, selfBackup: { ...selfBackup, ...patch } });
 
+   // Compare against the fetch time of the status, not the render time
    const isStale =
-      !!status?.enabled && (!status.lastSuccessAt || Date.now() - new Date(status.lastSuccessAt).getTime() > 2 * status.intervalHours * 3600 * 1000);
+      !!status?.enabled &&
+      (!status.lastSuccessAt || dataUpdatedAt - new Date(status.lastSuccessAt).getTime() > 2 * status.intervalHours * 3600 * 1000);
 
    const isRunning = runMutation.isPending || !!status?.running;
    const emailConnected = EMAIL_INTEGRATIONS.some((type) => settings?.integration?.[type]?.connected);

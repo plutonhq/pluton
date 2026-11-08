@@ -24,7 +24,7 @@ const StorageActions = ({ storage, onModalChange }: StorageActionsProps) => {
 
    useEffect(() => {
       onModalChange?.(showEditModal || showDeleteModal || showVerifyModal);
-   }, [showEditModal, showDeleteModal, showVerifyModal]);
+   }, [showEditModal, showDeleteModal, showVerifyModal, onModalChange]);
 
    const removeStorage = () => {
       deleteStorageMutation.mutate(storage.id, {

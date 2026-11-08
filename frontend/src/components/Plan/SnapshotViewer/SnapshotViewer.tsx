@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useRef, ReactNode } from 'react';
+import { useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 import Icon from '../../common/Icon/Icon';
@@ -69,8 +69,19 @@ const SnapshotViewer = ({
    const [showRestoreModal, setShowRestoreModal] = useState<FileItem | false>(false);
    const [selectedReplicationId, setSelectedReplicationId] = useState<string | undefined>(replicationId);
    const [showUpgrade, setShowUpgrade] = useState<boolean>(false);
-   const fileListRef = useRef<HTMLDivElement | null>(null);
+   // Callback ref in state: the list container mounts only after the index is ready
+   const [fileListEl, setFileListEl] = useState<HTMLDivElement | null>(null);
+   const [fileListHeight, setFileListHeight] = useState(520);
    const navigate = useNavigate();
+
+   useEffect(() => {
+      if (!fileListEl) return;
+      const observer = new ResizeObserver(() => {
+         setFileListHeight(fileListEl.clientHeight ? fileListEl.clientHeight - 45 : 520);
+      });
+      observer.observe(fileListEl);
+      return () => observer.disconnect();
+   }, [fileListEl]);
 
    const backupId = backup.id;
    const restoreMutation = useRestoreBackup();
@@ -256,10 +267,10 @@ const SnapshotViewer = ({
                   isLoadingMore={indexTree.isLoadingDirectories}
                />
 
-               <div className={`${classes.content} styled__scrollbar`} ref={fileListRef}>
+               <div className={`${classes.content} styled__scrollbar`} ref={setFileListEl}>
                   <SnapshotBrowserFileList
                      files={currentDirectoryFiles}
-                     height={fileListRef.current?.clientHeight ? fileListRef.current.clientHeight - 45 : 520}
+                     height={fileListHeight}
                      itemSize={isMobileDevice ? 65 : 46}
                      headerContent={
                         <>

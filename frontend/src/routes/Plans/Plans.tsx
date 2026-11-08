@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import classes from './Plans.module.scss';
 import PageHeader from '../../components/common/PageHeader/PageHeader';
 import PlanItem from '../../components/Plan/PlanItems/PlanItem';
@@ -62,26 +62,101 @@ const PlanTableSource = ({ plan }: { plan: Plan }) => {
    );
 };
 
+type StorageRef = { id: string; name: string };
+type PlanFilter = Record<PlanFilterTypes, string[]>;
+
+const getSourceName = (plan: Plan, storages: StorageRef[]) =>
+   plan.sourceType === 'storage' ? storages.find((s) => s.id === plan.sourceId)?.name || '' : plan.device?.name || '';
+const getLastRun = (plan: Plan) => Date.parse(plan.lastBackupTime || '') || 0;
+
+const getSavedFilter = (): PlanFilter | null => {
+   try {
+      const filterSettingsRaw = localStorage.getItem('plans_filter');
+      return filterSettingsRaw ? JSON.parse(filterSettingsRaw) : null;
+   } catch {
+      return null;
+   }
+};
+
+const searchPlans = (plans: Plan[], term: string) =>
+   term ? plans.filter((p) => p.title.toLowerCase().includes(term.toLowerCase())) : plans;
+
+const filterPlans = (plans: Plan[], filter: PlanFilter | null) => {
+   if (!filter) return plans;
+   let filteredPlans = plans;
+   if (filter.devices.length > 0) {
+      filteredPlans = filteredPlans.filter((plan) => !!plan.device && filter.devices.includes(plan.device.id));
+   }
+   if (filter.methods.length > 0) {
+      filteredPlans = filteredPlans.filter((plan) => filter.methods.includes(plan.sourceType === 'storage' ? 'storage-sync' : plan.method));
+   }
+   if (filter.storages.length > 0) {
+      filteredPlans = filteredPlans.filter((plan) => filter.storages.includes(plan.storage.id));
+   }
+   if (filter.tags.length > 0) {
+      filteredPlans = filteredPlans.filter((plan) => plan.tags.some((tag) => filter.tags.includes(tag)));
+   }
+   return filteredPlans;
+};
+
+const sortPlans = (plans: Plan[], sortBy: string, storages: StorageRef[]) => {
+   switch (sortBy) {
+      case 'title_asc':
+         return [...plans].sort((a, b) => a.title.localeCompare(b.title));
+      case 'title_desc':
+         return [...plans].sort((a, b) => b.title.localeCompare(a.title));
+      case 'created_asc':
+         return [...plans].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
+      case 'created_desc':
+         return [...plans].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+      case 'size_asc':
+         return [...plans].sort((a, b) => a.stats.size - b.stats.size);
+      case 'size_desc':
+         return [...plans].sort((a, b) => b.stats.size - a.stats.size);
+      case 'run_frequency_asc':
+         return [...plans].sort((a, b) => getIntervalMinutes(a.settings.interval) - getIntervalMinutes(b.settings.interval));
+      case 'run_frequency_desc':
+         return [...plans].sort((a, b) => getIntervalMinutes(b.settings.interval) - getIntervalMinutes(a.settings.interval));
+      case 'source_asc':
+         return [...plans].sort((a, b) => getSourceName(a, storages).localeCompare(getSourceName(b, storages)));
+      case 'source_desc':
+         return [...plans].sort((a, b) => getSourceName(b, storages).localeCompare(getSourceName(a, storages)));
+      case 'storage_asc':
+         return [...plans].sort((a, b) => a.storage.name.localeCompare(b.storage.name));
+      case 'storage_desc':
+         return [...plans].sort((a, b) => b.storage.name.localeCompare(a.storage.name));
+      case 'last_run_asc':
+         return [...plans].sort((a, b) => getLastRun(a) - getLastRun(b));
+      case 'last_run_desc':
+         return [...plans].sort((a, b) => getLastRun(b) - getLastRun(a));
+      case 'health_asc':
+         return [...plans].sort((a, b) => Number(!!a.verified?.hasError) - Number(!!b.verified?.hasError));
+      case 'health_desc':
+         return [...plans].sort((a, b) => Number(!!b.verified?.hasError) - Number(!!a.verified?.hasError));
+      default:
+         return plans;
+   }
+};
+
 const Plans = () => {
    const [showSidePanel, setShowSidePanel] = useState(false);
-   const [plans, setPlans] = useState<Plan[]>([]);
    const [plansLayout, setPlansLayout] = useState<ItemsLayoutValue>(() => getSavedLayout('plans'));
    const [sortBy, setSortBy] = useState(localStorage.getItem('plans_sort') || '');
+   const [searchTerm, setSearchTerm] = useState('');
+   const [filter, setFilter] = useState<PlanFilter | null>(getSavedFilter);
    const itemLayout = plansLayout === 'grid' ? 'grid' : 'list';
    const { data, isLoading } = useGetPlans();
    const { data: storageData } = useGetStorages();
 
-   const fetchedPlans: Plan[] = data?.result || [];
+   const fetchedPlans: Plan[] = useMemo(() => data?.result ?? [], [data]);
 
-   const getSourceName = (plan: Plan) =>
-      plan.sourceType === 'storage'
-         ? ((storageData?.result as { id: string; name: string }[]) || []).find((s) => s.id === plan.sourceId)?.name || ''
-         : plan.device?.name || '';
-   const getLastRun = (plan: Plan) => Date.parse(plan.lastBackupTime || '') || 0;
+   const plans = useMemo(() => {
+      const storages = (storageData?.result as StorageRef[]) || [];
+      return sortPlans(filterPlans(searchPlans(fetchedPlans, searchTerm), filter), sortBy, storages);
+   }, [fetchedPlans, searchTerm, filter, sortBy, storageData]);
 
    const onSort = (value: string) => {
       setSortBy(value);
-      sortPlans(value);
    };
 
    const onTableSort = (value: string) => {
@@ -137,121 +212,7 @@ const Plans = () => {
 
    const AddPlanModal = useComponentOverride('AddPlan', AddPlan);
 
-   useEffect(() => {
-      if (data?.result) {
-         setPlans(data.result);
-         const sortSetting = localStorage.getItem('plans_sort');
-         const filterSettingsRaw = localStorage.getItem('plans_filter');
-         const filterSettings = filterSettingsRaw ? JSON.parse(filterSettingsRaw) : null;
-         if (filterSettings) {
-            applyFilters(filterSettings, data.result);
-         }
-         if (sortSetting) {
-            sortPlans(sortSetting, data.result);
-         }
-      }
-   }, [data]);
-
    // console.log('plans :', plans);
-
-   const searchPlans = (term: string) => {
-      if (term) {
-         setPlans(fetchedPlans.filter((p) => p.title.toLowerCase().includes(term.toLowerCase())));
-      } else {
-         setPlans(fetchedPlans);
-      }
-   };
-
-   const sortPlans = (sortBy: string, plansToSort?: Plan[]) => {
-      const thePlans = plansToSort && plansToSort.length > 0 ? plansToSort : plans;
-      switch (sortBy) {
-         case 'title_asc':
-            setPlans([...thePlans].sort((a, b) => a.title.localeCompare(b.title)));
-            break;
-         case 'title_desc':
-            setPlans([...thePlans].sort((a, b) => b.title.localeCompare(a.title)));
-            break;
-         case 'created_asc':
-            setPlans([...thePlans].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)));
-            break;
-         case 'created_desc':
-            setPlans([...thePlans].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)));
-            break;
-         case 'size_asc':
-            setPlans([...thePlans].sort((a, b) => a.stats.size - b.stats.size));
-            break;
-         case 'size_desc':
-            setPlans([...thePlans].sort((a, b) => b.stats.size - a.stats.size));
-            break;
-         case 'run_frequency_asc':
-            setPlans([...thePlans].sort((a, b) => getIntervalMinutes(a.settings.interval) - getIntervalMinutes(b.settings.interval)));
-            break;
-         case 'run_frequency_desc':
-            setPlans([...thePlans].sort((a, b) => getIntervalMinutes(b.settings.interval) - getIntervalMinutes(a.settings.interval)));
-            break;
-         case 'source_asc':
-            setPlans([...thePlans].sort((a, b) => getSourceName(a).localeCompare(getSourceName(b))));
-            break;
-         case 'source_desc':
-            setPlans([...thePlans].sort((a, b) => getSourceName(b).localeCompare(getSourceName(a))));
-            break;
-         case 'storage_asc':
-            setPlans([...thePlans].sort((a, b) => a.storage.name.localeCompare(b.storage.name)));
-            break;
-         case 'storage_desc':
-            setPlans([...thePlans].sort((a, b) => b.storage.name.localeCompare(a.storage.name)));
-            break;
-         case 'last_run_asc':
-            setPlans([...thePlans].sort((a, b) => getLastRun(a) - getLastRun(b)));
-            break;
-         case 'last_run_desc':
-            setPlans([...thePlans].sort((a, b) => getLastRun(b) - getLastRun(a)));
-            break;
-         case 'health_asc':
-            setPlans([...thePlans].sort((a, b) => Number(!!a.verified?.hasError) - Number(!!b.verified?.hasError)));
-            break;
-         case 'health_desc':
-            setPlans([...thePlans].sort((a, b) => Number(!!b.verified?.hasError) - Number(!!a.verified?.hasError)));
-            break;
-         case '':
-            setPlans([...fetchedPlans]);
-            break;
-         default:
-            break;
-      }
-   };
-
-   const applyFilters = (filter: Record<PlanFilterTypes, string[]> | null, plansToSort?: Plan[]) => {
-      if (!filter) {
-         setPlans(fetchedPlans);
-         const sortSetting = localStorage.getItem('plans_sort');
-         if (sortSetting) {
-            sortPlans(sortSetting, fetchedPlans);
-         }
-         return;
-      } else {
-         let filteredPlans = plansToSort && plansToSort.length > 0 ? plansToSort : plans;
-
-         if (filter.devices.length > 0) {
-            filteredPlans = filteredPlans.filter((plan) => !!plan.device && filter.devices.includes(plan.device.id));
-         }
-         if (filter.methods.length > 0) {
-            filteredPlans = filteredPlans.filter((plan) => filter.methods.includes(plan.sourceType === 'storage' ? 'storage-sync' : plan.method));
-         }
-         if (filter.storages.length > 0) {
-            filteredPlans = filteredPlans.filter((plan) => filter.storages.includes(plan.storage.id));
-         }
-         if (filter.tags.length > 0) {
-            filteredPlans = filteredPlans.filter((plan) => plan.tags.some((tag) => filter.tags.includes(tag)));
-         }
-
-         setPlans(filteredPlans);
-         const sortSetting = localStorage.getItem('plans_sort');
-         if (sortSetting) {
-            sortPlans(sortSetting, filteredPlans);
-         }
-      }
-   };
 
    return (
       <div className={classes.plans}>
@@ -262,7 +223,7 @@ const Plans = () => {
             buttonAction={() => setShowSidePanel(true)}
             rightSection={
                <>
-                  <SearchItems onSearch={(term) => searchPlans(term)} itemName="Plans" />
+                  <SearchItems onSearch={(term) => setSearchTerm(term)} itemName="Plans" />
                   <SortItems
                      key={sortBy}
                      id={'plans_sort'}
@@ -278,7 +239,7 @@ const Plans = () => {
                      ]}
                      onSort={onSort}
                   />
-                  <FilterPlans plans={fetchedPlans} onUpdate={(filterSettings) => applyFilters(filterSettings)} />
+                  <FilterPlans plans={fetchedPlans} onUpdate={(filterSettings) => setFilter(filterSettings)} />
                   <ItemsLayout onChange={(value) => setPlansLayout(value)} type="plans" value={plansLayout} />
                </>
             }

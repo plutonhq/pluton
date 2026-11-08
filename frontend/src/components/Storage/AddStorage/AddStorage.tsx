@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import classes from './AddStorage.module.scss';
 import Icon from '../../common/Icon/Icon';
@@ -30,7 +30,9 @@ const AddStorage = ({ close }: AddStorageProps) => {
    // const { data: deviceData } = useGetDevice('main', true);
    // const mainDeviceIsServer =
    //    deviceData?.result?.os && deviceData?.result?.platform ? isServerEdition(deviceData.result.os, deviceData.result.platform) : false;
-   const storageProviders = data?.result || {};
+   const storageProviders = useMemo(() => {
+      return data?.result || {};
+   }, [data]);
 
    console.log('storageProviders :', storageProviders);
 
@@ -69,42 +71,15 @@ const AddStorage = ({ close }: AddStorageProps) => {
       return groupedFields;
    }, [storageProviders, storageType]);
 
-   // Initialize credentials when storage type changes
-   useEffect(() => {
-      if (storageType) {
-         const storageCreds: Record<string, string> = {};
-         storageFields.required.forEach((field: storageOptionField) => {
-            storageCreds[field.value] = '';
-         });
-         setStorageCredentials(storageCreds);
-      }
-   }, [storageType, storageFields]);
-
-   useEffect(() => {
-      if (storageTitle) {
-         setInputError((currentState) => {
-            const data = { ...currentState };
-            delete data['title'];
-            return data;
-         });
-      }
-      if (storageType) {
-         setInputError((currentState) => {
-            const data = { ...currentState };
-            delete data['storageType'];
-            return data;
-         });
-      }
+   const visibleErrors = useMemo(() => {
+      const errors = { ...inputError };
+      if (storageTitle) delete errors['title'];
+      if (storageType) delete errors['storageType'];
       Object.entries(storageCredentials).forEach(([key, value]) => {
-         if (value) {
-            setInputError((currentState) => {
-               const data = { ...currentState };
-               delete data[key];
-               return data;
-            });
-         }
+         if (value) delete errors[key];
       });
-   }, [storageTitle, storageType, storageCredentials]);
+      return errors;
+   }, [inputError, storageTitle, storageType, storageCredentials]);
 
    const addStorage = () => {
       setInputError({});
@@ -201,9 +176,9 @@ const AddStorage = ({ close }: AddStorageProps) => {
                      <Icon type="help" size={13} />
                   </i>
                </label>
-               {inputError['title'] && <span className={classes.fieldErrorLabel}>{inputError['title']}</span>}
+               {visibleErrors['title'] && <span className={classes.fieldErrorLabel}>{visibleErrors['title']}</span>}
                <input
-                  className={`${classes.input} ${inputError['title'] ? classes.inputHasError : ''}`}
+                  className={`${classes.input} ${visibleErrors['title'] ? classes.inputHasError : ''}`}
                   type="text"
                   placeholder="Give your Storage a Name"
                   value={storageTitle || ''}
@@ -213,7 +188,7 @@ const AddStorage = ({ close }: AddStorageProps) => {
             </div>
             <div className={classes.field}>
                <label className={classes.label}>Storage Type*</label>
-               {inputError['storageType'] && <span className={classes.fieldErrorLabel}>{inputError['storageType']}</span>}
+               {visibleErrors['storageType'] && <span className={classes.fieldErrorLabel}>{visibleErrors['storageType']}</span>}
                <div className={classes.selectField}>
                   <StorageProviderSelect
                      options={[...providersOptions]}
@@ -221,20 +196,12 @@ const AddStorage = ({ close }: AddStorageProps) => {
                      full={true}
                      onUpdate={(val: string) => {
                         setCurrentAuthType('');
-                        setStorageCredentials({});
                         setStorageSettings({});
                         setStorageType(val);
-                        const fields = storageProviders[val as keyof typeof storageProviders]?.fields || [];
-                        const newCredentials = fields.reduce(
-                           (acc: any, field: { value: any }) => ({
-                              ...acc,
-                              [field.value]: '',
-                           }),
-                           {},
-                        );
-                        setStorageCredentials(newCredentials);
+                        const fields: storageOptionField[] = storageProviders[val as keyof typeof storageProviders]?.settings || [];
+                        setStorageCredentials(Object.fromEntries(fields.filter((f) => f.required).map((f) => [f.value, ''])));
                      }}
-                     error={inputError['storageType']}
+                     // error={visibleErrors['storageType']}
                   />
                </div>
             </div>
@@ -246,7 +213,7 @@ const AddStorage = ({ close }: AddStorageProps) => {
                   authTypes={storageFields.authFields.types}
                   settings={storageCredentials}
                   onUpdate={(newSettings) => setStorageCredentials(newSettings)}
-                  errors={inputError}
+                  errors={visibleErrors}
                   currentAuthType={currentAuthType}
                   onAuthTypeChange={setCurrentAuthType}
                />

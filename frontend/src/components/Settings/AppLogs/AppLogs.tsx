@@ -9,12 +9,9 @@ interface AppLogsProps {
 
 const AppLogs = ({ settingsID = '1' }: AppLogsProps) => {
    const { data: logs, isLoading } = useGetAppLogs(settingsID);
-   const planLogs = logs?.result || [];
-   console.log('logs :', planLogs);
-   console.log('settingsID: ', settingsID);
-
    const theLogs = useMemo(() => {
-      return planLogs.sort((a: LogItem, b: LogItem) => b.time - a.time);
+      const planLogs: LogItem[] = logs?.result || [];
+      return [...planLogs].sort((a, b) => b.time - a.time);
    }, [logs]);
 
    return <LogViewer type="app" logs={theLogs} settingsID={settingsID} isLoading={isLoading} />;

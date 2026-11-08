@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Input from '../../common/form/Input/Input';
 import Tristate from '../../common/form/Tristate/Tristate';
 import SizePicker from '../../common/form/SizePicker/SizePicker';
@@ -18,21 +18,11 @@ type StorageSettingsProps = {
 };
 
 const StorageSettings = ({ fields, onUpdate, settings, errors = {} }: StorageSettingsProps) => {
+   // Only the user's choices. Fields without a choice fall back to the saved setting.
    const [customFieldsActive, setCustomFieldsActive] = useState<Record<string, boolean>>({});
+   const isCustomActive = (field: storageOptionField) =>
+      !!field.allowCustom && (customFieldsActive[field.value] ?? settings[field.value] === 'custom');
 
-   // Initialize the custom fields state when settings change
-   useEffect(() => {
-      const initialCustomFields: Record<string, boolean> = {};
-
-      fields.forEach((field) => {
-         if (field.allowCustom && field.fieldType === 'select') {
-            // Check if this field previously had custom selected
-            initialCustomFields[field.value] = settings[field.value] === 'custom' || customFieldsActive[field.value] || false;
-         }
-      });
-
-      setCustomFieldsActive(initialCustomFields);
-   }, [fields]);
    return (
       <>
          {fields.map((field) => {
@@ -139,7 +129,7 @@ const StorageSettings = ({ fields, onUpdate, settings, errors = {} }: StorageSet
                            label={fieldLabel}
                            options={field.options}
                            fieldValue={
-                              customFieldsActive[field.value] && customField?.value ? customField?.value : (settings[field.value] as string) || ''
+                              isCustomActive(field) && customField?.value ? customField?.value : (settings[field.value] as string) || ''
                            }
                            hint={hint}
                            onUpdate={(newVal: string) => {
@@ -154,7 +144,7 @@ const StorageSettings = ({ fields, onUpdate, settings, errors = {} }: StorageSet
                            error={errors[field.value] || ''}
                            inline={true}
                         />
-                        {field.allowCustom && customFieldsActive[field.value] && (
+                        {isCustomActive(field) && (
                            <div key={field.value} className={classes.field} style={{ margin: '20px 0' }}>
                               <Input
                                  label={customField?.label || 'Insert Custom'}

@@ -105,7 +105,7 @@ export const FileManager = ({
       const sortedFiles = sortFileItems([...files], sortField, sortOrder);
 
       return [...sortedDirectories, ...sortedFiles];
-   }, [data, sortField, sortOrder]);
+   }, [data, sortField, sortOrder, selectionType]);
 
    const getSortIcon = (field: SortField) => {
       if (sortField !== field) return null;

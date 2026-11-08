@@ -3,7 +3,9 @@ import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
 export default tseslint.config(
-	{ ignores: ['dist', 'public', 'scripts', 'drizzle', 'data', 'binaries', '__tests__'] },
+	{
+		ignores: ['dist', 'public', 'scripts', 'drizzle', 'data', 'binaries', '__tests__', 'coverage'],
+	},
 	{
 		extends: [js.configs.recommended, ...tseslint.configs.recommended],
 		files: ['src/**/*.ts'],

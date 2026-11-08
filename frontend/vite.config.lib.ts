@@ -45,7 +45,7 @@ function copyScssPlugin() {
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ command, mode }) => ({
+export default defineConfig(({ command }) => ({
    plugins: [react(), copyScssPlugin()],
    build: {
       lib: {

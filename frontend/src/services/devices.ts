@@ -68,7 +68,7 @@ export async function getDevice(id: string, metrics: boolean) {
 
 export function useGetDevice(id: string, metrics = false) {
    return useQuery({
-      queryKey: ['device', id],
+      queryKey: ['device', id, metrics],
       queryFn: () => getDevice(id, metrics),
       refetchOnMount: true,
       refetchOnWindowFocus: false,
@@ -153,7 +153,7 @@ export async function browseDir(payload: { deviceId: string; path?: string }) {
 
 export function useBrowseDir(payload: { deviceId: string; path?: string }) {
    return useQuery({
-      queryKey: ['dirPath', payload.deviceId, payload.path],
+      queryKey: ['dirPath', payload.deviceId, payload.path, payload],
       queryFn: () => browseDir(payload),
       refetchOnMount: true,
       retry: false,

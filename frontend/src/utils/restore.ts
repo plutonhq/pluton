@@ -7,7 +7,7 @@ export const getPathSeparator = (path: string): string => {
 // the path is formatted like this for Windows: \\E\\pluton_files_viewer_test or for Linux: /home/towfiqi/games/Battle Realm
 export const normalizePath = (path: string): string => {
    // Remove leading slashes/backslashes for consistency but keep the structure
-   return path.replace(/^[\\\/]+/, '');
+   return path.replace(/^[\\/]+/, '');
 };
 
 export const splitPath = (path: string): string[] => {

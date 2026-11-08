@@ -254,7 +254,7 @@ export async function browseStorage(payload: { storageId: string; path?: string 
 
 export function useBrowseStorage(payload: { storageId: string; path?: string }, enabled: boolean = true) {
    return useQuery({
-      queryKey: ['storageBrowse', payload.storageId, payload.path],
+      queryKey: ['storageBrowse', payload.storageId, payload.path, payload],
       queryFn: () => browseStorage(payload),
       refetchOnMount: true,
       retry: false,

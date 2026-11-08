@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import classes from '../AddStorage/AddStorage.module.scss';
 import Icon from '../../common/Icon/Icon';
@@ -20,19 +20,16 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
    // const [storageTitle, setStorageTitle] = useState(() => storage.name)/;
    const [showAdvanced, setShowAdvanced] = useState(false);
    const [currentAuthType, setCurrentAuthType] = useState<string>(() => storage.authType || '');
-   const [storageCredentials, setStorageCredentials] = useState<Record<string, string | number | boolean>>({});
+   // null until the user edits: then the server credentials show
+   const [credentialsDraft, setCredentialsDraft] = useState<Record<string, string | number | boolean> | null>(null);
    const [storageSettings, setStorageSettings] = useState<Record<string, string | number | boolean>>(() => storage.settings);
    const [storageTags, setStorageTags] = useState<string[]>(() => storage.tags || []);
 
    const updateStorageMutation = useUpdateStorage();
    const storageType = storage.type;
    const { data: storageData } = useGetStorage(storage.id);
-
-   useEffect(() => {
-      if (storageData && storageData.success && storageData.result && storageData.result.credentials) {
-         setStorageCredentials(storageData.result.credentials);
-      }
-   }, [storageData]);
+   const storageCredentials: Record<string, string | number | boolean> =
+      credentialsDraft ?? (storageData?.success ? storageData.result?.credentials : undefined) ?? {};
 
    const storageFields = useMemo(() => {
       const groupedFields = { required: [], optional: [] };
@@ -103,7 +100,7 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
             onError: (error: Error) => {
                console.log('error :', error?.message);
                toast.error(`Error Updating Storage. Changes Reverted.\nError Detail: ${error.message}`);
-               setStorageCredentials(storageData.result.credentials);
+               setCredentialsDraft(null);
                setStorageSettings(storageData.result.settings);
             },
             onSuccess: (data: any) => {
@@ -177,7 +174,7 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
                   fields={authFields.fields}
                   authTypes={authFields.types}
                   settings={storageCredentials}
-                  onUpdate={(newSettings) => setStorageCredentials(newSettings)}
+                  onUpdate={(newSettings) => setCredentialsDraft(newSettings)}
                   errors={inputError}
                   currentAuthType={currentAuthType}
                   onAuthTypeChange={setCurrentAuthType}

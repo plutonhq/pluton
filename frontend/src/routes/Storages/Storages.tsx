@@ -1,6 +1,6 @@
 import classes from './Storages.module.scss';
 import PageHeader from '../../components/common/PageHeader/PageHeader';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import StorageItem from '../../components/Storage/StorageItem/StorageItem';
 import TagsFilter from '../../components/common/TagsFilter/TagsFilter';
 import SearchItems from '../../components/common/SearchItems/SearchItems';
@@ -20,54 +20,55 @@ import { useComponentOverride } from '../../context/ComponentOverrideContext';
 import SkeletonItems from '../../components/Skeleton/SkeletonItems';
 import { formatBytes } from '../../utils/helpers';
 
+const sortStorages = (list: Storage[], sortBy: string): Storage[] => {
+   switch (sortBy) {
+      case 'name_asc':
+         return [...list].sort((a, b) => a.name.localeCompare(b.name));
+      case 'name_desc':
+         return [...list].sort((a, b) => b.name.localeCompare(a.name));
+      case 'type_asc':
+         return [...list].sort((a, b) => a.storageTypeName.localeCompare(b.storageTypeName));
+      case 'type_desc':
+         return [...list].sort((a, b) => b.storageTypeName.localeCompare(a.storageTypeName));
+      case 'plans_asc':
+         return [...list].sort((a, b) => (a.plans?.length || 0) - (b.plans?.length || 0));
+      case 'plans_desc':
+         return [...list].sort((a, b) => (b.plans?.length || 0) - (a.plans?.length || 0));
+      case 'size_asc':
+         return [...list].sort((a, b) => (a.usedSize || 0) - (b.usedSize || 0));
+      case 'size_desc':
+         return [...list].sort((a, b) => (b.usedSize || 0) - (a.usedSize || 0));
+      default:
+         return list;
+   }
+};
+
 const Storages = () => {
    const [showSidePanel, setShowSidePanel] = useState(false);
-   const [storages, setStorages] = useState<Storage[]>([]);
    const [storagesLayout, setStoragesLayout] = useState<ItemsLayoutValue>(() => getSavedLayout('storages'));
    const [sortBy, setSortBy] = useState(localStorage.getItem('storages_sort') || '');
+   const [searchTerm, setSearchTerm] = useState('');
+   const [tagFilter, setTagFilter] = useState('');
    const itemLayout = storagesLayout === 'grid' ? 'grid' : 'list';
    const [browseStorage, setBrowseStorage] = useState<Storage | false>(false);
    const [editStorage, setEditStorage] = useState<Storage | false>(false);
    const Browser = useComponentOverride('StorageFileBrowser', StorageFileBrowser);
 
    const { data, isLoading } = useGetStorages();
-   const fetchedStorages: Storage[] = data?.result || [];
-   console.log('fetchedStorages :', fetchedStorages);
+   const fetchedStorages = useMemo<Storage[]>(() => data?.result ?? [], [data]);
 
-   const sortStorages = (sortBy: string, storagesToSort?: Storage[]) => {
-      const theStorages = storagesToSort && storagesToSort.length > 0 ? storagesToSort : storages;
-      switch (sortBy) {
-         case 'name_asc':
-            setStorages([...theStorages].sort((a, b) => a.name.localeCompare(b.name)));
-            break;
-         case 'name_desc':
-            setStorages([...theStorages].sort((a, b) => b.name.localeCompare(a.name)));
-            break;
-         case 'type_asc':
-            setStorages([...theStorages].sort((a, b) => a.storageTypeName.localeCompare(b.storageTypeName)));
-            break;
-         case 'type_desc':
-            setStorages([...theStorages].sort((a, b) => b.storageTypeName.localeCompare(a.storageTypeName)));
-            break;
-         case 'plans_asc':
-            setStorages([...theStorages].sort((a, b) => (a.plans?.length || 0) - (b.plans?.length || 0)));
-            break;
-         case 'plans_desc':
-            setStorages([...theStorages].sort((a, b) => (b.plans?.length || 0) - (a.plans?.length || 0)));
-            break;
-         case 'size_asc':
-            setStorages([...theStorages].sort((a, b) => (a.usedSize || 0) - (b.usedSize || 0)));
-            break;
-         case 'size_desc':
-            setStorages([...theStorages].sort((a, b) => (b.usedSize || 0) - (a.usedSize || 0)));
-            break;
-         case '':
-            setStorages([...fetchedStorages]);
-            break;
-         default:
-            break;
+   const storages = useMemo(() => {
+      let list = fetchedStorages;
+      if (tagFilter) {
+         list = list.filter((p) => p.tags.includes(tagFilter));
       }
-   };
+      if (searchTerm) {
+         list = list.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      }
+      return sortStorages(list, sortBy);
+   }, [fetchedStorages, tagFilter, searchTerm, sortBy]);
+
+   const allTags = useMemo(() => [...new Set(fetchedStorages.flatMap((s) => s.tags ?? []))], [fetchedStorages]);
 
    const onTableSort = (value: string) => {
       if (value) {
@@ -76,47 +77,6 @@ const Storages = () => {
          localStorage.removeItem('storages_sort');
       }
       setSortBy(value);
-      sortStorages(value);
-   };
-
-   const allTags = useMemo(() => {
-      const tags: string[] = [];
-      if (storages && storages.length > 0) {
-         storages.forEach((storage) => {
-            storage.tags.forEach((tag) => {
-               if (!tags.includes(tag)) {
-                  tags.push(tag);
-               }
-            });
-         });
-      }
-
-      return tags;
-   }, [storages]);
-
-   useEffect(() => {
-      if (data?.result) {
-         setStorages(data.result);
-         if (sortBy) {
-            sortStorages(sortBy, data.result);
-         }
-      }
-   }, [data]);
-
-   const filterByTags = (tag: string) => {
-      if (tag) {
-         setStorages(fetchedStorages.filter((p) => p.tags.includes(tag)));
-      } else {
-         setStorages(fetchedStorages);
-      }
-   };
-
-   const searchStorages = (term: string) => {
-      if (term) {
-         setStorages(fetchedStorages.filter((p) => p.name.toLowerCase().includes(term.toLowerCase())));
-      } else {
-         setStorages(fetchedStorages);
-      }
    };
 
    return (
@@ -128,8 +88,8 @@ const Storages = () => {
             buttonAction={() => setShowSidePanel(true)}
             rightSection={
                <>
-                  <TagsFilter tags={allTags} onSelect={filterByTags} />
-                  <SearchItems onSearch={(term) => searchStorages(term)} itemName="Storages" />
+                  <TagsFilter tags={allTags} onSelect={setTagFilter} />
+                  <SearchItems onSearch={setSearchTerm} itemName="Storages" />
                   <SortItems
                      key={sortBy}
                      id={'storages_sort'}

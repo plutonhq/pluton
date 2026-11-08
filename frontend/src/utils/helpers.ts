@@ -398,7 +398,7 @@ export const calculateDirectorySizes = (files: Pick<FileItem, 'path' | 'size' | 
    files.forEach((file) => {
       if (!file.isDirectory && file.size) {
          // For each file, add its size to all parent directories
-         let pathParts = file.path.split('/').filter(Boolean);
+         const pathParts = file.path.split('/').filter(Boolean);
          let currentPath = '';
 
          // Add size to each parent directory
@@ -467,9 +467,9 @@ export const getAvailableCliApps = (platform?: string) => {
       case 'linux':
       case 'Linux':
          return availableShells.Linux;
-      default:
+      default: {
          const allShells: { label: string; value: string }[] = [];
-         (Object.keys(availableShells) as typeofOSType[]).map((OSType) => {
+         (Object.keys(availableShells) as typeofOSType[]).forEach((OSType) => {
             availableShells[OSType].forEach((shell) => {
                if (allShells.findIndex((s) => s.value === shell.value) === -1) {
                   allShells.push({ label: `${shell.label} (${shell.value})`, value: shell.value });
@@ -477,6 +477,7 @@ export const getAvailableCliApps = (platform?: string) => {
             });
          });
          return allShells;
+      }
    }
 };
 

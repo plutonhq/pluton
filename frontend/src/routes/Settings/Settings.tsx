@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
 import Icon from '../../components/common/Icon/Icon';
 import PageHeader from '../../components/common/PageHeader/PageHeader';
@@ -26,11 +26,12 @@ const Settings = () => {
 
    console.log('Settings data :', settingsID, data);
 
-   useEffect(() => {
-      if (rawSettings) {
-         setSettings(rawSettings);
-      }
-   }, [rawSettings]);
+   // Server changes (e.g. integration validation) replace the form state
+   const [syncedSettings, setSyncedSettings] = useState<typeof rawSettings>();
+   if (rawSettings && rawSettings !== syncedSettings) {
+      setSyncedSettings(rawSettings);
+      setSettings(rawSettings);
+   }
 
    const updateSettings = () => {
       settingsMutation.mutate(

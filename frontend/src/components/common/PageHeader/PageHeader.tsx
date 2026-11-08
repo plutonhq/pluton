@@ -8,7 +8,7 @@ interface PageHeaderProps {
    icon: string;
    stat?: number;
    buttonTitle?: string;
-   buttonAction?: Function;
+   buttonAction?: () => void;
    rightSection?: React.ReactNode;
 }
 

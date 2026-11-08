@@ -73,11 +73,10 @@ export const useSnapshotIndexTree = ({ backupId, replicationId, enabled = true }
       return { discoveredDirectories: discovered, directoryInfo: info, loadMoreAfter: more };
    }, [pages, dirs.data]);
 
-   useEffect(() => {
-      if (autoExpanded || discoveredDirectories.length === 0) return;
+   if (!autoExpanded && discoveredDirectories.length > 0) {
       setAutoExpanded(true);
       setExpandedFolders(new Set(discoveredDirectories.slice(0, AUTO_EXPANDED_FOLDERS)));
-   }, [autoExpanded, discoveredDirectories]);
+   }
 
    useEffect(() => {
       if (dirs.error?.message === 'index_not_ready') restartIndex();
