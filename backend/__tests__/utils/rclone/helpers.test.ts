@@ -14,7 +14,7 @@ import { runCommand } from '../../../src/utils/runCommand';
 import { getBinaryPath } from '../../../src/utils/binaryPathResolver';
 import { getInstallType } from '../../../src/utils/installHelpers';
 
-jest.mock('os');
+jest.mock('os', () => ({ ...jest.requireActual('os'), platform: jest.fn() }));
 jest.mock('../../../src/utils/runCommand');
 jest.mock('../../../src/utils/binaryPathResolver');
 jest.mock('../../../src/utils/installHelpers');

@@ -3,6 +3,8 @@ import { getInstallType } from '../../src/utils/installHelpers';
 
 jest.mock('../../src/utils/installHelpers', () => ({
 	getInstallType: jest.fn().mockReturnValue('dev'),
+	isBinaryMode: jest.fn().mockReturnValue(false),
+	isDockerMode: jest.fn().mockReturnValue(false),
 }));
 
 describe('versionMiddleware', () => {
