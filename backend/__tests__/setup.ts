@@ -1,8 +1,24 @@
 // import { drizzle } from 'drizzle-orm/better-sqlite3';
 // import Database from 'better-sqlite3';
 // import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { initializeLogger } from '../src/utils/logger';
 import 'dotenv/config';
+
+// The real logger writes to data/logs/app.log, the same file the dev server uses.
+jest.mock('../src/utils/logger', () => {
+	const pino = jest.requireActual('pino');
+	const silent = pino({ level: 'silent' });
+	return {
+		initializeLogger: jest.fn(),
+		logger: silent,
+		cronLogger: silent,
+		notificationLogger: silent,
+		serverLogger: silent,
+		StorageLogger: silent,
+		SystemLogger: silent,
+		DeviceLogger: jest.fn(() => silent),
+		planLogger: jest.fn(() => silent),
+	};
+});
 
 // Mock templateLoader globally to avoid import.meta.url issues in Jest
 jest.mock('../src/notifications/templateLoader', () => ({
@@ -20,8 +36,6 @@ jest.mock('../src/utils/snapshotIndex/workerLocator', () => ({
 
 beforeAll(() => {
 	console.log('--- JEST SETUP FILE IS RUNNING ---');
-	//initialize logger
-	initializeLogger();
 
 	// Create an in-memory SQLite database for testing
 	// const sqlite = new Database(':memory:');

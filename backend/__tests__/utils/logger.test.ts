@@ -1,5 +1,8 @@
 import pino from 'pino';
 
+// setup.ts mocks the logger globally; this file tests the real one.
+jest.unmock('../../src/utils/logger');
+
 // Mock pino at the module level
 jest.mock('pino', () => {
 	return jest.fn();
