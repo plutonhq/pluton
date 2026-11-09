@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.22.0](https://github.com/plutonhq/pluton/compare/pluton-v0.21.1...pluton-v0.22.0) (2026-11-02)
+
+
+### Features
+
+* add new refactored snapshot browser to handle huge file list ([6999397](https://github.com/plutonhq/pluton/commit/6999397ff239fd47437b7aa99ac699d47ee39b6b))
+
+
+### Bug Fixes
+
+* prevent command execution through rclone source paths ([46455e0](https://github.com/plutonhq/pluton/commit/46455e0d2cc64be977a0ca5e519af7f21817d116))
+* resolves broken restore for unencrypted backup plans ([da935f5](https://github.com/plutonhq/pluton/commit/da935f511cfb901c2aa703bbca92320309dc65d9)), closes [#136](https://github.com/plutonhq/pluton/issues/136)
+
 ## [0.21.1](https://github.com/plutonhq/pluton/compare/pluton-v0.21.0...pluton-v0.21.1) (2026-10-28)
 
 
