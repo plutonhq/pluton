@@ -15,11 +15,18 @@ import { SystemJobConfig } from '../types/global';
  */
 export class SystemTaskManager {
 	private static instance: SystemTaskManager;
+	private static jobNames = new Set<string>();
 	private cronJobs: Cron[] = [];
 	private systemJobs: SystemJobConfig[];
 
 	private constructor(systemJobs: SystemJobConfig[]) {
 		this.systemJobs = systemJobs;
+		SystemTaskManager.jobNames = new Set(systemJobs.map(j => j.name));
+	}
+
+	/** True if the job name is in the list given to getInstance (core or pro). */
+	public static isSystemJob(name: string): boolean {
+		return SystemTaskManager.jobNames.has(name);
 	}
 
 	public static getInstance(systemJobs?: SystemJobConfig[]): SystemTaskManager {

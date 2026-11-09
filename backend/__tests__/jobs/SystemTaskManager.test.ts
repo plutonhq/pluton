@@ -80,6 +80,16 @@ describe('SystemTaskManager', () => {
 		});
 	});
 
+	describe('isSystemJob', () => {
+		it('matches only the job names given to getInstance', () => {
+			SystemTaskManager.getInstance(systemJobs);
+
+			expect(SystemTaskManager.isSystemJob('CleanDownloads')).toBe(true);
+			expect(SystemTaskManager.isSystemJob('PruneDatabase')).toBe(true);
+			expect(SystemTaskManager.isSystemJob('Backup')).toBe(false);
+		});
+	});
+
 	describe('initialize', () => {
 		it('schedules all system jobs', () => {
 			const manager = SystemTaskManager.getInstance(systemJobs);

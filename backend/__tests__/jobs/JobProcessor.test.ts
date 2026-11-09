@@ -7,6 +7,7 @@ const mockJobQueueFailJob = jest.fn();
 
 const mockLogger = {
 	info: jest.fn(),
+	debug: jest.fn(),
 	error: jest.fn(),
 	warn: jest.fn(),
 };
@@ -29,6 +30,10 @@ jest.mock('../../src/jobs/JobQueue', () => ({
 
 jest.mock('../../src/utils/logger', () => ({
 	logger: mockLogger,
+}));
+
+jest.mock('../../src/jobs/SystemTaskManager', () => ({
+	SystemTaskManager: { isSystemJob: (name: string) => name === 'SelfBackup' },
 }));
 
 jest.mock('../../src/services/ConfigService', () => ({
@@ -97,6 +102,40 @@ describe('JobProcessor', () => {
 			const instance1 = jobProcessor;
 			const instance2 = jobProcessor;
 			expect(instance1).toBe(instance2);
+		});
+	});
+
+	describe('processing log level', () => {
+		const makeJob = (name: string): Job =>
+			({ name, attempts: 0, maxAttempts: 1, retryDelay: 0 }) as Job;
+
+		it('logs system jobs at debug level', async () => {
+			jobProcessor.addTask(new MockTask('SelfBackup', mockExecute));
+			mockJobQueueGetNext.mockReturnValue(makeJob('SelfBackup'));
+
+			await processOneJob();
+
+			expect(mockLogger.debug).toHaveBeenCalledWith(
+				{ module: 'JobProcessor' },
+				'Processing job: SelfBackup. Active backups: 0'
+			);
+			expect(mockLogger.info).not.toHaveBeenCalledWith(
+				{ module: 'JobProcessor' },
+				expect.stringContaining('Processing job')
+			);
+		});
+
+		it('logs other jobs at info level', async () => {
+			jobProcessor.addTask(mockTask);
+			mockJobQueueGetNext.mockReturnValue(makeJob('TestTask'));
+
+			await processOneJob();
+
+			expect(mockLogger.info).toHaveBeenCalledWith(
+				{ module: 'JobProcessor' },
+				'Processing job: TestTask. Active backups: 0'
+			);
+			expect(mockLogger.debug).not.toHaveBeenCalled();
 		});
 	});
 

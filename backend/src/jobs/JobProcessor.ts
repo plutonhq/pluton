@@ -9,6 +9,8 @@ import { configService } from '../services/ConfigService';
 import { BaseRestoreManager } from '../managers/BaseRestoreManager';
 import { RestoreTask } from './tasks/RestoreTask';
 import { ReplicationRetryTask } from './tasks/ReplicationRetryTask';
+import { SystemTaskManager } from './SystemTaskManager';
+
 interface TaskDependencies {
 	backupManager?: BaseBackupManager;
 	restoreManager?: BaseRestoreManager;
@@ -160,7 +162,9 @@ class JobProcessor extends EventEmitter {
 		if (job.name === 'Backup') {
 			this.activeBackupJobs++;
 		}
-		logger.info(
+		// System jobs tick often and most ticks do nothing, so keep their start line out of the info log.
+		const level = SystemTaskManager.isSystemJob(job.name) ? 'debug' : 'info';
+		logger[level](
 			{ module: 'JobProcessor' },
 			`Processing job: ${job.name}. Active backups: ${this.activeBackupJobs}`
 		);

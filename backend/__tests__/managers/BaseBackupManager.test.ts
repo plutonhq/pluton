@@ -33,6 +33,7 @@ jest.mock('../../src/utils/rclone/rclone', () => ({
 const mockCanWriteTargetOrParent = jest.fn().mockResolvedValue(true);
 jest.mock('../../src/utils/linuxHelper', () => ({
 	canWriteTargetOrParent: (...args: any[]) => mockCanWriteTargetOrParent(...args),
+	isLinuxInstalledRuntime: () => false,
 }));
 
 // Mock singleton instance for CronManager
