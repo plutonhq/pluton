@@ -335,6 +335,63 @@ describe('BaseSystemManager', () => {
 		});
 	});
 
+	describe('getRootDrives (win32)', () => {
+		beforeEach(() => {
+			jest.spyOn(os, 'platform').mockReturnValue('win32' as NodeJS.Platform);
+		});
+
+		it('queries Win32_LogicalDisk and maps drives with label fallbacks', async () => {
+			mockPromisifiedExec.mockResolvedValueOnce({
+				stdout: JSON.stringify([
+					{ DeviceID: 'M:', VolumeName: '', DriveType: 3 },
+					{ DeviceID: 'C:', VolumeName: '', DriveType: 3 },
+					{ DeviceID: 'E:', VolumeName: null, DriveType: 2 },
+					{ DeviceID: 'Z:', VolumeName: null, DriveType: 4 },
+					{ DeviceID: 'D:', VolumeName: 'Data', DriveType: 3 },
+				]),
+				stderr: '',
+			});
+			const manager = new BaseSystemManager();
+			const res = await manager.getRootDrives();
+
+			expect(mockPromisifiedExec).toHaveBeenCalledWith(expect.stringContaining('Win32_LogicalDisk'));
+			expect(res.success).toBe(true);
+			expect((res.result as any[]).map(d => d.name)).toEqual([
+				'Local Disk (C:)',
+				'Data (D:)',
+				'USB Drive (E:)',
+				'Local Disk (M:)',
+				'Network Drive (Z:)',
+			]);
+			expect((res.result as any[])[0]).toEqual({
+				name: 'Local Disk (C:)',
+				path: 'C:',
+				label: 'Local Disk',
+				type: 'drive',
+				isDirectory: true,
+			});
+		});
+
+		it('handles a single drive object', async () => {
+			mockPromisifiedExec.mockResolvedValueOnce({
+				stdout: JSON.stringify({ DeviceID: 'C:', VolumeName: 'Windows', DriveType: 3 }),
+				stderr: '',
+			});
+			const manager = new BaseSystemManager();
+			const res = await manager.getRootDrives();
+			expect(res.success).toBe(true);
+			expect((res.result as any[]).map(d => d.path)).toEqual(['C:']);
+		});
+
+		it('returns failure when the command errors', async () => {
+			jest.spyOn(console, 'error').mockImplementation(() => {});
+			mockPromisifiedExec.mockRejectedValueOnce(new Error('powershell failed'));
+			const manager = new BaseSystemManager();
+			const res = await manager.getRootDrives();
+			expect(res).toEqual({ success: false, result: 'powershell failed' });
+		});
+	});
+
 	describe('getBrowsePath', () => {
 		it('without givenPath returns drives with stats and fallback on stat error', async () => {
 			const manager = new BaseSystemManager();

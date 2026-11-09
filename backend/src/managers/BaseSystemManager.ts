@@ -274,8 +274,8 @@ export class BaseSystemManager {
 
 		if (platform === 'win32') {
 			try {
-				// Get-Volume is part of the modern Storage module and provides cleaner data than Win32_LogicalDisk
-				const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Volume | Where-Object DriveLetter -ne $null | Select-Object @{Name='DeviceID';Expression={($_.DriveLetter + ':')}}, @{Name='VolumeName';Expression={$_.FileSystemLabel}}, DriveType | ConvertTo-Json"`;
+				// Win32_LogicalDisk lists every drive letter, including virtual drives (VeraCrypt, subst, network) that Get-Volume omits
+				const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_LogicalDisk | Select-Object DeviceID, VolumeName, DriveType | ConvertTo-Json"`;
 
 				const { stdout } = await execAsync(command);
 
@@ -293,11 +293,16 @@ export class BaseSystemManager {
 						let label = drive.VolumeName;
 
 						// Handle Windows UI Fallbacks (mimicking File Explorer)
+						// DriveType: 2 = Removable, 4 = Network, 5 = CD/DVD
 						if (!label) {
 							if (deviceId === 'C:') {
 								label = 'Local Disk';
-							} else if (drive.DriveType === 'Removable') {
+							} else if (drive.DriveType === 2) {
 								label = 'USB Drive';
+							} else if (drive.DriveType === 4) {
+								label = 'Network Drive';
+							} else if (drive.DriveType === 5) {
+								label = 'CD Drive';
 							} else {
 								label = 'Local Disk';
 							}
@@ -314,7 +319,7 @@ export class BaseSystemManager {
 
 				return { success: true, result };
 			} catch (error: any) {
-				console.error('Error fetching drives via CIM:', error);
+				console.error('Error fetching drives via Win32_LogicalDisk:', error);
 				return { success: false, result: error.message };
 			}
 		}
