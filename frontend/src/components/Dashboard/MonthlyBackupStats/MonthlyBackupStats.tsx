@@ -66,7 +66,7 @@ const MonthlyBackupStats = ({ months = [], isLoading }: MonthlyBackupStatsProps)
                   const month = months[items[0]?.dataIndex ?? 0];
                   return month ? `${getDashboardMonthLabel(month.month)} (${month.total} backups)` : '';
                },
-               label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}%`,
+               label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y ?? 0}%`,
             },
          },
       },
