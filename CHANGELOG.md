@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.23.0](https://github.com/plutonhq/pluton/compare/pluton-v0.22.0...pluton-v0.23.0) (2026-11-10)
+
+
+### Features
+
+* add new dashboard screen ([58f3542](https://github.com/plutonhq/pluton/commit/58f354208cd4c102bd32f73318b56a657d2bcbc8))
+* add table view for plans, storage and source items ([ce2b145](https://github.com/plutonhq/pluton/commit/ce2b1450cf4304bf2265b406286b056f4b285ddf))
+
+
+### Bug Fixes
+
+* resolve broken local storage browser on windows ([a0b30dc](https://github.com/plutonhq/pluton/commit/a0b30dc03cb583c56e1cc58af6bac9abfe233e7d))
+* resolves missing VeraCrypt-mounted drives in File Browsers ([31fb825](https://github.com/plutonhq/pluton/commit/31fb825eb2fc08e7e99d1a403c0b2e2ef2519653)), closes [#138](https://github.com/plutonhq/pluton/issues/138)
+* resolves self-backup writing in the log file frequently ([5e1eed3](https://github.com/plutonhq/pluton/commit/5e1eed3d600e19a575bc2c6f9e6aaf92279204c4))
+* resolves various accessiblity issues ([68d5ccd](https://github.com/plutonhq/pluton/commit/68d5ccd4954720f27d3ec7702b3a0df2250928a2))
+
+
+### Styles
+
+* redesign side navigation as fixed full-height panel ([8a2b418](https://github.com/plutonhq/pluton/commit/8a2b418f9f0eba0dd598b00bc391d7ab29a3411e))
+* redesign various icons for plan items and navigation menu ([0cffc16](https://github.com/plutonhq/pluton/commit/0cffc16de5c6019f5735732ed60a86fe03c59f41))
+
 ## [0.22.0](https://github.com/plutonhq/pluton/compare/pluton-v0.21.1...pluton-v0.22.0) (2026-11-02)
 
 
