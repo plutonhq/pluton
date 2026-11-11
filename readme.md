@@ -17,7 +17,7 @@
   <br />
   <br />
   <figure>
-    <img src="https://docs.usepluton.com/assets/images/pluton-be6c5af7c03acc29d7e9c43e1399b811.gif" alt="Pluton Screenshot" />
+    <img width="800" height="449" alt="pluton" src="https://github.com/user-attachments/assets/b13398aa-65ee-4cc9-898c-9f12f9c94cab" />
   </figure>
 </div>
 
