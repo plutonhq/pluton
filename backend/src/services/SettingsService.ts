@@ -1,7 +1,6 @@
 import * as otpauth from 'otpauth';
 import qrcode from 'qrcode';
-import { createReadStream, constants, ReadStream } from 'fs';
-import { readFile, access } from 'fs/promises';
+import { Readable } from 'stream';
 import { Settings, settingsUpdateSchema } from '../db/schema/settings';
 import { TestEmailNotification } from '../notifications/templates/email/test-email/TestEmailNotification';
 import { TestNtfyNotification } from '../notifications/templates/push/test-ntfy/TestNtfyNotification';
@@ -9,7 +8,9 @@ import { SettingsStore } from '../stores/SettingsStore';
 import { AppSettings, IntegrationTypes } from '../types/settings';
 import { INotificationChannelResolver } from '../types/notifications';
 import { NotificationChannelResolver } from '../notifications/channels/NotificationChannelResolver';
-import { appPaths } from '../utils/AppPaths';
+import { LogQuery, readLogPage, streamLogFiles } from '../utils/logging/LogReader';
+import { listLogFiles } from '../utils/logging/logFiles';
+import { LogPage } from '../types/plans';
 import { selfBackupSettingsSchema } from '../utils/selfBackup/settings';
 import { SelfBackupService } from './SelfBackupService';
 import { jobQueue } from '../jobs/JobQueue';
@@ -174,63 +175,13 @@ export class SettingsService {
 		}
 	}
 
-	async getAppLogs(id: number): Promise<Record<string, any>[]> {
-		const logPath = appPaths.getLogsDir();
-		const logFilePath = `${logPath}/app.log`;
-
-		try {
-			// Read the raw log file
-			const rawLogs = await readFile(logFilePath, 'utf-8');
-
-			if (!rawLogs) {
-				// This case is unlikely if the file exists, but good practice
-				throw new NotFoundError('No logs found');
-			}
-
-			// Process the logs
-			const logEntries = rawLogs
-				.split(/\r?\n/)
-				.filter(line => line.trim() !== '')
-				.map(line => {
-					try {
-						const entry = JSON.parse(line);
-						if (entry.time) {
-							const date = new Date(entry.time);
-							entry.formattedTime = date.toLocaleString();
-						}
-						return entry;
-					} catch (e) {
-						return { raw: line };
-					}
-				});
-			return logEntries;
-		} catch (error: any) {
-			if (error.code === 'ENOENT') {
-				// If file doesn't exist, throw a clear NotFoundError
-				throw new NotFoundError('No logs found for this plan');
-			}
-			// For any other read error, throw a generic server error
-			throw new AppError(500, 'Failed to read logs: ' + error.message);
-		}
+	async getAppLogs(id: number, query: LogQuery = {}): Promise<LogPage> {
+		return readLogPage({ prefix: 'app', ...query });
 	}
 
-	async getAppLogsFile(): Promise<ReadStream> {
-		const logPath = appPaths.getLogsDir();
-		const logFilePath = `${logPath}/app.log`;
-
-		try {
-			// Check if file exists
-			await access(logFilePath, constants.F_OK);
-
-			// Stream the file directly to the response
-			const fileStream = createReadStream(logFilePath);
-			return fileStream;
-		} catch (error: any) {
-			if (error.code === 'ENOENT') {
-				throw new NotFoundError('Log file not found');
-			}
-			throw new AppError(500, `Failed to download logs: ${error.message}`);
-		}
+	async getAppLogsFile(from?: number, to?: number): Promise<Readable> {
+		if (!listLogFiles('app').length) throw new NotFoundError('Log file not found');
+		return streamLogFiles('app', from, to);
 	}
 
 	async setupTwoFactorAuth() {

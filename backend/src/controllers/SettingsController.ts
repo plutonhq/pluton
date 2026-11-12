@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { createReadStream } from 'fs';
 import { SettingsService } from '../services/SettingsService';
+import { parseLogQuery } from '../utils/logging/LogReader';
 import { AppSettings, IntegrationTypes } from '../types/settings';
 import { Settings } from '../db/schema/settings';
 
@@ -130,11 +131,14 @@ export class SettingsController {
 				return;
 			}
 
-			const logs = await this.settingsService.getAppLogs(parseInt(req.params.id, 10));
-			res.status(200).json({ success: true, result: logs });
+			const page = await this.settingsService.getAppLogs(
+				parseInt(req.params.id, 10),
+				parseLogQuery(req.query)
+			);
+			res.status(200).json({ success: true, result: page });
 			return;
 		} catch (error: any) {
-			res.status(500).json({
+			res.status(error.statusCode || 500).json({
 				success: false,
 				error: 'Failed to get logs: ' + error.message,
 			});
@@ -152,11 +156,12 @@ export class SettingsController {
 		}
 
 		try {
-			const logFileStream = await this.settingsService.getAppLogsFile();
+			const { from, to } = parseLogQuery(req.query);
+			const logFileStream = await this.settingsService.getAppLogsFile(from, to);
 
 			// Set headers for file download
 			res.setHeader('Content-Type', 'text/plain');
-			res.setHeader('Content-Disposition', `attachment; filename="app.log"`);
+			res.setHeader('Content-Disposition', `attachment; filename="app-logs.log"`);
 
 			// Stream the file directly to the response
 			logFileStream.pipe(res);

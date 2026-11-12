@@ -405,21 +405,36 @@ describe('PlanController', () => {
 		});
 
 		it('should successfully get logs', async () => {
-			const mockLogs = [
-				{ timestamp: new Date(), level: 'info', message: 'log line 1' },
-				{ timestamp: new Date(), level: 'info', message: 'log line 2' },
-			];
+			const page = {
+				items: [{ time: 1, level: 30, msg: 'log line 1' }],
+				nextCursor: 'abc',
+				scannedTo: 1,
+				modules: ['backup'],
+			};
 			mockRequest.params = { id: 'plan-1' };
-			mockPlanService.getPlanLogs.mockResolvedValue(mockLogs as any);
+			mockRequest.query = {
+				cursor: 'c1',
+				from: '100',
+				to: '200',
+				levels: 'warn,error',
+				modules: 'backup',
+				search: 'fail',
+			};
+			mockPlanService.getPlanLogs.mockResolvedValue(page as any);
 
 			await planController.getLogs(mockRequest as Request, mockResponse as Response);
 
-			expect(mockPlanService.getPlanLogs).toHaveBeenCalledWith('plan-1');
-			expect(mockStatus).toHaveBeenCalledWith(200);
-			expect(mockJson).toHaveBeenCalledWith({
-				success: true,
-				logs: mockLogs,
+			expect(mockPlanService.getPlanLogs).toHaveBeenCalledWith('plan-1', {
+				cursor: 'c1',
+				from: 100,
+				to: 200,
+				levels: ['warn', 'error'],
+				modules: ['backup'],
+				search: 'fail',
+				limit: undefined,
 			});
+			expect(mockStatus).toHaveBeenCalledWith(200);
+			expect(mockJson).toHaveBeenCalledWith({ success: true, result: page });
 		});
 	});
 
@@ -435,15 +450,16 @@ describe('PlanController', () => {
 		it('should successfully stream log file', async () => {
 			const mockFileStream = { pipe: mockPipe };
 			mockRequest.params = { id: 'plan-1' };
+			mockRequest.query = { from: '100', to: '200' };
 			mockPlanService.downloadPlanLogs.mockResolvedValue(mockFileStream as any);
 
 			await planController.downloadLogs(mockRequest as Request, mockResponse as Response);
 
-			expect(mockPlanService.downloadPlanLogs).toHaveBeenCalledWith('plan-1');
+			expect(mockPlanService.downloadPlanLogs).toHaveBeenCalledWith('plan-1', 100, 200);
 			expect(mockSetHeader).toHaveBeenCalledWith('Content-Type', 'text/plain');
 			expect(mockSetHeader).toHaveBeenCalledWith(
 				'Content-Disposition',
-				'attachment; filename="plan.log"'
+				'attachment; filename="plan-plan-1-logs.log"'
 			);
 			expect(mockPipe).toHaveBeenCalledWith(mockResponse);
 		});

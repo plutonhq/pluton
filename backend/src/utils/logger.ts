@@ -1,5 +1,7 @@
 import pino from 'pino';
-import { appPaths } from '../utils/AppPaths';
+import { RotatingLogStream } from './logging/RotatingLogStream';
+import { createRepeatLimiterHook } from './logging/repeatLimiter';
+import { APP_LOG_MAX_BYTES, PLAN_LOG_MAX_BYTES, migrateLegacyLogs } from './logging/logFiles';
 
 // Declare the main logger and all specialized loggers, but do not initialize them.
 // We use 'let' because their values will be assigned later.
@@ -9,6 +11,7 @@ let notificationLogger: pino.Logger;
 let serverLogger: pino.Logger;
 let StorageLogger: pino.Logger;
 let SystemLogger: pino.Logger;
+let appStream: RotatingLogStream | undefined;
 
 /**
  * Creates a child logger for device-specific logging.
@@ -36,49 +39,25 @@ export function initializeLogger(): void {
 		return;
 	}
 
-	const logPath = appPaths.getLogsDir();
-
-	// 1. Create and assign the main logger instance.
 	const isProduction = process.env.NODE_ENV === 'production';
 	const isPkg = (process as any).pkg;
-
-	let mainLogger: pino.Logger;
-
-	if (isPkg) {
-		// In pkg environment, use pino.destination (main thread) to avoid worker thread issues
-		const stream = pino.destination({ 
-			dest: `${logPath}/app.log`, 
-			sync: false, // Asynchronous logging
-			mkdir: true 
-		});
-		mainLogger = pino(stream);
-	} else {
-		// In development or standard node production, use transports
-		const targets: any[] = [
-			{
-				target: 'pino/file',
-				options: { destination: `${logPath}/app.log`, mkdir: true },
-				level: 'info',
-			}
-		];
-
-		// Add pino-pretty only in development
-		if (!isProduction) {
-			targets.push({
+	migrateLegacyLogs();
+	appStream = new RotatingLogStream('app', APP_LOG_MAX_BYTES);
+	const streams: pino.StreamEntry[] = [{ level: 'info', stream: appStream }];
+	// pkg builds cannot run worker transports
+	if (!isProduction && !isPkg) {
+		streams.push({
+			level: 'info',
+			stream: pino.transport({
 				target: 'pino-pretty',
-				options: {
-					colorize: true,
-					translateTime: 'SYS:standard',
-					ignore: 'pid,hostname',
-				},
-				level: 'info',
-			});
-		}
-
-		mainLogger = pino({
-			transport: { targets },
+				options: { colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' },
+			}),
 		});
 	}
+	const mainLogger = pino(
+		{ hooks: { logMethod: createRepeatLimiterHook() } },
+		pino.multistream(streams)
+	);
 
 	logger = mainLogger;
 
@@ -91,7 +70,7 @@ export function initializeLogger(): void {
 }
 
 // Cache for plan-specific loggers to avoid creating multiple instances
-const planLoggers: Record<string, pino.Logger> = {};
+const planLoggers: Record<string, { logger: pino.Logger; stream: RotatingLogStream }> = {};
 
 // Specialized backup logger that writes to plan-specific log files
 /**
@@ -117,36 +96,31 @@ export const planLogger = (task: string, planId?: string, backupId?: string) => 
 
 	if (planId) {
 		if (!planLoggers[planId]) {
-			const isPkg = (process as any).pkg;
-			
-			if (isPkg) {
-				// Use pino.destination for plan loggers in pkg to avoid worker threads
-				const stream = pino.destination({
-					dest: `${appPaths.getLogsDir()}/plan-${planId}.log`,
-					sync: false,
-					mkdir: true
-				});
-				planLoggers[planId] = pino(stream);
-			} else {
-				// Use standard transport for non-pkg environments
-				planLoggers[planId] = pino({
-					transport: {
-						targets: [
-							{
-								target: 'pino/file',
-								options: { destination: `${appPaths.getLogsDir()}/plan-${planId}.log`, mkdir: true },
-								level: 'info',
-							},
-						],
-					},
-				});
-			}
+			const stream = new RotatingLogStream(`plan-${planId}`, PLAN_LOG_MAX_BYTES);
+			planLoggers[planId] = {
+				stream,
+				logger: pino({ hooks: { logMethod: createRepeatLimiterHook() } }, stream),
+			};
 		}
-		return planLoggers[planId].child(metadata);
+		return planLoggers[planId].logger.child(metadata);
 	}
 
 	return logger.child(metadata);
 };
+
+/** Closes the log file of a plan, for example before its files are deleted. */
+export async function closePlanLogger(planId: string): Promise<void> {
+	const entry = planLoggers[planId];
+	if (!entry) return;
+	delete planLoggers[planId];
+	await entry.stream.end();
+}
+
+/** Writes the buffered log lines to disk. Call it before the process exits. */
+export function flushLogs(): void {
+	appStream?.flushSync();
+	Object.values(planLoggers).forEach(entry => entry.stream.flushSync());
+}
 
 export {
 	logger,

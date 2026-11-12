@@ -1,106 +1,152 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import Icon from '../Icon/Icon';
 import classes from './LogViewer.module.scss';
 import { useGetDownloadLogs } from '../../../services/plans';
 import { getLogLevelName } from '../../../utils/helpers';
-import { useGetDownloadAppLogs } from '../../../services/settings';
+import { useGetDownloadAppLogs, useLogs } from '../../../services/settings';
 import MultiSelect from '../form/MultiSelect/MultiSelect';
-import { LogItem } from '../../../@types/settings';
+import Select from '../form/Select/Select';
 
 interface LogViewerProps {
-   type: string;
-   planId?: string;
+   type: 'app' | 'plan';
+   id: string;
    planMethod?: string;
-   sourceType?: string;
-   settingsID?: string;
-   isLoading: boolean;
-   logs: LogItem[];
 }
 
 const logTypes = ['info', 'error', 'warn'];
-const ITEMS_PER_PAGE = 500;
-const PAGINATION_THRESHOLD = 1000;
+const DAY = 24 * 60 * 60 * 1000;
+const rangeOptions = [
+   { label: 'All', value: 'all' },
+   { label: 'Last 24 hours', value: '24h' },
+   { label: 'Last 7 days', value: '7d' },
+   { label: 'This month', value: 'month' },
+   { label: 'Last month', value: 'lastMonth' },
+   { label: 'Custom', value: 'custom' },
+];
 
-const LogViewer = ({ type = '', planMethod = 'backup', logs = [], planId, settingsID = '1', isLoading }: LogViewerProps) => {
-   const allTaskTypes = [...new Set(logs.map((log) => log.module))];
+const getPresetRange = (preset: string): { from?: number; to?: number } => {
+   const now = new Date();
+   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+   switch (preset) {
+      case '24h':
+         return { from: now.getTime() - DAY };
+      case '7d':
+         return { from: now.getTime() - 7 * DAY };
+      case 'month':
+         return { from: monthStart };
+      case 'lastMonth':
+         return { from: new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime(), to: monthStart - 1 };
+      default:
+         return {};
+   }
+};
+
+const LogViewer = ({ type, id, planMethod = 'backup' }: LogViewerProps) => {
+   const queryClient = useQueryClient();
+   const [rangePreset, setRangePreset] = useState('all');
+   const [range, setRange] = useState<{ from?: number; to?: number }>({});
+   const [customFrom, setCustomFrom] = useState('');
+   const [customTo, setCustomTo] = useState('');
+   const [levels, setLevels] = useState<string[]>(logTypes);
+   const [modules, setModules] = useState<string[] | null>(null);
+   const [knownModules, setKnownModules] = useState<string[]>([]);
+   const [searchInput, setSearchInput] = useState('');
    const [search, setSearch] = useState('');
-   const [filters, setFilters] = useState<string[]>(['info', 'error', 'warn']);
-   const [pickedTaskTypes, setTaskTypes] = useState<string[] | null>(null);
-   const taskTypes = pickedTaskTypes ?? allTaskTypes;
-   const [currentPage, setCurrentPage] = useState(1);
    const downloadPlanLogsMutation = useGetDownloadLogs();
    const downloadAppLogsMutation = useGetDownloadAppLogs();
 
-   const theLogs = logs
-      .filter((log) => {
-         const matchesSearch = log.msg?.toLowerCase().includes(search.toLowerCase());
-         const matchesBackupId = log.backupId?.toLowerCase().includes(search.toLowerCase());
-         const logType = getLogLevelName(log.level);
-         const matchesFilter = filters.includes(logType);
-         const matchesTaskType = taskTypes.includes(log.module);
-         return (matchesSearch || matchesBackupId) && matchesFilter && matchesTaskType;
-      })
-      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+   useEffect(() => {
+      const timer = setTimeout(() => setSearch(searchInput.trim()), 300);
+      return () => clearTimeout(timer);
+   }, [searchInput]);
 
-   const showPagination = theLogs.length > PAGINATION_THRESHOLD;
-   const totalPages = Math.ceil(theLogs.length / ITEMS_PER_PAGE);
-   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-   const endIndex = startIndex + ITEMS_PER_PAGE;
-   const paginatedLogs = showPagination ? theLogs.slice(startIndex, endIndex) : theLogs;
+   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useLogs(type, id, {
+      ...range,
+      levels: levels.length === logTypes.length ? undefined : levels,
+      modules: modules ?? undefined,
+      search: search || undefined,
+   });
 
-   const handlePageChange = (page: number) => {
-      setCurrentPage(page);
+   const pages = data?.pages;
+   const logs = useMemo(() => pages?.flatMap((page) => page.items) ?? [], [pages]);
+   const scannedTo = pages?.[pages.length - 1]?.scannedTo;
+
+   // Keep module options from earlier filters, so a module can be picked again.
+   const newModules = [...new Set(pages?.flatMap((page) => page.modules) ?? [])].filter((m) => !knownModules.includes(m));
+   if (newModules.length > 0) {
+      setKnownModules([...knownModules, ...newModules]);
+   }
+
+   const updateRangePreset = (preset: string) => {
+      setRangePreset(preset);
+      if (preset !== 'custom') {
+         setRange(getPresetRange(preset));
+      }
    };
 
-   const getPageNumbers = () => {
-      const pages = [];
-      const maxVisiblePages = 5;
-      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-      if (endPage - startPage < maxVisiblePages - 1) {
-         startPage = Math.max(1, endPage - maxVisiblePages + 1);
+   const refresh = () => {
+      if (rangePreset !== 'custom') {
+         setRange(getPresetRange(rangePreset));
       }
+      queryClient.resetQueries({ queryKey: ['logs', type, id] });
+   };
 
-      for (let i = startPage; i <= endPage; i++) {
-         pages.push(i);
+   const applyCustomRange = () => {
+      setRange({
+         from: customFrom ? new Date(customFrom).getTime() : undefined,
+         to: customTo ? new Date(customTo).getTime() : undefined,
+      });
+   };
+
+   const downloadLogs = () => {
+      if (type === 'plan') {
+         downloadPlanLogsMutation.mutate({ id, ...range });
+      } else {
+         downloadAppLogsMutation.mutate({ settingsID: id, ...range });
       }
-      return pages;
    };
 
    return (
       <div className={classes.logViewer}>
          <div className={classes.toolbar}>
             <div className={classes.toolbarLeft}>
-               <div className={classes.toolbarSummary}>
-                  {theLogs.length}/{logs.length} log items
-                  {showPagination && ` (Page ${currentPage} of ${totalPages})`}
-               </div>
+               <Select size="small" fieldValue={rangePreset} options={rangeOptions} onUpdate={updateRangePreset} />
+               {rangePreset === 'custom' && (
+                  <div className={classes.customRange}>
+                     <input type="datetime-local" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} />
+                     <span>to</span>
+                     <input type="datetime-local" value={customTo} onChange={(e) => setCustomTo(e.target.value)} />
+                     <button onClick={applyCustomRange}>Apply</button>
+                  </div>
+               )}
             </div>
             <div className={classes.toolbarRight}>
                <div className={classes.filters}>
                   <MultiSelect
                      title="Log Levels"
-                     fieldValue={filters}
+                     fieldValue={levels}
                      options={logTypes.map((logType) => ({ label: logType, value: logType }))}
-                     onUpdate={(updatedLogTypes) => setFilters(updatedLogTypes)}
+                     onUpdate={(updatedLogTypes) => setLevels(updatedLogTypes)}
                   />
                </div>
                <div className={classes.filters}>
                   <MultiSelect
                      title={type === 'plan' ? 'Task Type' : 'Module Type'}
-                     fieldValue={taskTypes}
-                     options={allTaskTypes.map((taskType) => ({ label: taskType || 'General', value: taskType }))}
-                     onUpdate={(updatedTaskTypes) => setTaskTypes(updatedTaskTypes)}
+                     fieldValue={modules ?? knownModules}
+                     options={knownModules.map((taskType) => ({ label: taskType || 'General', value: taskType }))}
+                     onUpdate={(updatedTaskTypes) => setModules(updatedTaskTypes.length === knownModules.length ? null : updatedTaskTypes)}
                   />
                </div>
                <div className={classes.search}>
                   <Icon type="search" size={16} />
-                  <input type="text" placeholder="Search Log Messages..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                  <input type="text" placeholder="Search Log Messages..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
                </div>
-               <button
-                  onClick={() => (type === 'plan' && planId ? downloadPlanLogsMutation.mutate(planId) : downloadAppLogsMutation.mutate(settingsID))}
-               >
+               <button onClick={refresh}>
+                  <Icon type="reload" size={16} />
+                  <span>Refresh</span>
+               </button>
+               <button onClick={downloadLogs}>
                   <Icon type="download" size={16} />
                   <span>Download</span>
                </button>
@@ -116,9 +162,8 @@ const LogViewer = ({ type = '', planMethod = 'backup', logs = [], planId, settin
             </div>
             <div className={classes.logs}>
                {!isLoading &&
-                  paginatedLogs.map((log, index) => {
+                  logs.map((log, index) => {
                      const logType = getLogLevelName(log.level);
-                     // const isBackupLogStart = type === 'plan' && log.backupId && log.msg.includes('Started');
                      return (
                         <div key={index} className={`${classes.log}`}>
                            <div className={`${classes.logType} ${classes[`logType--${logType.toLowerCase()}`]}`}>
@@ -138,25 +183,17 @@ const LogViewer = ({ type = '', planMethod = 'backup', logs = [], planId, settin
                )}
             </div>
          </div>
-         {showPagination && !isLoading && (
-            <div className={classes.pagination}>
-               <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className={classes.paginationButton}>
-                  <Icon type="arrow-left" size={16} />
+         <div className={classes.footer}>
+            <span>
+               {logs.length} entries
+               {scannedTo ? ` · back to ${new Date(scannedTo).toLocaleString()}` : ''}
+            </span>
+            {hasNextPage && (
+               <button className={classes.loadOlder} disabled={isFetchingNextPage} onClick={() => fetchNextPage()}>
+                  {isFetchingNextPage ? 'Loading...' : 'Load older'}
                </button>
-               {getPageNumbers().map((page) => (
-                  <button
-                     key={page}
-                     onClick={() => handlePageChange(page)}
-                     className={`${classes.paginationButton} ${currentPage === page ? classes.paginationButtonActive : ''}`}
-                  >
-                     {page}
-                  </button>
-               ))}
-               <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className={classes.paginationButton}>
-                  <Icon type="arrow-right" size={16} />
-               </button>
-            </div>
-         )}
+            )}
+         </div>
       </div>
    );
 };

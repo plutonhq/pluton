@@ -6,6 +6,7 @@ import { PlanStore } from '../../src/stores/PlanStore';
 import { BackupStore } from '../../src/stores/BackupStore';
 import { DeviceStore } from '../../src/stores/DeviceStore';
 import { DashboardEvent } from '../../src/types/dashboard';
+import { logFileName } from '../../src/utils/logging/logFiles';
 
 let mockLogsDir = '';
 
@@ -221,23 +222,25 @@ describe('DashboardService', () => {
 		it('merges backup rows with warn/error lines from the app and plan logs', async () => {
 			const now = Date.now();
 			const line = (o: Record<string, any>) => JSON.stringify({ time: now - 1000, ...o });
+			const d = new Date(now);
+			const month = (prefix: string) => logFileName(prefix, d.getFullYear(), d.getMonth() + 1);
 			writeFileSync(
-				path.join(mockLogsDir, 'app.log'),
+				path.join(mockLogsDir, month('app')),
 				[
+					line({ level: 50, msg: 'old', time: now - 40 * 24 * 3600 * 1000 }),
 					line({ level: 30, msg: 'info' }),
 					line({ level: 40, msg: 'app warning' }),
-					line({ level: 50, msg: 'old', time: now - 40 * 24 * 3600 * 1000 }),
 					'not json',
 				].join('\n')
 			);
 			writeFileSync(
-				path.join(mockLogsDir, 'plan-p1.log'),
+				path.join(mockLogsDir, month('plan-p1')),
 				[
-					line({ level: 50, msg: 'run failed', backupId: 'b1' }),
 					line({ level: 60, msg: 'plan fatal', time: now - 2000 }),
+					line({ level: 50, msg: 'run failed', backupId: 'b1' }),
 				].join('\n')
 			);
-			writeFileSync(path.join(mockLogsDir, 'plan-deleted.log'), line({ level: 50, msg: 'x' }));
+			writeFileSync(path.join(mockLogsDir, month('plan-deleted')), line({ level: 50, msg: 'x' }));
 			mockBackupStore.getEndedSince.mockResolvedValue([
 				row({ id: 'b1', status: 'failed', ended: new Date(now) }),
 			]);

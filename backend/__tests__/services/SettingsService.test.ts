@@ -1,6 +1,7 @@
-import { createReadStream, constants } from 'fs';
-import { readFile, access } from 'fs/promises';
+import { readLogPage, streamLogFiles } from '../../src/utils/logging/LogReader';
+import { listLogFiles } from '../../src/utils/logging/logFiles';
 import { SettingsService } from '../../src/services/SettingsService';
+import type { SelfBackupService } from '../../src/services/SelfBackupService';
 import { SettingsStore } from '../../src/stores/SettingsStore';
 import { AppSettings } from '../../src/types/settings';
 import { AppError } from '../../src/utils/AppError';
@@ -27,6 +28,8 @@ jest.mock('../../src/notifications/channels/SMTPChannel');
 jest.mock('../../src/notifications/channels/NtfyChannel');
 jest.mock('fs/promises');
 jest.mock('fs');
+jest.mock('../../src/utils/logging/LogReader');
+jest.mock('../../src/utils/logging/logFiles');
 
 // Mock config service as it's used in notifications
 jest.mock('../../src/services/ConfigService', () => ({
@@ -39,9 +42,9 @@ jest.mock('../../src/services/ConfigService', () => ({
 }));
 
 // Create typed mock references for fs modules
-const mockedReadFile = readFile as jest.Mock;
-const mockedAccess = access as jest.Mock;
-const mockedCreateReadStream = createReadStream as jest.Mock;
+const mockedReadLogPage = readLogPage as jest.Mock;
+const mockedStreamLogFiles = streamLogFiles as jest.Mock;
+const mockedListLogFiles = listLogFiles as jest.Mock;
 
 // Get a typed reference to the mocked class
 const MockedNotificationChannelResolver = NotificationChannelResolver as jest.MockedClass<
@@ -65,7 +68,7 @@ describe('SettingsService', () => {
 			integration => integration
 		);
 
-		settingsService = new SettingsService(mockSettingsStore);
+		settingsService = new SettingsService(mockSettingsStore, {} as SelfBackupService);
 	});
 
 	// ----------------------------------------
@@ -489,52 +492,40 @@ describe('SettingsService', () => {
 	// ----------------------------------------
 	describe('App Logs', () => {
 		const settingsId = 1;
-		const logContent =
-			'{"level":30,"time":1672531200000,"msg":"Log message 1"}\n{"level":40,"time":1672531260000,"msg":"Log message 2"}';
 
 		describe('getAppLogs', () => {
-			it('should read and parse the log file', async () => {
-				mockedReadFile.mockResolvedValue(logContent);
+			it('reads one page of the app logs with the query', async () => {
+				const page = { items: [], nextCursor: null, scannedTo: null, modules: [] };
+				mockedReadLogPage.mockResolvedValue(page);
 
-				const logs = await settingsService.getAppLogs(settingsId);
+				const result = await settingsService.getAppLogs(settingsId, {
+					cursor: 'c1',
+					levels: ['error'],
+				});
 
-				expect(mockedReadFile).toHaveBeenCalledWith(expect.stringContaining('app.log'), 'utf-8');
-				expect(logs).toHaveLength(2);
-				expect(logs[0].msg).toBe('Log message 1');
-				expect(logs[1].level).toBe(40);
-			});
-
-			it('should throw NotFoundError if the log file does not exist', async () => {
-				mockedReadFile.mockRejectedValue({ code: 'ENOENT' });
-
-				await expect(settingsService.getAppLogs(settingsId)).rejects.toThrow(
-					'No logs found for this plan'
-				);
-				await expect(settingsService.getAppLogs(settingsId)).rejects.toHaveProperty(
-					'statusCode',
-					404
-				);
+				expect(mockedReadLogPage).toHaveBeenCalledWith({
+					prefix: 'app',
+					cursor: 'c1',
+					levels: ['error'],
+				});
+				expect(result).toBe(page);
 			});
 		});
 
 		describe('downloadAppLogs', () => {
-			it('should return a readable stream for the log file', async () => {
+			it('should return a stream of the log files in the range', async () => {
 				const mockStream = 'mock-stream' as any;
-				mockedAccess.mockResolvedValue(undefined); // File exists
-				mockedCreateReadStream.mockReturnValue(mockStream);
+				mockedListLogFiles.mockReturnValue([{ name: 'app-2026-11.log' }]);
+				mockedStreamLogFiles.mockReturnValue(mockStream);
 
-				const result = await settingsService.getAppLogsFile();
+				const result = await settingsService.getAppLogsFile(100, 200);
 
-				expect(mockedAccess).toHaveBeenCalledWith(
-					expect.stringContaining('app.log'),
-					constants.F_OK
-				);
-				expect(mockedCreateReadStream).toHaveBeenCalledWith(expect.stringContaining('app.log'));
+				expect(mockedStreamLogFiles).toHaveBeenCalledWith('app', 100, 200);
 				expect(result).toBe(mockStream);
 			});
 
-			it('should throw NotFoundError if log file does not exist for download', async () => {
-				mockedAccess.mockRejectedValue({ code: 'ENOENT' });
+			it('should throw NotFoundError if there are no log files', async () => {
+				mockedListLogFiles.mockReturnValue([]);
 				await expect(settingsService.getAppLogsFile()).rejects.toThrow('Log file not found');
 				await expect(settingsService.getAppLogsFile()).rejects.toHaveProperty('statusCode', 404);
 			});

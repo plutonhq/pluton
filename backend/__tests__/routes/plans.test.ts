@@ -214,14 +214,17 @@ describe('Plan Routes', () => {
 
 	describe('GET /api/plans/:id/logs', () => {
 		it('should return logs for a plan when authenticated', async () => {
-			mockPlanService.getPlanLogs.mockResolvedValue([
-				{ timestamp: '2024-01-01', message: 'log entry' },
-			] as any);
+			const page = { items: [], nextCursor: null, scannedTo: null, modules: [] };
+			mockPlanService.getPlanLogs.mockResolvedValue(page as any);
 
-			const response = await request(app).get('/api/plans/plan-1/logs');
+			const response = await request(app).get('/api/plans/plan-1/logs?levels=warn,error&to=500');
 
 			expect(response.status).toBe(200);
-			expect(mockPlanService.getPlanLogs).toHaveBeenCalledWith('plan-1');
+			expect(response.body).toEqual({ success: true, result: page });
+			expect(mockPlanService.getPlanLogs).toHaveBeenCalledWith(
+				'plan-1',
+				expect.objectContaining({ levels: ['warn', 'error'], to: 500 })
+			);
 		});
 	});
 
@@ -232,9 +235,9 @@ describe('Plan Routes', () => {
 				throw new Error('Stream test - expected');
 			});
 
-			const response = await request(app).get('/api/plans/plan-1/logs/download');
+			const response = await request(app).get('/api/plans/plan-1/logs/download?from=100');
 
-			expect(mockPlanService.downloadPlanLogs).toHaveBeenCalledWith('plan-1');
+			expect(mockPlanService.downloadPlanLogs).toHaveBeenCalledWith('plan-1', 100, undefined);
 			expect(response.status).toBe(500); // Error because we threw in mock
 		});
 	});

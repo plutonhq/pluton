@@ -12,9 +12,52 @@
       gap: 15px;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      .toolbarLeft {
+         display: flex;
+         align-items: center;
+         gap: 12px;
+         position: relative;
+
+         .customRange {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            position: absolute;
+            top: 31px;
+            background: var(--content-background-color);
+            padding: 12px;
+            border-radius: 0 6px 6px 6px;
+            border: 1px solid var(--field-line-color);
+            z-index: 1;
+
+            input {
+               padding: 6px 10px;
+               border: 1px solid var(--field-line-color);
+               border-radius: 6px;
+               background: transparent;
+               color: var(--content-text-color);
+               font-size: 0.75rem;
+
+               &:focus {
+                  outline: none;
+                  border-color: var(--line-active-color);
+               }
+            }
+
+            button {
+               color: var(--icon-color);
+               &:hover {
+                  color: var(--primary-color);
+               }
+            }
+         }
+      }
       .toolbarRight {
          display: flex;
          flex-direction: row;
+         flex-wrap: wrap;
          gap: 15px;
          justify-content: space-between;
 
@@ -60,6 +103,7 @@
       .logsHeader {
          display: grid;
          grid-template-columns: repeat(4, 1fr) 55%;
+         column-gap: 12px;
          padding: 12px;
          background: var(--background-color);
          font-weight: 600;
@@ -68,12 +112,13 @@
          }
       }
       .logs {
-         height: calc(100vh - 300px);
+         height: calc(100vh - 280px);
          overflow: auto;
 
          .log {
             display: grid;
             grid-template-columns: repeat(4, 1fr) 55%;
+            column-gap: 12px;
             padding: 8px 12px;
             border-bottom: 1px solid var(--line-color);
             position: relative;
@@ -127,39 +172,27 @@
          }
       }
    }
-   .pagination {
+   .footer {
       display: flex;
-      justify-content: center;
       align-items: center;
-      gap: 8px;
-      padding: 12px;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
       border-top: 1px solid var(--line-color);
+      font-size: 0.75rem;
+      color: var(--content-text-color-light);
 
-      .paginationButton {
-         padding: 6px 12px;
-         border: 1px solid var(--line-color);
+      .loadOlder {
+         padding: 6px 16px;
+         border: none;
          border-radius: 6px;
-         background: transparent;
-         cursor: pointer;
-         font-size: 0.875rem;
-         transition: all 0.2s;
+         background: none;
          color: var(--content-text-color-light);
+         font-size: 0.8rem;
+         cursor: pointer;
 
          &:hover:not(:disabled) {
-            background: var(--primary-color-light);
-            color: var(--primary-color);
-            border-color: var(--primary-color);
-         }
-
-         &:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-         }
-
-         &.paginationButtonActive {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
+            background: var(--background-color);
          }
       }
    }

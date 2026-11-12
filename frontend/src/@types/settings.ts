@@ -19,6 +19,21 @@ export interface LogItem {
    msg: string;
 }
 
+export interface LogPage {
+   items: LogItem[];
+   nextCursor: string | null;
+   scannedTo: number | null;
+   modules: string[];
+}
+
+export interface LogFilters {
+   from?: number;
+   to?: number;
+   levels?: string[];
+   modules?: string[];
+   search?: string;
+}
+
 export interface NtfySettingsType {
    authType: string;
    authToken: string;

@@ -63,38 +63,14 @@ export function useGetPlan(id: string) {
    });
 }
 
-// Get Plan Logs
-export async function getPlanLogs(planId: string) {
-   const url = new URL(`${API_URL}/plans/${planId}/logs`);
-
-   const res = await fetch(url.toString(), {
-      method: 'GET',
-      credentials: 'include',
-   });
-   const data = await res.json();
-   if (!data.success) {
-      const error = new Error(data.error) as Error & { status?: number };
-      error.status = res.status;
-      throw error;
-   }
-   return data;
-}
-
-export function useGetPlanLogs(planId: string) {
-   return useQuery({
-      queryKey: ['planLogs', planId],
-      queryFn: () => getPlanLogs(planId),
-      refetchOnMount: true,
-      retry: false,
-   });
-}
-
 // Download Plan Logs
-export async function downloadPlanLogs(id: string) {
-   const res = await fetch(`${API_URL}/plans/${id}/logs/download`, {
+export async function downloadPlanLogs({ id, from, to }: { id: string; from?: number; to?: number }) {
+   const endpoint = new URL(`${API_URL}/plans/${id}/logs/download`);
+   if (from) endpoint.searchParams.set('from', String(from));
+   if (to) endpoint.searchParams.set('to', String(to));
+   const res = await fetch(endpoint.toString(), {
       method: 'GET',
       credentials: 'include',
-      // headers: header,
    });
    // Check if response is ok
    if (!res.ok) {
@@ -102,7 +78,7 @@ export async function downloadPlanLogs(id: string) {
       throw new Error(data.error);
    }
 
-   const filename = res.headers.get('content-disposition')?.split('filename=')[1] || `plan-${id}.log`;
+   const filename = res.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || `plan-${id}-logs.log`;
 
    // Use streams API
    const reader = res.body?.getReader();

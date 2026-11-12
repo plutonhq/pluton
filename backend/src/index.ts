@@ -7,6 +7,7 @@ import { initSetup } from './utils/initSetup';
 import { configService, ConfigService } from './services/ConfigService';
 import { requiresDesktopSetup } from './utils/installHelpers';
 import { processManager } from './managers/ProcessManager';
+import { flushLogs } from './utils/logger';
 
 // Export main entry point for use as a library
 export { createApp } from './createApp';
@@ -127,11 +128,13 @@ if (isMainModule || isDevelopment) {
 			// Kill any restic/rclone children so a stop does not orphan them.
 			processManager.killAll();
 			const forceExit = setTimeout(() => {
+				flushLogs();
 				process.exit(1);
 			}, 30000);
 			server.close(() => {
 				console.log('HTTP server closed.');
 				clearTimeout(forceExit);
+				flushLogs();
 				process.exit(0);
 			});
 		};

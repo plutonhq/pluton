@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { experimental_createQueryPersister } from '@tanstack/react-query-persist-client';
 import { API_URL } from '../utils/constants';
 import { useNavigate } from 'react-router';
-import { IntegrationSettings } from '../@types';
+import { IntegrationSettings, LogFilters, LogPage } from '../@types';
 
 // ============== Settings API ==============
 
@@ -59,9 +59,15 @@ export function useUpdateSettings() {
    });
 }
 
-// Get App Logs
-export async function getAppLogs(settingsID: string) {
-   const url = new URL(`${API_URL}/settings/${settingsID}/logs`);
+// Get App or Plan Logs, one page at a time
+export async function getLogs(type: 'app' | 'plan', id: string, filters: LogFilters, cursor: string | null): Promise<LogPage> {
+   const url = new URL(`${API_URL}/${type === 'plan' ? 'plans' : 'settings'}/${id}/logs`);
+   if (cursor) url.searchParams.set('cursor', cursor);
+   if (filters.from) url.searchParams.set('from', String(filters.from));
+   if (filters.to) url.searchParams.set('to', String(filters.to));
+   if (filters.levels?.length) url.searchParams.set('levels', filters.levels.join(','));
+   if (filters.modules?.length) url.searchParams.set('modules', filters.modules.join(','));
+   if (filters.search) url.searchParams.set('search', filters.search);
 
    const res = await fetch(url.toString(), {
       method: 'GET',
@@ -71,24 +77,31 @@ export async function getAppLogs(settingsID: string) {
    if (!data.success) {
       throw new Error(data.error);
    }
-   return data;
+   return data.result;
 }
 
-export function useGetAppLogs(settingsID: string) {
-   return useQuery({
-      queryKey: ['appLogs', settingsID],
-      queryFn: () => getAppLogs(settingsID),
+export function useLogs(type: 'app' | 'plan', id: string, filters: LogFilters) {
+   return useInfiniteQuery({
+      queryKey: ['logs', type, id, filters],
+      queryFn: ({ pageParam }) => getLogs(type, id, filters, pageParam),
+      initialPageParam: null as string | null,
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      // An empty level or module selection matches no entries.
+      enabled: filters.levels?.length !== 0 && filters.modules?.length !== 0,
       refetchOnMount: true,
+      refetchOnWindowFocus: false,
       retry: false,
    });
 }
 
-// Download Plan Logs
-export async function downloadAppLogs(settingsID: string) {
-   const res = await fetch(`${API_URL}/settings/${settingsID}/logs/download`, {
+// Download App Logs
+export async function downloadAppLogs({ settingsID, from, to }: { settingsID: string; from?: number; to?: number }) {
+   const endpoint = new URL(`${API_URL}/settings/${settingsID}/logs/download`);
+   if (from) endpoint.searchParams.set('from', String(from));
+   if (to) endpoint.searchParams.set('to', String(to));
+   const res = await fetch(endpoint.toString(), {
       method: 'GET',
       credentials: 'include',
-      // headers: header,
    });
    // Check if response is ok
    if (!res.ok) {
@@ -96,7 +109,7 @@ export async function downloadAppLogs(settingsID: string) {
       throw new Error(data.error);
    }
 
-   const filename = res.headers.get('content-disposition')?.split('filename=')[1] || `app.log`;
+   const filename = res.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || `app-logs.log`;
 
    // Use streams API
    const reader = res.body?.getReader();

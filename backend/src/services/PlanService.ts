@@ -1,5 +1,3 @@
-import { createReadStream } from 'fs';
-import { access, constants, readFile } from 'fs/promises';
 import { BaseBackupManager } from '../managers/BaseBackupManager';
 import { PlanStore } from '../stores/PlanStore';
 import { BackupStore } from '../stores/BackupStore';
@@ -15,19 +13,20 @@ import {
 	BackupVerifiedResult,
 	NewPlanReq,
 	PlanAddRunSettings,
-	PlanLogItem,
+	LogPage,
 	PlanNotification,
 	PlanNotificationType,
 	PlanStoragePath,
 } from '../types/plans';
-import { planLogger } from '../utils/logger';
+import { closePlanLogger, planLogger } from '../utils/logger';
+import { LogQuery, readLogPage, streamLogFiles } from '../utils/logging/LogReader';
+import { deleteLogFiles, listLogFiles } from '../utils/logging/logFiles';
 import { generateUID, normalizeStorageName } from '../utils/helpers';
 import { intervalToCron } from '../utils/intervalToCron';
 import { LocalStrategy as LocalBackupStrategy } from '../strategies/backup/LocalStrategy';
 import { RemoteStrategy as RemoteBackupStrategy } from '../strategies/backup/RemoteStrategy';
 import { DeviceStore } from '../stores/DeviceStore';
 import { BackupStrategy } from '../strategies/backup';
-import { appPaths } from '../utils/AppPaths';
 import { AppError, NotFoundError } from '../utils/AppError';
 import { isSafeRclonePath } from '../utils/rclone/helpers';
 import { SourceTypes } from '../types/source';
@@ -375,6 +374,8 @@ export class PlanService {
 			throw new AppError(500, deleteResult.result);
 		}
 
+		planLogger('delete', planId).info('Plan and associated data successfully deleted.');
+
 		// Finally, remove from our database
 		await this.restoreStore.deleteByPlanId(planId);
 		const backupIds = await this.backupStore.getIdsByPlanId(planId);
@@ -385,7 +386,8 @@ export class PlanService {
 			throw new AppError(500, 'Failed to delete plan from the database.');
 		}
 
-		planLogger('delete', planId).info('Plan and associated data successfully deleted.');
+		await closePlanLogger(planId);
+		deleteLogFiles(`plan-${planId}`);
 
 		return {
 			deleted: deleteRes,
@@ -668,80 +670,27 @@ export class PlanService {
 	}
 
 	/**
-	 * Retrieves the logs for a backup plan. Parses the plan log file from the data/logs folder.
+	 * Retrieves one page of a plan's logs, newest first.
 	 */
-	public async getPlanLogs(planId: string): Promise<PlanLogItem[] | undefined> {
+	public async getPlanLogs(planId: string, query: LogQuery = {}): Promise<LogPage> {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError(`Plan with ID ${planId} not found.`);
-
-		if (plan) {
-			const logPath = appPaths.getLogsDir();
-			const logFilePath = `${logPath}/plan-${plan.id}.log`;
-
-			try {
-				// Read the raw log file
-				const rawLogs = await readFile(logFilePath, 'utf-8');
-
-				if (!rawLogs) {
-					throw new NotFoundError(`No logs found for plan with ID ${planId}`);
-				}
-
-				// Process the logs - split by line breaks and parse each line as JSON
-				const logEntries = rawLogs
-					.split(/\r?\n/)
-					.filter(line => line.trim() !== '')
-					.map(line => {
-						try {
-							const entry = JSON.parse(line);
-							// Format the timestamp to be more readable
-							if (entry.time) {
-								const date = new Date(entry.time);
-								entry.formattedTime = date.toLocaleString();
-							}
-							return entry;
-						} catch (e) {
-							// If a line can't be parsed as JSON, return it as-is
-							return { raw: line };
-						}
-					});
-
-				return logEntries;
-			} catch (error: any) {
-				if (error.code === 'ENOENT') {
-					throw new NotFoundError(`No logs found for plan with ID ${planId}`);
-				}
-
-				throw error;
-			}
-		}
+		return readLogPage({ prefix: `plan-${plan.id}`, ...query });
 	}
 
 	/**
-	 * Downloads the logs for a backup plan. Fetches the plan log file from the data/logs folder as is.
+	 * Downloads the raw log files of a backup plan that overlap the range.
 	 */
-	public async downloadPlanLogs(planId: string): Promise<NodeJS.ReadableStream> {
+	public async downloadPlanLogs(
+		planId: string,
+		from?: number,
+		to?: number
+	): Promise<NodeJS.ReadableStream> {
 		const plan = await this.planStore.getById(planId);
 		if (!plan) throw new NotFoundError(`Plan with ID ${planId} not found.`);
-
-		const logPath = appPaths.getLogsDir();
-		const logFilePath = `${logPath}/plan-${plan.id}.log`;
-
-		try {
-			// Check if file exists
-			await access(logFilePath, constants.F_OK);
-
-			// Stream the file directly to the response
-			const fileStream = createReadStream(logFilePath);
-
-			// Return nothing as we're handling the response with the stream
-			return fileStream;
-		} catch (error: any) {
-			if (error.code === 'ENOENT') {
-				throw new NotFoundError('Log file not found');
-			}
-
-			throw new AppError(403, error?.message || 'Failed to access the log file');
-		}
+		const prefix = `plan-${plan.id}`;
+		if (!listLogFiles(prefix).length) throw new NotFoundError('Log file not found');
+		return streamLogFiles(prefix, from, to);
 	}
 
 	async sendTestNotification(

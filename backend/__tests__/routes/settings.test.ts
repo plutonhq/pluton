@@ -147,14 +147,17 @@ describe('Settings Routes', () => {
 		});
 
 		it('should return app logs when authenticated', async () => {
-			mockSettingsService.getAppLogs.mockResolvedValue({
-				logs: ['log line 1', 'log line 2'],
-			} as any);
+			const page = { items: [], nextCursor: null, scannedTo: null, modules: [] };
+			mockSettingsService.getAppLogs.mockResolvedValue(page as any);
 
-			const response = await request(app).get('/api/settings/1/logs');
+			const response = await request(app).get('/api/settings/1/logs?search=fail');
 
 			expect(response.status).toBe(200);
-			expect(mockSettingsService.getAppLogs).toHaveBeenCalledWith(1);
+			expect(response.body).toEqual({ success: true, result: page });
+			expect(mockSettingsService.getAppLogs).toHaveBeenCalledWith(
+				1,
+				expect.objectContaining({ search: 'fail' })
+			);
 		});
 	});
 

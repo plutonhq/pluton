@@ -282,14 +282,22 @@ export interface PlanFull extends Plan {
 }
 
 export type PlanLogItem = {
-	formattedTime: string;
 	hostname: string;
 	level: number;
 	module: string;
 	msg: string;
 	pid: number;
-	planId: string;
+	planId?: string;
+	backupId?: string;
+	deviceId?: string;
 	time: number;
+};
+
+export type LogPage = {
+	items: PlanLogItem[];
+	nextCursor: string | null;
+	scannedTo: number | null;
+	modules: string[];
 };
 
 export interface PlanAddRunSettings {

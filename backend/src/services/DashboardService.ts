@@ -1,6 +1,4 @@
 import fs from 'fs';
-import { FileHandle, open, readdir } from 'fs/promises';
-import path from 'path';
 import si from 'systeminformation';
 import { BackupStore } from '../stores/BackupStore';
 import { DeviceStore } from '../stores/DeviceStore';
@@ -8,6 +6,7 @@ import { PlanStore } from '../stores/PlanStore';
 import { Device } from '../db/schema/devices';
 import { PlanFull } from '../types/plans';
 import { appPaths } from '../utils/AppPaths';
+import { readLogPage } from '../utils/logging/LogReader';
 import {
 	DashboardBackupRow,
 	DashboardEvent,
@@ -270,32 +269,23 @@ export class DashboardService {
 		planTitles: Map<string, string>,
 		sinceMs: number
 	): Promise<DashboardEvent[]> {
-		const logsDir = appPaths.getLogsDir();
-		let files: string[] = [];
-		try {
-			files = await readdir(logsDir);
-		} catch {
-			return [];
-		}
+		const sources = [undefined, ...planTitles.keys()];
 		const events: DashboardEvent[] = [];
-		for (const file of files) {
-			const planId = file.match(/^plan-(.+)\.log$/)?.[1];
-			if (file !== 'app.log' && !(planId && planTitles.has(planId))) continue;
-			const source = planId ? 'plan' : 'app';
-			const lines = await this.readLogTail(path.join(logsDir, file));
-			lines.forEach((line, index) => {
-				let entry: any;
-				try {
-					entry = JSON.parse(line);
-				} catch {
-					return;
-				}
-				if (!(entry?.level >= 40) || !(entry.time >= sinceMs)) return;
+		for (const planId of sources) {
+			const prefix = planId ? `plan-${planId}` : 'app';
+			const { items } = await readLogPage({
+				prefix,
+				from: sinceMs,
+				levels: ['warn', 'error'],
+				limit: 100,
+				maxScanBytes: LOG_TAIL_BYTES,
+			}).catch(() => ({ items: [] }));
+			items.forEach((entry, index) => {
 				const entryPlanId: string | undefined = planId || entry.planId;
 				events.push({
-					id: `${file}-${entry.time}-${index}`,
+					id: `${prefix}-${entry.time}-${index}`,
 					type: entry.level >= 50 ? 'failure' : 'warning',
-					source,
+					source: planId ? 'plan' : 'app',
 					...(entryPlanId ? { planId: entryPlanId } : {}),
 					...(entryPlanId && planTitles.has(entryPlanId)
 						? { planTitle: planTitles.get(entryPlanId) }
@@ -307,24 +297,5 @@ export class DashboardService {
 			});
 		}
 		return events;
-	}
-
-	protected async readLogTail(filePath: string): Promise<string[]> {
-		let handle: FileHandle | undefined;
-		try {
-			handle = await open(filePath, 'r');
-			const { size } = await handle.stat();
-			const start = Math.max(0, size - LOG_TAIL_BYTES);
-			const buffer = Buffer.alloc(size - start);
-			await handle.read(buffer, 0, buffer.length, start);
-			const lines = buffer.toString('utf8').split(/\r?\n/);
-			// The first line is cut when the read starts mid-file
-			if (start > 0) lines.shift();
-			return lines.filter(line => line.trim() !== '');
-		} catch {
-			return [];
-		} finally {
-			await handle?.close();
-		}
 	}
 }

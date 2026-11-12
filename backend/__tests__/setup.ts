@@ -17,6 +17,8 @@ jest.mock('../src/utils/logger', () => {
 		SystemLogger: silent,
 		DeviceLogger: jest.fn(() => silent),
 		planLogger: jest.fn(() => silent),
+		closePlanLogger: jest.fn().mockResolvedValue(undefined),
+		flushLogs: jest.fn(),
 	};
 });
 

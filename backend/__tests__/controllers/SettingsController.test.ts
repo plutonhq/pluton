@@ -31,7 +31,7 @@ describe('SettingsController', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 
-		mockSettingsService = new SettingsService(null as any) as jest.Mocked<SettingsService>;
+		mockSettingsService = new SettingsService(null as any, null as any) as jest.Mocked<SettingsService>;
 
 		mockJson = jest.fn().mockReturnThis();
 		mockStatus = jest.fn().mockReturnValue({ json: mockJson });
@@ -359,21 +359,19 @@ describe('SettingsController', () => {
 		});
 
 		it('should successfully get app logs', async () => {
-			const mockLogs = [
-				{ timestamp: new Date(), level: 'info', message: 'log line 1' },
-				{ timestamp: new Date(), level: 'info', message: 'log line 2' },
-			];
+			const page = { items: [], nextCursor: null, scannedTo: null, modules: [] };
 			mockRequest.params = { id: '1' };
-			mockSettingsService.getAppLogs.mockResolvedValue(mockLogs as any);
+			mockRequest.query = { levels: 'error', limit: '50' };
+			mockSettingsService.getAppLogs.mockResolvedValue(page as any);
 
 			await settingsController.getAppLogs(mockRequest as Request, mockResponse as Response);
 
-			expect(mockSettingsService.getAppLogs).toHaveBeenCalledWith(1);
+			expect(mockSettingsService.getAppLogs).toHaveBeenCalledWith(
+				1,
+				expect.objectContaining({ levels: ['error'], limit: 50 })
+			);
 			expect(mockStatus).toHaveBeenCalledWith(200);
-			expect(mockJson).toHaveBeenCalledWith({
-				success: true,
-				result: mockLogs,
-			});
+			expect(mockJson).toHaveBeenCalledWith({ success: true, result: page });
 		});
 
 		it('should return 500 if service throws an error', async () => {
@@ -406,15 +404,16 @@ describe('SettingsController', () => {
 		it('should successfully stream log file', async () => {
 			const mockFileStream = { pipe: mockPipe };
 			mockRequest.params = { id: '1' };
+			mockRequest.query = { from: '100' };
 			mockSettingsService.getAppLogsFile.mockResolvedValue(mockFileStream as any);
 
 			await settingsController.downloadAppLogs(mockRequest as Request, mockResponse as Response);
 
-			expect(mockSettingsService.getAppLogsFile).toHaveBeenCalled();
+			expect(mockSettingsService.getAppLogsFile).toHaveBeenCalledWith(100, undefined);
 			expect(mockSetHeader).toHaveBeenCalledWith('Content-Type', 'text/plain');
 			expect(mockSetHeader).toHaveBeenCalledWith(
 				'Content-Disposition',
-				'attachment; filename="app.log"'
+				'attachment; filename="app-logs.log"'
 			);
 			expect(mockPipe).toHaveBeenCalledWith(mockResponse);
 		});

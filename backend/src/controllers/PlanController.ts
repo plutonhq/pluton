@@ -3,6 +3,7 @@ import { NewPlanReq, PlanAddRunSettings } from '../types/plans';
 import { BackupRunConfig } from '../types/backups';
 import { PlanService } from '../services/PlanService';
 import { AppError } from '../utils/AppError';
+import { parseLogQuery } from '../utils/logging/LogReader';
 
 export class PlanController {
 	constructor(protected planService: PlanService) {}
@@ -316,8 +317,8 @@ export class PlanController {
 				return;
 			}
 
-			const logs = await this.planService.getPlanLogs(req.params.id);
-			res.status(200).json({ success: true, logs });
+			const page = await this.planService.getPlanLogs(req.params.id, parseLogQuery(req.query));
+			res.status(200).json({ success: true, result: page });
 		} catch (error: unknown) {
 			const appError = error as AppError;
 			res.status(appError.statusCode || 500).json({
@@ -338,9 +339,10 @@ export class PlanController {
 				return;
 			}
 
-			const fileStream = await this.planService.downloadPlanLogs(req.params.id);
+			const { from, to } = parseLogQuery(req.query);
+			const fileStream = await this.planService.downloadPlanLogs(req.params.id, from, to);
 			res.setHeader('Content-Type', 'text/plain');
-			res.setHeader('Content-Disposition', 'attachment; filename="plan.log"');
+			res.setHeader('Content-Disposition', `attachment; filename="plan-${req.params.id}-logs.log"`);
 			fileStream.pipe(res);
 		} catch (error: unknown) {
 			const appError = error as AppError;
