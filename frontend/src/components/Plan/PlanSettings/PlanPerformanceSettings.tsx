@@ -46,8 +46,8 @@ const PlanPerformanceSettings = ({ plan, onUpdate, hiddenFields, children }: Pla
                   label="Packet Size (MB)"
                   fieldValue={perfSettings?.packSize ? parseInt(perfSettings.packSize, 10) : ''}
                   onUpdate={(val) => onUpdate({ ...perfSettings, packSize: val ? val.toString() : '' })}
-                  min={0}
-                  max={4000}
+                  min={4}
+                  max={128}
                />
             </div>
          )}
