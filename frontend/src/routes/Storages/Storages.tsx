@@ -20,6 +20,8 @@ import { useComponentOverride } from '../../context/ComponentOverrideContext';
 import SkeletonItems from '../../components/Skeleton/SkeletonItems';
 import { formatBytes } from '../../utils/helpers';
 
+const DefaultStorageBadges = () => null;
+
 const sortStorages = (list: Storage[], sortBy: string): Storage[] => {
    switch (sortBy) {
       case 'name_asc':
@@ -53,6 +55,7 @@ const Storages = () => {
    const [browseStorage, setBrowseStorage] = useState<Storage | false>(false);
    const [editStorage, setEditStorage] = useState<Storage | false>(false);
    const Browser = useComponentOverride('StorageFileBrowser', StorageFileBrowser);
+   const Badges = useComponentOverride('StorageBadges', DefaultStorageBadges);
 
    const { data, isLoading } = useGetStorages();
    const fetchedStorages = useMemo<Storage[]>(() => data?.result ?? [], [data]);
@@ -145,6 +148,7 @@ const Storages = () => {
                                  <Icon type="lock" size={14} />
                               </i>
                            )}
+                           <Badges storage={storage} />
                         </div>,
                         storage.storageTypeName,
                         <div className={storageItemClasses.info}>

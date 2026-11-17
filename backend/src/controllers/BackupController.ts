@@ -203,7 +203,7 @@ export class BackupController {
 			await this.backupService.deleteBackup(req.params.id, removeSnapshot);
 			res.status(200).json({ success: true, result: 'Removed' });
 		} catch (error: any) {
-			res.status(500).json({
+			res.status(error?.statusCode || 500).json({
 				success: false,
 				error: error?.message || 'Failed to delete backup',
 			});

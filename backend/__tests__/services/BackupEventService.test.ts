@@ -364,6 +364,32 @@ describe('BackupEventService', () => {
 			);
 		});
 
+		it('should keep other keys written before the completion', async () => {
+			const verdict = { verdict: 'suspicious', checkedBy: 'server' };
+			mockBackupStore.getById.mockResolvedValue({
+				id: backupId,
+				inProgress: true,
+				status: 'started',
+				completionStats: { anomaly: verdict },
+			} as any);
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockBackupStore.update.mockResolvedValue({ id: backupId } as any);
+
+			await backupEventService.onBackupComplete({
+				planId,
+				backupId,
+				success: true,
+				summary: mockCompletionStats,
+			});
+
+			expect(mockBackupStore.update).toHaveBeenCalledWith(
+				backupId,
+				expect.objectContaining({
+					completionStats: { ...mockCompletionStats, anomaly: verdict },
+				})
+			);
+		});
+
 		it('should skip a replayed completion for an already finalized backup', async () => {
 			// Arrange
 			mockBackupStore.getById.mockResolvedValue({
@@ -701,6 +727,51 @@ describe('BackupEventService', () => {
 
 			// Assert
 			expect(mockPlanStore.update).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('plan mirror stats', () => {
+		const mirrors = [{ replicationId: 'r1', storageId: 's1', storagePath: 'p', size: 10, snapshots: ['m1'] }];
+
+		it('keeps the mirror stats when a backup updates the plan stats', async () => {
+			mockPlanStore.getById.mockResolvedValue({ id: 'plan-123', stats: { size: 1, snapshots: [], mirrors } } as any);
+
+			await backupEventService.onBackupStatsUpdate({
+				planId: 'plan-123',
+				backupId: 'backup-abc',
+				total_size: 1024,
+				snapshots: ['snap1'],
+			});
+
+			expect(mockPlanStore.update).toHaveBeenCalledWith(
+				'plan-123',
+				expect.objectContaining({ stats: { size: 1024, snapshots: ['snap1'], mirrors } })
+			);
+		});
+
+		it('keeps the mirror stats when a prune updates the plan stats', async () => {
+			mockPlanStore.getById.mockResolvedValue({ id: 'plan-123', stats: { size: 1, snapshots: [], mirrors } } as any);
+
+			await backupEventService.onPruneEnd({
+				planId: 'plan-123',
+				success: true,
+				stats: { total_size: 512, snapshots: ['snap1'] },
+			});
+
+			expect(mockPlanStore.update).toHaveBeenCalledWith(
+				'plan-123',
+				expect.objectContaining({ stats: { size: 512, snapshots: ['snap1'], mirrors } })
+			);
+		});
+
+		it('records the mirror stats of a plan that has no stats yet', async () => {
+			mockPlanStore.getById.mockResolvedValue({ id: 'plan-123', stats: null } as any);
+
+			await backupEventService.onReplicationStatsUpdate({ planId: 'plan-123', backupId: 'backup-abc', mirrors });
+
+			expect(mockPlanStore.update).toHaveBeenCalledWith('plan-123', {
+				stats: { size: 0, snapshots: [], mirrors },
+			});
 		});
 	});
 });

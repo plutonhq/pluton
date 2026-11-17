@@ -1,7 +1,7 @@
 import Icon from '../Icon/Icon';
 
 interface StatusLabelProps {
-   status: 'completed' | 'cancelled' | 'failed' | 'started' | 'retrying' | 'initializing';
+   status: 'completed' | 'cancelled' | 'failed' | 'started' | 'retrying' | 'initializing' | 'blocked';
    hasError: boolean;
 }
 
@@ -28,6 +28,12 @@ const StatusLabel = ({ status, hasError }: StatusLabelProps) => {
       return (
          <div>
             <Icon type={'loading'} size={15} /> In Progress
+         </div>
+      );
+   } else if (status === 'blocked') {
+      return (
+         <div>
+            <Icon type={'log-warn'} size={15} color="#df9a07" /> Blocked
          </div>
       );
    } else if (status === 'initializing') {

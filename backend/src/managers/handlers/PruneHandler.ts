@@ -61,7 +61,14 @@ export class PruneHandler {
 		const { storagePath, storage, settings } = options;
 		const { prune, encryption = true } = settings;
 
-		const resticArgs = ['forget', '--prune', '--tag', `plan-${planId}`];
+		const resticArgs = [
+			'forget',
+			'--prune',
+			'--tag',
+			`plan-${planId}`,
+			'--keep-tag',
+			'pluton-keep',
+		];
 		const policyArgs: string[] = [];
 		const resticEnv = { RESTIC_PASSWORD: encryption ? configService.config.ENCRYPTION_KEY : '' };
 

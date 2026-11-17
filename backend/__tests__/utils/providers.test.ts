@@ -1,4 +1,4 @@
-import { providers } from '../../src/utils/providers';
+import { providers, registerProviderSettings } from '../../src/utils/providers';
 
 describe('providers setup()', () => {
 	const base = { host: 'example.com', user: 'bob', pass: 'secret' };
@@ -402,5 +402,40 @@ describe('providers setup()', () => {
 			});
 			expect(missing).toEqual([]);
 		});
+	});
+});
+
+describe('registerProviderSettings', () => {
+	const field = (value: string) => ({
+		label: value,
+		value,
+		fieldType: 'string',
+		required: false,
+		default: '',
+		description: '',
+	});
+
+	it('adds new settings to matched providers only, once', () => {
+		const wasabiBefore = providers.wasabi.settings!.length;
+		const sftpBefore = providers.sftp.settings?.length || 0;
+		const isS3 = (p: { type?: string }) => p.type === 's3';
+
+		registerProviderSettings(isS3, [field('test_extra_key')]);
+		registerProviderSettings(isS3, [field('test_extra_key')]);
+
+		expect(providers.wasabi.settings!.length).toBe(wasabiBefore + 1);
+		expect(providers.wasabi.settings!.filter(s => s.value === 'test_extra_key')).toHaveLength(1);
+		expect(providers.sftp.settings?.length || 0).toBe(sftpBefore);
+	});
+
+	it('puts the settings first with prepend', () => {
+		registerProviderSettings(p => p.name === 'AWS S3', [field('test_first_key')], { prepend: true });
+		expect(providers.s3.settings![0].value).toBe('test_first_key');
+	});
+
+	it('does not add a setting the provider already has', () => {
+		const before = providers.s3.settings!.length;
+		registerProviderSettings(p => p.name === 'AWS S3', [field('region')]);
+		expect(providers.s3.settings!.length).toBe(before);
 	});
 });

@@ -143,6 +143,7 @@ const StorageSettings = ({ fields, onUpdate, settings, errors = {} }: StorageSet
                            }}
                            error={errors[field.value] || ''}
                            inline={true}
+                           full={true}
                         />
                         {isCustomActive(field) && (
                            <div key={field.value} className={classes.field} style={{ margin: '20px 0' }}>

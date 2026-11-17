@@ -207,5 +207,33 @@ describe('BackupEventListener', () => {
 			expect(mockBackupEventService.onBackupFailure).toHaveBeenCalledWith(event);
 			expect(mockBackupEventService.onBackupFailure).toHaveBeenCalledTimes(1);
 		});
+
+		it('handles integrity_failed only in the file backup listener', () => {
+			(BackupEventService as jest.Mock).mockImplementation(() => mockBackupEventService);
+			const emitter = jobProcessor as unknown as EventEmitter;
+			const before = emitter.listenerCount('integrity_failed');
+
+			new BackupEventListener(new EventEmitter() as any, mockPlanStore, mockBackupStore, 'VmBackup');
+			expect(emitter.listenerCount('integrity_failed')).toBe(before);
+
+			new BackupEventListener(new EventEmitter() as any, mockPlanStore, mockBackupStore);
+			expect(emitter.listenerCount('integrity_failed')).toBe(before + 1);
+		});
+
+		it('subscribes only to the failure event of the given job name', () => {
+			const service = {
+				...mockBackupEventService,
+				onBackupFailure: jest.fn().mockResolvedValue(undefined),
+			} as any;
+			(BackupEventService as jest.Mock).mockImplementation(() => service);
+			new BackupEventListener(new EventEmitter() as any, mockPlanStore, mockBackupStore, 'VmBackup');
+			const event = { planId: 'plan-2', backupId: 'backup-2', error: 'failed' };
+
+			(jobProcessor as unknown as EventEmitter).emit('backup_failed', event);
+			expect(service.onBackupFailure).not.toHaveBeenCalled();
+
+			(jobProcessor as unknown as EventEmitter).emit('vmbackup_failed', event);
+			expect(service.onBackupFailure).toHaveBeenCalledTimes(1);
+		});
 	});
 });

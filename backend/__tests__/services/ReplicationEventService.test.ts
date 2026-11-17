@@ -168,6 +168,25 @@ describe('ReplicationEventService', () => {
 			});
 		});
 
+		it('sets hadSnapshots from the plan stats of each mirror', async () => {
+			mockStorageStore.getById.mockResolvedValue({ name: 'Storage', type: 'b2' } as any);
+			mockBackupStore.update.mockResolvedValue(null);
+			(mockPlanStore.getById as jest.Mock).mockResolvedValue({
+				stats: {
+					mirrors: [
+						{ replicationId: 'rep-1', snapshots: ['s1'] },
+						{ replicationId: 'rep-2', snapshots: [] },
+					],
+				},
+			});
+
+			await service.onReplicationInit(initEvent);
+
+			const resolved = (mockLocalAgent.emit as jest.Mock).mock.calls[0][1].resolvedStorages;
+			expect(resolved.find((s: any) => s.replicationId === 'rep-1').hadSnapshots).toBe(true);
+			expect(resolved.find((s: any) => s.replicationId === 'rep-2').hadSnapshots).toBe(false);
+		});
+
 		it('should handle storage lookup failures gracefully', async () => {
 			mockStorageStore.getById.mockRejectedValue(new Error('DB error'));
 			mockBackupStore.update.mockResolvedValue(null);

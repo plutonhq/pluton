@@ -26,7 +26,8 @@ export class BackupEventListener {
 	constructor(
 		protected localAgent: BaseBackupManager,
 		protected planStore: PlanStore,
-		protected backupStore: BackupStore
+		protected backupStore: BackupStore,
+		protected jobName = 'Backup' // JobProcessor job name of this manager's backups
 	) {
 		this.backupEventService = new BackupEventService(planStore, backupStore, localAgent);
 		this.registerEventListeners();
@@ -46,7 +47,7 @@ export class BackupEventListener {
 		// 	this.onBackupProgress(event)
 		// );
 		jobProcessor.on(
-			'backup_failed',
+			`${this.jobName.toLowerCase()}_failed`,
 			(event: { planId: string; backupId: string; error: string }) => {
 				this.onBackupFailure(event);
 			}
@@ -72,9 +73,12 @@ export class BackupEventListener {
 			(event: { planId: string; result: Record<string, string | null> }) =>
 				this.onIntegrityEnd(event)
 		);
-		jobProcessor.on('integrity_failed', (event: any) => {
-			this.onIntegrityCheckFailure(event);
-		});
+		// Integrity jobs run on the file backup manager, so only its listener handles their failure
+		if (this.jobName === 'Backup') {
+			jobProcessor.on('integrity_failed', (event: any) => {
+				this.onIntegrityCheckFailure(event);
+			});
+		}
 	}
 
 	protected async onBackupInit(data: BackupInitEvent): Promise<void> {

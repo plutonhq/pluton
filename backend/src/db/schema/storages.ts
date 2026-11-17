@@ -17,6 +17,7 @@ export const storages = sqliteTable('storages', {
 	>(),
 	authType: text('authType'),
 	tags: text('tags', { mode: 'json' }),
+	status: text('status', { mode: 'json' }).$type<Record<string, unknown>>(),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.notNull()
 		.default(sql`(unixepoch())`),

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { StorageLogger } from '../utils/logger';
+import { AppError } from '../utils/AppError';
 import { StorageService } from '../services/StorageService';
 
 export class StorageController {
@@ -69,7 +70,9 @@ export class StorageController {
 			const newStorage = await this.storageService.createStorage(req.body);
 			res.status(201).json({ success: true, result: newStorage });
 		} catch (error: any) {
-			res.status(500).json({ success: false, error: error?.message || 'Failed to create storage' });
+			res
+				.status(error?.statusCode || 500)
+				.json({ success: false, error: error?.message || 'Failed to create storage' });
 		}
 	}
 
@@ -90,6 +93,10 @@ export class StorageController {
 			StorageLogger.error(
 				`Error updating storage #${req.params.id}. Reason : ${error?.message.toString() || 'Unknown Error'}`
 			);
+			if (error instanceof AppError) {
+				res.status(error.statusCode).json({ success: false, error: error.message });
+				return;
+			}
 			res.status(500).json({ success: false, error: 'Failed to update storage' });
 		}
 	}

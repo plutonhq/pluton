@@ -30,8 +30,16 @@ export class ReplicationOrchestrator {
 	 * Runs the full replication phase: init → copy → retry → stats → notify.
 	 * Replication failures do NOT propagate — they are caught and logged.
 	 */
-	async run(planId: string, backupId: string, options: Record<string, any>): Promise<void> {
-		const { replication, prune, encryption } = options.settings;
+	async run(
+		planId: string,
+		backupId: string,
+		options: Record<string, any>,
+		skipPrune = false
+	): Promise<void> {
+		const { replication, encryption } = options.settings;
+		const prune = skipPrune
+			? { ...options.settings.prune, policy: 'disable' }
+			: options.settings.prune;
 		const sourceRepoPath = generateResticRepoPath(options.storage.name, options.storagePath || '');
 		const maxRetries = options.settings.retries || 0;
 		const retryDelaySec = options.settings.retryDelay || 30;

@@ -32,8 +32,13 @@ const PlanStats = ({ plan, isSync, lastBackupItem, storageAction }: PlanStatsPro
       : undefined;
    const sourceName = isStorageSource ? sourceStorage?.name || '' : plan.device?.name || '';
 
-   const totalFiles = lastBackupItem?.totalFiles || 0;
-   const totalSize = lastBackupItem?.totalSize || 0;
+   // A blocked run uploaded nothing, so the numbers come from the run before it.
+   const statsItem =
+      lastBackupItem?.status === 'blocked'
+         ? [...(plan.backups || [])].filter((b) => b.status !== 'blocked').sort((a, b) => (b.started || 0) - (a.started || 0))[0]
+         : lastBackupItem;
+   const totalFiles = statsItem?.totalFiles || 0;
+   const totalSize = statsItem?.totalSize || 0;
 
    const sourceTooltipHTML = (sources: Plan['sourceConfig']) => {
       let html = '';

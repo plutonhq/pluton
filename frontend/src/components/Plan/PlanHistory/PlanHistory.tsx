@@ -14,6 +14,7 @@ const PlanHistory = ({ planId, history, itemsCount = 10 }: PlanHistoryProps) => 
       failed: '❌ Failed',
       started: '⏳ In Progress',
       cancelled: '🛇 Cancelled',
+      blocked: '⛔ Blocked',
    };
 
    const backupChanges = (changes: { new?: number; modified?: number; removed?: number }) => {
@@ -47,7 +48,7 @@ const PlanHistory = ({ planId, history, itemsCount = 10 }: PlanHistoryProps) => 
                const duration = !h.inProgress && (h.duration || (h.ended ? (new Date(h.ended).getTime() - new Date(h.started).getTime()) / 1000 : 0));
                return (
                   <div
-                     className={`${h.status === 'completed' ? classes.historyItemSuccess : ''} ${h.status === 'failed' || h.status === 'cancelled' ? classes.historyItemFailed : ''} ${h.inProgress ? classes.historyItemPending : ''}`}
+                     className={`${h.status === 'completed' ? classes.historyItemSuccess : ''} ${h.status === 'failed' || h.status === 'cancelled' || h.status === 'blocked' ? classes.historyItemFailed : ''} ${h.inProgress ? classes.historyItemPending : ''}`}
                      key={`${planId}-history-${i}`}
                      data-tooltip-id="htmlToolTip"
                      data-tooltip-html={`

@@ -258,16 +258,14 @@ export class BackupEventService {
 			// A backup that skipped its dry run has no real file counts in taskStats. Backfill them from the
 			// completion summary so notifications and history have accurate numbers.
 			const existingBackup = await this.backupStore.getById(backupId);
-			// Keep the repo sizes that onBackupStatsUpdate may have written first
+			// Keep the keys written before this event (e.g. repo sizes from onBackupStatsUpdate)
 			const prevStats = existingBackup?.completionStats;
 			const keptSizes = {
 				...(prevStats?.plan_size !== undefined ? { plan_size: prevStats.plan_size } : {}),
 				...(prevStats?.mirrors_size !== undefined ? { mirrors_size: prevStats.mirrors_size } : {}),
 			};
-			backupPayload.completionStats =
-				summaryData || Object.keys(keptSizes).length > 0
-					? { ...(summaryData || {}), ...keptSizes }
-					: null;
+			const mergedStats = { ...(prevStats || {}), ...(summaryData || {}), ...keptSizes };
+			backupPayload.completionStats = Object.keys(mergedStats).length > 0 ? mergedStats : null;
 			// If the sourceCongif was actually different from the plan's, record the resolved config
 			if (data.resolvedSourceConfig) {
 				backupPayload.sourceConfig = {
@@ -444,6 +442,7 @@ export class BackupEventService {
 				const isNewer = !plan?.lastBackupTime || eventTime >= plan.lastBackupTime;
 				await this.planStore.update(data.planId, {
 					stats: {
+						...plan?.stats,
 						size: total_size,
 						snapshots: snapshots,
 						...(mirrors ? { mirrors } : {}),
@@ -488,8 +487,10 @@ export class BackupEventService {
 			const { total_size, snapshots = [] } = stats || {};
 			if (planId && total_size && !Number.isNaN(total_size) && snapshots.length > 0) {
 				try {
+					const plan = await this.planStore.getById(planId);
 					await this.planStore.update(data.planId, {
 						stats: {
+							...plan?.stats,
 							size: total_size,
 							snapshots: snapshots,
 						},
@@ -537,9 +538,11 @@ export class BackupEventService {
 		if (!planId || !mirrors || mirrors.length === 0) return;
 		try {
 			const plan = await this.planStore.getById(planId);
-			if (plan && plan.stats) {
+			if (plan) {
 				await this.planStore.update(planId, {
 					stats: {
+						size: 0,
+						snapshots: [],
 						...plan.stats,
 						mirrors,
 					},

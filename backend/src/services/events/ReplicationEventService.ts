@@ -5,6 +5,7 @@ import { PlanStore } from '../../stores/PlanStore';
 import { BackupNotification } from '../../notifications/BackupNotification';
 import { planLogger } from '../../utils/logger';
 import { BackupMirror } from '../../types/backups';
+import { PlanStats } from '../../types/plans';
 import {
 	ReplicationStartEvent,
 	ReplicationCompleteEvent,
@@ -36,6 +37,7 @@ export class ReplicationEventService {
 	async onReplicationInit(data: ReplicationInitEvent): Promise<void> {
 		try {
 			const resolvedStorages: ResolvedReplicationStorage[] = [];
+			const withSnapshots = await this.mirrorsWithSnapshots(data.planId);
 
 			for (const ms of data.replicationStorages) {
 				try {
@@ -46,6 +48,7 @@ export class ReplicationEventService {
 						storagePath: ms.storagePath,
 						storageName: storage?.name || '',
 						storageType: storage?.type || '',
+						hadSnapshots: withSnapshots.has(ms.replicationId),
 					});
 				} catch (error: any) {
 					resolvedStorages.push({
@@ -110,6 +113,7 @@ export class ReplicationEventService {
 		try {
 			// Resolve storage names for the failed storages
 			const resolvedStorages: ResolvedReplicationStorage[] = [];
+			const withSnapshots = await this.mirrorsWithSnapshots(data.planId);
 			for (const ms of data.replicationStorages) {
 				try {
 					const storage = await this.storageStore.getById(ms.storageId);
@@ -119,6 +123,7 @@ export class ReplicationEventService {
 						storagePath: ms.storagePath,
 						storageName: storage?.name || '',
 						storageType: storage?.type || '',
+						hadSnapshots: withSnapshots.has(ms.replicationId),
 					});
 				} catch (error: any) {
 					resolvedStorages.push({
@@ -297,4 +302,14 @@ export class ReplicationEventService {
 		}
 	}
 
+	/** Replication ids whose mirror has snapshots in the plan stats. */
+	protected async mirrorsWithSnapshots(planId: string): Promise<Set<string>> {
+		try {
+			const plan = await this.planStore.getById(planId);
+			const mirrors = (plan?.stats as PlanStats | undefined)?.mirrors || [];
+			return new Set(mirrors.filter(m => m.snapshots?.length).map(m => m.replicationId));
+		} catch {
+			return new Set();
+		}
+	}
 }

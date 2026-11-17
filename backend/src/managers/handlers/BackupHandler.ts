@@ -10,7 +10,7 @@ import { generateResticRepoPath } from '../../utils/restic/helpers';
 import { classifyResticExitCode, isResticBackupWarning } from '../../utils/restic/exitCodes';
 import { processManager } from '../ProcessManager';
 import { PruneHandler } from './PruneHandler';
-import { ProgressManager } from '../ProgressManager';
+import { ProgressManager, ResticProgress } from '../ProgressManager';
 import { appPaths } from '../../utils/AppPaths';
 import { BackupPlanArgs } from '../../types/plans';
 import { runScriptsForEvent } from '../../utils/executeUserScript';
@@ -27,6 +27,7 @@ type ResticArgsAndEnv = {
 // A backup that gives no output for one hour is stuck (sleep, VPN drop, NAS offline).
 // The watchdog kills it so the job queue does not lock forever.
 const RESTIC_STALL_TIMEOUT_MS = 60 * 60 * 1000;
+const UNLOCK_TIMEOUT_MS = 2 * 60 * 1000;
 
 export class BackupHandler {
 	private runningBackups = new Set<string>();
@@ -118,14 +119,14 @@ export class BackupHandler {
 			}
 
 			// --- 3. POST-BACKUP PHASE ---
-			await this.postBackupPhase(planId, backupId, options, runConfig);
+			const pruned = await this.postBackupPhase(planId, backupId, options, runConfig);
 
 			// --- 4. REPLICATION PHASE ---
 			if (
 				options.settings?.replication?.enabled &&
 				options.settings.replication.storages?.length > 0
 			) {
-				await this.getReplicationOrchestrator().run(planId, backupId, options);
+				await this.getReplicationOrchestrator().run(planId, backupId, options, !pruned);
 			}
 
 			// Mark as completed
@@ -378,7 +379,7 @@ export class BackupHandler {
 		backupId: string,
 		options: Record<string, any>,
 		runConfig?: BackupRunConfig
-	): Promise<void> {
+	): Promise<boolean> {
 		// Update progress: Post-backup start
 		await this.updateProgress(planId, backupId, 'post-backup', 'POST_BACKUP_START', false);
 
@@ -394,8 +395,10 @@ export class BackupHandler {
 		);
 
 		// Run pruning and stats update
-		const skipPrune = runConfig?.skipPrune || false;
-		if (!skipPrune) {
+		const summary = await this.progressManager.getResticProgress(planId, backupId);
+		const allowed = await this.beforePrune(planId, backupId, options, summary, runConfig);
+		const shouldPrune = !runConfig?.skipPrune && allowed;
+		if (shouldPrune) {
 			await this.updateProgress(planId, backupId, 'post-backup', 'POST_BACKUP_PRUNE_START', false);
 			try {
 				const pruneHandler = new PruneHandler(this.emitter);
@@ -471,6 +474,7 @@ export class BackupHandler {
 		}
 
 		await this.updateProgress(planId, backupId, 'post-backup', 'POST_BACKUP_COMPLETE', true);
+		return shouldPrune;
 	}
 
 	/**
@@ -549,15 +553,24 @@ export class BackupHandler {
 				const repoPath = generateResticRepoPath(options.storage.name, options.storagePath || '');
 				const repoPassword = options.settings.encryption ? configService.config.ENCRYPTION_KEY : '';
 
-				await runResticCommand(['unlock', '-r', repoPath], {
-					...resticArgsAndEnv.resticEnv,
-					RESTIC_PASSWORD: repoPassword,
-				});
+				await runResticCommand(
+					['unlock', '-r', repoPath],
+					{ ...resticArgsAndEnv.resticEnv, RESTIC_PASSWORD: repoPassword },
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					{ timeout: UNLOCK_TIMEOUT_MS }
+				);
 			} catch (error: any) {
 				console.warn(
 					`[BackupHandler]: Failed to unlock stale locks for plan: ${planId}. Error:  ${error.message}`
 				);
-				throw Error(`Failed to unlock stale locks. ${error.message || 'Reason Unknown'}`);
+				const rethrown: ResticCommandError = new Error(
+					`Failed to unlock stale locks. ${error.message || 'Reason Unknown'}`
+				);
+				rethrown.code = (error as ResticCommandError)?.code;
+				throw rethrown;
 			}
 		}
 	}
@@ -917,6 +930,20 @@ export class BackupHandler {
 		resticArgs.push('--json');
 		return { resticArgs, resticEnv };
 	};
+
+	/**
+	 * Extension point called after a successful backup. Return false to skip the prune
+	 * of the primary repository and of every mirror for this run.
+	 */
+	protected async beforePrune(
+		_planId: string,
+		_backupId: string,
+		_options: Record<string, any>,
+		_summary: ResticProgress | null,
+		_runConfig?: BackupRunConfig
+	): Promise<boolean> {
+		return true;
+	}
 
 	/**
 	 * [PRO] Run user commands before a backup starts.

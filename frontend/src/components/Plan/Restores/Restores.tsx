@@ -75,7 +75,7 @@ const Restores = ({
                   return (
                      <div
                         key={id}
-                        className={`${classes.backupsTableRow} ${showSnapOptions && showSnapOptions === id ? classes.backupsTableRowActive : ''}`}
+                        className={`${classes.backupsTableRow} restore-${id} ${showSnapOptions && showSnapOptions === id ? classes.backupsTableRowActive : ''}`}
                      >
                         <div className={classes.restoreTitle} onClick={() => !isSync && setShowRestoreEvents(id)}>
                            <Icon type={isSync ? 'sync' : 'box'} size={14} /> {isSync ? 'sync' : 'backup'}-{backupId}

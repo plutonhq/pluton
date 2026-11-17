@@ -45,7 +45,8 @@ const PlanSizeChart = ({ backups }: PlanSizeChartProps) => {
       const cutoff = now - activeRange.days * 24 * 60 * 60 * 1000;
       // if there is only one backup duplicate the first backup to make 2 items
       // so that the graph is never empty and shows the size even if there is only one backup in the selected range
-      const theBackups = backups && backups.length === 1 ? [backups[0], backups[0]] : backups || [];
+      const usable = (backups || []).filter((b) => b.status !== 'blocked');
+      const theBackups = usable.length === 1 ? [usable[0], usable[0]] : usable;
       return [...theBackups]
          .filter((b) => {
             const t = new Date(b.started).getTime();

@@ -307,6 +307,18 @@ describe('BackupController', () => {
 				error: 'Delete failed',
 			});
 		});
+
+		it('should return the status code of an error that has one', async () => {
+			mockRequest.params = { id: 'backup-123' };
+			mockBackupService.deleteBackup.mockRejectedValue(
+				Object.assign(new Error('This backup is kept'), { statusCode: 409 })
+			);
+
+			await backupController.deleteBackup(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(409);
+			expect(mockJson).toHaveBeenCalledWith({ success: false, error: 'This backup is kept' });
+		});
 	});
 
 	describe('getBackupProgress', () => {

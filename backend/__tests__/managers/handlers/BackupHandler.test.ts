@@ -513,6 +513,29 @@ describe('BackupHandler', () => {
 		});
 	});
 
+	describe('execute - prune hold', () => {
+		it('should pass the skip flag to replication when the prune did not run', async () => {
+			const replicationRun = jest.fn().mockResolvedValue(undefined);
+			jest.spyOn(handler as any, 'preBackupPhase').mockResolvedValue(undefined);
+			jest.spyOn(handler as any, 'executeBackupPhase').mockResolvedValue('ok');
+			jest.spyOn(handler as any, 'postBackupPhase').mockResolvedValue(false);
+			jest
+				.spyOn(handler as any, 'getReplicationOrchestrator')
+				.mockReturnValue({ run: replicationRun });
+			const options = {
+				...baseOptions,
+				settings: {
+					...baseOptions.settings,
+					replication: { enabled: true, storages: [{ storageId: 's-2' }] },
+				},
+			};
+
+			await handler.execute('plan-1', 'backup-1', options as any, { attempts: 0, maxAttempts: 1 });
+
+			expect(replicationRun).toHaveBeenCalledWith('plan-1', 'backup-1', options, true);
+		});
+	});
+
 	describe('createResticBackupArgs', () => {
 		it('builds correct restic args and env', () => {
 			const { resticArgs, resticEnv } = handler.createResticBackupArgs(
@@ -1112,6 +1135,51 @@ describe('BackupHandler', () => {
 			consoleWarnSpy.mockRestore();
 		});
 
+		it('should skip the prune when beforePrune returns false', async () => {
+			const mockPrune = jest.fn().mockResolvedValue({ success: true });
+			const { PruneHandler } = require('../../../src/managers/handlers/PruneHandler');
+			PruneHandler.mockImplementation(() => ({ prune: mockPrune }));
+			const beforePrune = jest.spyOn(handler as any, 'beforePrune').mockResolvedValue(false);
+
+			const pruned = await handler['postBackupPhase']('plan-1', 'backup-1', baseOptions);
+
+			expect(beforePrune).toHaveBeenCalledWith(
+				'plan-1',
+				'backup-1',
+				baseOptions,
+				{ percent_done: 1 },
+				undefined
+			);
+			expect(mockPrune).not.toHaveBeenCalled();
+			expect(pruned).toBe(false);
+		});
+
+		it('should call beforePrune even when the run skips the prune', async () => {
+			const mockPrune = jest.fn().mockResolvedValue({ success: true });
+			const { PruneHandler } = require('../../../src/managers/handlers/PruneHandler');
+			PruneHandler.mockImplementation(() => ({ prune: mockPrune }));
+			const beforePrune = jest.spyOn(handler as any, 'beforePrune');
+
+			const pruned = await handler['postBackupPhase']('plan-1', 'backup-1', baseOptions, {
+				skipPrune: true,
+			});
+
+			expect(beforePrune).toHaveBeenCalled();
+			expect(mockPrune).not.toHaveBeenCalled();
+			expect(pruned).toBe(false);
+		});
+
+		it('should prune and return true by default', async () => {
+			const mockPrune = jest.fn().mockResolvedValue({ success: true });
+			const { PruneHandler } = require('../../../src/managers/handlers/PruneHandler');
+			PruneHandler.mockImplementation(() => ({ prune: mockPrune }));
+
+			const pruned = await handler['postBackupPhase']('plan-1', 'backup-1', baseOptions);
+
+			expect(mockPrune).toHaveBeenCalledWith('plan-1', baseOptions);
+			expect(pruned).toBe(true);
+		});
+
 		it('should handle stats update failure gracefully', async () => {
 			mockGetBackupPlanStats.mockResolvedValue(false);
 
@@ -1214,7 +1282,12 @@ describe('BackupHandler', () => {
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				['unlock', '-r', 'rclone:test-storage:backups/test'],
-				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' })
+				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' }),
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				{ timeout: 2 * 60 * 1000 }
 			);
 		});
 
@@ -1229,7 +1302,12 @@ describe('BackupHandler', () => {
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.any(Array),
-				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' })
+				expect.objectContaining({ RESTIC_PASSWORD: 'test-encryption-key' }),
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				expect.objectContaining({ timeout: expect.any(Number) })
 			);
 		});
 
@@ -1246,6 +1324,19 @@ describe('BackupHandler', () => {
 				expect.stringContaining('Failed to unlock stale locks')
 			);
 
+			consoleWarnSpy.mockRestore();
+		});
+
+		it('should keep the restic exit code on the rethrown error', async () => {
+			const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+			mockRunResticCommand.mockRejectedValueOnce(
+				Object.assign(new Error('repository does not exist'), { code: 10 })
+			);
+
+			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
+			await expect(
+				handler['unlockStaleLocks']('plan-1', baseOptions, resticArgsAndEnv)
+			).rejects.toMatchObject({ code: 10 });
 			consoleWarnSpy.mockRestore();
 		});
 

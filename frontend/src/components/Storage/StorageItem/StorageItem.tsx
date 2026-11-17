@@ -8,6 +8,8 @@ import StorageFileBrowser from '../StorageFileBrowser/StorageFileBrowser';
 import { useComponentOverride } from '../../../context/ComponentOverrideContext';
 import StorageActions from './StorageActions';
 
+const DefaultStorageBadges = () => null;
+
 interface StorageItemProps {
    storage: Storage;
    layout: 'list' | 'grid';
@@ -21,6 +23,7 @@ const StorageItem = ({ storage, layout }: StorageItemProps) => {
    const isLocalStorage = id === 'local';
    const description = settings.description as string;
    const Browser = useComponentOverride('StorageFileBrowser', StorageFileBrowser);
+   const Badges = useComponentOverride('StorageBadges', DefaultStorageBadges);
 
    return (
       <div
@@ -41,6 +44,7 @@ const StorageItem = ({ storage, layout }: StorageItemProps) => {
                      </i>
                   )}
                   {isLocalStorage && <Icon type="lock" size={14} />}
+                  <Badges storage={storage} />
                </div>
                <div>{storageTypeName}</div>
             </div>

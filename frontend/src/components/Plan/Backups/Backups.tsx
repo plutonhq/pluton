@@ -206,7 +206,7 @@ const Backups = ({
                   return (
                      <div
                         key={id}
-                        className={`${classes.backupsTableRow} ${showSnapOptions && showSnapOptions === id ? classes.backupsTableRowActive : ''}`}
+                        className={`${classes.backupsTableRow} backup-${id} ${showSnapOptions && showSnapOptions === id ? classes.backupsTableRowActive : ''}`}
                      >
                         <div>
                            <span

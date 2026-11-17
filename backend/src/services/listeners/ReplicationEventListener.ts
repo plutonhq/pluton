@@ -22,14 +22,12 @@ export class ReplicationEventListener {
 		protected localAgent: BaseBackupManager,
 		protected planStore: PlanStore,
 		protected backupStore: BackupStore,
-		protected storageStore: StorageStore
+		protected storageStore: StorageStore,
+		replicationEventService?: ReplicationEventService
 	) {
-		this.replicationEventService = new ReplicationEventService(
-			planStore,
-			backupStore,
-			storageStore,
-			localAgent
-		);
+		this.replicationEventService =
+			replicationEventService ??
+			new ReplicationEventService(planStore, backupStore, storageStore, localAgent);
 		this.registerEventListeners();
 	}
 

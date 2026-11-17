@@ -16,10 +16,11 @@ interface RestoreWizardProps {
    deviceId: string;
    planStorage: Plan['storage'];
    mirrors?: Backup['mirrors'];
+   initialSettings?: Partial<RestoreSettings>;
    close: () => void;
 }
 
-const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close }: RestoreWizardProps) => {
+const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, initialSettings, close }: RestoreWizardProps) => {
    const [step, setStep] = useState(1);
    const [restoreSettings, setRestoreSettings] = useState<RestoreSettings>({
       type: 'original',
@@ -29,6 +30,7 @@ const RestoreWizard = ({ backupId, planId, deviceId, mirrors, planStorage, close
       excludes: [],
       delete: false,
       storageId: undefined,
+      ...initialSettings,
    });
    const [restorePreview, setRestorePreview] = useState<{ stats: RestoredItemsStats | null; files: RestoredFileItem[] }>({ stats: null, files: [] });
    const isFetching = useIsFetching({ predicate: (query) => !query.meta?.background });

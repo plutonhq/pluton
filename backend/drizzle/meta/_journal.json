@@ -22,6 +22,13 @@
       "when": 1772630106968,
       "tag": "0002_narrow_hairball",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794631103281,
+      "tag": "0003_storage_status",
+      "breakpoints": true
     }
   ]
 }

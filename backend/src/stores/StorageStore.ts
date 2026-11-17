@@ -229,6 +229,10 @@ export class StorageStore {
 		return result[0] || null;
 	}
 
+	async setStatus(id: string, status: Record<string, unknown> | null): Promise<void> {
+		await this.db.update(storages).set({ status }).where(eq(storages.id, id));
+	}
+
 	async delete(id: string): Promise<boolean> {
 		const result = await this.db.delete(storages).where(eq(storages.id, id));
 

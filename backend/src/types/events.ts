@@ -158,6 +158,7 @@ export interface ReplicationCompleteEvent {
 	storageType: string;
 	success: boolean;
 	error?: string;
+	errorCode?: number;
 }
 
 export interface ReplicationProgressEvent {
@@ -206,6 +207,7 @@ export interface ResolvedReplicationStorage {
 	storagePath: string;
 	storageName: string;
 	storageType: string;
+	hadSnapshots?: boolean;
 }
 
 /**

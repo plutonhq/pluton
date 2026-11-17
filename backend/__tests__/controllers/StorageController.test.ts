@@ -208,6 +208,18 @@ describe('StorageController', () => {
 				error: 'Creation failed',
 			});
 		});
+
+		it('should return the status code of an error that has one', async () => {
+			mockRequest.body = { name: 'Test Storage', type: 's3', settings: {}, credentials: {} };
+			mockStorageService.createStorage.mockRejectedValue(
+				Object.assign(new Error('Bucket has no Object Lock'), { statusCode: 400 })
+			);
+
+			await storageController.createStorage(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(400);
+			expect(mockJson).toHaveBeenCalledWith({ success: false, error: 'Bucket has no Object Lock' });
+		});
 	});
 
 	describe('updateStorage', () => {

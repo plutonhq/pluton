@@ -448,6 +448,89 @@ describe('ReplicationHandler', () => {
 			const actionCalls = mockUpdateReplicationAction.mock.calls.map((c: any) => c[3]);
 			expect(actionCalls).toContain('REPLICATION_INIT_FAILED');
 		});
+
+		const MIRROR_REPO_MISSING_MESSAGE =
+			'The mirror repository is missing. It had backups before, so Pluton did not create it again. To start a new repository, remove this mirror from the plan and add it again.';
+
+		it('does not init a missing mirror repo that had snapshots and emits errorCode 10', async () => {
+			mockRunResticCommand.mockRejectedValueOnce(
+				Object.assign(new Error('repo not found'), { code: 10 })
+			);
+			const completes: any[] = [];
+			emitter.on('replication_complete', e => completes.push(e));
+
+			const results = await handler.replicateSnapshot(
+				planId,
+				backupId,
+				sourceRepoPath,
+				true,
+				[{ ...resolvedStorages[0], hadSnapshots: true }],
+				pruneSettings,
+				false,
+				retryInfo
+			);
+
+			expect(results[0].status).toBe('failed');
+			expect(results[0].error).toBe(MIRROR_REPO_MISSING_MESSAGE);
+			expect(mockRunResticCommand).toHaveBeenCalledTimes(1);
+			expect(mockRunResticCommand.mock.calls.some((c: any) => c[0].includes('init'))).toBe(false);
+			expect(completes[0]).toMatchObject({ success: false, errorCode: 10 });
+		});
+
+		it('checks the mirror repo again after a copy finds it missing', async () => {
+			const storages = [{ ...resolvedStorages[0], hadSnapshots: true }];
+			const run = () =>
+				handler.replicateSnapshot(
+					planId,
+					backupId,
+					sourceRepoPath,
+					true,
+					storages,
+					pruneSettings,
+					false,
+					retryInfo
+				);
+			const repoMissing = () => Object.assign(new Error('repo not found'), { code: 10 });
+			const calledCat = () =>
+				mockRunResticCommand.mock.calls.some((c: any) => c[0].includes('cat'));
+
+			mockRunResticCommand.mockResolvedValue('');
+			await run();
+			expect(calledCat()).toBe(true);
+
+			mockRunResticCommand.mockReset();
+			mockRunResticCommand.mockImplementation((args: string[]) =>
+				args.includes('copy') ? Promise.reject(repoMissing()) : Promise.resolve('')
+			);
+			await run();
+			expect(calledCat()).toBe(false);
+
+			mockRunResticCommand.mockReset();
+			mockRunResticCommand.mockRejectedValue(repoMissing());
+			const results = await run();
+			expect(calledCat()).toBe(true);
+			expect(results[0].error).toBe(MIRROR_REPO_MISSING_MESSAGE);
+		});
+
+		it('inits a missing mirror repo that never had snapshots', async () => {
+			mockRunResticCommand
+				.mockRejectedValueOnce(Object.assign(new Error('repo not found'), { code: 10 }))
+				.mockResolvedValue('');
+
+			const results = await handler.replicateSnapshot(
+				planId,
+				backupId,
+				sourceRepoPath,
+				true,
+				[{ ...resolvedStorages[0], hadSnapshots: false }],
+				pruneSettings,
+				false,
+				retryInfo
+			);
+
+			expect(results[0].status).toBe('completed');
+			expect(mockRunResticCommand.mock.calls[1][0]).toContain('init');
+		});
 	});
 
 	describe('cancelReplications', () => {

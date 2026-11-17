@@ -185,6 +185,22 @@ describe('ReplicationOrchestrator', () => {
 			);
 		});
 
+		it('should disable the mirror prune when skipPrune is set', async () => {
+			emitter.on('replication_init', () => {
+				setImmediate(() => {
+					emitter.emit('replication_init_complete', { planId, backupId, resolvedStorages: [] });
+				});
+			});
+
+			await orchestrator.run(planId, backupId, planOptions, true);
+
+			expect(mockReplicateSnapshot.mock.calls[0][5]).toEqual({
+				...planOptions.settings.prune,
+				policy: 'disable',
+			});
+			expect(planOptions.settings.prune.policy).not.toBe('disable');
+		});
+
 		it('should update progress with REPLICATION_START and REPLICATION_COMPLETE', async () => {
 			emitter.on('replication_init', () => {
 				setImmediate(() => {

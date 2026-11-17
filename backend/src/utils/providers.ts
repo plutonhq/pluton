@@ -1573,3 +1573,25 @@ export const providers: Record<string, ProviderConfig> = {
 		},
 	},
 };
+
+/**
+ * Adds settings to every provider that `match` accepts. A setting whose `value`
+ * the provider already has is not added. Each matched provider gets a new array,
+ * so settings arrays that providers share are not changed. `prepend` puts the
+ * settings first, so they show at the top of the optional fields.
+ */
+export function registerProviderSettings(
+	match: (provider: ProviderConfig) => boolean,
+	settings: ProviderSetting[],
+	options: { prepend?: boolean } = {}
+): void {
+	for (const provider of Object.values(providers)) {
+		if (!match(provider)) continue;
+		const existing = new Set((provider.settings || []).map(s => s.value));
+		const added = settings.filter(s => !existing.has(s.value));
+		if (!added.length) continue;
+		provider.settings = options.prepend
+			? [...added, ...(provider.settings || [])]
+			: [...(provider.settings || []), ...added];
+	}
+}

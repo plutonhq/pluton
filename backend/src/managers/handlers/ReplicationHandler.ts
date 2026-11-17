@@ -125,6 +125,7 @@ export class ReplicationHandler {
 			this.activeMirrors.set(backupId, new Set());
 		}
 		this.activeMirrors.get(backupId)!.add(replicationId);
+		const destRepoPath = generateResticRepoPath(normalizeStorageName(storageName), storagePath);
 
 		try {
 			// Check for cancellation
@@ -152,8 +153,6 @@ export class ReplicationHandler {
 				false
 			);
 
-			const destRepoPath = generateResticRepoPath(normalizeStorageName(storageName), storagePath);
-
 			// Step 1: Ensure replication repo is initialized (with chunker params from source)
 			try {
 				await this.ensureRepoInitialized(
@@ -163,7 +162,8 @@ export class ReplicationHandler {
 					encryption,
 					planId,
 					backupId,
-					replicationId
+					replicationId,
+					!!storage.hadSnapshots
 				);
 			} catch (initError: any) {
 				const initMsg = initError?.message || 'Unknown init error';
@@ -406,6 +406,8 @@ export class ReplicationHandler {
 
 			return mirror;
 		} catch (error: any) {
+			// The repo is gone: the next run must check it again instead of trusting the cache
+			if (error?.code === 10) this.initializedRepos.delete(destRepoPath);
 			const errorMessage = error?.message || 'Unknown replication error';
 			mirror.status = 'failed';
 			mirror.ended = Date.now();
@@ -421,6 +423,7 @@ export class ReplicationHandler {
 			);
 
 			// Emit replication complete event with failure — ReplicationEventService will update the store
+			const errorCode = typeof error?.code === 'number' ? error.code : undefined;
 			this.emitter.emit('replication_complete', {
 				planId,
 				backupId,
@@ -431,6 +434,7 @@ export class ReplicationHandler {
 				storageType,
 				success: false,
 				error: errorMessage,
+				...(errorCode !== undefined ? { errorCode } : {}),
 			});
 
 			return mirror;
@@ -453,7 +457,8 @@ export class ReplicationHandler {
 		encryption: boolean,
 		planId: string,
 		backupId: string,
-		replicationId: string
+		replicationId: string,
+		hadSnapshots = false
 	): Promise<void> {
 		if (this.initializedRepos.has(repoPath)) {
 			return;
@@ -479,7 +484,13 @@ export class ReplicationHandler {
 			);
 			this.initializedRepos.add(repoPath);
 		} catch (error: any) {
-			if (error.code === 10) {
+			if (error.code === 10 && hadSnapshots) {
+				const MIRROR_REPO_MISSING_MESSAGE =
+					'The mirror repository is missing. It had backups before, so Pluton did not create it again. To start a new repository, remove this mirror from the plan and add it again.';
+				const missing: Error & { code?: number } = new Error(MIRROR_REPO_MISSING_MESSAGE);
+				missing.code = 10;
+				throw missing;
+			} else if (error.code === 10) {
 				// Repo doesn't exist
 				await this.progressManager.updateReplicationAction(
 					planId,
