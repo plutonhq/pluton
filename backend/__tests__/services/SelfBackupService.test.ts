@@ -247,14 +247,20 @@ describe('SelfBackupService', () => {
 			// rclone would create it and report success, quietly backing up into the container.
 			const service = makeLocalService(path.join(tmpDir, 'not-mounted'));
 
-			await expect(service.run()).rejects.toThrow(/does not exist or is not writable/);
+			await expect(service.run()).rejects.toMatchObject({
+				message: expect.stringMatching(/does not exist or is not writable/),
+				retryable: false,
+			});
 			expect(mockRunRcloneCommand).not.toHaveBeenCalled();
 		});
 
 		it('refuses an empty local path, which would mean rclone\'s working directory', async () => {
 			const service = makeLocalService('');
 
-			await expect(service.run()).rejects.toThrow(/Select a folder/);
+			await expect(service.run()).rejects.toMatchObject({
+				message: expect.stringMatching(/Select a folder/),
+				retryable: false,
+			});
 			expect(mockRunRcloneCommand).not.toHaveBeenCalled();
 		});
 	});
@@ -407,21 +413,31 @@ describe('SelfBackupService', () => {
 			expect(await service.isDue()).toBe(false);
 		});
 
-		it('is true when there has never been a successful run', async () => {
+		it('is true when there has never been a run', async () => {
 			const { service } = makeService();
 			expect(await service.isDue()).toBe(true);
 		});
 
-		it('is false an hour after success with a 12h interval', async () => {
-			writeSelfBackupState({ lastSuccessAt: new Date(Date.now() - 3600_000).toISOString() });
+		it('is false an hour after a run with a 12h interval', async () => {
+			writeSelfBackupState({ lastRunAt: new Date(Date.now() - 3600_000).toISOString() });
 			const { service } = makeService();
 			expect(await service.isDue()).toBe(false);
 		});
 
-		it('is true 13 hours after success with a 12h interval', async () => {
-			writeSelfBackupState({ lastSuccessAt: new Date(Date.now() - 13 * 3600_000).toISOString() });
+		it('is true 13 hours after a run with a 12h interval', async () => {
+			writeSelfBackupState({ lastRunAt: new Date(Date.now() - 13 * 3600_000).toISOString() });
 			const { service } = makeService();
 			expect(await service.isDue()).toBe(true);
+		});
+
+		it('waits a full interval after a failed run', async () => {
+			// Gating on lastSuccessAt made a failing backup repeat its whole cycle every hour.
+			writeSelfBackupState({
+				lastSuccessAt: new Date(Date.now() - 13 * 3600_000).toISOString(),
+				lastRunAt: new Date(Date.now() - 3600_000).toISOString(),
+			});
+			const { service } = makeService();
+			expect(await service.isDue()).toBe(false);
 		});
 	});
 
@@ -560,6 +576,33 @@ describe('SelfBackupService', () => {
 
 			await expect(service.run()).rejects.toThrow('network down');
 			expect(mockGetChannel).not.toHaveBeenCalled();
+		});
+
+		it('does not email before the last attempt', async () => {
+			failUpload();
+			const { service } = makeService({
+				selfBackup: { ...ENABLED, notifyOnFailure: true },
+				adminEmail: 'admin@example.com',
+				integration: { smtp: { connected: true } },
+			});
+
+			await expect(service.run({ isLastAttempt: false })).rejects.toThrow('network down');
+			expect(mockGetChannel).not.toHaveBeenCalled();
+		});
+
+		it('emails at once, without retries, when the selected storage no longer exists', async () => {
+			const { service } = makeService({
+				storageName: null,
+				selfBackup: { ...ENABLED, notifyOnFailure: true },
+				adminEmail: 'admin@example.com',
+				integration: { smtp: { connected: true } },
+			});
+
+			const error = await service.run({ isLastAttempt: false }).catch(e => e);
+			expect(error.message).toMatch(/no longer exists/);
+			expect(error.retryable).toBe(false);
+			expect(readSelfBackupState().lastError).toMatch(/no longer exists/);
+			expect(mockSend).toHaveBeenCalled();
 		});
 
 		it('still surfaces the backup error even if the email send throws', async () => {

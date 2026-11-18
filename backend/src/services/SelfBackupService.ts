@@ -84,20 +84,23 @@ export class SelfBackupService {
 	/**
 	 * Interval gate. SYSTEM_JOBS is a static array read once at startup, so a
 	 * user-configurable interval can't be a cron expression. The task ticks hourly
-	 * and asks this instead.
+	 * and asks this instead. Counts from the last run, not the last success, so a failed
+	 * cycle waits for the next interval instead of repeating every hour.
 	 */
 	async isDue(): Promise<boolean> {
 		const settings = await this.resolveSettings();
 		if (!settings.enabled) return false;
 
-		const { lastSuccessAt } = readSelfBackupState();
-		if (!lastSuccessAt) return true;
+		const { lastRunAt } = readSelfBackupState();
+		if (!lastRunAt) return true;
 
-		const elapsedMs = Date.now() - new Date(lastSuccessAt).getTime();
+		const elapsedMs = Date.now() - new Date(lastRunAt).getTime();
 		return elapsedMs >= settings.intervalHours * 60 * 60 * 1000;
 	}
 
-	async run(opts: { force?: boolean } = {}): Promise<SelfBackupRunResult> {
+	async run(
+		opts: { force?: boolean; isLastAttempt?: boolean } = {}
+	): Promise<SelfBackupRunResult> {
 		const settings = await this.resolveSettings();
 		if (!settings.enabled) {
 			return { status: 'disabled' };
@@ -111,12 +114,12 @@ export class SelfBackupService {
 			return { status: 'skipped' };
 		}
 
-		// The name is user-editable after save, so the zod check at save time isn't enough.
-		const remote = await this.resolveRemote(settings);
-		await this.assertLocalTargetUsable(remote, settings.path);
-
 		const tmpDir = await fsp.mkdtemp(path.join(appPaths.getTempDir(), 'self-backup-'));
 		try {
+			// The name is user-editable after save, so the zod check at save time isn't enough.
+			const remote = await this.resolveRemote(settings);
+			await this.assertLocalTargetUsable(remote, settings.path);
+
 			const blobName = `${BLOB_PREFIX}${new Date().toISOString().replace(/[:.]/g, '-')}${BLOB_SUFFIX}`;
 			const snapshotPath = path.join(tmpDir, 'pluton.db');
 
@@ -157,7 +160,9 @@ export class SelfBackupService {
 				lastError: error?.message || 'Unknown error',
 			});
 			cronLogger.error(`[SelfBackup] Backup failed: ${error?.message}`);
-			await this.notifyFailure(error);
+			if (opts.isLastAttempt !== false || error?.retryable === false) {
+				await this.notifyFailure(error);
+			}
 			throw error;
 		} finally {
 			await fsp.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
@@ -241,9 +246,12 @@ export class SelfBackupService {
 	protected async resolveRemote(settings: SelfBackupSettings): Promise<SelfBackupRemote> {
 		const storage = await this.storageStore.getById(settings.storageId);
 		if (!storage) {
-			throw new AppError(
-				400,
-				`The storage selected for Pluton backup no longer exists (id: ${settings.storageId}).`
+			throw Object.assign(
+				new AppError(
+					400,
+					`The storage selected for Pluton backup no longer exists (id: ${settings.storageId}).`
+				),
+				{ retryable: false }
 			);
 		}
 		return {
@@ -274,7 +282,10 @@ export class SelfBackupService {
 
 		const dir = targetPath.replace(/\/+$/g, '');
 		if (!dir) {
-			throw new AppError(400, 'Select a folder on the local storage for Pluton backup.');
+			throw Object.assign(
+				new AppError(400, 'Select a folder on the local storage for Pluton backup.'),
+				{ retryable: false }
+			);
 		}
 
 		try {
@@ -282,9 +293,12 @@ export class SelfBackupService {
 			if (!stat.isDirectory()) throw new Error('not a directory');
 			await fsp.access(dir, fsConstants.W_OK);
 		} catch {
-			throw new AppError(
-				400,
-				`The Pluton backup folder "${dir}" does not exist or is not writable. In Docker, bind-mount it into the container as a read-write volume.`
+			throw Object.assign(
+				new AppError(
+					400,
+					`The Pluton backup folder "${dir}" does not exist or is not writable. In Docker, bind-mount it into the container as a read-write volume.`
+				),
+				{ retryable: false }
 			);
 		}
 	}

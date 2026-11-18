@@ -5,7 +5,8 @@ import { SELF_BACKUP_JOB_NAME } from '../systemJobs';
 import { SelfBackupService } from '../../services/SelfBackupService';
 
 /**
- * Ticks hourly and gates on `intervalHours` from settings.
+ * Ticks hourly and gates on `intervalHours` from settings. Retries skip the gate,
+ * because the failed attempt already moved `lastRunAt`.
  */
 export class SelfBackupTask extends Task {
 	name = SELF_BACKUP_JOB_NAME;
@@ -17,11 +18,13 @@ export class SelfBackupTask extends Task {
 	async run(job?: Job): Promise<void> {
 		const force = job?.payload?.force === true;
 
-		if (!force && !(await this.selfBackupService.isDue())) {
+		const isRetry = (job?.attempts ?? 0) > 0;
+		if (!force && !isRetry && !(await this.selfBackupService.isDue())) {
 			return;
 		}
 
-		const result = await this.selfBackupService.run({ force });
+		const isLastAttempt = !job || job.attempts + 1 >= job.maxAttempts;
+		const result = await this.selfBackupService.run({ force, isLastAttempt });
 		cronLogger.info(`[SelfBackup] Run finished with status: ${result.status}`);
 	}
 }
