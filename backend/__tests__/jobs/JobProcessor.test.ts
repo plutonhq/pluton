@@ -445,7 +445,7 @@ describe('JobProcessor', () => {
 
 			await processOneJob();
 
-			expect(mockLogger.info).toHaveBeenCalledWith(
+			expect(mockLogger.debug).toHaveBeenCalledWith(
 				{ module: 'JobProcessor' },
 				expect.stringContaining('Delaying retry')
 			);

@@ -149,7 +149,7 @@ class JobProcessor extends EventEmitter {
 		const now = Date.now();
 		if (job.lastAttempt && now - job.lastAttempt < job.retryDelay) {
 			const timeLeft = Math.round((job.retryDelay - (now - job.lastAttempt)) / 1000);
-			logger.info(
+			logger.debug(
 				{ module: 'JobProcessor' },
 				`Delaying retry for job '${job.name}'. Next attempt in ~${timeLeft}s.`
 			);
