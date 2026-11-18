@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.23.1](https://github.com/plutonhq/pluton/compare/pluton-v0.23.0...pluton-v0.23.1) (2026-11-18)
+
+
+### Bug Fixes
+
+* resolves broken failed backup notification ([3665f9c](https://github.com/plutonhq/pluton/commit/3665f9c851ad0b6da185dadfb39f0de276333ebd))
+* resolves broken notification for failed self backups ([3a3c2c1](https://github.com/plutonhq/pluton/commit/3a3c2c147f868f9d9c3a11376cc62055f808c8e4))
+* resolves browser freeze issue on openning log viewer ([e6eee9d](https://github.com/plutonhq/pluton/commit/e6eee9d61fa815028d620e90e0b85139265dbdaa))
+* resolves stuck replication backup job & broken cancellation ([4c76dbb](https://github.com/plutonhq/pluton/commit/4c76dbbd8f55176dfe801332c0baff3c5a5d6ada))
+* restic pack size must be allowed to set from 4 to 128 MB. ([655241a](https://github.com/plutonhq/pluton/commit/655241ad523bd1576a38d093490396050fe2f9fe))
+
 ## [0.23.0](https://github.com/plutonhq/pluton/compare/pluton-v0.22.0...pluton-v0.23.0) (2026-11-10)
 
 
