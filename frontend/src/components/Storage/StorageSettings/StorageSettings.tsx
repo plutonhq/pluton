@@ -123,41 +123,39 @@ const StorageSettings = ({ fields, onUpdate, settings, errors = {} }: StorageSet
             if (field.fieldType === 'select' && field.options) {
                const customField = field.options.find((o) => o.value === 'custom');
                return (
-                  <>
-                     <div key={field.value} className={classes.field}>
-                        <Select
-                           label={fieldLabel}
-                           options={field.options}
-                           fieldValue={
-                              isCustomActive(field) && customField?.value ? customField?.value : (settings[field.value] as string) || ''
+                  <div key={field.value} className={classes.field}>
+                     <Select
+                        label={fieldLabel}
+                        options={field.options}
+                        fieldValue={
+                           isCustomActive(field) && customField?.value ? customField?.value : (settings[field.value] as string) || ''
+                        }
+                        hint={hint}
+                        onUpdate={(newVal: string) => {
+                           if (field.allowCustom) {
+                              setCustomFieldsActive((prev) => ({
+                                 ...prev,
+                                 [field.value]: newVal === 'custom',
+                              }));
                            }
-                           hint={hint}
-                           onUpdate={(newVal: string) => {
-                              if (field.allowCustom) {
-                                 setCustomFieldsActive((prev) => ({
-                                    ...prev,
-                                    [field.value]: newVal === 'custom',
-                                 }));
-                              }
-                              onUpdate({ ...settings, [field.value]: newVal });
-                           }}
-                           error={errors[field.value] || ''}
-                           inline={true}
-                           full={true}
-                        />
-                        {isCustomActive(field) && (
-                           <div key={field.value} className={classes.field} style={{ margin: '20px 0' }}>
-                              <Input
-                                 label={customField?.label || 'Insert Custom'}
-                                 inline={true}
-                                 fieldValue={(settings[field.value] as string) || ''}
-                                 onUpdate={(newVal: string) => onUpdate({ ...settings, [field.value]: newVal })}
-                                 error={errors[field.value] || ''}
-                              />
-                           </div>
-                        )}
-                     </div>
-                  </>
+                           onUpdate({ ...settings, [field.value]: newVal });
+                        }}
+                        error={errors[field.value] || ''}
+                        inline={true}
+                        full={true}
+                     />
+                     {isCustomActive(field) && (
+                        <div className={classes.field} style={{ margin: '20px 0' }}>
+                           <Input
+                              label={customField?.label || 'Insert Custom'}
+                              inline={true}
+                              fieldValue={(settings[field.value] as string) || ''}
+                              onUpdate={(newVal: string) => onUpdate({ ...settings, [field.value]: newVal })}
+                              error={errors[field.value] || ''}
+                           />
+                        </div>
+                     )}
+                  </div>
                );
             }
             return null;
