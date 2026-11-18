@@ -320,6 +320,72 @@ describe('ReplicationHandler', () => {
 			expect(cancelledResult).toBeDefined();
 		});
 
+		it('does not start the copy when cancelled during unlock', async () => {
+			mockRunResticCommand.mockImplementation(async (args: string[]) => {
+				if (args[0] === 'unlock') cancelledBackups.add(planId + backupId);
+				return 'ok';
+			});
+
+			const results = await handler.replicateSnapshot(
+				planId,
+				backupId,
+				sourceRepoPath,
+				true,
+				[resolvedStorages[0]],
+				pruneSettings,
+				false,
+				retryInfo
+			);
+
+			expect(results[0].error).toBe('Cancelled by user');
+			const copyCalls = mockRunResticCommand.mock.calls.filter((c: any) => c[0].includes('copy'));
+			expect(copyCalls).toHaveLength(0);
+		});
+
+		it('stops a copy whose pack count does not change for an hour', async () => {
+			jest.useFakeTimers();
+			try {
+				let rejectCopy: (e: Error) => void = () => {};
+				mockKillProcess.mockImplementation(() =>
+					rejectCopy(new Error('Process terminated by user'))
+				);
+				mockRunResticCommand.mockImplementation(
+					(args: string[], env: any, onProgress?: (d: Buffer) => void) => {
+						if (!args.includes('copy')) return Promise.resolve('ok');
+						expect(env.RESTIC_PROGRESS_FPS).toBeDefined();
+						return new Promise((_, reject) => {
+							rejectCopy = reject;
+							onProgress?.(Buffer.from('[0:00] 10.00%  1 / 10 packs copied'));
+							setInterval(
+								() => onProgress?.(Buffer.from('[1:00] 10.00%  1 / 10 packs copied')),
+								60_000
+							);
+						});
+					}
+				);
+
+				const resultPromise = handler.replicateSnapshot(
+					planId,
+					backupId,
+					sourceRepoPath,
+					true,
+					[resolvedStorages[0]],
+					pruneSettings,
+					false,
+					retryInfo
+				);
+				await jest.advanceTimersByTimeAsync(61 * 60 * 1000);
+				const results = await resultPromise;
+
+				expect(results[0].status).toBe('failed');
+				expect(results[0].error).toMatch(/stalled/);
+			} finally {
+				mockKillProcess.mockReset();
+				jest.clearAllTimers();
+				jest.useRealTimers();
+			}
+		});
+
 		it('should update replication progress actions throughout lifecycle', async () => {
 			await handler.replicateSnapshot(
 				planId,

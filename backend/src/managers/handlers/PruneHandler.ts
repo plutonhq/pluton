@@ -9,7 +9,8 @@ export class PruneHandler {
 	async prune(
 		planId: string,
 		options: Record<string, any>,
-		updateStats: boolean = false
+		updateStats: boolean = false,
+		onProcess?: (process: any) => void
 	): Promise<{ success: boolean; result: string }> {
 		let pruneErrorMsg = '';
 		const prune = options.settings.prune;
@@ -33,7 +34,14 @@ export class PruneHandler {
 
 		try {
 			// Execute the combined command ONCE
-			await runResticCommand(finalCommandArgs, resticEnv);
+			await runResticCommand(
+				finalCommandArgs,
+				resticEnv,
+				undefined,
+				undefined,
+				undefined,
+				onProcess
+			);
 
 			let planStats;
 			if (updateStats) {

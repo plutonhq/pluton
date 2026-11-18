@@ -10,6 +10,10 @@ import { PlanPrune } from '../../types/plans';
 import { BackupMirror } from '../../types/backups';
 import { ResolvedReplicationStorage } from '../../types/events';
 
+// restic prints a progress line on each tick even when stuck, so the stall check uses the pack count.
+const COPY_STALL_TIMEOUT_MS = 60 * 60 * 1000;
+const REPO_COMMAND_TIMEOUT_MS = 2 * 60 * 1000;
+
 export class ReplicationHandler {
 	private initializedRepos = new Set<string>();
 	private activeMirrors = new Map<string, Set<string>>(); // backupId -> Set<replicationId>
@@ -126,6 +130,7 @@ export class ReplicationHandler {
 		}
 		this.activeMirrors.get(backupId)!.add(replicationId);
 		const destRepoPath = generateResticRepoPath(normalizeStorageName(storageName), storagePath);
+		const processKey = `replication-${backupId}-${replicationId}`;
 
 		try {
 			// Check for cancellation
@@ -201,14 +206,14 @@ export class ReplicationHandler {
 					undefined,
 					undefined,
 					process => {
-						processManager.trackProcess(`replication-${backupId}-${replicationId}`, process);
-					}
+						processManager.trackProcess(processKey, process);
+					},
+					{ timeout: REPO_COMMAND_TIMEOUT_MS }
 				);
 			} catch (err) {
 				// Non-fatal - swallow errors
 			}
 
-			// Step 2: Unlock stale locks (non-fatal)
 			await this.progressManager.updateReplicationAction(
 				planId,
 				backupId,
@@ -216,6 +221,11 @@ export class ReplicationHandler {
 				'REPLICATION_COPY_START',
 				true
 			);
+
+			// A cancel during unlock should cancel the unlock process and the rest
+			if (this.cancelledBackups.has(planId + backupId)) {
+				throw new Error('Cancelled by user');
+			}
 
 			// Step 3: Run restic copy
 			const copyArgs = [
@@ -237,98 +247,124 @@ export class ReplicationHandler {
 			const copyEnv: Record<string, string> = {
 				RESTIC_PASSWORD: password,
 				RESTIC_FROM_PASSWORD: password,
+				RESTIC_PROGRESS_FPS: String(1 / 60),
 			};
 
-			await runResticCommand(
-				copyArgs,
-				copyEnv,
-				(data: Buffer) => {
-					// restic copy outputs plain text, not JSON.
-					// Parse stdout lines to emit synthetic progress events.
-					const line = data.toString().trim();
-					if (!line) return;
+			let lastPacksCopied = -1;
+			let lastCopyActivity = Date.now();
+			let copyStalled = false;
+			const copyStallTimer = setInterval(() => {
+				if (Date.now() - lastCopyActivity < COPY_STALL_TIMEOUT_MS) return;
+				copyStalled = true;
+				processManager.killProcess(processKey);
+			}, 60_000);
 
-					// Detect "copy started" lines
-					const copyStartMatch = line.match(/copy started/i);
-					if (copyStartMatch) {
-						this.progressManager
-							.updateReplicationResticProgress(planId, backupId, replicationId, line)
-							.catch(() => {});
-						this.emitter.emit('replication_progress', {
-							planId,
-							backupId,
-							replicationId,
-							storageId,
-							storagePath,
-							data: { message_type: 'status', info: line },
-						});
-						return;
-					}
+			try {
+				await runResticCommand(
+					copyArgs,
+					copyEnv,
+					(data: Buffer) => {
+						// restic copy outputs plain text, not JSON.
+						// Parse stdout lines to emit synthetic progress events.
+						const line = data.toString().trim();
+						if (!line) return;
 
-					// Detect pack progress lines like "[12:01] 100.00%  14 / 14 packs copied"
-					const packMatch = line.match(
-						/\[[\d:]+\]\s+([\d.]+)%\s+(\d+)\s*\/\s*(\d+)\s+packs?\s+copied/
-					);
-					if (packMatch) {
-						const [, percent, copied, total] = packMatch;
-						const progressData = {
-							message_type: 'status',
-							percent_done: parseFloat(percent) / 100,
-							packs_copied: parseInt(copied),
-							packs_total: parseInt(total),
-						};
-						this.progressManager
-							.updateReplicationResticProgress(
+						// Detect pack progress lines like "[12:01] 100.00%  14 / 14 packs copied"
+						const packMatch = line.match(
+							/\[[\d:]+\]\s+([\d.]+)%\s+(\d+)\s*\/\s*(\d+)\s+packs?\s+copied/
+						);
+						if (!packMatch || parseInt(packMatch[2]) !== lastPacksCopied) {
+							lastCopyActivity = Date.now();
+							if (packMatch) lastPacksCopied = parseInt(packMatch[2]);
+						}
+
+						// Detect "copy started" lines
+						const copyStartMatch = line.match(/copy started/i);
+						if (copyStartMatch) {
+							this.progressManager
+								.updateReplicationResticProgress(planId, backupId, replicationId, line)
+								.catch(() => {});
+							this.emitter.emit('replication_progress', {
 								planId,
 								backupId,
 								replicationId,
-								JSON.stringify(progressData)
-							)
-							.catch(() => {});
-						this.emitter.emit('replication_progress', {
-							planId,
-							backupId,
-							replicationId,
-							storageId,
-							storagePath,
-							data: progressData,
-						});
-						return;
-					}
+								storageId,
+								storagePath,
+								data: { message_type: 'status', info: line },
+							});
+							return;
+						}
 
-					// Detect "snapshot XX saved" lines
-					const savedMatch = line.match(/snapshot\s+(\w+)\s+saved/i);
-					if (savedMatch) {
+						if (packMatch) {
+							const [, percent, copied, total] = packMatch;
+							const progressData = {
+								message_type: 'status',
+								percent_done: parseFloat(percent) / 100,
+								packs_copied: parseInt(copied),
+								packs_total: parseInt(total),
+							};
+							this.progressManager
+								.updateReplicationResticProgress(
+									planId,
+									backupId,
+									replicationId,
+									JSON.stringify(progressData)
+								)
+								.catch(() => {});
+							this.emitter.emit('replication_progress', {
+								planId,
+								backupId,
+								replicationId,
+								storageId,
+								storagePath,
+								data: progressData,
+							});
+							return;
+						}
+
+						// Detect "snapshot XX saved" lines
+						const savedMatch = line.match(/snapshot\s+(\w+)\s+saved/i);
+						if (savedMatch) {
+							this.progressManager
+								.updateReplicationResticProgress(planId, backupId, replicationId, line)
+								.catch(() => {});
+							this.emitter.emit('replication_progress', {
+								planId,
+								backupId,
+								replicationId,
+								storageId,
+								storagePath,
+								data: {
+									message_type: 'status',
+									info: `Snapshot ${savedMatch[1]} saved`,
+								},
+							});
+							return;
+						}
+
+						// Forward any other output as-is
 						this.progressManager
 							.updateReplicationResticProgress(planId, backupId, replicationId, line)
 							.catch(() => {});
-						this.emitter.emit('replication_progress', {
-							planId,
-							backupId,
-							replicationId,
-							storageId,
-							storagePath,
-							data: {
-								message_type: 'status',
-								info: `Snapshot ${savedMatch[1]} saved`,
-							},
-						});
-						return;
+					},
+					(_: Buffer) => {
+						// console.log('### Restic Copy Error :', data.toString());
+					},
+					undefined,
+					process => {
+						processManager.trackProcess(processKey, process);
 					}
-
-					// Forward any other output as-is
-					this.progressManager
-						.updateReplicationResticProgress(planId, backupId, replicationId, line)
-						.catch(() => {});
-				},
-				(_: Buffer) => {
-					// console.log('### Restic Copy Error :', data.toString());
-				},
-				undefined,
-				process => {
-					processManager.trackProcess(`replication-${backupId}-${replicationId}`, process);
+				);
+			} catch (copyError) {
+				if (copyStalled) {
+					throw new Error(
+						`Replication stalled: no packs copied for ${COPY_STALL_TIMEOUT_MS / 60000} minutes`
+					);
 				}
-			);
+				throw copyError;
+			} finally {
+				clearInterval(copyStallTimer);
+			}
 
 			// Check for cancellation after copy
 			if (this.cancelledBackups.has(planId + backupId)) {
@@ -362,7 +398,12 @@ export class ReplicationHandler {
 						encryption,
 					},
 				};
-				await pruneHandler.prune(planId, pruneOptions);
+				if (this.cancelledBackups.has(planId + backupId)) {
+					throw new Error('Cancelled by user');
+				}
+				await pruneHandler.prune(planId, pruneOptions, false, process =>
+					processManager.trackProcess(processKey, process)
+				);
 				await this.progressManager.updateReplicationAction(
 					planId,
 					backupId,
@@ -480,7 +521,8 @@ export class ReplicationHandler {
 				undefined,
 				undefined,
 				undefined,
-				trackProcess
+				trackProcess,
+				{ timeout: REPO_COMMAND_TIMEOUT_MS }
 			);
 			this.initializedRepos.add(repoPath);
 		} catch (error: any) {
@@ -518,7 +560,9 @@ export class ReplicationHandler {
 						RESTIC_PASSWORD: password,
 						RESTIC_FROM_PASSWORD: password,
 					};
-					await runResticCommand(initArgs, initEnv, undefined, undefined, undefined, trackProcess);
+					await runResticCommand(initArgs, initEnv, undefined, undefined, undefined, trackProcess, {
+						timeout: 10 * 60 * 1000,
+					});
 					this.initializedRepos.add(repoPath);
 					await this.progressManager.updateReplicationAction(
 						planId,

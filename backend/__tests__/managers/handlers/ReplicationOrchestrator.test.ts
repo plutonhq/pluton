@@ -85,7 +85,7 @@ describe('ReplicationOrchestrator', () => {
 				],
 				concurrent: false,
 			},
-			prune: { keep: 5 },
+			prune: { snapCount: 5, policy: 'forgetByAge' },
 			encryption: true,
 			retries: 0,
 			retryDelay: 0,
@@ -305,6 +305,25 @@ describe('ReplicationOrchestrator', () => {
 			expect(partialFailureEvents[0].mirrors).toHaveLength(2);
 		});
 
+		it('does not send replication_partial_failure or collect stats after a cancel', async () => {
+			mockReplicateSnapshot.mockImplementation(async () => {
+				cancelledBackups.add(planId + backupId);
+				return [...completedMirrors, ...failedMirrors];
+			});
+			const partialFailureEvents: any[] = [];
+			emitter.on('replication_partial_failure', data => partialFailureEvents.push(data));
+			emitter.on('replication_init', () => {
+				setImmediate(() => {
+					emitter.emit('replication_init_complete', { planId, backupId, resolvedStorages: [] });
+				});
+			});
+
+			await orchestrator.run(planId, backupId, planOptions);
+
+			expect(partialFailureEvents).toHaveLength(0);
+			expect(mockGetBackupPlanStats).not.toHaveBeenCalled();
+		});
+
 		it('should not throw when replication phase fails completely', async () => {
 			mockReplicateSnapshot.mockRejectedValue(new Error('Total failure'));
 
@@ -426,6 +445,20 @@ describe('ReplicationOrchestrator', () => {
 
 			const actionCalls = mockUpdateAction.mock.calls.map((c: any) => c[3]);
 			expect(actionCalls).toContain('REPLICATION_MANUAL_RETRY_START');
+		});
+
+		it('clears the cancel flag when the manual retry ends', async () => {
+			cancelledBackups.add(planId + backupId);
+			emitter.on('replication_init', () => {
+				setImmediate(() => {
+					emitter.emit('replication_init_complete', { planId, backupId, resolvedStorages: [] });
+				});
+			});
+			mockReplicateSnapshot.mockResolvedValue([]);
+
+			await orchestrator.retryFailedReplications(planId, backupId, planOptions, []);
+
+			expect(cancelledBackups.has(planId + backupId)).toBe(false);
 		});
 	});
 

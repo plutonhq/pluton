@@ -96,7 +96,7 @@ export class ReplicationOrchestrator {
 			await this.collectAndEmitMirrorStats(planId, backupId, results, encryption);
 
 			// Trigger replication failure notification if any failed
-			if (!allSucceeded) {
+			if (!allSucceeded && !this.cancelledBackups.has(planId + backupId)) {
 				this.emitter.emit('replication_partial_failure', { planId, backupId, mirrors: results });
 			}
 		} catch (error: any) {
@@ -128,68 +128,76 @@ export class ReplicationOrchestrator {
 		options: Record<string, any>,
 		failedReplicationIds: string[]
 	): Promise<BackupMirror[]> {
-		const { replication, prune, encryption } = options.settings;
-		const sourceRepoPath = generateResticRepoPath(options.storage.name, options.storagePath || '');
+		try {
+			const { replication, prune, encryption } = options.settings;
+			const sourceRepoPath = generateResticRepoPath(
+				options.storage.name,
+				options.storagePath || ''
+			);
 
-		// Filter plan storages to only the failed ones
-		const failedReplicationStorages = replication.storages.filter((s: any) =>
-			failedReplicationIds.includes(s.replicationId)
-		);
+			// Filter plan storages to only the failed ones
+			const failedReplicationStorages = replication.storages.filter((s: any) =>
+				failedReplicationIds.includes(s.replicationId)
+			);
 
-		// Emit replication_init with isRetry flag — resets only the failed mirrors to 'pending'
-		this.emitter.emit('replication_init', {
-			planId,
-			backupId,
-			replicationStorages: failedReplicationStorages,
-			isRetry: true,
-		});
+			// Emit replication_init with isRetry flag. resets only the failed mirrors to 'pending'
+			this.emitter.emit('replication_init', {
+				planId,
+				backupId,
+				replicationStorages: failedReplicationStorages,
+				isRetry: true,
+			});
 
-		// Wait for resolved storage names
-		const resolvedStorages = await this.waitForReplicationInit(planId, backupId);
+			// Wait for resolved storage names
+			const resolvedStorages = await this.waitForReplicationInit(planId, backupId);
 
-		await this.updateProgress(
-			planId,
-			backupId,
-			'replication',
-			'REPLICATION_MANUAL_RETRY_START',
-			false
-		);
+			await this.updateProgress(
+				planId,
+				backupId,
+				'replication',
+				'REPLICATION_MANUAL_RETRY_START',
+				false
+			);
 
-		// Run replications for the failed storages
-		const results = await this.replicationHandler.replicateSnapshot(
-			planId,
-			backupId,
-			sourceRepoPath,
-			encryption,
-			resolvedStorages,
-			prune,
-			replication.concurrent,
-			{ attempts: 0, maxAttempts: 0 }
-		);
+			// Run replications for the failed storages
+			const results = await this.replicationHandler.replicateSnapshot(
+				planId,
+				backupId,
+				sourceRepoPath,
+				encryption,
+				resolvedStorages,
+				prune,
+				replication.concurrent,
+				{ attempts: 0, maxAttempts: 0 }
+			);
 
-		const allSucceeded = results.every(m => m.status === 'completed');
+			const allSucceeded = results.every(m => m.status === 'completed');
 
-		await this.updateProgress(
-			planId,
-			backupId,
-			'replication',
-			allSucceeded
-				? 'REPLICATION_MANUAL_RETRY_COMPLETE'
-				: 'REPLICATION_MANUAL_RETRY_PARTIAL_FAILURE',
-			true,
-			allSucceeded
-				? undefined
-				: `${results.filter(m => m.status === 'failed').length} replication(s) still failed`
-		);
+			await this.updateProgress(
+				planId,
+				backupId,
+				'replication',
+				allSucceeded
+					? 'REPLICATION_MANUAL_RETRY_COMPLETE'
+					: 'REPLICATION_MANUAL_RETRY_PARTIAL_FAILURE',
+				true,
+				allSucceeded
+					? undefined
+					: `${results.filter(m => m.status === 'failed').length} replication(s) still failed`
+			);
 
-		// Collect and emit mirror stats for completed replications
-		await this.collectAndEmitMirrorStats(planId, backupId, results, encryption);
+			// Collect and emit mirror stats for completed replications
+			await this.collectAndEmitMirrorStats(planId, backupId, results, encryption);
 
-		if (!allSucceeded) {
-			this.emitter.emit('replication_partial_failure', { planId, backupId, mirrors: results });
+			if (!allSucceeded && !this.cancelledBackups.has(planId + backupId)) {
+				this.emitter.emit('replication_partial_failure', { planId, backupId, mirrors: results });
+			}
+
+			return results;
+		} finally {
+			// Only execute() clears this flag, and a manual retry does not run execute()
+			this.cancelledBackups.delete(planId + backupId);
 		}
-
-		return results;
 	}
 
 	// ─── Cancellation ──────────────────────────────────────────────────
@@ -297,8 +305,8 @@ export class ReplicationOrchestrator {
 		encryption: boolean
 	): Promise<void> {
 		const completedResults = results.filter(m => m.status === 'completed');
-		if (completedResults.length === 0) return;
-
+		if (completedResults.length === 0 || this.cancelledBackups.has(planId + backupId)) return;
+		const MIRROR_STATS_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 		try {
 			const mirrorStats = await Promise.all(
 				completedResults.map(async m => {
@@ -307,7 +315,8 @@ export class ReplicationOrchestrator {
 							planId,
 							m.storageName,
 							m.storagePath,
-							encryption
+							encryption,
+							MIRROR_STATS_TIMEOUT_MS
 						);
 						return stats
 							? {

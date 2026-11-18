@@ -91,7 +91,11 @@ describe('PruneHandler', () => {
 					'--keep-last',
 					'50',
 				]),
-				expect.objectContaining({ RESTIC_PASSWORD: 'test-key' })
+				expect.objectContaining({ RESTIC_PASSWORD: 'test-key' }),
+				undefined,
+				undefined,
+				undefined,
+				undefined
 			);
 
 			expect(pruneEndListener).toHaveBeenCalledWith({
@@ -145,7 +149,11 @@ describe('PruneHandler', () => {
 			expect(result.success).toBe(true);
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['forget', '--prune', '--keep-within', '30d']),
-				expect.any(Object)
+				expect.any(Object),
+				undefined,
+				undefined,
+				undefined,
+				undefined
 			);
 		});
 
@@ -167,7 +175,11 @@ describe('PruneHandler', () => {
 			// forgetByDate is no longer a supported policy; only the failsafe --keep-last 1 is applied
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['forget', '--prune', '--keep-last', '1']),
-				expect.any(Object)
+				expect.any(Object),
+				undefined,
+				undefined,
+				undefined,
+				undefined
 			);
 			const call = mockRunResticCommand.mock.calls[0][0];
 			expect(call).not.toContain('--keep-before');
@@ -255,7 +267,11 @@ describe('PruneHandler', () => {
 			expect(result.success).toBe(true);
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['--insecure-no-password']),
-				expect.objectContaining({ RESTIC_PASSWORD: '' })
+				expect.objectContaining({ RESTIC_PASSWORD: '' }),
+				undefined,
+				undefined,
+				undefined,
+				undefined
 			);
 		});
 
@@ -276,7 +292,11 @@ describe('PruneHandler', () => {
 			expect(result.success).toBe(true);
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['--keep-daily', '10']),
-				expect.any(Object)
+				expect.any(Object),
+				undefined,
+				undefined,
+				undefined,
+				undefined
 			);
 
 			const call = mockRunResticCommand.mock.calls[0][0];
@@ -301,7 +321,11 @@ describe('PruneHandler', () => {
 			expect(result.success).toBe(true);
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['--keep-weekly', '8']),
-				expect.any(Object)
+				expect.any(Object),
+				undefined,
+				undefined,
+				undefined,
+				undefined
 			);
 		});
 
@@ -322,7 +346,11 @@ describe('PruneHandler', () => {
 			expect(result.success).toBe(true);
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['--keep-monthly', '6']),
-				expect.any(Object)
+				expect.any(Object),
+				undefined,
+				undefined,
+				undefined,
+				undefined
 			);
 		});
 
@@ -343,7 +371,11 @@ describe('PruneHandler', () => {
 			expect(mockGenerateResticRepoPath).toHaveBeenCalledWith('test-storage', 'backups/test');
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['-r', 'rclone:test-storage:backups/test']),
-				expect.any(Object)
+				expect.any(Object),
+				undefined,
+				undefined,
+				undefined,
+				undefined
 			);
 		});
 
@@ -352,7 +384,11 @@ describe('PruneHandler', () => {
 
 			expect(mockRunResticCommand).toHaveBeenCalledWith(
 				expect.arrayContaining(['--tag', 'plan-plan-123']),
-				expect.any(Object)
+				expect.any(Object),
+				undefined,
+				undefined,
+				undefined,
+				undefined
 			);
 		});
 
