@@ -20,6 +20,11 @@ jest.mock('../../src/utils/logging/RotatingLogStream', () => ({
 	})),
 }));
 
+// The production test re-imports AppPaths, which creates /var/lib/pluton on Linux.
+jest.mock('../../src/utils/AppPaths', () => ({
+	appPaths: { getLogsDir: () => '/tmp/pluton-test-logs' },
+}));
+
 jest.mock('../../src/utils/logging/logFiles', () => ({
 	...jest.requireActual('../../src/utils/logging/logFiles'),
 	migrateLegacyLogs: jest.fn(),
