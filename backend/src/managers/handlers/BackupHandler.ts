@@ -188,6 +188,7 @@ export class BackupHandler {
 					backupId,
 					success: false,
 					summary: null,
+					error: errorMessage,
 				});
 			}
 

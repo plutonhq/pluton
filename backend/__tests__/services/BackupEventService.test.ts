@@ -287,6 +287,77 @@ describe('BackupEventService', () => {
 			);
 		});
 
+		it('should send a failure notification and call afterPermanentFailure on failure', async () => {
+			// Arrange
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockBackupStore.update.mockResolvedValue({ id: backupId, started: new Date() } as any);
+			const afterSpy = jest.spyOn(backupEventService, 'afterPermanentFailure');
+
+			// Act
+			await backupEventService.onBackupComplete({
+				planId,
+				backupId,
+				success: false,
+				error: 'repository does not exist',
+			});
+
+			// Assert
+			expect(mockBackupNotification.send).toHaveBeenCalledTimes(1);
+			expect(mockBackupNotification.send).toHaveBeenCalledWith(
+				mockPlan,
+				'failure',
+				expect.objectContaining({ id: backupId, error: 'repository does not exist' })
+			);
+			expect(afterSpy).toHaveBeenCalledWith(planId, backupId, 'repository does not exist');
+		});
+
+		it('should use the stored error, then a default text, when the event has no error', async () => {
+			// Arrange
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+			mockBackupStore.update
+				.mockResolvedValueOnce({ id: backupId, errorMsg: 'stored error' } as any)
+				.mockResolvedValueOnce({ id: backupId, errorMsg: null } as any);
+
+			// Act
+			await backupEventService.onBackupComplete({ planId, backupId, success: false });
+			await backupEventService.onBackupComplete({ planId, backupId, success: false });
+
+			// Assert
+			const errors = mockBackupNotification.send.mock.calls.map(c => (c[2] as any).error);
+			expect(errors).toEqual(['stored error', 'Unknown error']);
+		});
+
+		it('should send one failure notification for the agent order complete, error, failed', async () => {
+			// Arrange: a store that keeps the row between events
+			let row: any = { id: backupId, status: 'started', inProgress: true, started: new Date() };
+			mockBackupStore.getById.mockImplementation(async () => row);
+			mockBackupStore.update.mockImplementation(async (_id: string, data: any) => {
+				row = { ...row, ...data };
+				return row;
+			});
+			mockPlanStore.getById.mockResolvedValue(mockPlan);
+
+			// Act
+			await backupEventService.onBackupComplete({
+				planId,
+				backupId,
+				success: false,
+				error: 'boom',
+			});
+			await backupEventService.onBackupError({ planId, backupId, error: 'boom' });
+			await backupEventService.onBackupFailure({ planId, backupId, error: 'boom' });
+
+			// Assert
+			expect(mockBackupNotification.send).toHaveBeenCalledTimes(1);
+			expect(mockBackupNotification.send).toHaveBeenCalledWith(
+				mockPlan,
+				'failure',
+				expect.objectContaining({ error: 'boom' })
+			);
+			expect(row.status).toBe('failed');
+			expect(row.inProgress).toBe(false);
+		});
+
 		it('should read summary from progress file if not provided in event', async () => {
 			// Arrange
 			const progressFileData = JSON.stringify({
@@ -447,6 +518,25 @@ describe('BackupEventService', () => {
 				status: 'retrying',
 				errorMsg: error,
 			});
+		});
+
+		it('should not reopen a finalized backup', async () => {
+			// Arrange
+			mockBackupStore.getById.mockResolvedValue({
+				id: 'backup-abc',
+				status: 'failed',
+				inProgress: false,
+			} as any);
+
+			// Act
+			await backupEventService.onBackupError({
+				planId: 'plan-123',
+				backupId: 'backup-abc',
+				error: 'late error',
+			});
+
+			// Assert
+			expect(mockBackupStore.update).not.toHaveBeenCalled();
 		});
 	});
 

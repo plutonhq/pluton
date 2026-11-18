@@ -37,6 +37,7 @@ export interface BackupCompleteEvent {
 	success: boolean;
 	summary?: BackupCompletionStats;
 	resolvedSourceConfig?: Record<string, unknown>;
+	error?: string;
 }
 
 // Event emitted when any error occurs.

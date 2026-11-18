@@ -286,8 +286,21 @@ export class BackupEventService {
 				throw new Error('Failed to update Backup entry in Database.');
 			}
 
+			// A failed completion is permanent and finalizes the row, so the later backup_failed event is skipped
+			const failureError = data.error || backup.errorMsg || 'Unknown error';
+			if (!success) {
+				await this.afterPermanentFailure(planId, backupId, failureError);
+			}
+
 			// Send Notification
-			if (plan && plan.settings.notification) {
+			if (plan && plan.settings.notification && !success) {
+				await this.backupNotification.send(plan, 'failure', {
+					id: backupId,
+					startTime: backup.started || new Date(),
+					stats: backup.taskStats || undefined,
+					error: failureError,
+				});
+			} else if (plan && plan.settings.notification) {
 				// Include replication failures in the success notification if any mirrors failed
 				const replicationFailures = (backup.mirrors || [])
 					.filter((m: any) => m.status === 'failed')
@@ -314,7 +327,7 @@ export class BackupEventService {
 				);
 			} else {
 				planLogger('backup', planId, backupId).error(
-					`Backup Failed for Backup Plan. Reason: Unknown.`
+					`Backup Failed for Backup Plan. Reason: ${failureError}`
 				);
 			}
 		} catch (error: any) {
@@ -360,13 +373,15 @@ export class BackupEventService {
 				return;
 			}
 
-			// Update DB with Error
-			const backup = await this.backupStore.update(data.backupId, {
-				status: 'retrying',
-				errorMsg: data.error,
-			});
-			if (!backup) {
-				throw new Error('Failed to update Backup entry in Database.');
+			// An agent sends this after its failed backup_complete. Do not reopen the finalized row.
+			if (!(await this.wasFinalized(data.backupId))) {
+				const backup = await this.backupStore.update(data.backupId, {
+					status: 'retrying',
+					errorMsg: data.error,
+				});
+				if (!backup) {
+					throw new Error('Failed to update Backup entry in Database.');
+				}
 			}
 
 			// Log Backup Error event
