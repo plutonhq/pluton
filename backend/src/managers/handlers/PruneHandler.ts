@@ -76,6 +76,8 @@ export class PruneHandler {
 			`plan-${planId}`,
 			'--keep-tag',
 			'pluton-keep',
+			'--group-by',
+			'',
 		];
 		const policyArgs: string[] = [];
 		const resticEnv = { RESTIC_PASSWORD: encryption ? configService.config.ENCRYPTION_KEY : '' };

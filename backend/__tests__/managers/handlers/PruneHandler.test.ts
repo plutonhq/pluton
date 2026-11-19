@@ -112,6 +112,13 @@ describe('PruneHandler', () => {
 			expect(args[args.indexOf('--keep-tag') + 1]).toBe('pluton-keep');
 		});
 
+		it('should disable host/path grouping so all plan snapshots form one group', async () => {
+			await handler.prune('plan-1', baseOptions, false);
+
+			const args: string[] = mockRunResticCommand.mock.calls[0][0];
+			expect(args[args.indexOf('--group-by') + 1]).toBe('');
+		});
+
 		it('should successfully prune with custom policy without snap count', async () => {
 			const optionsWithoutSnapCount = {
 				...baseOptions,
