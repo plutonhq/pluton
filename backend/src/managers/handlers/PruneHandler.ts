@@ -99,7 +99,9 @@ export class PruneHandler {
 			case 'forgetByAge':
 				// This uses --keep-within. (e.g. "30d", "2m")
 				if (prune.forgetAge) {
-					policyArgs.push('--keep-within', prune.forgetAge);
+					// restic --keep-within has no week unit. if w is set, convert to days (e.g. 2w = 14d)
+					const age = prune.forgetAge.replace(/^(\d+)w$/, (_: string, n: string) => `${Number(n) * 7}d`);
+					policyArgs.push('--keep-within', age);
 				}
 				break;
 		}

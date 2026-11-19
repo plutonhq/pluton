@@ -164,6 +164,22 @@ describe('PruneHandler', () => {
 			);
 		});
 
+		it.each([
+			['2w', '14d'],
+			['14d', '14d'],
+			['3m', '3m'],
+			['1y', '1y'],
+		])('should pass forgetAge %s to --keep-within as %s', async (forgetAge, expected) => {
+			await handler.prune(
+				'plan-1',
+				{ ...baseOptions, settings: { encryption: true, prune: { policy: 'forgetByAge', forgetAge } } },
+				false
+			);
+
+			const args: string[] = mockRunResticCommand.mock.calls[0][0];
+			expect(args[args.indexOf('--keep-within') + 1]).toBe(expected);
+		});
+
 		it('should treat forgetByDate as unknown policy (no policy args, keep-last 1 failsafe)', async () => {
 			const optionsWithDate = {
 				...baseOptions,
