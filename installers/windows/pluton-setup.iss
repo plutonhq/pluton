@@ -35,6 +35,7 @@ SolidCompression=yes
 WizardStyle=modern
 WizardImageFile=sidebar.png
 SetupIconFile=setup.ico
+ChangesEnvironment=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -70,6 +71,10 @@ Source: "..\..\dist\executables\pluton-win-x64\drizzle\*"; DestDir: "{app}\drizz
 ; NSSM for service management (Assumes you have downloaded nssm.exe to installers/windows/tools/)
 Source: "tools\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 
+; CLI wrappers that run restic/rclone with the Pluton configuration
+Source: "prestic.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "prclone.bat"; DestDir: "{app}"; Flags: ignoreversion
+
 ; Visual C++ Redistributable (required for native Node.js modules like better-sqlite3)
 ; Download from: https://aka.ms/vs/17/release/vc_redist.x64.exe
 Source: "tools\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: ignoreversion deleteafterinstall; Check: not IsVCRedistInstalled
@@ -87,6 +92,8 @@ Name: "{group}\Uninstall Pluton"; Filename: "{uninstallexe}"
 [Registry]
 ; Set the data directory environment variable
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "PLUTON_DATA_DIR"; ValueData: "{commonappdata}\{#MyAppName}"; Flags: uninsdeletevalue
+; Add the install directory to the system PATH so prestic/prclone work in any terminal (removed in CurUninstallStepChanged)
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; Flags: preservestringtype; Check: NeedsAddPath('{app}')
 
 
 [Run]
@@ -156,6 +163,68 @@ begin
   begin
     Log('VC++ Redistributable not found - will install');
   end;
+end;
+
+const
+  EnvironmentKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+
+function NormalizePathEntry(Value: String): String;
+begin
+  Result := Uppercase(RemoveBackslashUnlessRoot(Trim(Value)));
+end;
+
+// Returns True if Dir is in PathValue; NewPath gets PathValue without Dir
+function FilterPathEntry(PathValue, Dir: String; var NewPath: String): Boolean;
+var
+  Entry: String;
+  P: Integer;
+  First: Boolean;
+begin
+  Result := False;
+  First := True;
+  NewPath := '';
+  Dir := NormalizePathEntry(Dir);
+  PathValue := PathValue + ';';
+  while PathValue <> '' do
+  begin
+    P := Pos(';', PathValue);
+    Entry := Copy(PathValue, 1, P - 1);
+    Delete(PathValue, 1, P);
+    if NormalizePathEntry(Entry) = Dir then
+      Result := True
+    else
+    begin
+      if not First then
+        NewPath := NewPath + ';';
+      NewPath := NewPath + Entry;
+      First := False;
+    end;
+  end;
+end;
+
+function NeedsAddPath(Dir: String): Boolean;
+var
+  PathValue, NewPath: String;
+begin
+  if not RegQueryStringValue(HKLM, EnvironmentKey, 'Path', PathValue) then
+    Result := True
+  else
+    Result := not FilterPathEntry(PathValue, ExpandConstant(Dir), NewPath);
+end;
+
+procedure RemovePath(Dir: String);
+var
+  PathValue, NewPath: String;
+begin
+  if RegQueryStringValue(HKLM, EnvironmentKey, 'Path', PathValue) then
+    if FilterPathEntry(PathValue, Dir, NewPath) then
+      RegWriteExpandStringValue(HKLM, EnvironmentKey, 'Path', NewPath);
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+    RemovePath(ExpandConstant('{app}'));
 end;
 
 // Check if service exists by querying its status

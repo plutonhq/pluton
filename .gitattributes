@@ -1,2 +1,5 @@
 # Force LF line endings for git hooks (required for shebang on Windows)
 .githooks/* text eol=lf
+
+# Batch files need CRLF line endings
+*.bat text eol=crlf
