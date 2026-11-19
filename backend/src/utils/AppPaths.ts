@@ -152,6 +152,13 @@ class AppPaths {
 				fs.mkdirSync(dir, { recursive: true });
 			} catch (error: any) {
 				if (error.code !== 'EEXIST') {
+					// Non-elevated Windows shells cannot open the admin-only data dir; exit without a stack dump
+					if (process.platform === 'win32' && (error.code === 'EPERM' || error.code === 'EACCES')) {
+						console.error(
+							`FATAL: Access denied to ${dir}. Open Command Prompt or PowerShell with "Run as administrator" and try again.`
+						);
+						process.exit(1);
+					}
 					console.error(
 						this.isLinuxRuntime
 							? `FATAL: Could not create directory ${dir}. Check that the installer created it and that it is owned by the pluton user.`

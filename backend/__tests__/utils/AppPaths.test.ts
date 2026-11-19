@@ -245,6 +245,7 @@ describe('AppPaths', () => {
 			// Arrange
 			process.env.IS_DOCKER = 'true';
 			process.env.NODE_ENV = 'production';
+			Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
 			const mockFs = require('fs');
 			mockFs.existsSync.mockReturnValue(false);
 			const permissionError: any = new Error('Permission denied');
@@ -265,6 +266,40 @@ describe('AppPaths', () => {
 
 			consoleErrorSpy.mockRestore();
 		});
+
+		it.each(['EPERM', 'EACCES'])(
+			'should ask for an Administrator shell and exit on Windows %s error',
+			code => {
+				// Arrange
+				process.env.IS_DOCKER = 'true';
+				process.env.NODE_ENV = 'production';
+				Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+				const mockFs = require('fs');
+				mockFs.existsSync.mockReturnValue(false);
+				const permissionError: any = new Error('operation not permitted');
+				permissionError.code = code;
+				mockFs.mkdirSync.mockImplementation(() => {
+					throw permissionError;
+				});
+				const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+				const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {
+					throw new Error('process.exit');
+				});
+
+				// Act & Assert
+				expect(() => {
+					require('../../src/utils/AppPaths');
+				}).toThrow('process.exit');
+
+				expect(exitSpy).toHaveBeenCalledWith(1);
+				expect(consoleErrorSpy).toHaveBeenCalledWith(
+					expect.stringContaining('Run as administrator')
+				);
+
+				exitSpy.mockRestore();
+				consoleErrorSpy.mockRestore();
+			}
+		);
 	});
 
 	describe('rclone.conf Creation', () => {
