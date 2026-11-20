@@ -67,6 +67,20 @@ export function buildResticRestoreCommand(request: NormalizedRestoreRequest): {
 	args: string[];
 	env: Record<string, string>;
 } {
+	// Prevent accidental deletion of the entire filesystem when restoring to '/' with --delete.
+   // With target '/', restic --delete removes everything outside the restored paths.
+	const rootDelete = request.delete && request.target === '/';
+	if (rootDelete && request.includes.length === 0 && request.excludes.length > 0) {
+		throw new Error('Delete needs selected items, not cleared items. Select the items to restore.');
+	}
+	const includes =
+		rootDelete && request.includes.length === 0
+			? (request.sources || []).filter(source => !source.startsWith('ip#'))
+			: request.includes;
+	if (rootDelete && includes.includes('/')) {
+		throw new Error('Delete cannot restore the whole disk. Select the items to restore.');
+	}
+
 	const overwriteArgs = request.overwrite === 'always' ? [] : ['--overwrite', request.overwrite];
 	const resticArgs = [
 		'restore',
@@ -80,7 +94,7 @@ export function buildResticRestoreCommand(request: NormalizedRestoreRequest): {
 		'--json',
 	];
 
-	for (const item of request.includes) {
+	for (const item of includes) {
 		resticArgs.push('--include', escapeResticPattern(item));
 	}
 	for (const item of request.excludes) {
