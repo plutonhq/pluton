@@ -286,39 +286,52 @@ describe('RestoreHandler', () => {
 			);
 		});
 
-		it('should handle cancellation during execution', async () => {
-			handler['cancelledRestores'].add('restore-1');
-
-			mockGetSnapshotByTag.mockResolvedValueOnce({
-				success: true,
-				result: mockSnapshot,
-			});
-
-			// Mock dry run
-			mockRunResticCommand.mockResolvedValueOnce(
-				JSON.stringify({
-					message_type: 'summary',
-					total_files: 10,
-					files_restored: 10,
-					total_bytes: 1000,
-					bytes_restored: 1000,
-				})
-			);
-
-			// Emit restoreCreated event
+		it('should not retry a restore that was cancelled while restic ran', async () => {
+			const errorListener = jest.fn();
+			emitter.on('restore_error', errorListener);
+			mockRunResticCommand
+				.mockResolvedValueOnce(
+					JSON.stringify({
+						message_type: 'summary',
+						total_files: 10,
+						files_restored: 10,
+						total_bytes: 1000,
+						bytes_restored: 1000,
+					})
+				)
+				.mockImplementationOnce(async () => {
+					await handler.cancel('plan-1', 'restore-1');
+					throw new Error('Process terminated by user');
+				});
 			setTimeout(() => {
 				emitter.emit('restoreCreated', { backupId: 'backup-1', restoreId: 'restore-1' });
 			}, 10);
 
-			// When cancelled, execute returns empty string instead of throwing
 			const result = await handler.execute('backup-1', 'restore-1', baseOptions, {
 				attempts: 0,
 				maxAttempts: 3,
 			});
 
 			expect(result).toBe('');
-			handler['cancelledRestores'].delete('restore-1');
+			expect(errorListener).not.toHaveBeenCalled();
+			expect(handler['cancelledRestores'].has('restore-1')).toBe(false);
 		}, 15000);
+
+		it('should not start a restore that was cancelled while it waited for a retry', async () => {
+			await handler.cancel('plan-1', 'restore-1');
+			mockRunResticCommand.mockClear();
+			mockInitializeProgress.mockClear();
+
+			const result = await handler.execute('backup-1', 'restore-1', baseOptions, {
+				attempts: 1,
+				maxAttempts: 3,
+			});
+
+			expect(result).toBe('');
+			expect(mockRunResticCommand).not.toHaveBeenCalled();
+			expect(mockInitializeProgress).not.toHaveBeenCalled();
+			expect(handler['cancelledRestores'].has('restore-1')).toBe(false);
+		});
 
 		it('should run a new restore of a plan after a cancel of a restore that was not running', async () => {
 			await handler.cancel('plan-1', 'restore-old');

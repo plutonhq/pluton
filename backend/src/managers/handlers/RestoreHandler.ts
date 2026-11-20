@@ -62,6 +62,11 @@ export class RestoreHandler {
 	): Promise<string> {
 		const { planId } = options;
 
+		// Cancelled while it waited for a retry.
+		if (this.cancelledRestores.delete(restoreId)) {
+			return '';
+		}
+
 		// Prevent the same plan from running concurrently.
 		if (this.runningRestores.has(planId)) {
 			throw new Error(`Restore is already in progress for plan: ${planId}`);
@@ -123,7 +128,8 @@ export class RestoreHandler {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown execution error';
 
 			// If Cancelled by the user, do not retry or mark as failed.
-			const isCancelled = errorMessage.startsWith('RESTORE_CANCELLED:');
+			const isCancelled =
+				errorMessage.startsWith('RESTORE_CANCELLED:') || this.cancelledRestores.has(restoreId);
 			if (isCancelled) {
 				return '';
 			}
