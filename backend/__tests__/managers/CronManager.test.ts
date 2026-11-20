@@ -227,6 +227,21 @@ describe('CronManager', () => {
 			const savedData = JSON.parse((fs.writeFile as jest.Mock).mock.calls[1][1]);
 			expect(savedData[0].options.someData).toBe('updated');
 		});
+
+		it('keeps the old job running when the new expression is invalid', async () => {
+			const planId = 'plan-bad-update';
+			await cronManager.scheduleTask(planId, '* * * * *', { someData: 'initial' } as any, 'backup');
+			const oldCronInstance = mockCronInstances[0];
+			(Cron as unknown as jest.Mock).mockImplementationOnce(() => {
+				throw new Error('dayOfWeek () is empty');
+			});
+
+			await expect(
+				cronManager.updateSchedule(planId, '00 10 * * ', { someData: 'bad' } as any, 'backup')
+			).rejects.toThrow('Could Not Schedule Cron with Updated Settings');
+			expect(oldCronInstance.stop).not.toHaveBeenCalled();
+			expect((await cronManager.getSchedule(planId))?.[0].cronExpression).toBe('* * * * *');
+		});
 	});
 
 	describe('removeSchedule', () => {

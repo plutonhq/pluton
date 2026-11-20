@@ -106,6 +106,11 @@ describe('intervalToCron', () => {
 			expect(intervalToCron(interval)).toBe('30 10 * * 1');
 		});
 
+		it('accepts the old Thursday value "thur"', () => {
+			expect(intervalToCron({ type: 'weekly', days: 'thur', time: '10:00AM' })).toBe('00 10 * * 4');
+			expect(getIntervalLabel({ type: 'weekly', days: 'thur' })).toBe('Runs Once Per Week on Thursday');
+		});
+
 		it('should return cron for multiple days', () => {
 			const interval: PlanInterval = { type: 'weekly', days: 'mon,wed,fri', time: '8:00AM' };
 			expect(intervalToCron(interval)).toBe('00 8 * * 1,3,5');

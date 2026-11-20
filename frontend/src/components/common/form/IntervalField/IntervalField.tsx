@@ -102,11 +102,11 @@ const IntervalField = ({
                            { label: 'Monday', value: 'mon' },
                            { label: 'Tuesday', value: 'tue' },
                            { label: 'Wednesday', value: 'wed' },
-                           { label: 'Thursday', value: 'thur' },
+                           { label: 'Thursday', value: 'thu' },
                            { label: 'Friday', value: 'fri' },
                            { label: 'Saturday', value: 'sat' },
                         ]}
-                        fieldValue={fieldValue.days || 'sun'}
+                        fieldValue={fieldValue.days === 'thur' ? 'thu' : fieldValue.days || 'sun'}
                         onUpdate={(val: string) => onUpdate({ ...fieldValue, days: val })}
                      />
                   </>

@@ -201,12 +201,12 @@ export class CronManager<T extends ScheduleOptions> {
 			const scheduleToUpdate = existingSchedules.find(s => s.type === scheduleType);
 			if (scheduleToUpdate) {
 				try {
-					scheduleToUpdate.cron.stop();
 					const newCron = new Cron(cronExpression, () => {
 						if (options && typeof options === 'object' && 'taskCallback' in options) {
 							(options as any).taskCallback(id, options);
 						}
 					});
+					scheduleToUpdate.cron.stop();
 
 					if (
 						options &&

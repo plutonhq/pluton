@@ -101,6 +101,7 @@ export function getIntervalLabel(interval: PlanInterval): string {
 					tue: 'Tuesday',
 					wed: 'Wednesday',
 					thu: 'Thursday',
+					thur: 'Thursday', // Older UI versions saved Thursday as 'thur'.
 					fri: 'Friday',
 					sat: 'Saturday',
 				};
@@ -144,6 +145,8 @@ const convertDaysToDates = (days: string): string => {
 		tue: 2,
 		wed: 3,
 		thu: 4,
+		// Older UI versions saved Thursday as 'thur'.
+		thur: 4,
 		fri: 5,
 		sat: 6,
 	};

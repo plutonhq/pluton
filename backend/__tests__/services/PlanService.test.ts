@@ -444,6 +444,7 @@ describe('PlanService', () => {
 
 			// Act & Assert
 			await expect(planService.updatePlan(planId, updateData)).rejects.toThrow('Strategy failed');
+			expect(mockPlanStore.update).toHaveBeenLastCalledWith(planId, currentPlan);
 		});
 
 		it('should throw a validation error for invalid update data', async () => {

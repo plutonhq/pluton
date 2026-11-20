@@ -322,10 +322,8 @@ export class PlanService {
 			const strategy = this.getStrategy(updatedPlan) as BackupStrategy;
 			const updateRes = await strategy.updateBackup(planId, backupScheduleOptions);
 			if (!updateRes.success) {
-				if (updatedPlan.sourceType === 'device' && updatedPlan.sourceId !== 'main') {
-					// Revert the update in the database if remote update fails to avoid inconsistencies
-					await this.planStore.update(planId, currentPlan);
-				}
+				// Revert the update in the database, so it matches the schedule that still runs
+				await this.planStore.update(planId, currentPlan);
 				throw new AppError(500, updateRes.result);
 			}
 			planLogger('update', planId).info('Backup Plan updated by User.');
@@ -334,6 +332,7 @@ export class PlanService {
 			if (error instanceof AppError) {
 				throw error; // Re-throw as is
 			}
+			await this.planStore.update(planId, currentPlan);
 			throw new AppError(500, error?.message || 'Failed to update plan');
 		}
 	}
