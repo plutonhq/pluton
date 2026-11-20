@@ -237,6 +237,19 @@ describe('StorageService', () => {
 			expect(mockStorageStore.create).not.toHaveBeenCalled();
 		});
 
+		it.each(['local', 'Local', 'Local Storage', ' new b2 storage '])(
+			'refuses the taken or reserved name "%s"',
+			async name => {
+				mockStorageStore.getAll.mockResolvedValue([{ id: 's1', name: 'New B2 Storage' } as Storage]);
+
+				await expect(storageService.createStorage({ ...storagePayload, name })).rejects.toHaveProperty(
+					'statusCode',
+					409
+				);
+				expect(mockStorageManager.createRemote).not.toHaveBeenCalled();
+			}
+		);
+
 		it('should throw an AppError if payload validation fails', async () => {
 			const invalidPayload = { ...storagePayload, name: undefined }; // 'name' is required
 
@@ -467,6 +480,27 @@ describe('StorageService', () => {
 			expect(mockStorageManager.deleteRemote).toHaveBeenCalledWith('Old Storage');
 			expect(mockStorageStore.delete).toHaveBeenCalledWith(storageId);
 			expect(result).toBe(true);
+		});
+
+		it('keeps the remote when another storage has the same name', async () => {
+			mockStorageStore.getById.mockResolvedValue(mockStorage);
+			mockPlanStore.getStoragePlans.mockResolvedValue([]);
+			mockStorageStore.getReplicationPlans = jest.fn().mockResolvedValue([]);
+			mockPlanStore.getDevicePlans.mockResolvedValue([]);
+			mockStorageStore.getAll.mockResolvedValue([mockStorage, { id: 'other', name: 'Old Storage' } as Storage]);
+			mockStorageStore.delete.mockResolvedValue(true);
+
+			await expect(storageService.deleteStorage(storageId)).resolves.toBe(true);
+			expect(mockStorageManager.deleteRemote).not.toHaveBeenCalled();
+			expect(mockStorageStore.delete).toHaveBeenCalledWith(storageId);
+		});
+
+		it('refuses to delete the built-in Local Storage', async () => {
+			mockStorageStore.getById.mockResolvedValue({ id: 'local', name: 'Local Storage' } as Storage);
+
+			await expect(storageService.deleteStorage('local')).rejects.toHaveProperty('statusCode', 400);
+			expect(mockStorageManager.deleteRemote).not.toHaveBeenCalled();
+			expect(mockStorageStore.delete).not.toHaveBeenCalled();
 		});
 
 		it('should still succeed when getDevicePlans returns null', async () => {

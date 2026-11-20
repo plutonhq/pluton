@@ -234,6 +234,16 @@ export class StorageService {
 
 			const { type, name, authType, credentials, settings, tags } = parsedStorageData;
 			const storageName = (name || '').trim();
+			// The name is the rclone remote name, and 'local' is the built-in remote.
+			const lowerName = storageName.toLowerCase();
+			const existing = (await this.storageStore.getAll()) || [];
+			if (
+				lowerName === 'local' ||
+				lowerName === 'local storage' ||
+				existing.some(s => s.name.trim().toLowerCase() === lowerName)
+			) {
+				throw new AppError(409, `A storage named "${storageName}" already exists or the name is reserved.`);
+			}
 			// Create the remote storage with rclone
 			const remoteResult = await this.storageManager.createRemote(
 				type as string,
@@ -402,6 +412,9 @@ export class StorageService {
 			if (!storage) {
 				throw new NotFoundError('Storage not found');
 			}
+			if (storage.id === 'local') {
+				throw new AppError(400, 'The built-in Local Storage cannot be deleted.');
+			}
 
 			const storagePlans = await this.planStore.getStoragePlans(id);
 			const replicationPlans = await this.storageStore.getReplicationPlans(id);
@@ -441,9 +454,15 @@ export class StorageService {
 				);
 			}
 
-			const remoteResult = await this.storageManager.deleteRemote(storage.name);
-			if (!remoteResult.success) {
-				throw new AppError(500, remoteResult.result || 'Failed to delete remote storage');
+			// Older installs can have two rows with one remote name. Keep the remote for the other row.
+			const shared = (await this.storageStore.getAll())?.some(
+				s => s.id !== id && s.name === storage.name
+			);
+			if (!shared) {
+				const remoteResult = await this.storageManager.deleteRemote(storage.name);
+				if (!remoteResult.success) {
+					throw new AppError(500, remoteResult.result || 'Failed to delete remote storage');
+				}
 			}
 
 			await this.storageStore.delete(id);
