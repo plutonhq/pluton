@@ -557,8 +557,7 @@ describe('BackupHandler', () => {
 			expect(resticArgs).toContain('rclone:test-storage:backups/test');
 
 			// Compression
-			expect(resticArgs).toContain('--compression');
-			expect(resticArgs).toContain('auto');
+			expect(resticArgs[resticArgs.indexOf('--compression') + 1]).toBe('auto');
 
 			// Performance
 			expect(resticArgs).toContain('--pack-size');
@@ -643,7 +642,7 @@ describe('BackupHandler', () => {
 			expect(resticArgs).not.toContain('--insecure-no-password');
 		});
 
-		it('handles missing compression', () => {
+		it('sends --compression off when compression is disabled', () => {
 			const noCompressionOptions = {
 				...baseOptions,
 				settings: {
@@ -656,7 +655,7 @@ describe('BackupHandler', () => {
 				noCompressionOptions as any
 			);
 
-			expect(resticArgs).not.toContain('--compression');
+			expect(resticArgs[resticArgs.indexOf('--compression') + 1]).toBe('off');
 		});
 
 		it('handles minimal performance settings', () => {

@@ -915,7 +915,7 @@ export class BackupHandler {
 			resticArgs.push('-r', repoPath);
 		}
 
-		if (compression) resticArgs.push('--compression', 'auto'); // auto, max, off
+		resticArgs.push('--compression', compression ? 'auto' : 'off');
 		if (performance) {
 			if (performance.maxProcessor) resticEnv.GOMAXPROCS = performance.maxProcessor.toString();
 			if (performance.packSize) resticArgs.push('--pack-size', performance.packSize);
