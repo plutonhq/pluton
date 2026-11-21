@@ -197,7 +197,6 @@ export function spawnRcloneAuthorize(session: RcloneAuthSession, timeoutMs: numb
 		// onProgress (stdout)
 		(data: Buffer) => {
 			output += data.toString();
-			console.log('[oauth] stdout:', data.toString());
 
 			const token = extractToken(output);
 			if (token) {

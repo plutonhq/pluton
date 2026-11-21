@@ -145,7 +145,6 @@ export class SettingsService {
 			} else {
 				const notificationClass = new TestEmailNotification({ integrationType, appTitle });
 				const senderChannel = await this.notificationChannelResolver.getChannel(integrationType);
-				console.log('senderChannel :', senderChannel);
 				sendRes = await senderChannel.send(notificationClass, {
 					emails: test.email,
 				});

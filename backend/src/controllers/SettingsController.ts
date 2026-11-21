@@ -88,7 +88,6 @@ export class SettingsController {
 
 	async validateIntegration(req: Request, res: Response): Promise<void> {
 		if (!req.body.settingsID || !req.body.type || !req.body.settings || !req.body.test) {
-			console.log('req.body :', req.body);
 			res.status(400).json({
 				success: false,
 				error: 'Integration Payload Missing.',
