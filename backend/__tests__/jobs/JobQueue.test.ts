@@ -20,6 +20,10 @@ describe('JobQueue', () => {
 	let jobQueue: typeof jobQueueInstance;
 	let uidCounter: number;
 
+	const anyJob = () => true;
+	const next = () => jobQueue.getNext(anyJob);
+	const runningNames = () => jobQueue.getRunning().map(j => j.name);
+
 	beforeEach(() => {
 		jest.clearAllMocks();
 		uidCounter = 0;
@@ -33,7 +37,7 @@ describe('JobQueue', () => {
 
 		// Clear the queue state - access private properties for testing
 		(jobQueue as any).queue = [];
-		(jobQueue as any).runningJob = null;
+		(jobQueue as any).running = new Map();
 	});
 
 	describe('singleton instance', () => {
@@ -46,7 +50,7 @@ describe('JobQueue', () => {
 		it('adds job to queue with default parameters', () => {
 			jobQueue.add('TestJob', { data: 'test' });
 
-			const job = jobQueue.getNext();
+			const job = next();
 			expect(job).toBeDefined();
 			expect(job?.name).toBe('TestJob');
 			expect(job?.payload).toEqual({ data: 'test' });
@@ -58,7 +62,7 @@ describe('JobQueue', () => {
 		it('adds job with custom parameters', () => {
 			jobQueue.add('CustomJob', { id: 1 }, 5, 120000);
 
-			const job = jobQueue.getNext();
+			const job = next();
 			expect(job?.maxAttempts).toBe(5);
 			expect(job?.retryDelay).toBe(120000);
 		});
@@ -67,8 +71,8 @@ describe('JobQueue', () => {
 			jobQueue.add('DuplicateJob', { id: 1 });
 			jobQueue.add('DuplicateJob', { id: 1 });
 
-			const job1 = jobQueue.getNext();
-			const job2 = jobQueue.getNext();
+			const job1 = next();
+			const job2 = next();
 
 			expect(job1).toBeDefined();
 			expect(job2).toBeNull();
@@ -78,9 +82,8 @@ describe('JobQueue', () => {
 			jobQueue.add('Job', { id: 1 });
 			jobQueue.add('Job', { id: 2 });
 
-			const job1 = jobQueue.getNext();
-			jobQueue.completeJob();
-			const job2 = jobQueue.getNext();
+			const job1 = next();
+			const job2 = next();
 
 			expect(job1?.payload).toEqual({ id: 1 });
 			expect(job2?.payload).toEqual({ id: 2 });
@@ -88,19 +91,29 @@ describe('JobQueue', () => {
 
 		it('does not add job if same job is currently running', () => {
 			jobQueue.add('RunningJob', { id: 1 });
-			const runningJob = jobQueue.getNext();
+			const runningJob = next();
 
 			jobQueue.add('RunningJob', { id: 1 });
-			const nextJob = jobQueue.getNext();
+			const nextJob = next();
 
 			expect(runningJob).toBeDefined();
 			expect(nextJob).toBeNull();
 		});
 
+		it('adds the same job again after the running one completes', () => {
+			jobQueue.add('RunningJob', { id: 1 });
+			const first = next()!;
+			jobQueue.completeJob(first);
+
+			jobQueue.add('RunningJob', { id: 1 });
+
+			expect(next()?.id).toBe('uid-2');
+		});
+
 		it('adds job without payload', () => {
 			jobQueue.add('NoPayloadJob');
 
-			const job = jobQueue.getNext();
+			const job = next();
 			expect(job?.payload).toEqual({});
 		});
 
@@ -108,9 +121,8 @@ describe('JobQueue', () => {
 			jobQueue.add('Job1');
 			jobQueue.add('Job2');
 
-			const job1 = jobQueue.getNext();
-			jobQueue.completeJob();
-			const job2 = jobQueue.getNext();
+			const job1 = next();
+			const job2 = next();
 
 			expect(job1?.id).toBe('uid-1');
 			expect(job2?.id).toBe('uid-2');
@@ -122,7 +134,7 @@ describe('JobQueue', () => {
 			jobQueue.add('NormalJob');
 			jobQueue.addPriorityJob('PriorityJob');
 
-			const job = jobQueue.getNext();
+			const job = next();
 			expect(job?.name).toBe('PriorityJob');
 		});
 
@@ -130,8 +142,8 @@ describe('JobQueue', () => {
 			jobQueue.addPriorityJob('PriorityJob', { id: 1 });
 			jobQueue.addPriorityJob('PriorityJob', { id: 1 });
 
-			const job1 = jobQueue.getNext();
-			const job2 = jobQueue.getNext();
+			const job1 = next();
+			const job2 = next();
 
 			expect(job1).toBeDefined();
 			expect(job2).toBeNull();
@@ -140,7 +152,7 @@ describe('JobQueue', () => {
 		it('adds priority job with custom parameters', () => {
 			jobQueue.addPriorityJob('UrgentJob', { urgent: true }, 10, 30000);
 
-			const job = jobQueue.getNext();
+			const job = next();
 			expect(job?.maxAttempts).toBe(10);
 			expect(job?.retryDelay).toBe(30000);
 		});
@@ -148,15 +160,7 @@ describe('JobQueue', () => {
 
 	describe('getNext', () => {
 		it('returns null when queue is empty', () => {
-			const job = jobQueue.getNext();
-			expect(job).toBeNull();
-		});
-
-		it('returns null when job is already running', () => {
-			jobQueue.add('Job1');
-			jobQueue.getNext();
-
-			const job = jobQueue.getNext();
+			const job = next();
 			expect(job).toBeNull();
 		});
 
@@ -164,45 +168,113 @@ describe('JobQueue', () => {
 			jobQueue.add('Job1');
 			jobQueue.add('Job2');
 
-			const job = jobQueue.getNext();
+			const job = next();
 			expect(job?.name).toBe('Job1');
 		});
 
-		it('removes job from queue when returned', () => {
+		it('removes job from queue and marks it as running', () => {
 			jobQueue.add('Job1');
 			jobQueue.add('Job2');
 
-			jobQueue.getNext();
-			jobQueue.completeJob();
-			const job = jobQueue.getNext();
+			const job1 = next();
+			const job2 = next();
 
-			expect(job?.name).toBe('Job2');
+			expect(job1?.name).toBe('Job1');
+			expect(job2?.name).toBe('Job2');
+			expect(runningNames()).toEqual(['Job1', 'Job2']);
+			expect(next()).toBeNull();
 		});
 
-		it('marks job as running', () => {
+		it('skips a job the predicate rejects and takes a later one', () => {
 			jobQueue.add('Job1');
-			const job1 = jobQueue.getNext();
-			const job2 = jobQueue.getNext();
+			jobQueue.add('Job2');
+			jobQueue.add('Job3');
 
-			expect(job1).toBeDefined();
-			expect(job2).toBeNull();
+			const job = jobQueue.getNext(j => j.name !== 'Job1');
+
+			expect(job?.name).toBe('Job2');
+			expect(runningNames()).toEqual(['Job2']);
+			// Job1 stays at the head of the queue.
+			expect(next()?.name).toBe('Job1');
+		});
+
+		it('returns null when the predicate rejects every job', () => {
+			jobQueue.add('Job1');
+			jobQueue.add('Job2');
+
+			expect(jobQueue.getNext(() => false)).toBeNull();
+			expect(jobQueue.getRunning()).toEqual([]);
+			expect(jobQueue.hasPending('Job1')).toBe(true);
+		});
+
+		it('passes the running jobs to the predicate', () => {
+			jobQueue.add('Job1');
+			jobQueue.add('Job2');
+			const job1 = next();
+
+			const canStart = jest.fn(() => true);
+			jobQueue.getNext(canStart);
+
+			expect(canStart).toHaveBeenCalledWith(expect.objectContaining({ name: 'Job2' }), [job1]);
+		});
+	});
+
+	describe('getRunning', () => {
+		it('returns an empty list when no job runs', () => {
+			expect(jobQueue.getRunning()).toEqual([]);
+		});
+
+		it('returns a copy that does not change the running jobs', () => {
+			jobQueue.add('Job1');
+			next();
+
+			jobQueue.getRunning().pop();
+
+			expect(runningNames()).toEqual(['Job1']);
+		});
+	});
+
+	describe('hasPending', () => {
+		it('sees a queued job', () => {
+			jobQueue.add('Job1');
+			expect(jobQueue.hasPending('Job1')).toBe(true);
+		});
+
+		it('sees a running job', () => {
+			jobQueue.add('Job1');
+			next();
+
+			expect(jobQueue.hasPending('Job1')).toBe(true);
+		});
+
+		it('returns false after the job completes', () => {
+			jobQueue.add('Job1');
+			const job = next()!;
+			jobQueue.completeJob(job);
+
+			expect(jobQueue.hasPending('Job1')).toBe(false);
 		});
 	});
 
 	describe('completeJob', () => {
-		it('clears running job', () => {
+		it('removes only the given running job', () => {
 			jobQueue.add('Job1');
-			jobQueue.getNext();
-			jobQueue.completeJob();
-
 			jobQueue.add('Job2');
-			const nextJob = jobQueue.getNext();
+			const job1 = next()!;
+			next();
 
-			expect(nextJob?.name).toBe('Job2');
+			jobQueue.completeJob(job1);
+
+			expect(runningNames()).toEqual(['Job2']);
 		});
 
-		it('does nothing if no job is running', () => {
-			expect(() => jobQueue.completeJob()).not.toThrow();
+		it('does nothing if the job is not running', () => {
+			jobQueue.add('Job1');
+			next();
+			const other = { id: 'other' } as Job;
+
+			expect(() => jobQueue.completeJob(other)).not.toThrow();
+			expect(runningNames()).toEqual(['Job1']);
 		});
 	});
 
@@ -221,53 +293,23 @@ describe('JobQueue', () => {
 			jobQueue.add('AnotherJob');
 			jobQueue.reQueue(job);
 
-			const first = jobQueue.getNext();
-			jobQueue.completeJob();
-			const second = jobQueue.getNext();
+			const first = next();
+			const second = next();
 
 			expect(first?.name).toBe('AnotherJob');
 			expect(second?.name).toBe('TestJob');
 		});
 
-		it('clears running job', () => {
+		it('removes the job from the running jobs', () => {
 			jobQueue.add('Job1');
-			const job = jobQueue.getNext()!;
-
-			jobQueue.reQueue(job);
-
 			jobQueue.add('Job2');
-			const nextJob = jobQueue.getNext();
-			expect(nextJob).toBeDefined();
-		});
-	});
+			const job1 = next()!;
+			next();
 
-	describe('requeueAtFront', () => {
-		it('adds job to front of queue', () => {
-			const job: Job = {
-				id: 'priority-1',
-				name: 'PriorityJob',
-				payload: {},
-				attempts: 0,
-				maxAttempts: 3,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
+			jobQueue.reQueue(job1);
 
-			jobQueue.add('NormalJob');
-			jobQueue.requeueAtFront(job);
-
-			const nextJob = jobQueue.getNext();
-			expect(nextJob?.name).toBe('PriorityJob');
-		});
-
-		it('clears running job', () => {
-			jobQueue.add('Job1');
-			const job = jobQueue.getNext()!;
-
-			jobQueue.requeueAtFront(job);
-
-			const nextJob = jobQueue.getNext();
-			expect(nextJob).toBeDefined();
+			expect(runningNames()).toEqual(['Job2']);
+			expect(next()?.id).toBe(job1.id);
 		});
 	});
 
@@ -307,22 +349,17 @@ describe('JobQueue', () => {
 			expect(mockCronLogger.error).toHaveBeenCalledWith(expect.stringContaining("Job 'FailJob'"));
 		});
 
-		it('clears running job on permanent failure', () => {
-			const job: Job = {
-				id: 'fail-3',
-				name: 'FailJob',
-				payload: {},
-				attempts: 5,
-				maxAttempts: 5,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
+		it('removes only that job from the running jobs on permanent failure', () => {
+			jobQueue.add('FailJob', {}, 1);
+			jobQueue.add('OtherJob');
+			const job = next()!;
+			next();
 
-			jobQueue.failJob(job);
+			const isPermanent = jobQueue.failJob(job);
 
-			jobQueue.add('NextJob');
-			const nextJob = jobQueue.getNext();
-			expect(nextJob?.name).toBe('NextJob');
+			expect(isPermanent).toBe(true);
+			expect(runningNames()).toEqual(['OtherJob']);
+			expect(jobQueue.hasPending('FailJob')).toBe(false);
 		});
 
 		it('increments attempts before checking max', () => {
@@ -388,7 +425,7 @@ describe('JobQueue', () => {
 
 			expect(removed).toBe(true);
 
-			const job = jobQueue.getNext();
+			const job = next();
 			expect(job?.payload.planId).toBe('plan-2');
 		});
 
@@ -400,17 +437,35 @@ describe('JobQueue', () => {
 			expect(removed).toBe(false);
 		});
 
-		it('removes running job if it matches', () => {
+		it('does not touch a running job', () => {
 			jobQueue.add('Backup', { planId: 'plan-1' });
-			jobQueue.getNext();
+			next();
+
+			const removed = jobQueue.remove('Backup', 'plan-1');
+
+			expect(removed).toBe(false);
+			expect(runningNames()).toEqual(['Backup']);
+			expect(jobQueue.hasPending('Backup')).toBe(true);
+		});
+
+		it('removes a queued retry but keeps the running job of the same plan', () => {
+			jobQueue.add('Backup', { planId: 'plan-1' });
+			next();
+			jobQueue.reQueue({
+				id: 'retry-1',
+				name: 'Backup',
+				payload: { planId: 'plan-1', attempt: 2 },
+				attempts: 1,
+				maxAttempts: 3,
+				retryDelay: 60000,
+				lastAttempt: 0,
+			});
 
 			const removed = jobQueue.remove('Backup', 'plan-1');
 
 			expect(removed).toBe(true);
-
-			jobQueue.add('NextJob');
-			const nextJob = jobQueue.getNext();
-			expect(nextJob?.name).toBe('NextJob');
+			expect(runningNames()).toEqual(['Backup']);
+			expect(next()).toBeNull();
 		});
 
 		it('does not remove job with different name', () => {
@@ -421,7 +476,7 @@ describe('JobQueue', () => {
 
 			expect(removed).toBe(true);
 
-			const job = jobQueue.getNext();
+			const job = next();
 			expect(job?.name).toBe('Restore');
 		});
 

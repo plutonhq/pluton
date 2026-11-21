@@ -5,6 +5,7 @@ import { Job } from '../JobQueue';
 
 export class BackupTask extends Task {
 	name = 'Backup';
+	isBackup = true;
 
 	constructor(private backupManager: BaseBackupManager) {
 		super();

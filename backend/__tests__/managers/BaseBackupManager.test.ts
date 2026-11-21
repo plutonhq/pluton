@@ -14,6 +14,7 @@ const mockJobQueue = {
 	add: jest.fn(),
 	addPriorityJob: jest.fn(),
 	remove: jest.fn(),
+	getRunning: jest.fn(() => []),
 };
 
 let backupHandlerExecuteMock = jest.fn();

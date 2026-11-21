@@ -14,7 +14,7 @@ export interface Job {
 class JobQueue {
 	private static instance: JobQueue;
 	private queue: Job[] = [];
-	private runningJob: Job | null = null;
+	private running = new Map<string, Job>();
 
 	private constructor() {}
 
@@ -45,47 +45,44 @@ class JobQueue {
 	public reQueue(job: Job): void {
 		// cronLogger.warn(`Re-queuing job '${job.name}' for attempt ${job.attempts + 2}.`);
 		// Simply push to the end. The JobProcessor will handle the delay.
+		this.running.delete(job.id);
 		this.queue.push(job);
-		this.runningJob = null;
 	}
 
 	/**
-	 * Adds a job back to the front of the queue.
-	 * Used when a job cannot be started due to a temporary constraint like concurrency.
+	 * Takes the first queued job that `canStart` accepts and marks it as running.
+	 * Returns null if no job can start now.
 	 */
-	public requeueAtFront(job: Job): void {
-		this.queue.unshift(job);
-		this.runningJob = null;
-	}
-
-	/**
-	 * Retrieves the next available job and marks it as running.
-	 * Returns null if no job is ready to run.
-	 */
-	public getNext(): Job | null {
-		if (this.runningJob || this.queue.length === 0) {
+	public getNext(canStart: (job: Job, running: Job[]) => boolean): Job | null {
+		const running = this.getRunning();
+		const index = this.queue.findIndex(job => canStart(job, running));
+		if (index === -1) {
 			return null;
 		}
+		const [job] = this.queue.splice(index, 1);
+		this.running.set(job.id, job);
+		return job;
+	}
 
-		// Set the next job in the queue as the running one and remove it from the queue
-		this.runningJob = this.queue.shift()!;
-		return this.runningJob;
+	public getRunning(): Job[] {
+		return [...this.running.values()];
 	}
 
 	/**
 	 * Whether a job of this name is queued or currently running.
 	 */
 	public hasPending(jobName: string): boolean {
-		return this.runningJob?.name === jobName || this.queue.some(job => job.name === jobName);
+		return (
+			this.getRunning().some(job => job.name === jobName) ||
+			this.queue.some(job => job.name === jobName)
+		);
 	}
 
 	/**
-	 * Marks the currently running job as complete.
+	 * Marks a running job as complete.
 	 */
-	public completeJob(): void {
-		if (this.runningJob) {
-			this.runningJob = null;
-		}
+	public completeJob(job: Job): void {
+		this.running.delete(job.id);
 	}
 
 	/**
@@ -103,8 +100,7 @@ class JobQueue {
 			cronLogger.error(
 				`Job '${job.name}' for plan '${job.payload?.planId}' failed after ${job.attempts} attempts.`
 			);
-			// Clear the running job
-			this.runningJob = null;
+			this.running.delete(job.id);
 			return true; // It has permanently failed.
 		}
 	}
@@ -119,12 +115,9 @@ class JobQueue {
 		retryDelay: number,
 		isPriority: boolean
 	): void {
-		const isPresent =
-			this.queue.some(
-				j => j.name === jobName && JSON.stringify(j.payload) === JSON.stringify(payload)
-			) ||
-			(this.runningJob?.name === jobName &&
-				JSON.stringify(this.runningJob?.payload) === JSON.stringify(payload));
+		const isSame = (j: Job) =>
+			j.name === jobName && JSON.stringify(j.payload) === JSON.stringify(payload);
+		const isPresent = this.queue.some(isSame) || this.getRunning().some(isSame);
 
 		if (isPresent) {
 			return;
@@ -148,31 +141,16 @@ class JobQueue {
 	}
 
 	/**
-	 * Removes a job from the queue based on its name and a planId in its payload.
-	 * This is used to cancel pending retries.
+	 * Removes queued jobs based on their name and a planId in their payload.
+	 * This is used to cancel pending retries. A running job is not touched.
 	 * @param jobName The name of the job to remove (e.g., 'Backup').
 	 * @param planId The planId to match in the job's payload.
 	 * @returns {boolean} True if a job was removed, false otherwise.
 	 */
 	public remove(jobName: string, planId: string): boolean {
 		const initialQueueLength = this.queue.length;
-
-		// Filter out the job from the pending queue
 		this.queue = this.queue.filter(j => !(j.name === jobName && j.payload?.planId === planId));
-
-		const wasRemovedFromQueue = this.queue.length < initialQueueLength;
-
-		// Also check if the currently "running" job is the one to be removed.
-		// This handles the case where the job is just about to be processed again.
-		let wasRemovedFromRunning = false;
-		if (this.runningJob?.name === jobName && this.runningJob?.payload?.planId === planId) {
-			this.runningJob = null;
-			wasRemovedFromRunning = true;
-		}
-
-		const jobWasRemoved = wasRemovedFromQueue || wasRemovedFromRunning;
-
-		return jobWasRemoved;
+		return this.queue.length < initialQueueLength;
 	}
 }
 

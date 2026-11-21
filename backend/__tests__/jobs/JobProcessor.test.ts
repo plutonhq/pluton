@@ -1,10 +1,4 @@
 // Mock dependencies
-const mockJobQueueGetNext = jest.fn();
-const mockJobQueueReQueue = jest.fn();
-const mockJobQueueRequeueAtFront = jest.fn();
-const mockJobQueueCompleteJob = jest.fn();
-const mockJobQueueFailJob = jest.fn();
-
 const mockLogger = {
 	info: jest.fn(),
 	debug: jest.fn(),
@@ -18,18 +12,14 @@ const mockConfigService = {
 	},
 };
 
-jest.mock('../../src/jobs/JobQueue', () => ({
-	jobQueue: {
-		getNext: () => mockJobQueueGetNext(),
-		reQueue: (job: any) => mockJobQueueReQueue(job),
-		requeueAtFront: (job: any) => mockJobQueueRequeueAtFront(job),
-		completeJob: () => mockJobQueueCompleteJob(),
-		failJob: (job: any) => mockJobQueueFailJob(job),
-	},
+let mockUid = 0;
+jest.mock('../../src/utils/helpers', () => ({
+	generateUID: () => `uid-${++mockUid}`,
 }));
 
 jest.mock('../../src/utils/logger', () => ({
 	logger: mockLogger,
+	cronLogger: mockLogger,
 }));
 
 jest.mock('../../src/jobs/SystemTaskManager', () => ({
@@ -41,23 +31,38 @@ jest.mock('../../src/services/ConfigService', () => ({
 }));
 
 import { jobProcessor } from '../../src/jobs/JobProcessor';
-import { Job } from '../../src/jobs/JobQueue';
+import { jobQueue, Job } from '../../src/jobs/JobQueue';
 import { Task } from '../../src/jobs/tasks/AbstractTask';
 
-// Helper function to process one cycle of the job processor
+async function flush(): Promise<void> {
+	for (let i = 0; i < 20; i++) await Promise.resolve();
+}
+
+// Runs one processor tick and lets the started jobs settle.
 async function processOneJob(): Promise<void> {
-	// Manually call the private processQueue method
-	await (jobProcessor as any).processQueue();
+	(jobProcessor as any).processQueue();
+	await flush();
+}
+
+function deferred() {
+	let resolve!: () => void;
+	let reject!: (error: unknown) => void;
+	const promise = new Promise<void>((res, rej) => {
+		resolve = res;
+		reject = rej;
+	});
+	return { promise, resolve, reject };
 }
 
 class MockTask extends Task {
 	name = 'MockTask';
 	executeFunc: jest.Mock;
 
-	constructor(name: string, executeFunc: jest.Mock) {
+	constructor(name: string, executeFunc: jest.Mock, isBackup = false) {
 		super();
 		this.name = name;
 		this.executeFunc = executeFunc;
+		this.isBackup = isBackup;
 	}
 
 	async run(job?: Job): Promise<void> {
@@ -65,31 +70,46 @@ class MockTask extends Task {
 	}
 }
 
+// Puts a job straight into the queue, so tests control every field.
+function queueJob(name: string, payload: any = {}, overrides: Partial<Job> = {}): Job {
+	const job: Job = {
+		id: `${name}-${payload.planId ?? 'none'}-${++mockUid}`,
+		name,
+		payload,
+		attempts: 0,
+		maxAttempts: 3,
+		retryDelay: 60000,
+		lastAttempt: 0,
+		...overrides,
+	};
+	jobQueue.reQueue(job);
+	return job;
+}
+
+const runningNames = () => jobQueue.getRunning().map(j => `${j.name}:${j.payload?.planId}`);
+
 describe('JobProcessor', () => {
 	let mockTask: MockTask;
 	let mockExecute: jest.Mock;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		jest.restoreAllMocks();
 		jest.useFakeTimers();
 
 		mockExecute = jest.fn().mockResolvedValue(undefined);
 		mockTask = new MockTask('TestTask', mockExecute);
+		mockConfigService.config.MAX_CONCURRENT_BACKUPS = 2;
 
 		// Reset processor state
 		jobProcessor.stop();
 
 		// Clear tasks map - access private property for testing
 		(jobProcessor as any).tasks = new Map();
-		(jobProcessor as any).activeBackupJobs = 0;
-		(jobProcessor as any).isRunning = false;
 		(jobProcessor as any).intervalId = null;
 
-		mockJobQueueGetNext.mockReturnValue(null);
-		mockJobQueueFailJob.mockReturnValue(false);
-		mockJobQueueCompleteJob.mockReturnValue(undefined);
-		mockJobQueueReQueue.mockReturnValue(undefined);
-		mockJobQueueRequeueAtFront.mockReturnValue(undefined);
+		(jobQueue as any).queue = [];
+		(jobQueue as any).running = new Map();
 	});
 
 	afterEach(async () => {
@@ -106,12 +126,9 @@ describe('JobProcessor', () => {
 	});
 
 	describe('processing log level', () => {
-		const makeJob = (name: string): Job =>
-			({ name, attempts: 0, maxAttempts: 1, retryDelay: 0 }) as Job;
-
 		it('logs system jobs at debug level', async () => {
 			jobProcessor.addTask(new MockTask('SelfBackup', mockExecute));
-			mockJobQueueGetNext.mockReturnValue(makeJob('SelfBackup'));
+			queueJob('SelfBackup');
 
 			await processOneJob();
 
@@ -127,7 +144,7 @@ describe('JobProcessor', () => {
 
 		it('logs other jobs at info level', async () => {
 			jobProcessor.addTask(mockTask);
-			mockJobQueueGetNext.mockReturnValue(makeJob('TestTask'));
+			queueJob('TestTask');
 
 			await processOneJob();
 
@@ -155,6 +172,14 @@ describe('JobProcessor', () => {
 				'ReplicationRetry',
 				'Restore',
 			]);
+		});
+
+		it('marks only the Backup task as a backup task', () => {
+			jobProcessor.registerTasks({ backupManager: {} as any, restoreManager: {} as any });
+
+			const tasks: Map<string, Task> = (jobProcessor as any).tasks;
+			const backupTasks = [...tasks.values()].filter(t => t.isBackup).map(t => t.name);
+			expect(backupTasks).toEqual(['Backup']);
 		});
 
 		it('registers only CleanDownloadsTask without dependencies', () => {
@@ -193,11 +218,12 @@ describe('JobProcessor', () => {
 		});
 
 		it('starts with custom interval', () => {
+			const getNextSpy = jest.spyOn(jobQueue, 'getNext');
 			jobProcessor.addTask(mockTask);
 			jobProcessor.start(3000);
 
 			jest.advanceTimersByTime(3000);
-			expect(mockJobQueueGetNext).toHaveBeenCalled();
+			expect(getNextSpy).toHaveBeenCalled();
 		});
 
 		it('warns when already running', () => {
@@ -221,14 +247,15 @@ describe('JobProcessor', () => {
 		});
 
 		it('processes queue at specified interval', () => {
+			const getNextSpy = jest.spyOn(jobQueue, 'getNext');
 			jobProcessor.addTask(mockTask);
 			jobProcessor.start(1000);
 
 			jest.advanceTimersByTime(1000);
-			expect(mockJobQueueGetNext).toHaveBeenCalledTimes(1);
+			expect(getNextSpy).toHaveBeenCalledTimes(1);
 
 			jest.advanceTimersByTime(1000);
-			expect(mockJobQueueGetNext).toHaveBeenCalledTimes(2);
+			expect(getNextSpy).toHaveBeenCalledTimes(2);
 		});
 	});
 
@@ -261,39 +288,19 @@ describe('JobProcessor', () => {
 		});
 
 		it('processes job successfully', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'TestTask',
-				payload: { data: 'test' },
-				attempts: 0,
-				maxAttempts: 3,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
-
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
-			mockExecute.mockResolvedValueOnce(undefined);
-
+			const completeSpy = jest.spyOn(jobQueue, 'completeJob');
 			jobProcessor.addTask(mockTask);
+			const job = queueJob('TestTask', { data: 'test' });
 
 			await processOneJob();
 
 			expect(mockExecute).toHaveBeenCalledWith(job);
-			expect(mockJobQueueCompleteJob).toHaveBeenCalled();
+			expect(completeSpy).toHaveBeenCalledWith(job);
+			expect(jobQueue.getRunning()).toEqual([]);
 		});
-		it('logs error when task not registered', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'UnknownTask',
-				payload: {},
-				attempts: 0,
-				maxAttempts: 3,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
 
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
-			mockJobQueueFailJob.mockReturnValueOnce(true);
+		it('logs error when task not registered', async () => {
+			queueJob('UnknownTask', {}, { maxAttempts: 1 });
 
 			await processOneJob();
 
@@ -301,24 +308,14 @@ describe('JobProcessor', () => {
 				{ module: 'JobProcessor' },
 				expect.stringContaining('No task registered')
 			);
+			expect(jobQueue.getRunning()).toEqual([]);
 		});
 
 		it('handles job failure and retries', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'TestTask',
-				payload: {},
-				attempts: 0,
-				maxAttempts: 3,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
-
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
+			const failSpy = jest.spyOn(jobQueue, 'failJob');
 			mockExecute.mockRejectedValueOnce(new Error('Task failed'));
-			mockJobQueueFailJob.mockReturnValueOnce(false);
-
 			jobProcessor.addTask(mockTask);
+			const job = queueJob('TestTask');
 
 			await processOneJob();
 
@@ -326,27 +323,16 @@ describe('JobProcessor', () => {
 				{ module: 'JobProcessor', job: 'TestTask', error: 'Task failed' },
 				expect.stringContaining('Job failed')
 			);
-			expect(mockJobQueueFailJob).toHaveBeenCalledWith(job);
+			expect(failSpy).toHaveBeenCalledWith(job);
+			expect(jobQueue.getRunning()).toEqual([]);
+			expect(jobQueue.hasPending('TestTask')).toBe(true);
 		});
 
 		it('emits failure event on permanent failure', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'TestTask',
-				payload: { planId: 'plan-1' },
-				attempts: 2,
-				maxAttempts: 3,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
-
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
 			mockExecute.mockRejectedValueOnce(new Error('Permanent failure'));
-			mockJobQueueFailJob.mockReturnValueOnce(true);
-
 			const emitSpy = jest.spyOn(jobProcessor, 'emit');
-
 			jobProcessor.addTask(mockTask);
+			queueJob('TestTask', { planId: 'plan-1' }, { attempts: 2 });
 
 			await processOneJob();
 
@@ -357,36 +343,28 @@ describe('JobProcessor', () => {
 		});
 
 		it('does not retry a non-retryable error and fails immediately', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'Backup',
-				payload: { planId: 'plan-1', backupId: 'backup-1' },
-				attempts: 0,
-				maxAttempts: 5,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
-
 			// Error tagged as non-retryable (e.g. restic wrong-password exit code 12).
 			const nonRetryableError = Object.assign(new Error('wrong password'), {
 				code: 12,
 				retryable: false,
 			});
 
-			const backupTask = new MockTask('Backup', jest.fn());
+			const backupTask = new MockTask('Backup', jest.fn(), true);
 			backupTask.executeFunc.mockRejectedValueOnce(nonRetryableError);
 
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
-
+			const failSpy = jest.spyOn(jobQueue, 'failJob');
+			const completeSpy = jest.spyOn(jobQueue, 'completeJob');
 			const emitSpy = jest.spyOn(jobProcessor, 'emit');
 			jobProcessor.addTask(backupTask);
+			const job = queueJob('Backup', { planId: 'plan-1', backupId: 'backup-1' }, { maxAttempts: 5 });
 
 			await processOneJob();
 
 			// Must NOT go through the retry path.
-			expect(mockJobQueueFailJob).not.toHaveBeenCalled();
+			expect(failSpy).not.toHaveBeenCalled();
 			// Job is cleared without re-queuing.
-			expect(mockJobQueueCompleteJob).toHaveBeenCalled();
+			expect(completeSpy).toHaveBeenCalledWith(job);
+			expect(jobQueue.hasPending('Backup')).toBe(false);
 			// A warning is logged and a permanent failure is emitted immediately.
 			expect(mockLogger.warn).toHaveBeenCalledWith(
 				{ module: 'JobProcessor', job: 'Backup' },
@@ -400,97 +378,42 @@ describe('JobProcessor', () => {
 		});
 
 		it('still retries a retryable error (retryable !== false)', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'Backup',
-				payload: { planId: 'plan-1' },
-				attempts: 0,
-				maxAttempts: 5,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
-
 			// Error tagged as retryable (e.g. restic lock-failed exit code 11).
 			const retryableError = Object.assign(new Error('unable to lock repository'), {
 				code: 11,
 				retryable: true,
 			});
 
-			const backupTask = new MockTask('Backup', jest.fn());
+			const backupTask = new MockTask('Backup', jest.fn(), true);
 			backupTask.executeFunc.mockRejectedValueOnce(retryableError);
-			mockJobQueueFailJob.mockReturnValueOnce(false);
-
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
+			const failSpy = jest.spyOn(jobQueue, 'failJob');
 			jobProcessor.addTask(backupTask);
+			const job = queueJob('Backup', { planId: 'plan-1' }, { maxAttempts: 5 });
 
 			await processOneJob();
 
-			expect(mockJobQueueFailJob).toHaveBeenCalledWith(job);
+			expect(failSpy).toHaveBeenCalledWith(job);
 		});
 
-		it('delays retry based on retryDelay', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'TestTask',
-				payload: {},
-				attempts: 1,
-				maxAttempts: 3,
-				retryDelay: 10000,
-				lastAttempt: Date.now(),
-			};
-
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
-
+		it('waits for the retry delay before it runs a job again', async () => {
 			jobProcessor.addTask(mockTask);
+			queueJob('TestTask', {}, { attempts: 1, retryDelay: 10000, lastAttempt: Date.now() });
 
 			await processOneJob();
-
-			expect(mockLogger.debug).toHaveBeenCalledWith(
-				{ module: 'JobProcessor' },
-				expect.stringContaining('Delaying retry')
-			);
-			expect(mockJobQueueReQueue).toHaveBeenCalledWith(job);
-		});
-
-		it('enforces backup concurrency limit', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'Backup',
-				payload: {},
-				attempts: 0,
-				maxAttempts: 3,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
-
-			// Set active backups to max
-			(jobProcessor as any).activeBackupJobs = 2;
-
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
-
-			await processOneJob();
-
-			expect(mockJobQueueRequeueAtFront).toHaveBeenCalledWith(job);
 			expect(mockExecute).not.toHaveBeenCalled();
+			expect(jobQueue.hasPending('TestTask')).toBe(true);
+
+			jest.advanceTimersByTime(10000);
+			await processOneJob();
+			expect(mockExecute).toHaveBeenCalledTimes(1);
 		});
 
 		it('handles backup cancellation gracefully', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'Backup',
-				payload: { planId: 'plan-1' },
-				attempts: 0,
-				maxAttempts: 3,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
-
-			const backupTask = new MockTask('Backup', jest.fn());
+			const backupTask = new MockTask('Backup', jest.fn(), true);
 			backupTask.executeFunc.mockRejectedValueOnce(new Error('BACKUP_CANCELLED: User cancelled'));
-
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
-
+			const completeSpy = jest.spyOn(jobQueue, 'completeJob');
 			jobProcessor.addTask(backupTask);
+			const job = queueJob('Backup', { planId: 'plan-1' });
 
 			await processOneJob();
 
@@ -498,26 +421,14 @@ describe('JobProcessor', () => {
 				{ module: 'JobProcessor', job: 'Backup' },
 				'Job was cancelled by user'
 			);
-			expect(mockJobQueueCompleteJob).toHaveBeenCalled();
+			expect(completeSpy).toHaveBeenCalledWith(job);
 		});
 
 		it('handles restore cancellation gracefully', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'Restore',
-				payload: {},
-				attempts: 0,
-				maxAttempts: 3,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
-
 			const restoreTask = new MockTask('Restore', jest.fn());
 			restoreTask.executeFunc.mockRejectedValueOnce(new Error('RESTORE_CANCELLED: User cancelled'));
-
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
-
 			jobProcessor.addTask(restoreTask);
+			queueJob('Restore');
 
 			await processOneJob();
 
@@ -525,30 +436,150 @@ describe('JobProcessor', () => {
 				{ module: 'JobProcessor', job: 'Restore' },
 				'Job was cancelled by user'
 			);
+			expect(jobQueue.getRunning()).toEqual([]);
+		});
+	});
+
+	describe('concurrency', () => {
+		let backupRuns: Map<string, ReturnType<typeof deferred>>;
+		let backupExecute: jest.Mock;
+		let restoreExecute: jest.Mock;
+
+		// Each started job waits until the test resolves or rejects it.
+		const blockingExecute = (runs: Map<string, ReturnType<typeof deferred>>) =>
+			jest.fn((job: Job) => {
+				const run = deferred();
+				runs.set(job.payload.planId, run);
+				return run.promise;
+			});
+
+		beforeEach(() => {
+			backupRuns = new Map();
+			backupExecute = blockingExecute(backupRuns);
+			restoreExecute = blockingExecute(backupRuns);
+			jobProcessor.addTask(new MockTask('Backup', backupExecute, true));
+			jobProcessor.addTask(new MockTask('Restore', restoreExecute));
 		});
 
-		it('increments and decrements backup counter', async () => {
-			const job: Job = {
-				id: 'job-1',
-				name: 'Backup',
-				payload: {},
-				attempts: 0,
-				maxAttempts: 3,
-				retryDelay: 60000,
-				lastAttempt: 0,
-			};
-
-			const backupTask = new MockTask('Backup', jest.fn().mockResolvedValue(undefined));
-
-			mockJobQueueGetNext.mockReturnValueOnce(job).mockReturnValue(null);
-
-			jobProcessor.addTask(backupTask);
-
-			expect((jobProcessor as any).activeBackupJobs).toBe(0);
+		it('with MAX=2 starts two backups in one tick and the third after one finishes', async () => {
+			queueJob('Backup', { planId: 'p1' });
+			queueJob('Backup', { planId: 'p2' });
+			queueJob('Backup', { planId: 'p3' });
 
 			await processOneJob();
 
-			expect((jobProcessor as any).activeBackupJobs).toBe(0);
+			expect(runningNames()).toEqual(['Backup:p1', 'Backup:p2']);
+			expect(backupExecute).toHaveBeenCalledTimes(2);
+			expect(jobProcessor.getActiveBackupJobs()).toBe(2);
+
+			await processOneJob();
+			expect(backupExecute).toHaveBeenCalledTimes(2);
+
+			backupRuns.get('p1')!.resolve();
+			await flush();
+			await processOneJob();
+
+			expect(runningNames()).toEqual(['Backup:p2', 'Backup:p3']);
+			expect(backupExecute).toHaveBeenCalledTimes(3);
+		});
+
+		it('with MAX=1 starts only one backup', async () => {
+			mockConfigService.config.MAX_CONCURRENT_BACKUPS = 1;
+			queueJob('Backup', { planId: 'p1' });
+			queueJob('Backup', { planId: 'p2' });
+
+			await processOneJob();
+
+			expect(runningNames()).toEqual(['Backup:p1']);
+			expect(jobProcessor.getActiveBackupJobs()).toBe(1);
+		});
+
+		it('never runs two jobs of the same plan together', async () => {
+			queueJob('Backup', { planId: 'p1' });
+			queueJob('Restore', { planId: 'p1' });
+			queueJob('Backup', { planId: 'p1', backupId: 'second' });
+
+			await processOneJob();
+
+			expect(runningNames()).toEqual(['Backup:p1']);
+			expect(restoreExecute).not.toHaveBeenCalled();
+
+			backupRuns.get('p1')!.resolve();
+			await flush();
+			await processOneJob();
+
+			expect(runningNames()).toEqual(['Restore:p1']);
+			expect(backupExecute).toHaveBeenCalledTimes(1);
+		});
+
+		it('runs only one non-backup job at a time, beside backup jobs', async () => {
+			queueJob('Restore', { planId: 'p1' });
+			queueJob('Restore', { planId: 'p2' });
+			queueJob('Backup', { planId: 'p3' });
+
+			await processOneJob();
+
+			expect(runningNames()).toEqual(['Restore:p1', 'Backup:p3']);
+
+			backupRuns.get('p1')!.resolve();
+			await flush();
+			await processOneJob();
+
+			expect(runningNames()).toEqual(['Backup:p3', 'Restore:p2']);
+		});
+
+		it('does not let a job in its retry delay block a later job', async () => {
+			queueJob('Backup', { planId: 'p1' }, { attempts: 1, retryDelay: 10000, lastAttempt: Date.now() });
+			queueJob('Backup', { planId: 'p2' });
+
+			await processOneJob();
+
+			expect(runningNames()).toEqual(['Backup:p2']);
+
+			jest.advanceTimersByTime(10000);
+			await processOneJob();
+
+			expect(runningNames()).toEqual(['Backup:p2', 'Backup:p1']);
+		});
+
+		it.each([
+			['a cancel error', new Error('BACKUP_CANCELLED: User cancelled'), 3],
+			['a non-retryable error', Object.assign(new Error('wrong password'), { retryable: false }), 3],
+			['a permanent failure', new Error('boom'), 1],
+		])('frees the slot after %s', async (_label, error, maxAttempts) => {
+			mockConfigService.config.MAX_CONCURRENT_BACKUPS = 1;
+			queueJob('Backup', { planId: 'p1' }, { maxAttempts });
+			queueJob('Backup', { planId: 'p2' });
+
+			await processOneJob();
+			expect(runningNames()).toEqual(['Backup:p1']);
+
+			backupRuns.get('p1')!.reject(error);
+			await flush();
+
+			expect(jobProcessor.getActiveBackupJobs()).toBe(0);
+			expect(jobQueue.hasPending('Backup')).toBe(true);
+
+			await processOneJob();
+			expect(runningNames()).toEqual(['Backup:p2']);
+		});
+
+		it('getActiveBackupJobs counts only backup tasks', async () => {
+			jobProcessor.addTask(new MockTask('VmBackup', blockingExecute(backupRuns), true));
+			queueJob('Restore', { planId: 'p1' });
+			queueJob('VmBackup', { planId: 'p2' });
+			queueJob('Backup', { planId: 'p3' });
+
+			await processOneJob();
+
+			expect(jobQueue.getRunning()).toHaveLength(3);
+			expect(jobProcessor.getActiveBackupJobs()).toBe(2);
+
+			backupRuns.get('p2')!.resolve();
+			backupRuns.get('p3')!.resolve();
+			await flush();
+
+			expect(jobProcessor.getActiveBackupJobs()).toBe(0);
 		});
 	});
 });

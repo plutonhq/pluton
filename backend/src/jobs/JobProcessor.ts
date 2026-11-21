@@ -36,12 +36,8 @@ interface TaskDependencies {
  */
 class JobProcessor extends EventEmitter {
 	private static instance: JobProcessor;
-	private isRunning = false;
 	private intervalId: NodeJS.Timeout | null = null;
 	private tasks: Map<string, Task> = new Map();
-
-	// Counter for active backup jobs to enforce concurrency limits
-	private activeBackupJobs = 0;
 
 	private constructor() {
 		super();
@@ -95,7 +91,7 @@ class JobProcessor extends EventEmitter {
 	 * Returns the number of currently running backup jobs.
 	 */
 	public getActiveBackupJobs(): number {
-		return this.activeBackupJobs;
+		return jobQueue.getRunning().filter(job => this.isBackupJob(job)).length;
 	}
 
 	/**
@@ -127,63 +123,60 @@ class JobProcessor extends EventEmitter {
 	}
 
 	/**
-	 * Processes the job queue.
-	 * This method is typically called internally by the JobProcessor.
+	 * Starts every queued job that can run now.
+	 * Backup tasks run up to MAX_CONCURRENT_BACKUPS at a time, other tasks one at a time,
+	 * and only one job of a plan runs at a time.
 	 */
-	private async processQueue(): Promise<void> {
-		if (this.isRunning) return;
-
-		const job = jobQueue.getNext();
-		if (!job) return;
-
-		// --- Concurrency Check for Backup Jobs ---
-		if (job.name === 'Backup') {
-			if (this.activeBackupJobs >= configService.config.MAX_CONCURRENT_BACKUPS) {
-				// Limit reached, put the job back at the front of the queue and try again later.
-				jobQueue.requeueAtFront(job);
-				return;
-			}
-		}
-
-		// --- Retry Delay Check ---
-		const now = Date.now();
-		if (job.lastAttempt && now - job.lastAttempt < job.retryDelay) {
-			const timeLeft = Math.round((job.retryDelay - (now - job.lastAttempt)) / 1000);
-			logger.debug(
-				{ module: 'JobProcessor' },
-				`Delaying retry for job '${job.name}'. Next attempt in ~${timeLeft}s.`
+	private processQueue(): void {
+		let job: Job | null;
+		while ((job = jobQueue.getNext((next, running) => this.canStart(next, running)))) {
+			const started = job;
+			this.runJob(started).catch(error =>
+				logger.error(
+					{ module: 'JobProcessor', job: started.name, error: error?.message },
+					'Job handler failed.'
+				)
 			);
-
-			jobQueue.reQueue(job); // Put it back at the end of the queue to wait.
-			return;
 		}
+	}
 
-		this.isRunning = true;
-		if (job.name === 'Backup') {
-			this.activeBackupJobs++;
+	private isBackupJob(job: Job): boolean {
+		return this.tasks.get(job.name)?.isBackup === true;
+	}
+
+	private canStart(job: Job, running: Job[]): boolean {
+		if (job.lastAttempt && Date.now() - job.lastAttempt < job.retryDelay) {
+			return false;
 		}
+		const planId = job.payload?.planId;
+		if (planId && running.some(r => r.payload?.planId === planId)) {
+			return false;
+		}
+		if (this.isBackupJob(job)) {
+			const activeBackups = running.filter(r => this.isBackupJob(r)).length;
+			return activeBackups < configService.config.MAX_CONCURRENT_BACKUPS;
+		}
+		return !running.some(r => !this.isBackupJob(r));
+	}
+
+	private async runJob(job: Job): Promise<void> {
 		// System jobs tick often and most ticks do nothing, so keep their start line out of the info log.
 		const level = SystemTaskManager.isSystemJob(job.name) ? 'debug' : 'info';
 		logger[level](
 			{ module: 'JobProcessor' },
-			`Processing job: ${job.name}. Active backups: ${this.activeBackupJobs}`
+			`Processing job: ${job.name}. Active backups: ${this.getActiveBackupJobs()}`
 		);
 
 		const task = this.tasks.get(job.name);
 		if (!task) {
 			logger.error({ module: 'JobProcessor' }, `No task registered for job name: ${job.name}`);
-			// This is a permanent failure, as there's no task to run.
 			jobQueue.failJob(job);
-			this.isRunning = false;
-			if (job.name === 'Backup') {
-				this.activeBackupJobs--;
-			}
 			return;
 		}
 
 		try {
 			await task.run(job);
-			jobQueue.completeJob();
+			jobQueue.completeJob(job);
 		} catch (error: any) {
 			// Check if this is a cancellation error
 			const errorMessage = error instanceof Error ? error.message : String(error);
@@ -192,8 +185,7 @@ class JobProcessor extends EventEmitter {
 				errorMessage.startsWith('RESTORE_CANCELLED:')
 			) {
 				logger.info({ module: 'JobProcessor', job: job.name }, `Job was cancelled by user`);
-				// Mark job as completed (cancelled) without retrying
-				jobQueue.completeJob();
+				jobQueue.completeJob(job);
 				return;
 			}
 
@@ -212,8 +204,7 @@ class JobProcessor extends EventEmitter {
 					{ module: 'JobProcessor', job: job.name },
 					`Job failed with a non-retryable error. Skipping remaining retries.`
 				);
-				// Clear the running job without re-queuing it.
-				jobQueue.completeJob();
+				jobQueue.completeJob(job);
 				isPermanentlyFailed = true;
 			} else {
 				isPermanentlyFailed = jobQueue.failJob(job);
@@ -230,11 +221,6 @@ class JobProcessor extends EventEmitter {
 					...job.payload,
 					error: error.message || 'Unknown error after multiple retries.',
 				});
-			}
-		} finally {
-			this.isRunning = false;
-			if (job.name === 'Backup') {
-				this.activeBackupJobs--;
 			}
 		}
 	}
