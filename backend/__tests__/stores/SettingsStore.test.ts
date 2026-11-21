@@ -133,6 +133,20 @@ describe('SettingsStore', () => {
 			expect(result).toBeNull();
 			expect(NotificationChannelResolver.decryptSecrets).not.toHaveBeenCalled();
 		});
+
+		it('should keep the totp settings when there is no integration key', async () => {
+			const { integration, ...withoutIntegration } = mockAppSettings;
+			const totp = { enabled: true, secret: 'enc', recoveryCodes: [] };
+			mockDb.query.settings.findFirst.mockResolvedValue({
+				...mockSettingsRecord,
+				settings: { ...withoutIntegration, totp },
+			});
+
+			const result = await settingsStore.getFirst();
+
+			expect(result).not.toBeNull();
+			expect(result!.settings!.totp).toEqual(totp);
+		});
 	});
 
 	describe('getById', () => {

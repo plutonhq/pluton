@@ -80,6 +80,7 @@ export class SettingsStore {
 				return null;
 			}
 		}
+		return theSettings;
 	}
 
 	async encryptIntegrationSecrets(appSettings: AppSettings) {

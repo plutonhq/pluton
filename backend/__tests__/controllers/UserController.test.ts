@@ -242,6 +242,21 @@ describe('UserController', () => {
 			expect(mockCookie).toHaveBeenCalled();
 		});
 
+		it('should accept a recovery code when the TOTP secret cannot be decrypted', async () => {
+			const settings = totpSettings();
+			settings.settings.totp.secret = new Cryptr('old-secret').encrypt(TOTP_SECRET);
+			mockSettingsService.getMainSettings.mockResolvedValue(settings);
+			mockSession.pendingTotpUser = 'testuser';
+			mockRequest.body = { code: 'ABCDE12345' };
+			mockSettingsService.consumeRecoveryCode.mockResolvedValue(true);
+
+			await userController.verifyTotp(mockRequest as Request, mockResponse as Response);
+
+			expect(mockSettingsService.consumeRecoveryCode).toHaveBeenCalledWith('ABCDE12345');
+			expect(mockCookie).toHaveBeenCalled();
+			expect(mockJson).toHaveBeenCalledWith({ success: true, error: null });
+		});
+
 		it('should return 401 for an invalid code and count the attempt', async () => {
 			mockSession.pendingTotpUser = 'testuser';
 			mockRequest.body = { code: '000000' };

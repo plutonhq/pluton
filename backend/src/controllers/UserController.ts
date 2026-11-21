@@ -86,21 +86,26 @@ export class UserController {
 		}
 
 		try {
-			const cryptr = new Cryptr(configService.config.SECRET);
-			const decryptedSecret = cryptr.decrypt(totpConfig.secret);
+			let isValidTotp = false;
+			try {
+				const cryptr = new Cryptr(configService.config.SECRET);
+				const decryptedSecret = cryptr.decrypt(totpConfig.secret);
 
-			const appName = appSettings?.settings?.title || 'Pluton';
-			const totp = new otpauth.TOTP({
-				issuer: appName,
-				label: 'admin',
-				secret: otpauth.Secret.fromBase32(decryptedSecret),
-				algorithm: 'SHA1',
-				digits: 6,
-				period: 30,
-			});
+				const appName = appSettings?.settings?.title || 'Pluton';
+				const totp = new otpauth.TOTP({
+					issuer: appName,
+					label: 'admin',
+					secret: otpauth.Secret.fromBase32(decryptedSecret),
+					algorithm: 'SHA1',
+					digits: 6,
+					period: 30,
+				});
 
-			// window: 1 allows codes from the previous, current, and next time periods
-			const isValidTotp = totp.validate({ token: code.trim(), window: 1 }) !== null;
+				// window: 1 allows codes from the previous, current, and next time periods
+				isValidTotp = totp.validate({ token: code.trim(), window: 1 }) !== null;
+			} catch (error) {
+				console.error('Could not decrypt the 2FA secret. Only recovery codes can be used:', error);
+			}
 			const isValid = isValidTotp || (await this.settingsService.consumeRecoveryCode(code));
 
 			if (!isValid) {
