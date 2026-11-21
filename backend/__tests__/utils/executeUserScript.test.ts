@@ -26,6 +26,11 @@ jest.mock('fs', () => ({
 
 jest.mock('os');
 
+const mockConfig: { DISABLE_EVENT_SCRIPTS?: boolean } = {};
+jest.mock('../../src/services/ConfigService', () => ({
+	configService: { config: mockConfig },
+}));
+
 import { executeUserScript, runScriptsForEvent } from '../../src/utils/executeUserScript';
 
 // --- Helpers ---
@@ -313,6 +318,18 @@ describe('runScriptsForEvent', () => {
 
 	it('returns early when eventName is empty', async () => {
 		await runScriptsForEvent('', [buildScript()], onStart, onComplete, onError);
+
+		expect(onStart).not.toHaveBeenCalled();
+		expect(mockSpawn).not.toHaveBeenCalled();
+	});
+
+	it('skips all scripts when DISABLE_EVENT_SCRIPTS is true', async () => {
+		mockConfig.DISABLE_EVENT_SCRIPTS = true;
+		try {
+			await runScriptsForEvent('onBackupStart', [buildScript()], onStart, onComplete, onError);
+		} finally {
+			mockConfig.DISABLE_EVENT_SCRIPTS = false;
+		}
 
 		expect(onStart).not.toHaveBeenCalled();
 		expect(mockSpawn).not.toHaveBeenCalled();

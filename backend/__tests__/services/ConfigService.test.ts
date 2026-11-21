@@ -171,6 +171,46 @@ describe('ConfigService', () => {
 		expect(mockExit).not.toHaveBeenCalled();
 	});
 
+	it('should read "false" in boolean env flags as false', async () => {
+		process.env = {
+			...validBaseEnv,
+			NODE_ENV: 'production',
+			ALLOW_FILE_BROWSER: 'false',
+			ALLOW_CUSTOM_RESTORE_PATH: '0',
+			DISABLE_EVENT_SCRIPTS: 'true',
+		};
+		mockExistsSync.mockReturnValue(false);
+
+		const { configService } = await import('../../src/services/ConfigService');
+
+		expect(configService.config.ALLOW_FILE_BROWSER).toBe(false);
+		expect(configService.config.ALLOW_CUSTOM_RESTORE_PATH).toBe(false);
+		expect(configService.config.DISABLE_EVENT_SCRIPTS).toBe(true);
+	});
+
+	it('should keep env values for keys that config.json does not have', async () => {
+		process.env = {
+			...validBaseEnv,
+			NODE_ENV: 'production',
+			SERVER_PORT: '8080',
+			MAX_CONCURRENT_BACKUPS: '4',
+			SESSION_DURATION: '30',
+			ALLOW_FILE_BROWSER: 'false',
+		};
+		mockExistsSync.mockReturnValue(true);
+		mockReadFileSync.mockReturnValue(JSON.stringify({ APP_TITLE: 'File Title' }));
+
+		const { configService } = await import('../../src/services/ConfigService');
+		const config = configService.config;
+
+		expect(config.APP_TITLE).toBe('File Title');
+		expect(config.SERVER_PORT).toBe(8080);
+		expect(config.MAX_CONCURRENT_BACKUPS).toBe(4);
+		expect(config.SESSION_DURATION).toBe(30);
+		expect(config.ALLOW_FILE_BROWSER).toBe(false);
+		expect(config.APP_URL).toBe('http://localhost:8080');
+	});
+
 	it('should exit the process if required environment variables are missing', async () => {
 		// Arrange: Deliberately omit a required variable
 		process.env = {

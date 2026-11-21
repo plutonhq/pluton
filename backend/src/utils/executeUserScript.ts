@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { PlanScript } from '../types/plans';
 import { isLinuxInstalledRuntime, runRootHelper } from './linuxHelper';
+import { configService } from '../services/ConfigService';
 
 /**
  * Executes a user-defined script file, capturing its output
@@ -184,6 +185,10 @@ export async function runScriptsForEvent(
 	}
 	if (!scripts || scripts.length === 0) {
 		return; // No scripts to run for this event
+	}
+	if (configService.config.DISABLE_EVENT_SCRIPTS === true) {
+		console.log(`Event scripts are disabled (DISABLE_EVENT_SCRIPTS). Skipped scripts for '${eventName}'.`);
+		return;
 	}
 
 	for (let i = 0; i < scripts.length; i++) {

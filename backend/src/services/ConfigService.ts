@@ -7,6 +7,8 @@ import { isCliCommandInvocation } from '../utils/cliCommands';
 import { readEncryptionKeyFromEnvFile, verifyFilePermissions } from '../utils/envFileHelpers';
 import { credentialManager } from './CredentialManager';
 
+const booleanFlag = z.union([z.boolean(), z.stringbool()]);
+
 // Schema for the .env config file (with optional sensitive fields for setup mode)
 const baseConfigSchema = z.object({
 	// General
@@ -18,8 +20,8 @@ const baseConfigSchema = z.object({
 	LICENSE_KEY: z.string().optional(),
 
 	// User Interface
-	ALLOW_CUSTOM_RESTORE_PATH: z.coerce.boolean().default(true).optional(),
-	ALLOW_FILE_BROWSER: z.coerce.boolean().default(true).optional(),
+	ALLOW_CUSTOM_RESTORE_PATH: booleanFlag.default(true).optional(),
+	ALLOW_FILE_BROWSER: booleanFlag.default(true).optional(),
 	FILE_BROWSER_ROOT: z.string().optional(),
 
 	// Reverse proxy: value passed to Express's `trust proxy` setting.
@@ -32,7 +34,7 @@ const baseConfigSchema = z.object({
 		.optional(),
 	SECRET: z.string().min(12).optional(),
 	APIKEY: z.string().min(12).optional(),
-	DISABLE_EVENT_SCRIPTS: z.coerce.boolean().default(false).optional(),
+	DISABLE_EVENT_SCRIPTS: booleanFlag.default(false).optional(),
 
 	// User Authentication (optional in setup mode)
 	USER_NAME: z.string().min(1).optional(),
@@ -164,7 +166,11 @@ class ConfigService {
 					);
 				}
 
-				fileConfig = userConfigSchema.parse(parsedJson); // Validate the user's config (will exclude sensitive fields)
+				// Keep only the keys in the file. The schema defaults must not replace env values.
+				const parsedFile = userConfigSchema.parse(parsedJson);
+				fileConfig = Object.fromEntries(
+					Object.entries(parsedFile).filter(([key]) => key in parsedJson)
+				);
 				console.log(`[ConfigService] Loaded user configuration from ${configPath}`);
 			} else {
 				console.log(`[ConfigService] No config.json found at ${configPath}`);

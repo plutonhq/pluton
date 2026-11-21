@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { RestoreService } from '../services/RestoreService';
+import { configService } from '../services/ConfigService';
 
 type RestorePayload = {
 	backupId: string;
@@ -89,6 +90,11 @@ export class RestoreController {
 			});
 			return;
 		}
+
+		if (configService.config.ALLOW_CUSTOM_RESTORE_PATH === false && !!restorePayload.target?.trim()) {
+			res.status(403).json({ success: false, error: 'Restore to a custom path is disabled on this server.' });
+			return;
+		}
 		try {
 			const restoreResult = await this.restoreService.dryRestoreBackup(restorePayload.backupId, {
 				target: restorePayload.target,
@@ -120,6 +126,10 @@ export class RestoreController {
 				success: false,
 				error: 'Required fields missing: Backup or Plan Id.',
 			});
+			return;
+		}
+		if (configService.config.ALLOW_CUSTOM_RESTORE_PATH === false && !!restorePayload.target?.trim()) {
+			res.status(403).json({ success: false, error: 'Restore to a custom path is disabled on this server.' });
 			return;
 		}
 		try {

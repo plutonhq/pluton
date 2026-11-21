@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { RestoreController } from '../../src/controllers/RestoreController';
 import { RestoreService } from '../../src/services/RestoreService';
+import { configService } from '../../src/services/ConfigService';
 
 jest.mock('../../src/services/RestoreService');
 
@@ -345,6 +346,44 @@ describe('RestoreController', () => {
 			expect(mockJson).toHaveBeenCalledWith({
 				success: true,
 				result: mockResult,
+			});
+		});
+
+		describe('when ALLOW_CUSTOM_RESTORE_PATH is false', () => {
+			const config = configService.config as any;
+			beforeEach(() => {
+				config.ALLOW_CUSTOM_RESTORE_PATH = false;
+			});
+			afterEach(() => {
+				config.ALLOW_CUSTOM_RESTORE_PATH = true;
+			});
+
+			it('should return 403 for a custom target', async () => {
+				mockRequest.body = { backupId: 'backup-1', planId: 'plan-1', target: '/restore/path' };
+
+				await restoreController.performRestore(mockRequest as Request, mockResponse as Response);
+
+				expect(mockStatus).toHaveBeenCalledWith(403);
+				expect(mockRestoreService.restoreBackup).not.toHaveBeenCalled();
+			});
+
+			it('should return 403 for a custom target on dry restore', async () => {
+				mockRequest.body = { backupId: 'backup-1', planId: 'plan-1', target: '/restore/path' };
+
+				await restoreController.performDryRestore(mockRequest as Request, mockResponse as Response);
+
+				expect(mockStatus).toHaveBeenCalledWith(403);
+				expect(mockRestoreService.dryRestoreBackup).not.toHaveBeenCalled();
+			});
+
+			it('should allow a restore to the original location', async () => {
+				mockRequest.body = { backupId: 'backup-1', planId: 'plan-1', target: '' };
+				mockRestoreService.restoreBackup.mockResolvedValue({} as any);
+
+				await restoreController.performRestore(mockRequest as Request, mockResponse as Response);
+
+				expect(mockRestoreService.restoreBackup).toHaveBeenCalled();
+				expect(mockStatus).toHaveBeenCalledWith(200);
 			});
 		});
 
