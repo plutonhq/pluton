@@ -18,6 +18,7 @@ WORKDIR /workspace
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json ./
 COPY frontend/package.json ./frontend/package.json
 COPY backend/package.json ./backend/package.json
+COPY scripts ./scripts
 
 # Install all dependencies (needed for building)
 RUN pnpm install --frozen-lockfile
@@ -81,6 +82,7 @@ WORKDIR /workspace
 # Copy workspace configuration
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY backend/package.json ./backend/package.json
+COPY scripts ./scripts
 
 # Install production dependencies only (allow scripts for better-sqlite3)
 RUN pnpm install --prod --frozen-lockfile
