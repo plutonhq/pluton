@@ -74,6 +74,7 @@ import { EventEmitter } from 'events';
 import { BackupHandler } from '../../../src/managers/handlers/BackupHandler';
 import os from 'os';
 import fs from 'fs';
+import path from 'path';
 import { BackupPlanArgs } from '#core-backend/types/plans';
 
 describe('BackupHandler', () => {
@@ -708,11 +709,13 @@ describe('BackupHandler', () => {
 			// but the important thing is that it was called with the correct parameters
 		});
 
-		it('handles ip# pattern in includes', () => {
+		it('passes ip# patterns through --files-from, not as arguments', () => {
+			const mkdirSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+			const writeSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
 			const optionsWithPattern = {
 				...baseOptions,
 				sourceConfig: {
-					includes: ['ip#C:\\pattern\\*'],
+					includes: ['C:\\data', 'ip#C:\\pattern\\*', 'ip#C:\\logs\\*.log'],
 					excludes: [],
 				},
 			};
@@ -721,8 +724,23 @@ describe('BackupHandler', () => {
 				optionsWithPattern as any
 			);
 
-			expect(resticArgs).toContain('C:\\pattern\\*');
-			expect(resticArgs).not.toContain('ip#');
+			const patternsFile = path.join('/mock/temp/dir', 'includes-plan-pattern.txt');
+			expect(resticArgs).toContain('C:\\data');
+			expect(resticArgs).not.toContain('C:\\pattern\\*');
+			expect(resticArgs.join(' ')).not.toContain('ip#');
+			expect(resticArgs).toEqual(expect.arrayContaining(['--files-from', patternsFile]));
+			expect(resticArgs.indexOf('--files-from') + 1).toBe(resticArgs.indexOf(patternsFile));
+			expect(writeSpy).toHaveBeenCalledWith(patternsFile, 'C:\\pattern\\*\nC:\\logs\\*.log\n');
+			mkdirSpy.mockRestore();
+			writeSpy.mockRestore();
+		});
+
+		it('does not add --files-from when there are no include patterns', () => {
+			const writeSpy = jest.spyOn(fs, 'writeFileSync');
+			const { resticArgs } = handler.createResticBackupArgs('plan-plain', baseOptions as any);
+			expect(resticArgs).not.toContain('--files-from');
+			expect(writeSpy).not.toHaveBeenCalled();
+			writeSpy.mockRestore();
 		});
 
 		it('handles ep# pattern in excludes', () => {
@@ -816,6 +834,19 @@ describe('BackupHandler', () => {
 			await expect(handler.canRun(baseOptions, resticArgsAndEnv)).rejects.toThrow(
 				'Source paths not accessible'
 			);
+		});
+
+		it('does not check ip# include patterns as paths', async () => {
+			jest.spyOn(os, 'freemem').mockReturnValue(1024 * 1024 * 1024);
+			const statSpy = jest.spyOn(fs.promises, 'stat').mockResolvedValue({} as any);
+			const patternOptions = {
+				...baseOptions,
+				sourceConfig: { includes: ['/data', 'ip#/srv/*.log'], excludes: [] },
+			};
+
+			await expect(handler.canRun(patternOptions, {} as any)).resolves.toBe(true);
+			expect(statSpy).toHaveBeenCalledWith('/data');
+			expect(statSpy).not.toHaveBeenCalledWith('ip#/srv/*.log');
 		});
 	});
 

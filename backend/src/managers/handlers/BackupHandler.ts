@@ -1,5 +1,6 @@
 import os from 'os';
 import fs from 'fs';
+import path from 'path';
 import { EventEmitter } from 'events';
 import {
 	getBackupPlanStats,
@@ -606,6 +607,8 @@ export class BackupHandler {
 		if (options.sourceConfig?.includes) {
 			const pathsNotFound = [];
 			for (const path of options.sourceConfig.includes) {
+				// restic reports a pattern that matches no files.
+				if (path.startsWith('ip#')) continue;
 				try {
 					// must use stat instead of access since the linux-helper has read capabilities
 					// through CAP_DAC_READ_SEARCH, which causes access to return false even when the path is readable.
@@ -883,14 +886,19 @@ export class BackupHandler {
 		const resticArgs = ['backup'];
 		const resticEnv: Record<string, string> = {};
 		if (sourceConfig?.includes) {
+			const includePatterns: string[] = [];
 			sourceConfig.includes.forEach(inPath => {
-				const pathSlice = inPath.slice(0, 3);
-				// Handles pattern paths
-				if (!inPath.startsWith('-')) {
-					const pathName = pathSlice === 'ip#' ? inPath.replace('ip#', '') : inPath;
-					resticArgs.push(pathName);
-				}
+				if (inPath.startsWith('-')) return;
+				// restic expands globs only in --files-from, not in arguments.
+				if (inPath.startsWith('ip#')) includePatterns.push(inPath.slice(3));
+				else resticArgs.push(inPath);
 			});
+			if (includePatterns.length > 0) {
+				const patternsFile = path.join(appPaths.getTempDir(), `includes-${planId}.txt`);
+				fs.mkdirSync(path.dirname(patternsFile), { recursive: true });
+				fs.writeFileSync(patternsFile, includePatterns.join('\n') + '\n');
+				resticArgs.push('--files-from', patternsFile);
+			}
 		}
 		if (sourceConfig?.excludes) {
 			sourceConfig.excludes.forEach(exPath => {

@@ -7,6 +7,30 @@ import Modal from '../Modal/Modal';
 import Select from '../form/Select/Select';
 import Input from '../form/Input/Input';
 
+const excludePatternHints = [
+   ['**/folder', 'Match folder in any subdirectory recursively'],
+   ['*.ext', 'Match all files with specific extension'],
+   ['path/to/folder/*', 'Match everything in specific folder'],
+   ['path/*/folder', 'Match folder in any immediate subdirectory'],
+   ['path/to/file?', 'Match single character wildcard'],
+   ['[abc]', 'Match any character in brackets'],
+   ['[a-z]', 'Match any character in range'],
+   ['/absolute/path/*', 'Match from absolute path'],
+   ['./relative/path/*', 'Match from relative path'],
+];
+
+// Include patterns are expanded by restic --files-from: full paths only, and * matches one folder level.
+const includePatternHints = [
+   ['/path/to/folder/*', 'Match everything in specific folder'],
+   ['/path/to/*.ext', 'Match files with specific extension in a folder'],
+   ['/path/*/folder', 'Match folder in any immediate subdirectory'],
+   ['C:\\path\\to\\*.ext', 'Match files on Windows'],
+   ['/path/to/file?', 'Match single character wildcard'],
+   ['/path/[abc]', 'Match any character in brackets'],
+   ['/path/[a-z]', 'Match any character in range'],
+   ['**', 'Same as *. It does not match subdirectories recursively'],
+];
+
 type PathPickerProps = {
    onUpdate: (paths: { includes: string[]; excludes: string[] }) => void;
    paths: { includes: string[]; excludes: string[] };
@@ -170,7 +194,7 @@ const PathPicker = ({ onUpdate, single = false, disallowChange = false, paths = 
                         onUpdate={(val) => setPatternInputType(val as 'includes' | 'excludes')}
                         full={true}
                      />
-                     <Input fieldValue={patternInput} onUpdate={(val) => setPatternInput(val)} placeholder={'**/node_modules/**'} full={true} />
+                     <Input fieldValue={patternInput} onUpdate={(val) => setPatternInput(val)} placeholder={patternInputType === 'includes' ? '/path/to/*.log' : '**/node_modules/**'} full={true} />
                   </div>
                   {showPatternHint && (
                      <div className={classes.patternPickerHint}>
@@ -182,46 +206,12 @@ const PathPicker = ({ onUpdate, single = false, disallowChange = false, paths = 
                               </tr>
                            </thead>
                            <tbody>
-                              <tr>
-                                 <td>**/folder</td>
-                                 <td>Match folder in any subdirectory recursively</td>
-                              </tr>
-                              <tr>
-                                 <td>*.ext</td>
-                                 <td>Match all files with specific extension</td>
-                              </tr>
-                              <tr>
-                                 <td>path/to/folder/*</td>
-                                 <td>Match everything in specific folder</td>
-                              </tr>
-                              <tr>
-                                 <td>path/*/folder</td>
-                                 <td>Match folder in any immediate subdirectory</td>
-                              </tr>
-                              <tr>
-                                 <td>path/to/file?</td>
-                                 <td>Match single character wildcard</td>
-                              </tr>
-                              <tr>
-                                 <td>{`path/to/{folder1,folder2}`}</td>
-                                 <td>Match multiple specific paths</td>
-                              </tr>
-                              <tr>
-                                 <td>[abc]</td>
-                                 <td>Match any character in brackets</td>
-                              </tr>
-                              <tr>
-                                 <td>[a-z]</td>
-                                 <td>Match any character in range</td>
-                              </tr>
-                              <tr>
-                                 <td>/absolute/path/*</td>
-                                 <td>Match from absolute path</td>
-                              </tr>
-                              <tr>
-                                 <td>./relative/path/*</td>
-                                 <td>Match from relative path</td>
-                              </tr>
+                              {(patternInputType === 'includes' ? includePatternHints : excludePatternHints).map(([pattern, description]) => (
+                                 <tr key={pattern}>
+                                    <td>{pattern}</td>
+                                    <td>{description}</td>
+                                 </tr>
+                              ))}
                            </tbody>
                         </table>
                      </div>

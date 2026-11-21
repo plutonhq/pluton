@@ -43,8 +43,10 @@ export class RestoreStatsManager {
 			},
 		};
 
-		if (sources.length > 0) {
-			const sourcePaths = await getBackupSourceFiles(sources);
+		// "ip#" include patterns are not paths, and one failed path empties the whole list.
+		const sourceDirs = sources.filter(source => !source.startsWith('ip#'));
+		if (sourceDirs.length > 0) {
+			const sourcePaths = await getBackupSourceFiles(sourceDirs);
 			if (sourcePaths.result && Array.isArray(sourcePaths.result)) {
 				initialStats.sourcePaths = sourcePaths.result;
 			}

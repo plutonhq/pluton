@@ -1,5 +1,5 @@
 import { spawn } from 'child_process';
-import { access, constants } from 'fs/promises';
+import { access, constants, stat } from 'fs/promises';
 import copyFiles from '../../src/utils/copyFiles';
 import { EventEmitter } from 'events';
 
@@ -9,6 +9,7 @@ jest.mock('fs/promises');
 
 const mockSpawn = spawn as jest.MockedFunction<typeof spawn>;
 const mockAccess = access as jest.MockedFunction<typeof access>;
+const mockStat = stat as jest.MockedFunction<typeof stat>;
 
 // Helper to create a mock ChildProcess
 class MockChildProcess extends EventEmitter {
@@ -80,6 +81,35 @@ describe('copyFiles', () => {
 
 					await expect(copyPromise).resolves.toBeUndefined();
 				}
+			});
+		});
+
+		describe('file source', () => {
+			it('copies a file as a name filter on its parent folders', async () => {
+				mockStat.mockResolvedValueOnce({ isFile: () => true } as any);
+				const mockProcess = new MockChildProcess();
+				mockSpawn.mockReturnValue(mockProcess as any);
+
+				const copyPromise = copyFiles('C:\\temp\\C\\logs\\a.log', 'C:\\logs\\a.log');
+				setTimeout(() => mockProcess.emit('close', 1), 10);
+				await copyPromise;
+
+				const psCommand = mockSpawn.mock.calls[0][1][3];
+				expect(psCommand).toContain('"C:\\temp\\C\\logs", "C:\\logs", "a.log"');
+				expect(psCommand).not.toContain('/E');
+			});
+
+			it('copies a folder with /E', async () => {
+				mockStat.mockResolvedValueOnce({ isFile: () => false } as any);
+				const mockProcess = new MockChildProcess();
+				mockSpawn.mockReturnValue(mockProcess as any);
+
+				const copyPromise = copyFiles('C:\\temp\\C\\data', 'C:\\data');
+				setTimeout(() => mockProcess.emit('close', 1), 10);
+				await copyPromise;
+
+				const psCommand = mockSpawn.mock.calls[0][1][3];
+				expect(psCommand).toContain('"C:\\temp\\C\\data", "C:\\data", "/E"');
 			});
 		});
 

@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
-import { access, constants } from 'fs/promises';
+import { access, constants, stat } from 'fs/promises';
+import path from 'path';
 
 /**
  * Copies files from one location to another using platform-specific commands.
@@ -22,7 +23,7 @@ const copyFiles = (
 	}
 };
 
-const copyFilesWindows = (
+const copyFilesWindows = async (
 	sourcePath: string, // Renamed for clarity, this is your intended source
 	destinationPath: string, // Renamed for clarity, this is your intended destination
 	overwritePolicy: 'always' | 'if-changed' | 'if-newer' | 'never' = 'always'
@@ -30,16 +31,22 @@ const copyFilesWindows = (
 	// Check if running as a pkg build (Windows service)
 	const isPkg = (process as any).pkg;
 
-	// Use the arguments directly as Robocopy source and destination
-	const robocopySource = sourcePath;
-	const robocopyDestination = destinationPath;
+	let isFile = false;
+	try {
+		isFile = (await stat(sourcePath)).isFile();
+	} catch {
+		// robocopy reports a missing source.
+	}
 
-	const robocopyArgsList = [
-		robocopySource,
-		robocopyDestination,
-		// /E copies subdirectories, including empty ones.
-		'/E',
-	];
+	// robocopy copies folders only, so a file is copied as a name filter on its parent folder.
+	// /E copies subdirectories, including empty ones.
+	const robocopyArgsList = isFile
+		? [
+				path.win32.dirname(sourcePath),
+				path.win32.dirname(destinationPath),
+				path.win32.basename(sourcePath),
+			]
+		: [sourcePath, destinationPath, '/E'];
 
 	switch (overwritePolicy) {
 		case 'always':

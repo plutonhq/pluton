@@ -107,6 +107,20 @@ describe('RestoreStatsManager', () => {
 			expect(fileContent.stats.total_files).toBe(0);
 		});
 
+		it('does not list ip# include patterns as source paths', async () => {
+			(existsSync as jest.Mock).mockReturnValue(false);
+
+			await restoreStatsManager.initialize(
+				planId,
+				backupId,
+				restoreId,
+				['/source/dir1', 'ip#/source/*.log'],
+				restoreConfig
+			);
+
+			expect(getBackupSourceFiles).toHaveBeenCalledWith(['/source/dir1']);
+		});
+
 		it('should not overwrite an existing stats file', async () => {
 			// Arrange
 			(existsSync as jest.Mock).mockReturnValue(true);
