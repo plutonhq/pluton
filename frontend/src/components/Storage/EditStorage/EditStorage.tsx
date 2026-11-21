@@ -3,6 +3,8 @@ import { toast } from 'react-toastify';
 import classes from '../AddStorage/AddStorage.module.scss';
 import Icon from '../../common/Icon/Icon';
 import { useGetStorage, useUpdateStorage } from '../../../services/storage';
+import { useGetDevices } from '../../../services/devices';
+import { Device } from '../../../@types/devices';
 import SidePanel from '../../common/SidePanel/SidePanel';
 import TagsInput from '../../common/form/TagsInput/TagsInput';
 import { Storage, storageOptionField } from '../../../@types/storages';
@@ -28,6 +30,7 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
    const updateStorageMutation = useUpdateStorage();
    const storageType = storage.type;
    const { data: storageData } = useGetStorage(storage.id);
+   const { data: devicesData } = useGetDevices();
    const storageCredentials: Record<string, string | number | boolean> =
       credentialsDraft ?? (storageData?.success ? storageData.result?.credentials : undefined) ?? {};
 
@@ -106,6 +109,18 @@ const EditStorage = ({ close, storage }: EditStorageProps) => {
             onSuccess: (data: any) => {
                console.log('Success :', data);
                toast.success(`Successfully Updated Storage!`, { autoClose: 5000 });
+               const devicesUpdated: Record<string, { success: boolean; result: string }> = data?.result?.devicesUpdated || {};
+               const failedDevices = Object.entries(devicesUpdated)
+                  .filter(([, res]) => !res?.success)
+                  .map(([deviceId, res]) => {
+                     const deviceName = devicesData?.result?.find((d: Device) => d.id === deviceId)?.name || deviceId;
+                     return `${deviceName}: ${res?.result || 'Unknown error'}`;
+                  });
+               if (failedDevices.length > 0) {
+                  toast.warning(`These devices could not apply the new storage settings:\n${failedDevices.join('\n')}`, {
+                     autoClose: false,
+                  });
+               }
             },
          });
       } else {

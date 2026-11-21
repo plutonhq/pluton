@@ -309,8 +309,6 @@ export class StorageService {
 				throw new AppError(400, 'Invalid storage data provided');
 			}
 			const { authType, credentials, settings, tags } = parsedStorageData;
-			// Update remote settings of all the sources first
-			const devicesWithStorage = await this.resolveStorageSources(existingStorage.id);
 			const deviceUpdateResult: Record<
 				string,
 				{
@@ -318,44 +316,63 @@ export class StorageService {
 					result: string;
 				}
 			> = {};
-			if (devicesWithStorage.length > 0) {
-				//decrypt the existing credentials
-				const existingCreds = existingStorage?.credentials;
-				const decryptedOldCred: Record<string, string> = {};
-				try {
-					if (existingCreds) {
-						const eCreds = existingCreds as Record<string, string>;
-						const cryptr = new Cryptr(configService.config.SECRET as string);
-						Object.keys(eCreds || {}).forEach(k => {
-							decryptedOldCred[k] = cryptr.decrypt(eCreds[k]);
-						});
-					}
-				} catch (error) {
-					console.log('[ERROR] failed to decrypt old config creds :', error);
-				}
 
-				// If old creds and new creds are same, no need to send them
-				const credsDifferent = !credentialsEqual(
-					decryptedOldCred,
-					credentials as Record<string, unknown>
-				);
-
-				const deviceUpdatePromises = devicesWithStorage.map(async sourceId => {
-					const strategy = this.getSystemStrategy(sourceId);
-					const updateRes = await strategy.updateRemoteStorage(existingStorage.name, {
-						new: { ...settings, ...(credsDifferent ? credentials : {}) },
-						old: {
-							...(existingStorage.settings || {}),
-							...(decryptedOldCred && credsDifferent ? decryptedOldCred : {}),
-						},
+			//decrypt the existing credentials
+			const existingCreds = existingStorage?.credentials;
+			const decryptedOldCred: Record<string, string> = {};
+			try {
+				if (existingCreds) {
+					const eCreds = existingCreds as Record<string, string>;
+					const cryptr = new Cryptr(configService.config.SECRET as string);
+					Object.keys(eCreds || {}).forEach(k => {
+						decryptedOldCred[k] = cryptr.decrypt(eCreds[k]);
 					});
-					deviceUpdateResult[sourceId] = updateRes;
-					return updateRes;
-				});
-
-				// Wait for all device updates to complete
-				await Promise.all(deviceUpdatePromises);
+				}
+			} catch (error) {
+				console.log('[ERROR] failed to decrypt old config creds :', error);
 			}
+
+			// If old creds and new creds are same, no need to send them
+			const credsDifferent = !credentialsEqual(
+				decryptedOldCred,
+				credentials as Record<string, unknown>
+			);
+
+			const updateDevice = async (sourceId: string) => {
+				const strategy = this.getSystemStrategy(sourceId);
+				const updateRes = await strategy.updateRemoteStorage(existingStorage.name, {
+					new: { ...settings, ...(credsDifferent ? credentials : {}) },
+					old: {
+						...(existingStorage.settings || {}),
+						...(decryptedOldCred && credsDifferent ? decryptedOldCred : {}),
+					},
+				});
+				deviceUpdateResult[sourceId] = updateRes;
+				return updateRes;
+			};
+
+			// The main server checks the new settings first. rclone reverts them on failure,
+			// so the agents and the DB keep the old values too.
+			const mainUpdate = await updateDevice('main');
+			if (!mainUpdate.success) {
+				throw new AppError(
+					400,
+					`Could not connect with the new storage settings. ${mainUpdate.result || ''}`.trim()
+				);
+			}
+
+			// A failure here is device specific (offline, network). It is returned, not thrown.
+			const remoteDevices = (await this.resolveStorageSources(existingStorage.id)).filter(
+				sourceId => sourceId !== 'main'
+			);
+			await Promise.all(remoteDevices.map(updateDevice));
+			Object.entries(deviceUpdateResult).forEach(([sourceId, res]) => {
+				if (!res.success) {
+					console.warn(
+						`[updateStorage] Device ${sourceId} could not apply the storage update: ${res.result}`
+					);
+				}
+			});
 
 			const safe = moveSecretSettings(
 				existingStorage.type as string,
