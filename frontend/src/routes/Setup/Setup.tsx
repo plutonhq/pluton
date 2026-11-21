@@ -27,6 +27,10 @@ const Setup = () => {
          setError('Encryption key must be at least 12 characters long');
          return;
       }
+      if (encryptionKey !== encryptionKey.trim()) {
+         setError('Encryption key cannot start or end with a space');
+         return;
+      }
 
       // Validate username
       if (!userName || userName.length < 1) {

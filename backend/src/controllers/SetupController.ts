@@ -81,6 +81,14 @@ export class SetupController {
 				});
 			}
 
+			// Disallow leading/trailing spaces in the encryption key
+			if (encryptionKey !== encryptionKey.trim()) {
+				return res.status(400).json({
+					success: false,
+					error: 'Encryption key cannot start or end with a space',
+				});
+			}
+
 			// Validate username
 			if (userName.length < 1) {
 				return res.status(400).json({
