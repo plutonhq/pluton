@@ -969,9 +969,14 @@ describe('BackupHandler', () => {
 				expect.any(Function),
 				expect.any(Function),
 				expect.any(Function),
-				undefined,
+				expect.any(Function),
 				expect.objectContaining({ stallTimeout: expect.any(Number) })
 			);
+
+			const onProcess = mockRunResticCommand.mock.calls[0][5];
+			const proc = {};
+			onProcess(proc);
+			expect(mockTrackProcess).toHaveBeenCalledWith('backup-backup-1', proc);
 		});
 
 		it('should throw error on dry run failure', async () => {
@@ -997,7 +1002,7 @@ describe('BackupHandler', () => {
 				expect.any(Function),
 				expect.any(Function),
 				expect.any(Function),
-				undefined,
+				expect.any(Function),
 				expect.objectContaining({ stallTimeout: expect.any(Number) })
 			);
 		});
@@ -1302,6 +1307,42 @@ describe('BackupHandler', () => {
 			// Verify unlock command was called
 			const unlockCall = mockRunResticCommand.mock.calls.find(call => call[0].includes('unlock'));
 			expect(unlockCall).toBeDefined();
+		});
+
+		it('should stop before backup_start when cancelled during the dry run', async () => {
+			const backupStartListener = jest.fn();
+			emitter.on('backup_start', backupStartListener);
+			mockRunResticCommand.mockImplementationOnce(async () => {
+				handler['cancelledBackups'].add('plan-1' + 'backup-1');
+				return '{"files_new":1,"total_files_processed":1}';
+			});
+			const beforeBackup = jest.spyOn(handler as any, 'beforeBackup');
+
+			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
+			await expect(
+				handler['preBackupPhase']('plan-1', 'backup-1', baseOptions, resticArgsAndEnv)
+			).rejects.toThrow('BACKUP_CANCELLED:');
+
+			expect(backupStartListener).not.toHaveBeenCalled();
+			expect(beforeBackup).not.toHaveBeenCalled();
+			handler['cancelledBackups'].delete('plan-1' + 'backup-1');
+		});
+
+		it('should not run pre-backup scripts when cancelled during the checks', async () => {
+			mockRunResticCommand.mockResolvedValueOnce('{"files_new":1,"total_files_processed":1}');
+			jest.spyOn(handler, 'canRun').mockImplementationOnce(async () => {
+				handler['cancelledBackups'].add('plan-1' + 'backup-1');
+				return true as any;
+			});
+			const beforeBackup = jest.spyOn(handler as any, 'beforeBackup');
+
+			const resticArgsAndEnv = handler.createResticBackupArgs('plan-1', baseOptions as any);
+			await expect(
+				handler['preBackupPhase']('plan-1', 'backup-1', baseOptions, resticArgsAndEnv)
+			).rejects.toThrow('BACKUP_CANCELLED:');
+
+			expect(beforeBackup).not.toHaveBeenCalled();
+			handler['cancelledBackups'].delete('plan-1' + 'backup-1');
 		});
 	});
 
@@ -1638,7 +1679,7 @@ describe('BackupHandler', () => {
 				expect.any(Function),
 				expect.any(Function),
 				expect.any(Function),
-				undefined,
+				expect.any(Function),
 				expect.objectContaining({ stallTimeout: expect.any(Number) })
 			);
 		});
@@ -1656,7 +1697,7 @@ describe('BackupHandler', () => {
 				expect.any(Function),
 				expect.any(Function),
 				expect.any(Function),
-				undefined,
+				expect.any(Function),
 				expect.objectContaining({ stallTimeout: expect.any(Number) })
 			);
 		});

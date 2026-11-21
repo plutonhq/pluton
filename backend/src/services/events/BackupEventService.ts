@@ -145,6 +145,7 @@ export class BackupEventService {
 		}
 
 		try {
+			if (await this.wasCancelled(backupId)) return;
 			// Update the existing backup entry with dry run summary and status
 			const backup = await this.backupStore.update(backupId, {
 				status: 'started',

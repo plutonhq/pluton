@@ -263,6 +263,9 @@ export class BackupHandler {
 			resticArgsAndEnv,
 			runConfig
 		);
+		if (this.cancelledBackups.has(planId + backupId)) {
+			throw new Error('BACKUP_CANCELLED: Backup was cancelled');
+		}
 
 		// Emit backup_start with dry run summary to update the DB record and send notifications.
 		this.emitter.emit('backup_start', {
@@ -275,6 +278,9 @@ export class BackupHandler {
 		await this.updateProgress(planId, backupId, 'pre-backup', 'PRE_BACKUP_CHECKS_START', false);
 		await this.canRun(options, resticArgsAndEnv, dryRunSummary);
 		await this.updateProgress(planId, backupId, 'pre-backup', 'PRE_BACKUP_CHECKS_COMPLETE', true);
+		if (this.cancelledBackups.has(planId + backupId)) {
+			throw new Error('BACKUP_CANCELLED: Backup was cancelled');
+		}
 
 		// Run pre-backup scripts
 		await this.updateProgress(planId, backupId, 'pre-backup', 'PRE_BACKUP_SCRIPTS_START', false);
@@ -837,7 +843,7 @@ export class BackupHandler {
 					handlers.onProgress,
 					handlers.onError,
 					handlers.onComplete,
-					undefined,
+					process => processManager.trackProcess('backup-' + backupId, process),
 					{ stallTimeout: RESTIC_STALL_TIMEOUT_MS }
 				);
 				const outputLines = dryRunOutput.split('\n').filter(line => line.trim() !== '');

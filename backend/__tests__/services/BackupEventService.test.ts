@@ -609,6 +609,17 @@ describe('BackupEventService', () => {
 		});
 
 		describe('guard against late failure events', () => {
+			it('should ignore onBackupStart for a cancelled backup', async () => {
+				// Arrange
+				markRowCancelled();
+
+				// Act
+				await backupEventService.onBackupStart({ planId, backupId, summary: {} } as any);
+
+				// Assert
+				expect(mockBackupStore.update).not.toHaveBeenCalled();
+			});
+
 			it('should ignore a failed onBackupComplete for a cancelled backup', async () => {
 				// Arrange
 				markRowCancelled();
