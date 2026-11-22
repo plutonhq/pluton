@@ -79,6 +79,8 @@ describe('initSetup', () => {
 			get: jest.fn(),
 			insert: jest.fn().mockReturnThis(),
 			values: jest.fn(),
+			update: jest.fn().mockReturnThis(),
+			set: jest.fn().mockReturnThis(),
 		};
 
 		// Mock appPaths
@@ -107,7 +109,38 @@ describe('initSetup', () => {
 			// Assert
 			expect(fs.access).toHaveBeenCalledWith(setupCompletePath);
 			expect(console.log).toHaveBeenCalledWith('[INIT] Setup already completed. Skipping.');
-			expect(mockDb.select).not.toHaveBeenCalled();
+			expect(mockDb.insert).not.toHaveBeenCalled();
+		});
+
+		it('refreshes the main device restic and rclone versions and keeps the agent version', async () => {
+			(fs.access as jest.Mock).mockResolvedValue(undefined);
+			mockDb.get.mockResolvedValue({
+				id: 'main',
+				versions: { restic: '0.16.0', rclone: '1.64.0', agent: '1.2.3' },
+			});
+			(getResticVersion as jest.Mock).mockReturnValue('0.19.1');
+			(getRcloneVersion as jest.Mock).mockReturnValue('1.75.1');
+
+			await initSetup(mockDb);
+
+			expect(mockDb.update).toHaveBeenCalledWith(devices);
+			expect(mockDb.set).toHaveBeenCalledWith({
+				versions: { restic: '0.19.1', rclone: '1.75.1', agent: '1.2.3' },
+			});
+		});
+
+		it('does not write the main device when its versions are current', async () => {
+			(fs.access as jest.Mock).mockResolvedValue(undefined);
+			mockDb.get.mockResolvedValue({
+				id: 'main',
+				versions: { restic: '0.19.1', rclone: '1.75.1', agent: '' },
+			});
+			(getResticVersion as jest.Mock).mockReturnValue('0.19.1');
+			(getRcloneVersion as jest.Mock).mockReturnValue('1.75.1');
+
+			await initSetup(mockDb);
+
+			expect(mockDb.update).not.toHaveBeenCalled();
 		});
 
 		it('runs the storage secrets migration with the db', async () => {

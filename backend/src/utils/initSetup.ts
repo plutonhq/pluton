@@ -38,6 +38,12 @@ export async function initSetup(db: BetterSQLite3Database) {
 		await fs.writeFile(setupCompletePath, new Date().toISOString());
 		console.log('[INIT] Initial setup complete.');
 	}
+   
+	try {
+		await refreshMainDeviceVersions(db);
+	} catch (error: any) {
+		console.error('[INIT] Main device version refresh failed:', error?.message || error);
+	}
 }
 
 async function createDefaultSettings(db: BetterSQLite3Database) {
@@ -111,6 +117,24 @@ async function createMainDevice(db: BetterSQLite3Database) {
 			settings: { general: { tempDir } },
 		});
 	}
+}
+
+// An upgrade replaces the bundled binaries, so read their versions again at each start.
+async function refreshMainDeviceVersions(db: BetterSQLite3Database) {
+	const mainDevice = await db.select().from(devices).where(eq(devices.id, 'main')).get();
+	if (!mainDevice) {
+		return;
+	}
+	const current = mainDevice.versions || { restic: '', rclone: '', agent: '' };
+	const restic = getResticVersion();
+	const rclone = getRcloneVersion();
+	if (current.restic === restic && current.rclone === rclone) {
+		return;
+	}
+	await db
+		.update(devices)
+		.set({ versions: { ...current, restic, rclone } })
+		.where(eq(devices.id, 'main'));
 }
 
 export async function runInitialSetup(db: BetterSQLite3Database) {
