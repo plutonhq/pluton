@@ -178,6 +178,7 @@ describe('ConfigService', () => {
 			ALLOW_FILE_BROWSER: 'false',
 			ALLOW_CUSTOM_RESTORE_PATH: '0',
 			DISABLE_EVENT_SCRIPTS: 'true',
+			DISABLE_2FA: 'true',
 		};
 		mockExistsSync.mockReturnValue(false);
 
@@ -186,6 +187,7 @@ describe('ConfigService', () => {
 		expect(configService.config.ALLOW_FILE_BROWSER).toBe(false);
 		expect(configService.config.ALLOW_CUSTOM_RESTORE_PATH).toBe(false);
 		expect(configService.config.DISABLE_EVENT_SCRIPTS).toBe(true);
+		expect(configService.config.DISABLE_2FA).toBe(true);
 	});
 
 	it('should keep env values for keys that config.json does not have', async () => {

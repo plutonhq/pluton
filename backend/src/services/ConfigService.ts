@@ -40,6 +40,7 @@ const baseConfigSchema = z.object({
 	USER_NAME: z.string().min(1).optional(),
 	USER_PASSWORD: z.string().min(1).optional(),
 	SESSION_DURATION: z.coerce.number().int().positive().default(7), // in days
+	DISABLE_2FA: booleanFlag.default(false).optional(),
 
 	// INTERNAL
 	IS_DOCKER: z.coerce.boolean().default(false).optional(),

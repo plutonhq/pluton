@@ -7,6 +7,11 @@ import * as otpauth from 'otpauth';
 
 jest.mock('jsonwebtoken');
 
+const mockLoggerWarn = jest.fn();
+jest.mock('../../src/utils/logger', () => ({
+	serverLogger: { warn: (...args: any[]) => mockLoggerWarn(...args) },
+}));
+
 const TOTP_SECRET = new otpauth.Secret().base32;
 const totpSettings = (enabled = true) => ({
 	id: 1,
@@ -199,6 +204,24 @@ describe('UserController', () => {
 			expect(mockCookie).toHaveBeenCalledWith('token', 'mock-token', expect.any(Object));
 			expect(mockJson).toHaveBeenCalledWith({ success: true, error: null });
 		});
+
+		it('should skip the 2FA step when DISABLE_2FA is set', async () => {
+			mockRequest.body = { username: 'testuser', password: 'testpass' };
+			mockVerifyPassword.mockReturnValue(true);
+			(jwt.sign as jest.Mock).mockReturnValue('mock-token');
+			mockSettingsService.getMainSettings.mockResolvedValue(totpSettings());
+			(configService.config as any).DISABLE_2FA = true;
+
+			try {
+				await userController.loginUser(mockRequest as Request, mockResponse as Response);
+			} finally {
+				(configService.config as any).DISABLE_2FA = undefined;
+			}
+
+			expect(mockSession.regenerate).not.toHaveBeenCalled();
+			expect(mockCookie).toHaveBeenCalledWith('token', 'mock-token', expect.any(Object));
+			expect(mockJson).toHaveBeenCalledWith({ success: true, error: null });
+		});
 	});
 
 	describe('verifyTotp', () => {
@@ -267,6 +290,10 @@ describe('UserController', () => {
 			expect(mockCookie).not.toHaveBeenCalled();
 			expect(mockSession.totpAttempts).toBe(1);
 			expect(mockSession.destroy).not.toHaveBeenCalled();
+			expect(mockLoggerWarn).toHaveBeenCalledWith(
+				expect.objectContaining({ attempt: 1, serverTime: expect.any(String) }),
+				expect.stringContaining('2FA verification failed')
+			);
 		});
 
 		it('should end the pending login after too many invalid codes', async () => {

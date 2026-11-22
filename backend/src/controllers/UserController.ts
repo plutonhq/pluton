@@ -4,6 +4,7 @@ import { configService } from '../services/ConfigService';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { SettingsService } from '../services/SettingsService';
+import { serverLogger } from '../utils/logger';
 
 const MAX_TOTP_ATTEMPTS = 5;
 
@@ -39,7 +40,7 @@ export class UserController {
 			const appSettings = await this.settingsService.getMainSettings();
 			const totpConfig = appSettings?.settings?.totp;
 
-			if (totpConfig?.enabled && totpConfig.secret) {
+			if (!configService.config.DISABLE_2FA && totpConfig?.enabled && totpConfig.secret) {
 				// Password is correct, but the session token is only issued after the 2FA step.
 				req.session.regenerate(err => {
 					if (err) {
@@ -110,6 +111,10 @@ export class UserController {
 
 			if (!isValid) {
 				const attempts = (req.session.totpAttempts || 0) + 1;
+				serverLogger.warn(
+					{ ip: req.ip, attempt: attempts, serverTime: new Date().toISOString() },
+					'2FA verification failed. If valid codes are rejected, check the server clock.'
+				);
 				if (attempts >= MAX_TOTP_ATTEMPTS) {
 					req.session.destroy(() => {
 						res.status(401).json({

@@ -50,6 +50,7 @@ services:
       SERVER_PORT: ${SERVER_PORT:-5173}
       MAX_CONCURRENT_BACKUPS: ${MAX_CONCURRENT_BACKUPS:-2}
       SESSION_DURATION: ${SESSION_DURATION:-7} # How long frontend login Session lasts in Days
+      # DISABLE_2FA: ${DISABLE_2FA:-false} # Set to true to skip 2FA at login if you are locked out. Remove after you regain access.
 
       # TRUST_PROXY: ${TRUST_PROXY:-1} #Uncomment when running Pluton behind a reverse proxy (Caddy, Nginx, Traefik, ...).
 
