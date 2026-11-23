@@ -423,6 +423,26 @@ export function useVerifyTwoFactorAuth() {
    });
 }
 
+export async function disableTwoFactorAuth(id: number) {
+   const headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+   const res = await fetch(`${API_URL}/settings/${id}/2fa/disable`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+   });
+   if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+   }
+   return await res.json();
+}
+
+export function useDisableTwoFactorAuth() {
+   return useMutation({
+      mutationFn: disableTwoFactorAuth,
+   });
+}
+
 export async function verifyTwoFactorOTP({ code }: { code: string }) {
    const headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
    const res = await fetch(`${API_URL}/user/verify-otp`, {

@@ -67,6 +67,7 @@ const userConfigSchema = baseConfigSchema
 		ALLOW_FILE_BROWSER: true,
 		FILE_BROWSER_ROOT: true,
 		DISABLE_EVENT_SCRIPTS: true,
+		DISABLE_2FA: true,
 		TRUST_PROXY: true,
 	})
 	.partial();

@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 import { ActionModal } from '../..';
 import { useTheme } from '../../../context/ThemeContext';
+import { useDisableTwoFactorAuth } from '../../../services/settings';
 import Input from '../../common/form/Input/Input';
 import Toggle from '../../common/form/Toggle/Toggle';
 import Tristate from '../../common/form/Tristate/Tristate';
@@ -17,17 +19,28 @@ const GeneralSettings = ({ settings, settingsID, onUpdate }: GeneralSettingsProp
    const { setTheme } = useTheme();
    const [show2FASetupConfirm, setShow2FASetupConfirm] = useState(false);
    const [show2FASetup, setShow2FASetup] = useState(false);
+   const [show2FADisableConfirm, setShow2FADisableConfirm] = useState(false);
+   const disable2FAMutation = useDisableTwoFactorAuth();
 
    const { totp } = settings || {};
-   const is2FASetupComplete = totp?.configured;
 
    const update2FASetting = (enabled: boolean) => {
-      if (enabled === true && !is2FASetupComplete) {
+      if (enabled && !totp?.enabled) {
          setShow2FASetupConfirm(true);
-         return;
-      } else {
-         onUpdate({ ...settings, totp: { ...totp, enabled } });
+      } else if (!enabled && totp?.enabled) {
+         setShow2FADisableConfirm(true);
       }
+   };
+
+   const disable2FA = () => {
+      disable2FAMutation.mutate(settingsID, {
+         onSuccess: () => {
+            // Update only the local totp state, so unsaved edits in the form are kept.
+            onUpdate({ ...settings, totp: { enabled: false, configured: false } });
+            setShow2FADisableConfirm(false);
+            toast.success('Two-Factor Authentication (2FA) disabled.', { autoClose: 5000 });
+         },
+      });
    };
 
    const handleThemeChange = (newThemeValue: 'auto' | 'light' | 'dark') => {
@@ -95,6 +108,25 @@ const GeneralSettings = ({ settings, settingsID, onUpdate }: GeneralSettingsProp
                   type: 'default',
                   isPending: false,
                   action: () => setShow2FASetup(true),
+               }}
+            />
+         )}
+         {show2FADisableConfirm && (
+            <ActionModal
+               title={`Disable Two-Factor Authentication (2FA)`}
+               message={`Are you sure you want to disable Two-Factor Authentication (2FA)? Your current authenticator codes and recovery codes will stop working. To enable 2FA again, you must set it up again with a new QR code.`}
+               closeModal={() => {
+                  if (disable2FAMutation.isPending) return;
+                  disable2FAMutation.reset();
+                  setShow2FADisableConfirm(false);
+               }}
+               width="420px"
+               errorMessage={disable2FAMutation.isError ? disable2FAMutation.error?.message : undefined}
+               primaryAction={{
+                  title: `Yes, Disable 2FA`,
+                  type: 'danger',
+                  isPending: disable2FAMutation.isPending,
+                  action: disable2FA,
                }}
             />
          )}

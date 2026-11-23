@@ -205,6 +205,31 @@ describe('SettingsController', () => {
 		});
 	});
 
+	describe('disableTwoFactorAuth', () => {
+		it('should disable 2FA for the given settings ID', async () => {
+			mockRequest.params = { id: '1' };
+			mockSettingsService.disableTwoFactorAuth.mockResolvedValue(undefined);
+
+			await settingsController.disableTwoFactorAuth(mockRequest as Request, mockResponse as Response);
+
+			expect(mockSettingsService.disableTwoFactorAuth).toHaveBeenCalledWith(1);
+			expect(mockStatus).toHaveBeenCalledWith(200);
+			expect(mockJson).toHaveBeenCalledWith({ success: true });
+		});
+
+		it('should return the service error status', async () => {
+			mockRequest.params = { id: '1' };
+			mockSettingsService.disableTwoFactorAuth.mockRejectedValue(
+				Object.assign(new Error('Settings not found.'), { statusCode: 404 })
+			);
+
+			await settingsController.disableTwoFactorAuth(mockRequest as Request, mockResponse as Response);
+
+			expect(mockStatus).toHaveBeenCalledWith(404);
+			expect(mockJson).toHaveBeenCalledWith({ success: false, error: 'Settings not found.' });
+		});
+	});
+
 	describe('updateSettings', () => {
 		it('should return 400 if settings ID is missing', async () => {
 			mockRequest.params = {};

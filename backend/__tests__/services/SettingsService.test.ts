@@ -156,21 +156,19 @@ describe('SettingsService', () => {
 				expect(mockSettingsStore.update.mock.calls[0][1].totp).toEqual(storedTotp);
 			});
 
-			it('should let the toggle turn 2FA off and on', async () => {
+			it('should ignore the requested enabled value', async () => {
 				mockSettingsStore.getById.mockResolvedValue({ id: 1, settings: { totp: storedTotp } } as any);
-
 				await settingsService.updateSettings(settingsId, {
 					totp: { enabled: false, configured: true },
 				} as any);
-				expect(mockSettingsStore.update.mock.calls[0][1].totp).toEqual({
-					...storedTotp,
-					enabled: false,
-				});
+				expect(mockSettingsStore.update.mock.calls[0][1].totp).toEqual(storedTotp);
 
+				const disabledTotp = { ...storedTotp, enabled: false };
+				mockSettingsStore.getById.mockResolvedValue({ id: 1, settings: { totp: disabledTotp } } as any);
 				await settingsService.updateSettings(settingsId, {
 					totp: { enabled: true, configured: true },
 				} as any);
-				expect(mockSettingsStore.update.mock.calls[1][1].totp).toEqual(storedTotp);
+				expect(mockSettingsStore.update.mock.calls[1][1].totp).toEqual(disabledTotp);
 			});
 
 			it('should not enable 2FA when no secret is stored', async () => {
@@ -194,6 +192,40 @@ describe('SettingsService', () => {
 			await expect(settingsService.updateSettings(settingsId, updateData)).rejects.toThrow(
 				'Failed to update settings'
 			);
+		});
+	});
+
+	// ----------------------------------------
+	// disableTwoFactorAuth
+	// ----------------------------------------
+	describe('disableTwoFactorAuth', () => {
+		it('should remove the secret and recovery codes and keep other settings', async () => {
+			mockSettingsStore.getById.mockResolvedValue({
+				id: 1,
+				settings: { title: 'T', totp: { enabled: true, secret: 's', recoveryCodes: ['h1'] } },
+			} as any);
+			mockSettingsStore.update.mockResolvedValue({ id: 1 } as any);
+
+			await settingsService.disableTwoFactorAuth(1);
+
+			expect(mockSettingsStore.update).toHaveBeenCalledWith(1, {
+				title: 'T',
+				totp: { enabled: false, secret: '', recoveryCodes: [] },
+			});
+		});
+
+		it('should throw if the settings record does not exist', async () => {
+			mockSettingsStore.getById.mockResolvedValue(null);
+
+			await expect(settingsService.disableTwoFactorAuth(1)).rejects.toThrow('Settings not found');
+			expect(mockSettingsStore.update).not.toHaveBeenCalled();
+		});
+
+		it('should throw if the store fails to update', async () => {
+			mockSettingsStore.getById.mockResolvedValue({ id: 1, settings: { title: 'T' } } as any);
+			mockSettingsStore.update.mockResolvedValue(null);
+
+			await expect(settingsService.disableTwoFactorAuth(1)).rejects.toThrow('Failed to disable 2FA');
 		});
 	});
 

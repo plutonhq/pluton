@@ -43,14 +43,11 @@ export class SettingsService {
 			// Validate the plan data using the schema
 			let parsedSettings = { ...settings };
 
-			// The TOTP secret and recovery codes are only written by the 2FA setup and login flows.
+			// 2FA data is only written by the dedicated 2FA endpoints and the login flow.
 			const storedTotp = (await this.settingsStore.getById(id))?.settings?.totp;
 			if (parsedSettings.totp !== undefined || storedTotp) {
-				const requestedEnabled = parsedSettings.totp
-					? parsedSettings.totp.enabled
-					: storedTotp?.enabled;
 				parsedSettings.totp = {
-					enabled: !!requestedEnabled && !!storedTotp?.secret,
+					enabled: !!storedTotp?.enabled && !!storedTotp?.secret,
 					secret: storedTotp?.secret || '',
 					recoveryCodes: storedTotp?.recoveryCodes || [],
 				};
@@ -255,6 +252,24 @@ export class SettingsService {
 
 		// 4. Return the plain-text recovery codes to be shown to the user ONCE
 		return { recoveryCodes };
+	}
+
+	/**
+	 * Removes the 2FA secret and recovery codes, so enabling 2FA again requires a new setup.
+	 */
+	public async disableTwoFactorAuth(settingsId: number): Promise<void> {
+		const appSettings = await this.settingsStore.getById(settingsId);
+		if (!appSettings || !appSettings.settings) {
+			throw new AppError(404, 'Settings not found.');
+		}
+
+		const updated = await this.settingsStore.update(settingsId, {
+			...appSettings.settings,
+			totp: { enabled: false, secret: '', recoveryCodes: [] },
+		});
+		if (!updated) {
+			throw new AppError(500, 'Failed to disable 2FA.');
+		}
 	}
 
 	/**

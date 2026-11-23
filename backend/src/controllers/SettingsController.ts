@@ -226,6 +226,15 @@ export class SettingsController {
 		}
 	}
 
+	async disableTwoFactorAuth(req: Request, res: Response): Promise<void> {
+		try {
+			await this.settingsService.disableTwoFactorAuth(parseInt(req.params.id, 10));
+			res.status(200).json({ success: true });
+		} catch (error: any) {
+			res.status(error.statusCode || 500).json({ success: false, error: error.message });
+		}
+	}
+
 	async getSelfBackupStatus(req: Request, res: Response): Promise<void> {
 		try {
 			const status = await this.settingsService.getSelfBackupStatus();
