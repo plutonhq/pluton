@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.24.0](https://github.com/plutonhq/pluton/compare/pluton-v0.23.2...pluton-v0.24.0) (2026-11-23)
+
+
+### Features
+
+* add ability to force disable 2fa if locked out ([b983d23](https://github.com/plutonhq/pluton/commit/b983d23e6159c9fd50a0f672c2c1654f72a82094))
+
+
+### Bug Fixes
+
+* encryption keys could be set with leading and trailing spaces ([7636ff2](https://github.com/plutonhq/pluton/commit/7636ff27f81962d50576d41375583a9e5a03976b))
+* keep old storage settings when the new ones do not connect ([9276a92](https://github.com/plutonhq/pluton/commit/9276a92ae1a512d586689b33258e8c583bb9bd14))
+* precent accidental deletion/creation of the local storage by user ([0802c0b](https://github.com/plutonhq/pluton/commit/0802c0b07e854674940739b0cd19de889eb82897))
+* prevent accidental deletion of entire system while restoring ([7187f4c](https://github.com/plutonhq/pluton/commit/7187f4cb00ab8b3a66d765c2022a258ddaa55691))
+* remove logging that outputs sensitive data ([cf0702a](https://github.com/plutonhq/pluton/commit/cf0702a3351dbf7201dfe78311a215146da5570e))
+* resolves 2fa disabling automatically in certain cases ([46e8291](https://github.com/plutonhq/pluton/commit/46e829146c91a0ea4ba03e8a63ffc51289052798))
+* resolves broken backup cancellation during dry run & scripts run stage ([2f966ba](https://github.com/plutonhq/pluton/commit/2f966ba7cd378a97f7efae09d55c6131bd418cb1))
+* resolves broken backup plan compression setting ([4a3bc79](https://github.com/plutonhq/pluton/commit/4a3bc793c302b03a61e372a9673378c8ba53d71c))
+* resolves broken backups when includes contain a pattern ([96b1cf1](https://github.com/plutonhq/pluton/commit/96b1cf1f0f96b217e3111b202c4f1c6929f4ab03))
+* resolves broken config rules ([07b62bf](https://github.com/plutonhq/pluton/commit/07b62bf2804cbf48f14540cc30d96e4bfd8c4fda))
+* resolves broken MAX_CONCURRENT_BACKUPS config ([fc41649](https://github.com/plutonhq/pluton/commit/fc4164979dde696958d70e629a9b3c791130db6b))
+* resolves cancelled restore being retried again ([4e319aa](https://github.com/plutonhq/pluton/commit/4e319aaaeb766f76ddd4be2143b960951cb70a2e))
+* resolves issue that prevent running the backup if its set to run on thursdays ([dbe081a](https://github.com/plutonhq/pluton/commit/dbe081a936c5f68864f2cce745043c2d7de24876))
+* resolves stale restic and rclone version on Sources page ([f9f0e8d](https://github.com/plutonhq/pluton/commit/f9f0e8d6589cebbbb8548220253401e872d71594))
+* resovle missing 2fa code reset on disabling 2fa ([22ee9df](https://github.com/plutonhq/pluton/commit/22ee9dfa184396c00b7c571d0f3e04d9d411b88e))
+
 ## [0.23.2](https://github.com/plutonhq/pluton/compare/pluton-v0.23.1...pluton-v0.23.2) (2026-11-19)
 
 
