@@ -101,7 +101,6 @@ WORKDIR /app
 # Copy compiled backend from builder
 COPY --from=backend-builder /workspace/backend/dist ./dist
 COPY --from=backend-builder /workspace/backend/drizzle ./drizzle
-COPY --from=backend-builder /workspace/backend/loader.mjs ./loader.mjs
 COPY --from=backend-builder /workspace/backend/package.json ./package.json
 
 # Copy frontend build to public directory
@@ -184,5 +183,5 @@ ENV NODE_ENV=production \
 # Expose the application port
 EXPOSE 5173
 
-# Start the application with custom loader for extension-less imports
-CMD ["node", "--loader", "./loader.mjs", "dist/index.js"]
+# Start the bundled application
+CMD ["node", "dist/pkg-index.cjs"]
