@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.23.2](https://github.com/plutonhq/pluton/compare/pluton-v0.23.1...pluton-v0.23.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* resolve broken weekly prune settings ([5a2b14e](https://github.com/plutonhq/pluton/commit/5a2b14ee997473a530f3df487135fb43116a3d60))
+* resolve missing restic and rclone scripts on windows ([15b15e0](https://github.com/plutonhq/pluton/commit/15b15e0663f75b6cc60298990eae387b60d97cab))
+* resolves broken pruning on docker installations ([392b0ae](https://github.com/plutonhq/pluton/commit/392b0ae3f30e82a5c078160e192b36c176859793))
+* resolves crashes on running pluton cli without privilege on windows ([74e6dc2](https://github.com/plutonhq/pluton/commit/74e6dc24bd62e2d75839f81a3cd43cbe24ead8a2))
+
 ## [0.23.1](https://github.com/plutonhq/pluton/compare/pluton-v0.23.0...pluton-v0.23.1) (2026-11-18)
 
 
