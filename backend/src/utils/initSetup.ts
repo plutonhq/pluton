@@ -25,20 +25,23 @@ export async function initSetup(db: BetterSQLite3Database) {
 		console.error('[INIT] Storage secrets migration failed:', error?.message || error);
 	}
 
+	let setupComplete = true;
 	try {
 		await fs.access(setupCompletePath);
-		// If access does not throw, file exists. Setup is complete.
+	} catch {
+		setupComplete = false;
+	}
+
+	if (setupComplete) {
 		console.log('[INIT] Setup already completed. Skipping.');
-		return;
-	} catch (error) {
-		// File does not exist, proceed with setup.
+	} else {
 		console.log('[INIT] First run detected. Starting initial setup...');
 		await runInitialSetup(db);
 		// Create the lock file to prevent running setup again
 		await fs.writeFile(setupCompletePath, new Date().toISOString());
 		console.log('[INIT] Initial setup complete.');
 	}
-   
+
 	try {
 		await refreshMainDeviceVersions(db);
 	} catch (error: any) {
